@@ -18,7 +18,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd contracts && npm install
-        cd frontend && npm install
+        cd ../frontend && npm install
         
     - name: Build contracts
       run: cd contracts && npm run compile
