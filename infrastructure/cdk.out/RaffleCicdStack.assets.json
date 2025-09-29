@@ -1,0 +1,20 @@
+{
+  "version": "31.0.0",
+  "files": {
+    "a991e853666ddbc248d8ab1e97f56ee8a928014b745c21c4ce75e9804c404036": {
+      "source": {
+        "path": "RaffleCicdStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "856872546342-us-east-1": {
+          "bucketName": "cdk-hnb659fds-assets-856872546342-us-east-1",
+          "objectKey": "a991e853666ddbc248d8ab1e97f56ee8a928014b745c21c4ce75e9804c404036.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::856872546342:role/cdk-hnb659fds-file-publishing-role-856872546342-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

@@ -1,0 +1,204 @@
+{
+ "Resources": {
+  "RaffleFrontendBucketDBF26C7D": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketName": "apechain-nft-raffle-856872546342-us-east-1",
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "IgnorePublicAcls": true
+    },
+    "WebsiteConfiguration": {
+     "ErrorDocument": "index.html",
+     "IndexDocument": "index.html"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "RaffleInfrastructureStack/RaffleFrontendBucket/Resource"
+   }
+  },
+  "RaffleFrontendBucketPolicy5D585DF2": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "RaffleFrontendBucketDBF26C7D"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:GetObject",
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "RaffleFrontendBucketDBF26C7D",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleInfrastructureStack/RaffleFrontendBucket/Policy/Resource"
+   }
+  },
+  "RaffleDistributionDE46C7C4": {
+   "Type": "AWS::CloudFront::Distribution",
+   "Properties": {
+    "DistributionConfig": {
+     "CustomErrorResponses": [
+      {
+       "ErrorCode": 404,
+       "ResponseCode": 200,
+       "ResponsePagePath": "/index.html"
+      }
+     ],
+     "DefaultCacheBehavior": {
+      "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+      "Compress": true,
+      "TargetOriginId": "RaffleInfrastructureStackRaffleDistributionOrigin17AF643E5",
+      "ViewerProtocolPolicy": "redirect-to-https"
+     },
+     "DefaultRootObject": "index.html",
+     "Enabled": true,
+     "HttpVersion": "http2",
+     "IPV6Enabled": true,
+     "Origins": [
+      {
+       "CustomOriginConfig": {
+        "OriginProtocolPolicy": "http-only",
+        "OriginSSLProtocols": [
+         "TLSv1.2"
+        ]
+       },
+       "DomainName": {
+        "Fn::Select": [
+         2,
+         {
+          "Fn::Split": [
+           "/",
+           {
+            "Fn::GetAtt": [
+             "RaffleFrontendBucketDBF26C7D",
+             "WebsiteURL"
+            ]
+           }
+          ]
+         }
+        ]
+       },
+       "Id": "RaffleInfrastructureStackRaffleDistributionOrigin17AF643E5"
+      }
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleInfrastructureStack/RaffleDistribution/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/02MwQrCMBBEv6X3dI1VEK/qXakfIG2SwrY1keyuRUL+XWoFPc28xzAV7DToopmoNHYoR2whXbkxg2omuiXaQDqIGRyrY+e/bYlLGNG8fnrhrMwYxHYxeIZ0QuKIrTAGPy//OefZnIUf8jmvHQWJxmXlg3XQ0+pZaVjvYVv0hFhG8Yx3B/WSbyftgeu5AAAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleInfrastructureStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "BucketName": {
+   "Value": {
+    "Ref": "RaffleFrontendBucketDBF26C7D"
+   }
+  },
+  "DistributionId": {
+   "Value": {
+    "Ref": "RaffleDistributionDE46C7C4"
+   }
+  },
+  "WebsiteURL": {
+   "Value": {
+    "Fn::GetAtt": [
+     "RaffleDistributionDE46C7C4",
+     "DomainName"
+    ]
+   }
+  },
+  "ExportsOutputFnGetAttRaffleFrontendBucketDBF26C7DArnC5C9C238": {
+   "Value": {
+    "Fn::GetAtt": [
+     "RaffleFrontendBucketDBF26C7D",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "RaffleInfrastructureStack:ExportsOutputFnGetAttRaffleFrontendBucketDBF26C7DArnC5C9C238"
+   }
+  },
+  "ExportsOutputRefRaffleDistributionDE46C7C4EB1B0256": {
+   "Value": {
+    "Ref": "RaffleDistributionDE46C7C4"
+   },
+   "Export": {
+    "Name": "RaffleInfrastructureStack:ExportsOutputRefRaffleDistributionDE46C7C4EB1B0256"
+   }
+  },
+  "ExportsOutputRefRaffleFrontendBucketDBF26C7DF03EDE82": {
+   "Value": {
+    "Ref": "RaffleFrontendBucketDBF26C7D"
+   },
+   "Export": {
+    "Name": "RaffleInfrastructureStack:ExportsOutputRefRaffleFrontendBucketDBF26C7DF03EDE82"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,250 @@
+{
+  "version": "31.0.0",
+  "artifacts": {
+    "RaffleInfrastructureStack.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "RaffleInfrastructureStack.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "RaffleInfrastructureStack": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://856872546342/us-east-1",
+      "properties": {
+        "templateFile": "RaffleInfrastructureStack.template.json",
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::856872546342:role/cdk-hnb659fds-deploy-role-856872546342-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::856872546342:role/cdk-hnb659fds-cfn-exec-role-856872546342-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-856872546342-us-east-1/a279b8ed654f59951a91ff407ba982cf87ccd1be0316850b799e0aad9f28187f.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "RaffleInfrastructureStack.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::856872546342:role/cdk-hnb659fds-lookup-role-856872546342-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "RaffleInfrastructureStack.assets"
+      ],
+      "metadata": {
+        "/RaffleInfrastructureStack/RaffleFrontendBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RaffleFrontendBucketDBF26C7D"
+          }
+        ],
+        "/RaffleInfrastructureStack/RaffleFrontendBucket/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RaffleFrontendBucketPolicy5D585DF2"
+          }
+        ],
+        "/RaffleInfrastructureStack/RaffleDistribution/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RaffleDistributionDE46C7C4"
+          }
+        ],
+        "/RaffleInfrastructureStack/BucketName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BucketName"
+          }
+        ],
+        "/RaffleInfrastructureStack/DistributionId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DistributionId"
+          }
+        ],
+        "/RaffleInfrastructureStack/WebsiteURL": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "WebsiteURL"
+          }
+        ],
+        "/RaffleInfrastructureStack/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/RaffleInfrastructureStack/Exports/Output{\"Fn::GetAtt\":[\"RaffleFrontendBucketDBF26C7D\",\"Arn\"]}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputFnGetAttRaffleFrontendBucketDBF26C7DArnC5C9C238"
+          }
+        ],
+        "/RaffleInfrastructureStack/Exports/Output{\"Ref\":\"RaffleDistributionDE46C7C4\"}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputRefRaffleDistributionDE46C7C4EB1B0256"
+          }
+        ],
+        "/RaffleInfrastructureStack/Exports/Output{\"Ref\":\"RaffleFrontendBucketDBF26C7D\"}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputRefRaffleFrontendBucketDBF26C7DF03EDE82"
+          }
+        ],
+        "/RaffleInfrastructureStack/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/RaffleInfrastructureStack/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "RaffleInfrastructureStack"
+    },
+    "RaffleCicdStack.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "RaffleCicdStack.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "RaffleCicdStack": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://856872546342/us-east-1",
+      "properties": {
+        "templateFile": "RaffleCicdStack.template.json",
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::856872546342:role/cdk-hnb659fds-deploy-role-856872546342-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::856872546342:role/cdk-hnb659fds-cfn-exec-role-856872546342-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-856872546342-us-east-1/a991e853666ddbc248d8ab1e97f56ee8a928014b745c21c4ce75e9804c404036.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "RaffleCicdStack.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::856872546342:role/cdk-hnb659fds-lookup-role-856872546342-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "RaffleInfrastructureStack",
+        "RaffleCicdStack.assets"
+      ],
+      "metadata": {
+        "/RaffleCicdStack/RaffleFrontendBuild/Role/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RaffleFrontendBuildRoleD3190113"
+          }
+        ],
+        "/RaffleCicdStack/RaffleFrontendBuild/Role/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RaffleFrontendBuildRoleDefaultPolicy9E12F53C"
+          }
+        ],
+        "/RaffleCicdStack/RaffleFrontendBuild/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RaffleFrontendBuildCA62C749"
+          }
+        ],
+        "/RaffleCicdStack/RafflePipeline/ArtifactsBucketEncryptionKey/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RafflePipelineArtifactsBucketEncryptionKeyFF4CA582"
+          }
+        ],
+        "/RaffleCicdStack/RafflePipeline/ArtifactsBucketEncryptionKeyAlias/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RafflePipelineArtifactsBucketEncryptionKeyAlias42FF97DC"
+          }
+        ],
+        "/RaffleCicdStack/RafflePipeline/ArtifactsBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RafflePipelineArtifactsBucketBC7D869E"
+          }
+        ],
+        "/RaffleCicdStack/RafflePipeline/ArtifactsBucket/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RafflePipelineArtifactsBucketPolicy384FE67E"
+          }
+        ],
+        "/RaffleCicdStack/RafflePipeline/Role/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RafflePipelineRole4DAB643F"
+          }
+        ],
+        "/RaffleCicdStack/RafflePipeline/Role/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RafflePipelineRoleDefaultPolicy1618EDBC"
+          }
+        ],
+        "/RaffleCicdStack/RafflePipeline/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RafflePipeline11A3F1DD"
+          }
+        ],
+        "/RaffleCicdStack/RafflePipeline/Source/GitHub_Source/WebhookResource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RafflePipelineSourceGitHubSourceWebhookResource25B6DBBC"
+          }
+        ],
+        "/RaffleCicdStack/RafflePipeline/Build/Build_Frontend/CodePipelineActionRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RafflePipelineBuildBuildFrontendCodePipelineActionRoleDEEEAF69"
+          }
+        ],
+        "/RaffleCicdStack/RafflePipeline/Build/Build_Frontend/CodePipelineActionRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RafflePipelineBuildBuildFrontendCodePipelineActionRoleDefaultPolicyECF2BD80"
+          }
+        ],
+        "/RaffleCicdStack/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/RaffleCicdStack/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/RaffleCicdStack/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "RaffleCicdStack"
+    },
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    }
+  }
+}

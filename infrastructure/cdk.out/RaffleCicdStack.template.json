@@ -1,0 +1,677 @@
+{
+ "Resources": {
+  "RaffleFrontendBuildRoleD3190113": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "codebuild.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RaffleFrontendBuild/Role/Resource"
+   }
+  },
+  "RaffleFrontendBuildRoleDefaultPolicy9E12F53C": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:aws:logs:us-east-1:856872546342:log-group:/aws/codebuild/",
+           {
+            "Ref": "RaffleFrontendBuildCA62C749"
+           },
+           ":*"
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:aws:logs:us-east-1:856872546342:log-group:/aws/codebuild/",
+           {
+            "Ref": "RaffleFrontendBuildCA62C749"
+           }
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "codebuild:BatchPutCodeCoverages",
+        "codebuild:BatchPutTestCases",
+        "codebuild:CreateReport",
+        "codebuild:CreateReportGroup",
+        "codebuild:UpdateReport"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:aws:codebuild:us-east-1:856872546342:report-group/",
+          {
+           "Ref": "RaffleFrontendBuildCA62C749"
+          },
+          "-*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "s3:Abort*",
+        "s3:DeleteObject*",
+        "s3:GetBucket*",
+        "s3:GetObject*",
+        "s3:List*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "RafflePipelineArtifactsBucketBC7D869E",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::ImportValue": "RaffleInfrastructureStack:ExportsOutputFnGetAttRaffleFrontendBucketDBF26C7DArnC5C9C238"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "RafflePipelineArtifactsBucketBC7D869E",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "RaffleInfrastructureStack:ExportsOutputFnGetAttRaffleFrontendBucketDBF26C7DArnC5C9C238"
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "cloudfront:CreateInvalidation",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:aws:cloudfront::856872546342:distribution/",
+          {
+           "Fn::ImportValue": "RaffleInfrastructureStack:ExportsOutputRefRaffleDistributionDE46C7C4EB1B0256"
+          }
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:GenerateDataKey*",
+        "kms:ReEncrypt*"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "RafflePipelineArtifactsBucketEncryptionKeyFF4CA582",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "RaffleFrontendBuildRoleDefaultPolicy9E12F53C",
+    "Roles": [
+     {
+      "Ref": "RaffleFrontendBuildRoleD3190113"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RaffleFrontendBuild/Role/DefaultPolicy/Resource"
+   }
+  },
+  "RaffleFrontendBuildCA62C749": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "NO_ARTIFACTS"
+    },
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "EnvironmentVariables": [
+      {
+       "Name": "S3_BUCKET",
+       "Type": "PLAINTEXT",
+       "Value": {
+        "Fn::ImportValue": "RaffleInfrastructureStack:ExportsOutputRefRaffleFrontendBucketDBF26C7DF03EDE82"
+       }
+      },
+      {
+       "Name": "CLOUDFRONT_DISTRIBUTION_ID",
+       "Type": "PLAINTEXT",
+       "Value": {
+        "Fn::ImportValue": "RaffleInfrastructureStack:ExportsOutputRefRaffleDistributionDE46C7C4EB1B0256"
+       }
+      }
+     ],
+     "Image": "aws/codebuild/standard:5.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "RaffleFrontendBuildRoleD3190113",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "frontend/buildspec.yml",
+     "Location": "https://github.com/KeithMV/apechain-nft-raffle.git",
+     "ReportBuildStatus": true,
+     "Type": "GITHUB"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "EncryptionKey": {
+     "Fn::GetAtt": [
+      "RafflePipelineArtifactsBucketEncryptionKeyFF4CA582",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RaffleFrontendBuild/Resource"
+   }
+  },
+  "RafflePipelineArtifactsBucketEncryptionKeyFF4CA582": {
+   "Type": "AWS::KMS::Key",
+   "Properties": {
+    "KeyPolicy": {
+     "Statement": [
+      {
+       "Action": "kms:*",
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": "arn:aws:iam::856872546342:root"
+       },
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RafflePipeline/ArtifactsBucketEncryptionKey/Resource"
+   }
+  },
+  "RafflePipelineArtifactsBucketEncryptionKeyAlias42FF97DC": {
+   "Type": "AWS::KMS::Alias",
+   "Properties": {
+    "AliasName": "alias/codepipeline-rafflecicdstack-rafflepipeline-9bd4bde8",
+    "TargetKeyId": {
+     "Fn::GetAtt": [
+      "RafflePipelineArtifactsBucketEncryptionKeyFF4CA582",
+      "Arn"
+     ]
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RafflePipeline/ArtifactsBucketEncryptionKeyAlias/Resource"
+   }
+  },
+  "RafflePipelineArtifactsBucketBC7D869E": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "KMSMasterKeyID": {
+         "Fn::GetAtt": [
+          "RafflePipelineArtifactsBucketEncryptionKeyFF4CA582",
+          "Arn"
+         ]
+        },
+        "SSEAlgorithm": "aws:kms"
+       }
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RafflePipeline/ArtifactsBucket/Resource"
+   }
+  },
+  "RafflePipelineArtifactsBucketPolicy384FE67E": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "RafflePipelineArtifactsBucketBC7D869E"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:*",
+       "Condition": {
+        "Bool": {
+         "aws:SecureTransport": "false"
+        }
+       },
+       "Effect": "Deny",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "RafflePipelineArtifactsBucketBC7D869E",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "RafflePipelineArtifactsBucketBC7D869E",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RafflePipeline/ArtifactsBucket/Policy/Resource"
+   }
+  },
+  "RafflePipelineRole4DAB643F": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "codepipeline.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RafflePipeline/Role/Resource"
+   }
+  },
+  "RafflePipelineRoleDefaultPolicy1618EDBC": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:Abort*",
+        "s3:DeleteObject*",
+        "s3:GetBucket*",
+        "s3:GetObject*",
+        "s3:List*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "RafflePipelineArtifactsBucketBC7D869E",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "RafflePipelineArtifactsBucketBC7D869E",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:GenerateDataKey*",
+        "kms:ReEncrypt*"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "RafflePipelineArtifactsBucketEncryptionKeyFF4CA582",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "RafflePipelineBuildBuildFrontendCodePipelineActionRoleDEEEAF69",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "RafflePipelineRoleDefaultPolicy1618EDBC",
+    "Roles": [
+     {
+      "Ref": "RafflePipelineRole4DAB643F"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RafflePipeline/Role/DefaultPolicy/Resource"
+   }
+  },
+  "RafflePipeline11A3F1DD": {
+   "Type": "AWS::CodePipeline::Pipeline",
+   "Properties": {
+    "RoleArn": {
+     "Fn::GetAtt": [
+      "RafflePipelineRole4DAB643F",
+      "Arn"
+     ]
+    },
+    "Stages": [
+     {
+      "Actions": [
+       {
+        "ActionTypeId": {
+         "Category": "Source",
+         "Owner": "ThirdParty",
+         "Provider": "GitHub",
+         "Version": "1"
+        },
+        "Configuration": {
+         "Owner": "KeithMV",
+         "Repo": "apechain-nft-raffle",
+         "Branch": "main",
+         "OAuthToken": "{{resolve:secretsmanager:github-token:SecretString:::}}",
+         "PollForSourceChanges": false
+        },
+        "Name": "GitHub_Source",
+        "OutputArtifacts": [
+         {
+          "Name": "Artifact_Source_GitHub_Source"
+         }
+        ],
+        "RunOrder": 1
+       }
+      ],
+      "Name": "Source"
+     },
+     {
+      "Actions": [
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "RaffleFrontendBuildCA62C749"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Artifact_Source_GitHub_Source"
+         }
+        ],
+        "Name": "Build_Frontend",
+        "OutputArtifacts": [
+         {
+          "Name": "Artifact_Build_Build_Frontend"
+         }
+        ],
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "RafflePipelineBuildBuildFrontendCodePipelineActionRoleDEEEAF69",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       }
+      ],
+      "Name": "Build"
+     }
+    ],
+    "ArtifactStore": {
+     "EncryptionKey": {
+      "Id": {
+       "Fn::GetAtt": [
+        "RafflePipelineArtifactsBucketEncryptionKeyFF4CA582",
+        "Arn"
+       ]
+      },
+      "Type": "KMS"
+     },
+     "Location": {
+      "Ref": "RafflePipelineArtifactsBucketBC7D869E"
+     },
+     "Type": "S3"
+    },
+    "Name": "NFT-Raffle-Pipeline"
+   },
+   "DependsOn": [
+    "RafflePipelineRoleDefaultPolicy1618EDBC",
+    "RafflePipelineRole4DAB643F"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RafflePipeline/Resource"
+   }
+  },
+  "RafflePipelineSourceGitHubSourceWebhookResource25B6DBBC": {
+   "Type": "AWS::CodePipeline::Webhook",
+   "Properties": {
+    "Authentication": "GITHUB_HMAC",
+    "AuthenticationConfiguration": {
+     "SecretToken": "{{resolve:secretsmanager:github-token:SecretString:::}}"
+    },
+    "Filters": [
+     {
+      "JsonPath": "$.ref",
+      "MatchEquals": "refs/heads/{Branch}"
+     }
+    ],
+    "TargetAction": "GitHub_Source",
+    "TargetPipeline": {
+     "Ref": "RafflePipeline11A3F1DD"
+    },
+    "TargetPipelineVersion": 1,
+    "RegisterWithThirdParty": true
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RafflePipeline/Source/GitHub_Source/WebhookResource"
+   }
+  },
+  "RafflePipelineBuildBuildFrontendCodePipelineActionRoleDEEEAF69": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": "arn:aws:iam::856872546342:root"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RafflePipeline/Build/Build_Frontend/CodePipelineActionRole/Resource"
+   }
+  },
+  "RafflePipelineBuildBuildFrontendCodePipelineActionRoleDefaultPolicyECF2BD80": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "RaffleFrontendBuildCA62C749",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "RafflePipelineBuildBuildFrontendCodePipelineActionRoleDefaultPolicyECF2BD80",
+    "Roles": [
+     {
+      "Ref": "RafflePipelineBuildBuildFrontendCodePipelineActionRoleDEEEAF69"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/RafflePipeline/Build/Build_Frontend/CodePipelineActionRole/DefaultPolicy/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/02OwQ6CMBBEv8V7WRFNjEf16IXgwaMpZY1LS0soSEzTfzctTeQ0bzaT2SngmEO+4bPNRCMzRTW4+8iFZHy2TydMg/VEqgFXDqZFMbLrSyf0jHgHrjIKwzVqaRSJbwxF8ixU9NSjIo3gykQxseIH1m9jpGeys+BuGCuCnBVxG0wEz+we3GUSEuOSRIv8f6+996xCa6ZBLCsTe6ZNg9Da7afIYXeCw6a1RNkw6ZE6hGrRHyP6HcAgAQAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleCicdStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}
