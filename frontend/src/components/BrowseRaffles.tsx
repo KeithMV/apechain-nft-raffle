@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAccount, usePublicClient } from 'wagmi';
 import { rafflePositionService, CreatedRaffle } from '../services/rafflePositionService';
 import { raffleContractService } from '../services/raffleContractService';
+import ApeTokenBalance from './ApeTokenBalance';
 import toast from 'react-hot-toast';
 
 export default function BrowseRaffles() {
@@ -85,7 +86,8 @@ export default function BrowseRaffles() {
       if (error.message?.includes('User rejected')) {
         toast.error('Transaction cancelled by user');
       } else if (error.message?.includes('insufficient funds')) {
-        toast.error('Insufficient APE balance - you need ' + totalCost + ' APE tokens');
+        const requiredAmount = (parseFloat(raffle.ticketPrice) * quantity).toFixed(3);
+        toast.error('Insufficient APE balance - you need ' + requiredAmount + ' APE tokens');
       } else if (error.message?.includes('execution reverted')) {
         toast.error('Transaction failed - ensure you have enough APE tokens and try again');
       } else if (error.message?.includes('allowance')) {
@@ -190,6 +192,13 @@ export default function BrowseRaffles() {
                     </div>
                   </div>
 
+                  {/* APE Token Balance */}
+                  <div className="mb-4">
+                    <ApeTokenBalance 
+                      requiredAmount={totalCost}
+                    />
+                  </div>
+
                   {/* Buy Tickets Section */}
                   <div className="border-t border-slate-700/50 pt-4">
                     <div className="flex items-center space-x-3 mb-3">
@@ -226,14 +235,7 @@ export default function BrowseRaffles() {
                       </div>
                     </div>
 
-                    <div className="bg-yellow-500/10 border border-yellow-400/30 rounded-lg p-3 mb-3">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-yellow-400 text-sm">⚠️</span>
-                        <p className="text-yellow-300 text-xs">
-                          <strong>Requires APE tokens:</strong> Make sure you have {totalCost} APE in your wallet
-                        </p>
-                      </div>
-                    </div>
+
 
                     <button
                       onClick={() => handleBuyTickets(raffle)}

@@ -66,10 +66,31 @@ export const RAFFLE_CONTRACT_ABI = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "selectWinner",
+    "inputs": [{"internalType": "bytes32", "name": "_commitHash", "type": "bytes32"}],
+    "name": "commitRandomness",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "_nonce", "type": "uint256"}],
+    "name": "revealAndSelectWinner",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emergencySelectWinner",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTotalTickets",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -128,6 +149,22 @@ export const RAFFLE_CONTRACT_ABI = [
       {"indexed": false, "internalType": "uint256", "name": "totalSales", "type": "uint256"}
     ],
     "name": "RaffleCompleted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": false, "internalType": "uint256", "name": "tokenId", "type": "uint256"}
+    ],
+    "name": "RaffleCancelled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": false, "internalType": "bytes32", "name": "commitHash", "type": "bytes32"}
+    ],
+    "name": "CommitSubmitted",
     "type": "event"
   }
 ] as const;

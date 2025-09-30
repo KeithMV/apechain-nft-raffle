@@ -2,7 +2,9 @@ import { writeContract, readContract, waitForTransactionReceipt } from '@wagmi/c
 import { wagmiConfig } from '../config/wagmi';
 import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { parseEther } from 'viem';
+import { apeTokenService } from './apeTokenService';
 import { safeLog, safeError } from '../utils/logSanitizer';
+import { ErrorHandlingService } from './errorHandlingService';
 
 export interface RaffleInfo {
   nftContract: string;
@@ -24,6 +26,8 @@ export interface BuyTicketsParams {
 }
 
 class RaffleContractService {
+  
+
   
   /**
    * Buy tickets for a raffle
@@ -58,7 +62,8 @@ class RaffleContractService {
         throw new Error('Raffle has expired');
       }
       
-      const totalCost = parseEther((parseFloat(params.ticketPrice) * params.quantity).toString());
+      // Pre-calculate total cost to avoid async in transaction args
+      const totalCost = await apeTokenService.calculateTotalCost(params.ticketPrice, params.quantity);
       safeLog('💰 Total cost:', totalCost.toString(), 'wei');
       
       const hash = await writeContract(wagmiConfig, {
@@ -67,7 +72,7 @@ class RaffleContractService {
         functionName: 'buyTickets',
         args: [BigInt(params.quantity)],
         value: totalCost,
-        gas: BigInt(300000), // Increased gas for potential winner selection
+        // Gas will be estimated automatically
       });
 
       safeLog('✅ Ticket purchase transaction submitted:', hash);
@@ -89,22 +94,7 @@ class RaffleContractService {
 
     } catch (error: any) {
       safeError('❌ Ticket purchase failed:', error);
-      
-      // Provide more specific error messages
-      if (error.message?.includes('insufficient funds')) {
-        throw new Error('Insufficient APE balance for ticket purchase');
-      }
-      if (error.message?.includes('allowance')) {
-        throw new Error('Please approve APE spending for this contract');
-      }
-      if (error.message?.includes('user rejected')) {
-        throw new Error('Transaction cancelled by user');
-      }
-      if (error.message?.includes('unknown reason')) {
-        throw new Error('Transaction failed - check your APE balance and try again');
-      }
-      
-      throw error;
+      throw new Error(ErrorHandlingService.parseContractError(error));
     }
   }
 
@@ -120,7 +110,8 @@ class RaffleContractService {
       });
       
       // Handle both tuple and object return types
-      if (Array.isArray(info)) {
+      const EXPECTED_RAFFLE_INFO_FIELDS = 10;
+      if (Array.isArray(info) && info.length === EXPECTED_RAFFLE_INFO_FIELDS) {
         const [
           nftContract,
           tokenId,
@@ -135,20 +126,22 @@ class RaffleContractService {
         ] = info;
 
         return {
-          nftContract,
-          tokenId,
-          creator,
-          ticketPrice,
-          maxTickets,
-          ticketsSold,
-          endTime,
-          winner,
-          completed,
-          platformFee
+          nftContract: nftContract as string,
+          tokenId: tokenId as bigint,
+          creator: creator as string,
+          ticketPrice: ticketPrice as bigint,
+          maxTickets: maxTickets as bigint,
+          ticketsSold: ticketsSold as bigint,
+          endTime: endTime as bigint,
+          winner: winner as string,
+          completed: completed as boolean,
+          platformFee: platformFee as bigint
         };
-      } else {
+      } else if (typeof info === 'object' && info !== null) {
         // Handle object return type
         return info as RaffleInfo;
+      } else {
+        throw new Error('Invalid raffle info format returned from contract');
       }
     } catch (error) {
       safeError('Failed to get raffle info:', error);
@@ -192,34 +185,94 @@ class RaffleContractService {
   }
 
   /**
-   * Select winner (can be called by anyone after raffle ends)
+   * Emergency select winner (for expired raffles)
    */
-  async selectWinner(raffleContract: string): Promise<string> {
+  async emergencySelectWinner(raffleContract: string): Promise<string> {
     try {
-      safeLog('🔄 Selecting winner for raffle:', raffleContract);
+      safeLog('🔄 Emergency winner selection for raffle:', raffleContract);
       
       const hash = await writeContract(wagmiConfig, {
         address: raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
-        functionName: 'selectWinner',
-        gas: BigInt(150000), // Set reasonable gas limit
+        functionName: 'emergencySelectWinner',
       });
 
-      safeLog('✅ Winner selection transaction submitted:', hash);
+      safeLog('✅ Emergency winner selection transaction submitted:', hash);
 
-      // Wait for confirmation with timeout
       await waitForTransactionReceipt(wagmiConfig, {
         hash,
         confirmations: 1,
-        timeout: 30000, // 30 second timeout
+        timeout: 30000,
       });
 
-      safeLog('✅ Winner selection confirmed');
+      safeLog('✅ Emergency winner selection confirmed');
       return hash;
 
     } catch (error) {
-      safeError('❌ Winner selection failed:', error);
-      throw error;
+      safeError('❌ Emergency winner selection failed:', error);
+      throw new Error(ErrorHandlingService.parseContractError(error));
+    }
+  }
+
+  /**
+   * Commit randomness for winner selection (creator only)
+   */
+  async commitRandomness(raffleContract: string, commitHash: string): Promise<string> {
+    try {
+      safeLog('🔄 Committing randomness for raffle:', raffleContract);
+      
+      const hash = await writeContract(wagmiConfig, {
+        address: raffleContract as `0x${string}`,
+        abi: RAFFLE_CONTRACT_ABI,
+        functionName: 'commitRandomness',
+        args: [commitHash as `0x${string}`],
+      });
+
+      safeLog('✅ Commit randomness transaction submitted:', hash);
+
+      await waitForTransactionReceipt(wagmiConfig, {
+        hash,
+        confirmations: 1,
+        timeout: 30000,
+      });
+
+      safeLog('✅ Commit randomness confirmed');
+      return hash;
+
+    } catch (error) {
+      safeError('❌ Commit randomness failed:', error);
+      throw new Error(ErrorHandlingService.parseContractError(error));
+    }
+  }
+
+  /**
+   * Reveal randomness and select winner
+   */
+  async revealAndSelectWinner(raffleContract: string, nonce: bigint): Promise<string> {
+    try {
+      safeLog('🔄 Revealing randomness and selecting winner:', raffleContract);
+      
+      const hash = await writeContract(wagmiConfig, {
+        address: raffleContract as `0x${string}`,
+        abi: RAFFLE_CONTRACT_ABI,
+        functionName: 'revealAndSelectWinner',
+        args: [nonce],
+      });
+
+      safeLog('✅ Reveal and select winner transaction submitted:', hash);
+
+      await waitForTransactionReceipt(wagmiConfig, {
+        hash,
+        confirmations: 1,
+        timeout: 30000,
+      });
+
+      safeLog('✅ Reveal and select winner confirmed');
+      return hash;
+
+    } catch (error) {
+      safeError('❌ Reveal and select winner failed:', error);
+      throw new Error(ErrorHandlingService.parseContractError(error));
     }
   }
 

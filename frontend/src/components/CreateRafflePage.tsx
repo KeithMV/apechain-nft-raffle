@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { raffleService } from '../services/raffleService';
 import { NETWORK_CONFIG } from '../config/addresses';
+import ApeTokenBalance from './ApeTokenBalance';
 import toast from 'react-hot-toast';
 
 interface FormData {
@@ -173,6 +174,11 @@ export default function CreateRafflePage() {
           </div>
         </div>
 
+        {/* APE Token Balance */}
+        <div className="mb-6">
+          <ApeTokenBalance />
+        </div>
+
         {/* NFT Details Form */}
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -261,7 +267,7 @@ export default function CreateRafflePage() {
             <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-500/20 rounded-lg flex items-center justify-center mr-2">
               <span className="text-green-400 text-xs">💰</span>
             </div>
-            Revenue Summary
+            Revenue Summary (if all tickets sold)
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
             <div className="text-center p-3 bg-slate-800/50 rounded-lg">

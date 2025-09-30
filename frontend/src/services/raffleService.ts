@@ -2,6 +2,7 @@ import { writeContract, readContract, waitForTransactionReceipt } from '@wagmi/c
 import { wagmiConfig } from '../config/wagmi';
 import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem';
+import { apeTokenService } from './apeTokenService';
 import { safeLog, safeError } from '../utils/logSanitizer';
 
 export interface CreateRaffleParams {
@@ -33,6 +34,8 @@ class RaffleService {
       return fee as bigint;
     } catch (error) {
       safeError('Failed to get platform fee:', error);
+      // Return fallback for backward compatibility, but log the error
+      console.warn('Using fallback platform fee due to contract read failure');
       return BigInt(1000); // Default 10%
     }
   }
@@ -61,6 +64,9 @@ class RaffleService {
     safeLog('🔄 Starting raffle creation with params:', params);
 
     try {
+      // Pre-calculate APE amount to avoid async in transaction args
+      const ticketPriceWei = await apeTokenService.parseApe(params.ticketPrice);
+      
       const hash = await writeContract(wagmiConfig, {
         address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
@@ -68,11 +74,11 @@ class RaffleService {
         args: [
           params.nftContract as `0x${string}`,
           BigInt(params.tokenId),
-          parseEther(params.ticketPrice),
+          ticketPriceWei,
           BigInt(params.maxTickets),
           BigInt(params.duration)
         ],
-        gas: BigInt(500000), // Set reasonable gas limit
+        // Gas will be estimated automatically
       });
 
       safeLog('✅ Raffle creation transaction submitted:', hash);
@@ -158,7 +164,7 @@ class RaffleService {
         abi: ERC721_ABI,
         functionName: 'setApprovalForAll',
         args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
-        gas: BigInt(100000), // Set reasonable gas limit for approval
+        // Gas will be estimated automatically
       });
 
       safeLog('✅ Approval transaction submitted:', hash);
@@ -189,7 +195,7 @@ class RaffleService {
         abi: ERC721_ABI,
         functionName: 'setApprovalForAll',
         args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, false],
-        gas: BigInt(100000), // Set reasonable gas limit
+        // Gas will be estimated automatically
       });
 
       safeLog('✅ Revoke transaction submitted:', hash);

@@ -10,6 +10,7 @@ import { Toaster } from 'react-hot-toast';
 import CreateRafflePage from './components/CreateRafflePage';
 import RaffleDashboard from './components/RaffleDashboard';
 import BrowseRaffles from './components/BrowseRaffles';
+import WalletInfo from './components/WalletInfo';
 
 import '@rainbow-me/rainbowkit/styles.css';
 import './index.css';
@@ -27,6 +28,8 @@ function Header({ currentPage, setCurrentPage }: {
   currentPage: string, 
   setCurrentPage: (page: 'create' | 'dashboard' | 'browse') => void 
 }) {
+  const { isConnected } = useAccount();
+  
   return (
     <header className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 backdrop-blur-md border-b border-blue-500/20 shadow-2xl">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -75,8 +78,11 @@ function Header({ currentPage, setCurrentPage }: {
               </button>
             </nav>
           </div>
-          <div className="scale-90 sm:scale-100">
-            <ConnectButton />
+          <div className="flex items-center space-x-3">
+            {isConnected && <WalletInfo />}
+            <div className="scale-90 sm:scale-100">
+              <ConnectButton />
+            </div>
           </div>
         </div>
       </div>

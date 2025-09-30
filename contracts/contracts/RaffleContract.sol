@@ -3,12 +3,13 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 /**
  * @title RaffleContract - Individual NFT Raffle
  * @dev Template contract for individual raffles, cloned by factory
  */
-contract RaffleContract is ReentrancyGuard {
+contract RaffleContract is ReentrancyGuard, Initializable {
     
     struct RaffleInfo {
         address nftContract;
@@ -28,12 +29,21 @@ contract RaffleContract is ReentrancyGuard {
     
     // Ticket tracking
     mapping(address => uint256) public ticketsPurchased;
-    address[] public participants;
+    mapping(uint256 => address) public ticketToOwner;
+    uint256 public totalTickets;
+    
+    // Commit-reveal for randomness
+    bytes32 public commitHash;
+    uint256 public revealDeadline;
+    bool public commitPhase = true;
     
     // Events
     event TicketsPurchased(address indexed buyer, uint256 quantity, uint256 totalSpent);
-    event WinnerSelected(address indexed winner, uint256 randomSeed);
+    event WinnerSelected(address indexed winner, uint256 winningTicket);
     event RaffleCompleted(address indexed winner, uint256 totalSales);
+    event RaffleCancelled(uint256 indexed tokenId);
+    event CommitSubmitted(bytes32 commitHash);
+    event RandomnessRevealed(uint256 randomSeed);
     
     // Modifiers
     modifier onlyFactory() {
@@ -59,8 +69,8 @@ contract RaffleContract is ReentrancyGuard {
         uint256 _maxTickets,
         uint256 _duration,
         uint256 _platformFee
-    ) external {
-        require(factory == address(0), "Already initialized");
+    ) external initializer {
+        require(IERC721(_nftContract).ownerOf(_tokenId) == _creator, "Not NFT owner");
         
         factory = msg.sender;
         raffle = RaffleInfo({
@@ -91,53 +101,82 @@ contract RaffleContract is ReentrancyGuard {
         ticketsPurchased[msg.sender] += quantity;
         raffle.ticketsSold += quantity;
         
-        // Add to participants array for random selection
+        // Assign tickets to buyer
         for(uint256 i = 0; i < quantity; i++) {
-            participants.push(msg.sender);
+            ticketToOwner[totalTickets + i] = msg.sender;
         }
+        totalTickets += quantity;
         
         emit TicketsPurchased(msg.sender, quantity, msg.value);
         
         // Check if raffle is complete
         if(raffle.ticketsSold >= raffle.maxTickets) {
-            _selectWinner();
+            // Auto-complete with simple randomness for immediate completion
+            uint256 autoSeed = uint256(keccak256(abi.encodePacked(
+                block.timestamp,
+                block.prevrandao,
+                totalTickets,
+                msg.sender
+            )));
+            _selectWinner(autoSeed);
         }
     }
     
     /**
-     * @dev Select winner and complete raffle
+     * @dev Commit random hash (creator only)
      */
-    function selectWinner() external nonReentrant {
+    function commitRandomness(bytes32 _commitHash) external {
+        require(msg.sender == raffle.creator, "Only creator");
+        require(commitPhase, "Commit phase ended");
         require(!raffle.completed, "Already completed");
         require(
             block.timestamp >= raffle.endTime || raffle.ticketsSold >= raffle.maxTickets,
             "Raffle still active"
         );
-        require(participants.length > 0, "No participants");
         
-        _selectWinner();
+        commitHash = _commitHash;
+        revealDeadline = block.timestamp + 1 hours;
+        commitPhase = false;
+        
+        emit CommitSubmitted(_commitHash);
+    }
+    
+    /**
+     * @dev Reveal randomness and select winner
+     */
+    function revealAndSelectWinner(uint256 _nonce) external nonReentrant {
+        require(!commitPhase, "Still in commit phase");
+        require(!raffle.completed, "Already completed");
+        require(totalTickets > 0, "No participants");
+        require(keccak256(abi.encodePacked(_nonce)) == commitHash, "Invalid reveal");
+        
+        _selectWinner(_nonce);
+    }
+    
+    /**
+     * @dev Emergency winner selection if reveal fails
+     */
+    function emergencySelectWinner() external nonReentrant {
+        require(!commitPhase, "Still in commit phase");
+        require(block.timestamp > revealDeadline, "Reveal period active");
+        require(!raffle.completed, "Already completed");
+        require(totalTickets > 0, "No participants");
+        
+        // Use block hash as fallback randomness
+        uint256 fallbackSeed = uint256(blockhash(block.number - 1));
+        _selectWinner(fallbackSeed);
     }
     
     /**
      * @dev Internal function to select winner
      */
-    function _selectWinner() internal {
-        // Generate random number
-        uint256 randomSeed = uint256(keccak256(
-            abi.encodePacked(
-                block.timestamp,
-                block.prevrandao,
-                participants.length,
-                raffle.nftContract,
-                raffle.tokenId
-            )
-        ));
-        
-        uint256 winnerIndex = randomSeed % participants.length;
-        raffle.winner = participants[winnerIndex];
+    function _selectWinner(uint256 _seed) internal {
+        uint256 winningTicket = _seed % totalTickets;
+        raffle.winner = ticketToOwner[winningTicket];
         raffle.completed = true;
         
-        emit WinnerSelected(raffle.winner, randomSeed);
+        emit WinnerSelected(raffle.winner, winningTicket);
+        emit RandomnessRevealed(_seed);
         
         _distributeRewards();
     }
@@ -155,12 +194,14 @@ contract RaffleContract is ReentrancyGuard {
         
         // Transfer APE to creator
         if(creatorAmount > 0) {
-            payable(raffle.creator).transfer(creatorAmount);
+            (bool success, ) = payable(raffle.creator).call{value: creatorAmount}("");
+            require(success, "Creator transfer failed");
         }
         
         // Transfer platform fee to factory
         if(platformFeeAmount > 0) {
-            payable(factory).transfer(platformFeeAmount);
+            (bool success, ) = payable(factory).call{value: platformFeeAmount}("");
+            require(success, "Fee transfer failed");
         }
         
         emit RaffleCompleted(raffle.winner, totalSales);
@@ -178,6 +219,8 @@ contract RaffleContract is ReentrancyGuard {
         
         // Return NFT to creator
         IERC721(raffle.nftContract).transferFrom(address(this), raffle.creator, raffle.tokenId);
+        
+        emit RaffleCancelled(raffle.tokenId);
     }
     
     /**
@@ -188,10 +231,10 @@ contract RaffleContract is ReentrancyGuard {
     }
     
     /**
-     * @dev Get participant count
+     * @dev Get total tickets sold
      */
-    function getParticipantCount() external view returns (uint256) {
-        return participants.length;
+    function getTotalTickets() external view returns (uint256) {
+        return totalTickets;
     }
     
     /**

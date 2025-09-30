@@ -56,7 +56,7 @@ export default function RaffleDashboard() {
 
   const handleSelectWinner = async (raffleContract: string) => {
     try {
-      await raffleContractService.selectWinner(raffleContract);
+      await raffleContractService.emergencySelectWinner(raffleContract);
       toast.success('Winner selected successfully!');
       loadUserData(); // Refresh data
     } catch (error: any) {
