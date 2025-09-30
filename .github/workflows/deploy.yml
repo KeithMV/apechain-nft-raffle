@@ -31,4 +31,4 @@ jobs:
     - name: Deploy to S3
       run: |
         aws s3 sync frontend/build/ s3://apechain-nft-raffle-856872546342-us-east-1/ --delete
-        aws cloudfront create-invalidation --distribution-id E3789QHQWV0CRS --paths "/*"
+        aws cloudfront create-invalidation --distribution-id EH7R5RBQF66DL --paths "/*"
