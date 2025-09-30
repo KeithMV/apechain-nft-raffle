@@ -38,28 +38,32 @@ export default function NFTImage({ contractAddress, tokenId, className = '', sho
 
   if (loading) {
     return (
-      <div className={`bg-slate-700/50 rounded-lg flex items-center justify-center ${className}`}>
-        <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+      <div className={`relative bg-gray-800/90 border border-emerald-500/30 rounded-lg flex items-center justify-center ${className} backdrop-blur-sm`}>
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-lg blur-sm animate-pulse"></div>
+        <div className="relative w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (error || !metadata?.image) {
     return (
-      <div className={`bg-slate-700/50 rounded-lg flex flex-col items-center justify-center ${className}`}>
-        <span className="text-slate-400 text-2xl mb-2">🖼️</span>
-        <span className="text-slate-400 text-xs text-center">NFT #{tokenId}</span>
-        {showName && (
-          <span className="text-slate-300 text-sm mt-1 text-center">
-            {metadata?.name || `Token #${tokenId}`}
-          </span>
-        )}
+      <div className={`relative bg-gray-800/90 border border-emerald-500/30 rounded-lg flex flex-col items-center justify-center ${className} backdrop-blur-sm`}>
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-lg blur-sm animate-pulse"></div>
+        <div className="relative flex flex-col items-center">
+          <span className="text-emerald-400 text-2xl mb-2">⚡</span>
+          <span className="text-emerald-300/70 text-xs text-center font-mono tracking-wider">NFT #{tokenId}</span>
+          {showName && (
+            <span className="text-emerald-200 text-sm mt-1 text-center font-mono">
+              {metadata?.name || `NFT #${tokenId}`}
+            </span>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={`relative overflow-hidden rounded-lg ${className}`}>
+    <div className={`relative overflow-hidden rounded-lg border border-emerald-500/30 ${className}`}>
       <img
         src={metadata.image}
         alt={metadata.name || `NFT #${tokenId}`}
@@ -67,12 +71,13 @@ export default function NFTImage({ contractAddress, tokenId, className = '', sho
         onError={() => setError(true)}
       />
       {showName && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-          <p className="text-white text-sm font-medium truncate">
-            {metadata.name || `Token #${tokenId}`}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900/90 via-gray-800/50 to-transparent p-2 border-t border-emerald-500/20">
+          <p className="text-emerald-200 text-sm font-medium truncate font-mono tracking-wide">
+            {metadata.name || `NFT #${tokenId}`}
           </p>
         </div>
       )}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-teal-500/5 pointer-events-none"></div>
     </div>
   );
 }

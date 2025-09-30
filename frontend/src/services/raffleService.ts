@@ -213,6 +213,80 @@ class RaffleService {
       throw error;
     }
   }
+
+  /**
+   * Emergency pause all raffle operations (owner only)
+   */
+  async emergencyPause(): Promise<string> {
+    try {
+      safeLog('🚨 Emergency pausing raffle factory');
+      
+      const hash = await writeContract(wagmiConfig, {
+        address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+        abi: RAFFLE_FACTORY_ABI,
+        functionName: 'emergencyPause',
+      });
+
+      await waitForTransactionReceipt(wagmiConfig, { hash });
+      safeLog('✅ Emergency pause activated');
+      return hash;
+    } catch (error) {
+      safeError('❌ Emergency pause failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Resume operations after emergency pause (owner only)
+   */
+  async emergencyUnpause(): Promise<string> {
+    try {
+      safeLog('🔄 Resuming raffle operations');
+      
+      const hash = await writeContract(wagmiConfig, {
+        address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+        abi: RAFFLE_FACTORY_ABI,
+        functionName: 'emergencyUnpause',
+      });
+
+      await waitForTransactionReceipt(wagmiConfig, { hash });
+      safeLog('✅ Operations resumed');
+      return hash;
+    } catch (error) {
+      safeError('❌ Resume failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if factory is paused
+   */
+  async isPaused(): Promise<boolean> {
+    try {
+      const paused = await readContract(wagmiConfig, {
+        address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+        abi: RAFFLE_FACTORY_ABI,
+        functionName: 'paused',
+      });
+      return paused as boolean;
+    } catch (error) {
+      safeError('Failed to check pause status:', error);
+      return false;
+    }
+  }
 }
 
 export const raffleService = new RaffleService();
+
+// Emergency pause interface for admin use
+export interface EmergencyControls {
+  pause: () => Promise<string>;
+  unpause: () => Promise<string>;
+  isPaused: () => Promise<boolean>;
+}
+
+export const emergencyControls: EmergencyControls = {
+  pause: () => raffleService.emergencyPause(),
+  unpause: () => raffleService.emergencyUnpause(),
+  isPaused: () => raffleService.isPaused()
+};

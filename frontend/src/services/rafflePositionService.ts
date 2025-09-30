@@ -25,6 +25,7 @@ export interface CreatedRaffle {
   raffleContract: string;
   nftContract: string;
   tokenId: string;
+  creator: string;
   ticketPrice: string;
   maxTickets: number;
   ticketsSold: number;
@@ -160,7 +161,7 @@ class RafflePositionService {
       // Process each created raffle
       const rafflePromises = raffleEvents.map(async (event: any) => {
         try {
-          const { raffleId, raffleContract, nftContract, tokenId, ticketPrice, maxTickets } = event.args;
+          const { raffleId, raffleContract, nftContract, tokenId, creator, ticketPrice, maxTickets } = event.args;
           
           // Get current raffle info
           const raffleInfo = await raffleContractService.getRaffleInfo(raffleContract as string);
@@ -170,6 +171,7 @@ class RafflePositionService {
             raffleContract: raffleContract as string,
             nftContract: nftContract as string,
             tokenId: tokenId.toString(),
+            creator: creator as string,
             ticketPrice: (Number(ticketPrice) / 1e18).toString(), // Convert from wei to APE
             maxTickets: Number(maxTickets),
             ticketsSold: Number(raffleInfo.ticketsSold),
@@ -242,6 +244,7 @@ class RafflePositionService {
             raffleContract: raffleContract as string,
             nftContract: nftContract as string,
             tokenId: tokenId.toString(),
+            creator: creator as string,
             ticketPrice: (Number(ticketPrice) / 1e18).toString(),
             maxTickets: Number(maxTickets),
             ticketsSold: Number(raffleInfo.ticketsSold),

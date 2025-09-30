@@ -41,6 +41,41 @@ export const RAFFLE_FACTORY_ABI = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "emergencyPause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emergencyUnpause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paused",
+    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "raffleContract", "type": "address"}],
+    "name": "pauseRaffle",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "raffleContract", "type": "address"}],
+    "name": "unpauseRaffle",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {"indexed": true, "internalType": "uint256", "name": "raffleId", "type": "uint256"},
@@ -52,6 +87,18 @@ export const RAFFLE_FACTORY_ABI = [
       {"indexed": false, "internalType": "uint256", "name": "maxTickets", "type": "uint256"}
     ],
     "name": "RaffleCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [{"indexed": true, "internalType": "address", "name": "admin", "type": "address"}],
+    "name": "EmergencyPause",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [{"indexed": true, "internalType": "address", "name": "admin", "type": "address"}],
+    "name": "EmergencyUnpause",
     "type": "event"
   }
 ] as const;

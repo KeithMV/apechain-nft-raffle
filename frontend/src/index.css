@@ -1,85 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --purple-50: #faf5ff;
-  --purple-100: #f3e8ff;
-  --purple-200: #e9d5ff;
-  --purple-300: #d8b4fe;
+  --cyan-400: #f472b6;
+  --cyan-500: #ec4899;
+  --blue-400: #e879f9;
+  --blue-500: #d946ef;
   --purple-400: #c084fc;
   --purple-500: #a855f7;
-  --purple-600: #9333ea;
-  --purple-700: #7c3aed;
-  --purple-800: #6b21a8;
-  --purple-900: #581c87;
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #000000;
+  color: #ffffff;
+  overflow-x: hidden;
 }
 
-.shadow-glow-purple {
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+}
+
+/* Futuristic Cyber Animations */
+@keyframes cyber-glow {
+  0%, 100% { box-shadow: 0 0 5px #ec4899, 0 0 10px #ec4899, 0 0 15px #ec4899; }
+  50% { box-shadow: 0 0 10px #ec4899, 0 0 20px #ec4899, 0 0 30px #ec4899; }
+}
+
+@keyframes data-stream {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+@keyframes hologram {
+  0%, 100% { opacity: 0.8; transform: translateX(0); }
+  25% { opacity: 0.9; transform: translateX(1px); }
+  50% { opacity: 0.7; transform: translateX(-1px); }
+  75% { opacity: 0.9; transform: translateX(1px); }
+}
+
+@keyframes quantum-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+/* Custom utility classes */
+.cyber-glow {
+  animation: cyber-glow 2s ease-in-out infinite;
+}
+
+.hologram-effect {
+  animation: hologram 3s ease-in-out infinite;
+}
+
+.quantum-pulse {
+  animation: quantum-pulse 2s ease-in-out infinite;
+}
+
+/* Glassmorphism effect */
+.glass-morphism {
+  background: rgba(236, 72, 153, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(236, 72, 153, 0.2);
+}
+
+/* Neon text effect */
+.neon-text {
+  text-shadow: 
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 15px currentColor,
+    0 0 20px currentColor;
+}
+
+/* Particle animation */
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: #ec4899;
+  border-radius: 50%;
+  animation: data-stream 4s linear infinite;
+}
+
+.particle:nth-child(2) { animation-delay: 0.5s; left: 10%; }
+.particle:nth-child(3) { animation-delay: 1s; left: 20%; }
+.particle:nth-child(4) { animation-delay: 1.5s; left: 30%; }
+.particle:nth-child(5) { animation-delay: 2s; left: 40%; }
+.particle:nth-child(6) { animation-delay: 2.5s; left: 50%; }
+.particle:nth-child(7) { animation-delay: 3s; left: 60%; }
+.particle:nth-child(8) { animation-delay: 3.5s; left: 70%; }
+.particle:nth-child(9) { animation-delay: 4s; left: 80%; }
+.particle:nth-child(10) { animation-delay: 4.5s; left: 90%; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, #ec4899, #d946ef);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, #db2777, #c026d3);
 }
 
 /* Mobile optimizations */
 @media (max-width: 640px) {
-  /* Improve touch targets */
   button {
     min-height: 44px;
   }
   
-  /* Better input field sizing */
   input[type="text"],
   input[type="number"] {
     min-height: 44px;
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
   }
   
-  /* Improve readability */
   body {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
   
-  /* Better scrolling on mobile */
   * {
     -webkit-overflow-scrolling: touch;
   }
   
-  /* Prevent horizontal scroll */
   html, body {
     overflow-x: hidden;
   }
-  
-  /* Better font rendering on mobile */
-  * {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
 }
 
-/* Improve focus states for accessibility */
+/* Focus states */
 @media (prefers-reduced-motion: no-preference) {
   button:focus,
   input:focus {
     transition: all 0.2s ease-in-out;
+    box-shadow: 0 0 0 2px #ec4899;
   }
 }
 
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .bg-slate-800\/50 {
-    background-color: rgba(30, 41, 59, 0.8);
-  }
-  
-  .border-slate-700\/50 {
-    border-color: rgba(51, 65, 85, 0.8);
-  }
+/* RainbowKit custom styling */
+[data-rk] {
+  --rk-colors-accentColor: #ec4899 !important;
+  --rk-colors-accentColorForeground: #000000 !important;
+  --rk-fonts-body: 'JetBrains Mono', monospace !important;
 }

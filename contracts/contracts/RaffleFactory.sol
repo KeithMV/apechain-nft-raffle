@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "./RaffleContract.sol";
@@ -16,7 +17,7 @@ import "./RaffleContract.sol";
  * - Automated raffle management
  * - Secure NFT escrow system
  */
-contract RaffleFactory is Ownable, ReentrancyGuard {
+contract RaffleFactory is Ownable, ReentrancyGuard, Pausable {
     
     // Platform fee (10% in basis points)
     uint256 public platformFee = 1000; // 10%
@@ -40,6 +41,8 @@ contract RaffleFactory is Ownable, ReentrancyGuard {
     );
     
     event FeeUpdated(uint256 newFee);
+    event EmergencyPause(address indexed admin);
+    event EmergencyUnpause(address indexed admin);
     
     // Mapping to track raffle contracts
     mapping(uint256 => address) public raffleContracts;
@@ -70,7 +73,7 @@ contract RaffleFactory is Ownable, ReentrancyGuard {
         uint256 ticketPrice,
         uint256 maxTickets,
         uint256 duration
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         require(nftContract != address(0), "Invalid NFT contract");
         require(ticketPrice > 0, "Invalid ticket price");
         require(maxTickets > 0 && maxTickets <= 10000, "Invalid ticket count");
@@ -136,12 +139,44 @@ contract RaffleFactory is Ownable, ReentrancyGuard {
     }
     
     /**
+     * @dev Emergency pause all operations (owner only)
+     */
+    function emergencyPause() external onlyOwner {
+        _pause();
+        emit EmergencyPause(msg.sender);
+    }
+    
+    /**
+     * @dev Resume operations after pause (owner only)
+     */
+    function emergencyUnpause() external onlyOwner {
+        _unpause();
+        emit EmergencyUnpause(msg.sender);
+    }
+    
+    /**
      * @dev Withdraw collected fees (owner only)
      */
     function withdrawFees() external onlyOwner {
         uint256 balance = address(this).balance;
         require(balance > 0, "No fees to withdraw");
         payable(owner()).transfer(balance);
+    }
+    
+    /**
+     * @dev Emergency pause specific raffle (owner only)
+     */
+    function pauseRaffle(address raffleContract) external onlyOwner {
+        require(validRaffles[raffleContract], "Invalid raffle");
+        RaffleContract(raffleContract).emergencyPause();
+    }
+    
+    /**
+     * @dev Emergency unpause specific raffle (owner only)
+     */
+    function unpauseRaffle(address raffleContract) external onlyOwner {
+        require(validRaffles[raffleContract], "Invalid raffle");
+        RaffleContract(raffleContract).emergencyUnpause();
     }
     
     /**

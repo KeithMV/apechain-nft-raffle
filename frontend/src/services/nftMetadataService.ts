@@ -40,21 +40,21 @@ class NFTMetadataService {
 
       if (!tokenURI) return null;
 
-      // Handle IPFS URLs
+      // Handle IPFS URLs with fallback gateways
       let metadataUrl = tokenURI;
       if (tokenURI.startsWith('ipfs://')) {
-        metadataUrl = tokenURI.replace('ipfs://', 'https://ipfs.io/ipfs/');
+        const ipfsHash = tokenURI.replace('ipfs://', '');
+        metadataUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
       }
 
-      // Fetch metadata
-      const response = await fetch(metadataUrl);
-      if (!response.ok) return null;
-
-      const metadata: NFTMetadata = await response.json();
+      // Fetch metadata with fallback
+      const metadata = await this.fetchWithFallback(metadataUrl);
+      if (!metadata) return null;
       
       // Handle IPFS image URLs
       if (metadata.image?.startsWith('ipfs://')) {
-        metadata.image = metadata.image.replace('ipfs://', 'https://ipfs.io/ipfs/');
+        const ipfsHash = metadata.image.replace('ipfs://', '');
+        metadata.image = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
       }
 
       this.metadataCache.set(cacheKey, metadata);
@@ -63,6 +63,30 @@ class NFTMetadataService {
       console.error('Failed to fetch NFT metadata:', error);
       return null;
     }
+  }
+
+  private async fetchWithFallback(url: string): Promise<NFTMetadata | null> {
+    const gateways = [
+      url,
+      url.replace('gateway.pinata.cloud', 'ipfs.io'),
+      url.replace('gateway.pinata.cloud', 'cloudflare-ipfs.com')
+    ];
+
+    for (const gateway of gateways) {
+      try {
+        const response = await fetch(gateway, { 
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(10000)
+        });
+        if (response.ok) {
+          return await response.json();
+        }
+      } catch (error) {
+        continue;
+      }
+    }
+    return null;
   }
 }
 

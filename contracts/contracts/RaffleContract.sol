@@ -3,13 +3,14 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 /**
  * @title RaffleContract - Individual NFT Raffle
  * @dev Template contract for individual raffles, cloned by factory
  */
-contract RaffleContract is ReentrancyGuard, Initializable {
+contract RaffleContract is ReentrancyGuard, Pausable, Initializable {
     
     struct RaffleInfo {
         address nftContract;
@@ -44,6 +45,8 @@ contract RaffleContract is ReentrancyGuard, Initializable {
     event RaffleCancelled(uint256 indexed tokenId);
     event CommitSubmitted(bytes32 commitHash);
     event RandomnessRevealed(uint256 randomSeed);
+    event EmergencyPaused(address indexed admin);
+    event EmergencyUnpaused(address indexed admin);
     
     // Modifiers
     modifier onlyFactory() {
@@ -52,6 +55,7 @@ contract RaffleContract is ReentrancyGuard, Initializable {
     }
     
     modifier raffleActive() {
+        require(!paused(), "Contract paused");
         require(!raffle.completed, "Raffle completed");
         require(block.timestamp < raffle.endTime, "Raffle expired");
         require(raffle.ticketsSold < raffle.maxTickets, "Sold out");
@@ -92,6 +96,7 @@ contract RaffleContract is ReentrancyGuard, Initializable {
      * @param quantity Number of tickets to purchase
      */
     function buyTickets(uint256 quantity) external payable nonReentrant raffleActive {
+        require(msg.sender != raffle.creator, "Creator cannot buy own raffle");
         require(quantity > 0, "Invalid quantity");
         require(quantity <= 50, "Max 50 tickets per tx"); // Prevent gas issues
         require(raffle.ticketsSold + quantity <= raffle.maxTickets, "Not enough tickets");
@@ -205,6 +210,22 @@ contract RaffleContract is ReentrancyGuard, Initializable {
         }
         
         emit RaffleCompleted(raffle.winner, totalSales);
+    }
+    
+    /**
+     * @dev Emergency pause (factory only)
+     */
+    function emergencyPause() external onlyFactory {
+        _pause();
+        emit EmergencyPaused(msg.sender);
+    }
+    
+    /**
+     * @dev Emergency unpause (factory only)
+     */
+    function emergencyUnpause() external onlyFactory {
+        _unpause();
+        emit EmergencyUnpaused(msg.sender);
     }
     
     /**

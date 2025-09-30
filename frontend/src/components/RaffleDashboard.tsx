@@ -68,10 +68,11 @@ export default function RaffleDashboard() {
 
   if (loading) {
     return (
-      <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-8">
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full animate-spin mr-3"></div>
-          <span className="text-slate-300">Loading your raffles...</span>
+      <div className="relative bg-gray-900/95 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl shadow-emerald-500/10 p-8">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-2xl blur-sm animate-pulse"></div>
+        <div className="relative flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mr-3"></div>
+          <span className="text-emerald-200 font-mono tracking-wide">Loading raffle data...</span>
         </div>
       </div>
     );
@@ -80,59 +81,67 @@ export default function RaffleDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl overflow-hidden">
-        <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 px-4 sm:px-8 py-6 sm:py-8 border-b border-slate-700/50">
+      <div className="relative bg-gray-900/95 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl shadow-emerald-500/10 overflow-hidden">
+        {/* Animated background grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:20px_20px] animate-pulse"></div>
+        
+        <div className="relative bg-gradient-to-r from-emerald-900/20 via-green-900/20 to-teal-900/20 px-4 sm:px-8 py-6 sm:py-8 border-b border-emerald-500/30">
           <div className="flex items-center space-x-3 sm:space-x-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-400 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white text-lg sm:text-xl">📊</span>
+            <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 rounded-xl blur-sm animate-pulse"></div>
+              <span className="relative text-white text-lg sm:text-xl">⚡</span>
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">My Raffle Dashboard</h2>
-              <p className="text-slate-300 mt-1 text-sm sm:text-base">Track your raffle participation and creations</p>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400 bg-clip-text text-transparent font-mono tracking-wider">My Raffle Dashboard</h2>
+              <p className="text-emerald-200 mt-1 text-sm sm:text-base font-mono tracking-wide">View your raffle activity and created raffles</p>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="px-4 sm:px-8 pt-6">
+        <div className="relative px-4 sm:px-8 pt-6 z-10">
           <div className="flex space-x-1">
             <button
               onClick={() => setActiveTab('participated')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+              className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 overflow-hidden group font-mono tracking-wider ${
                 activeTab === 'participated'
-                  ? 'bg-purple-500/30 text-purple-300 border border-purple-400/50'
-                  : 'text-slate-400 hover:text-purple-300 hover:bg-purple-500/10'
+                  ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/50 shadow-lg shadow-emerald-500/25'
+                  : 'text-emerald-300/70 hover:text-emerald-200 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
               }`}
             >
-              Participated ({userPositions.length})
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+              <span className="relative">Participated ({userPositions.length})</span>
             </button>
             <button
               onClick={() => setActiveTab('created')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+              className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 overflow-hidden group font-mono tracking-wider ${
                 activeTab === 'created'
-                  ? 'bg-purple-500/30 text-purple-300 border border-purple-400/50'
-                  : 'text-slate-400 hover:text-purple-300 hover:bg-purple-500/10'
+                  ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/50 shadow-lg shadow-emerald-500/25'
+                  : 'text-emerald-300/70 hover:text-emerald-200 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
               }`}
             >
-              Created ({createdRaffles.length})
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+              <span className="relative">Created ({createdRaffles.length})</span>
             </button>
           </div>
         </div>
 
-        <div className="p-4 sm:p-8">
+        <div className="relative p-4 sm:p-8 z-10">
           {activeTab === 'participated' ? (
             <div className="space-y-4">
               {userPositions.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-slate-700/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <span className="text-slate-400 text-2xl">🎫</span>
+                  <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
+                    <span className="relative text-cyan-400 text-2xl">⚡</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-300 mb-2">No Raffle Participation</h3>
-                  <p className="text-slate-400">You haven't bought tickets for any raffles yet.</p>
+                  <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffle Participation</h3>
+                  <p className="text-cyan-400/70 font-mono">You haven't participated in any raffles yet</p>
                 </div>
               ) : (
                 userPositions.map((position) => (
-                  <div key={`${position.raffleContract}-${position.raffleId}`} className="bg-slate-900/50 border border-slate-700/50 rounded-xl overflow-hidden">
+                  <div key={`${position.raffleContract}-${position.raffleId}`} className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
                     <div className="flex flex-col sm:flex-row">
                       <div className="w-full sm:w-64 h-64 sm:h-auto">
                         <NFTImage 
@@ -141,28 +150,28 @@ export default function RaffleDashboard() {
                           className="w-full h-full"
                         />
                       </div>
-                      <div className="flex-1 p-6">
+                      <div className="relative flex-1 p-6 z-10">
                         <div className="flex items-center space-x-3 mb-2">
-                          <h4 className="text-lg font-semibold text-white">
+                          <h4 className="text-lg font-semibold text-pink-300 font-mono tracking-wider">
                             NFT #{position.tokenId}
                           </h4>
                         </div>
-                        <p className="text-slate-400 text-sm font-mono mb-3">
+                        <p className="text-pink-400/70 text-sm font-mono mb-3 tracking-wide">
                           {position.nftContract.slice(0, 6)}...{position.nftContract.slice(-4)}
                         </p>
                         <div className="flex items-center space-x-3 mb-2">
                           {position.isWinner && (
-                            <span className="px-2 py-1 bg-green-500/20 border border-green-400/30 rounded-full text-green-300 text-xs font-medium">
-                              🏆 WINNER
+                            <span className="px-2 py-1 bg-pink-500/20 border border-pink-400/30 rounded-full text-pink-300 text-xs font-medium font-mono tracking-wider">
+                              ⚡ Winner
                             </span>
                           )}
                           {position.completed && !position.isWinner && (
-                            <span className="px-2 py-1 bg-red-500/20 border border-red-400/30 rounded-full text-red-300 text-xs font-medium">
+                            <span className="px-2 py-1 bg-red-500/20 border border-red-400/30 rounded-full text-red-300 text-xs font-medium font-mono tracking-wider">
                               Lost
                             </span>
                           )}
                           {position.isActive && (
-                            <span className="px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-medium">
+                            <span className="px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-medium font-mono tracking-wider">
                               Active
                             </span>
                           )}
@@ -170,20 +179,20 @@ export default function RaffleDashboard() {
                         
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                           <div>
-                            <p className="text-slate-400">Your Tickets</p>
-                            <p className="text-white font-mono">{position.userTickets}</p>
+                            <p className="text-pink-400/70 font-mono tracking-wide">Your Tickets</p>
+                            <p className="text-pink-300 font-mono tracking-wider">{position.userTickets}</p>
                           </div>
                           <div>
-                            <p className="text-slate-400">Win Chance</p>
-                            <p className="text-white font-mono">{position.winProbability.toFixed(1)}%</p>
+                            <p className="text-pink-400/70 font-mono tracking-wide">Win Probability</p>
+                            <p className="text-pink-300 font-mono tracking-wider">{position.winProbability.toFixed(1)}%</p>
                           </div>
                           <div>
-                            <p className="text-slate-400">Tickets Sold</p>
-                            <p className="text-white font-mono">{position.ticketsSold}/{position.maxTickets}</p>
+                            <p className="text-pink-400/70 font-mono tracking-wide">Tickets Sold</p>
+                            <p className="text-pink-300 font-mono tracking-wider">{position.ticketsSold}/{position.maxTickets}</p>
                           </div>
                           <div>
-                            <p className="text-slate-400">Time Left</p>
-                            <p className="text-white font-mono">{formatTimeRemaining(position.endTime)}</p>
+                            <p className="text-pink-400/70 font-mono tracking-wide">Time Remaining</p>
+                            <p className="text-pink-300 font-mono tracking-wider">{formatTimeRemaining(position.endTime)}</p>
                           </div>
                         </div>
                       </div>
@@ -196,15 +205,17 @@ export default function RaffleDashboard() {
             <div className="space-y-4">
               {createdRaffles.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-slate-700/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <span className="text-slate-400 text-2xl">🎨</span>
+                  <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
+                    <span className="relative text-cyan-400 text-2xl">⚡</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-300 mb-2">No Raffles Created</h3>
-                  <p className="text-slate-400">You haven't created any raffles yet.</p>
+                  <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffles Created</h3>
+                  <p className="text-cyan-400/70 font-mono">You haven't created any raffles yet</p>
                 </div>
               ) : (
                 createdRaffles.map((raffle) => (
-                  <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className="bg-slate-900/50 border border-slate-700/50 rounded-xl overflow-hidden">
+                  <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
                     <div className="flex flex-col sm:flex-row">
                       <div className="w-full sm:w-64 h-64 sm:h-auto">
                         <NFTImage 
@@ -213,25 +224,25 @@ export default function RaffleDashboard() {
                           className="w-full h-full"
                         />
                       </div>
-                      <div className="flex-1 p-6">
+                      <div className="relative flex-1 p-6 z-10">
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-4 sm:space-y-0">
                           <div className="flex-1">
                             <div className="flex items-center space-x-3 mb-2">
-                              <h4 className="text-lg font-semibold text-white">
+                              <h4 className="text-lg font-semibold text-pink-300 font-mono tracking-wider">
                                 NFT #{raffle.tokenId}
                               </h4>
                             </div>
-                            <p className="text-slate-400 text-sm font-mono mb-3">
+                            <p className="text-pink-400/70 text-sm font-mono mb-3 tracking-wide">
                               {raffle.nftContract.slice(0, 6)}...{raffle.nftContract.slice(-4)}
                             </p>
                         <div className="flex items-center space-x-3 mb-2">
                           {raffle.completed && (
-                            <span className="px-2 py-1 bg-green-500/20 border border-green-400/30 rounded-full text-green-300 text-xs font-medium">
+                            <span className="px-2 py-1 bg-pink-500/20 border border-pink-400/30 rounded-full text-pink-300 text-xs font-medium font-mono tracking-wider">
                               Completed
                             </span>
                           )}
                           {raffle.isActive && (
-                            <span className="px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-medium">
+                            <span className="px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-medium font-mono tracking-wider">
                               Active
                             </span>
                           )}
@@ -239,27 +250,27 @@ export default function RaffleDashboard() {
                         
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                           <div>
-                            <p className="text-slate-400">Ticket Price</p>
-                            <p className="text-white font-mono">{raffle.ticketPrice} APE</p>
+                            <p className="text-pink-400/70 font-mono tracking-wide">Ticket Price</p>
+                            <p className="text-pink-300 font-mono tracking-wider">{raffle.ticketPrice} APE</p>
                           </div>
                           <div>
-                            <p className="text-slate-400">Tickets Sold</p>
-                            <p className="text-white font-mono">{raffle.ticketsSold}/{raffle.maxTickets}</p>
+                            <p className="text-pink-400/70 font-mono tracking-wide">Tickets Sold</p>
+                            <p className="text-pink-300 font-mono tracking-wider">{raffle.ticketsSold}/{raffle.maxTickets}</p>
                           </div>
                           <div>
-                            <p className="text-slate-400">Revenue</p>
-                            <p className="text-white font-mono">{(parseFloat(raffle.ticketPrice) * raffle.ticketsSold * 0.9).toFixed(2)} APE</p>
+                            <p className="text-pink-400/70 font-mono tracking-wide">Your Revenue</p>
+                            <p className="text-pink-300 font-mono tracking-wider">{(parseFloat(raffle.ticketPrice) * raffle.ticketsSold * 0.9).toFixed(2)} APE</p>
                           </div>
                           <div>
-                            <p className="text-slate-400">Status</p>
-                            <p className="text-white font-mono">{formatTimeRemaining(raffle.endTime)}</p>
+                            <p className="text-pink-400/70 font-mono tracking-wide">Status</p>
+                            <p className="text-pink-300 font-mono tracking-wider">{formatTimeRemaining(raffle.endTime)}</p>
                           </div>
                         </div>
                         
                             {raffle.completed && raffle.winner && (
-                              <div className="mt-3 p-3 bg-green-500/10 border border-green-400/20 rounded-lg">
-                                <p className="text-green-300 text-sm">
-                                  🏆 Winner: {raffle.winner.slice(0, 6)}...{raffle.winner.slice(-4)}
+                              <div className="mt-3 p-3 bg-pink-500/10 border border-pink-400/20 rounded-lg backdrop-blur-sm">
+                                <p className="text-pink-300 text-sm font-mono tracking-wide">
+                                  ⚡ Winner: {raffle.winner.slice(0, 6)}...{raffle.winner.slice(-4)}
                                 </p>
                               </div>
                             )}
@@ -268,9 +279,10 @@ export default function RaffleDashboard() {
                           {!raffle.isActive && !raffle.completed && raffle.ticketsSold > 0 && (
                             <button
                               onClick={() => handleSelectWinner(raffle.raffleContract)}
-                              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                              className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
                             >
-                              Select Winner
+                              <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                              <span className="relative">Select Winner</span>
                             </button>
                           )}
                         </div>
