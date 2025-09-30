@@ -3,6 +3,7 @@ import { wagmiConfig } from '../config/wagmi';
 import { parseAbiItem } from 'viem';
 import { RAFFLE_FACTORY_ADDRESS } from '../config/contracts';
 import { raffleContractService, RaffleInfo } from './raffleContractService';
+import { safeLog, safeError } from '../utils/logSanitizer';
 
 export interface UserRafflePosition {
   raffleId: number;
@@ -47,7 +48,7 @@ class RafflePositionService {
    * Get all raffles user has participated in (bought tickets)
    */
   async getUserRafflePositions(userAddress: string, publicClient: any): Promise<UserRafflePosition[]> {
-    console.log('🎫 Getting user raffle positions for:', userAddress);
+    safeLog('🎫 Getting user raffle positions for:', userAddress);
     
     if (!publicClient) {
       console.log('❌ No publicClient provided');
@@ -123,7 +124,7 @@ class RafflePositionService {
       return positions;
 
     } catch (error) {
-      console.error('Error fetching user raffle positions:', error);
+      safeError('Error fetching user raffle positions:', error);
       return [];
     }
   }
@@ -132,7 +133,7 @@ class RafflePositionService {
    * Get all raffles created by user
    */
   async getCreatedRaffles(userAddress: string, publicClient: any): Promise<CreatedRaffle[]> {
-    console.log('🎨 Getting created raffles for:', userAddress);
+    safeLog('🎨 Getting created raffles for:', userAddress);
     
     if (!publicClient) {
       console.log('❌ No publicClient provided');
@@ -192,7 +193,7 @@ class RafflePositionService {
       return raffles;
 
     } catch (error) {
-      console.error('Error fetching created raffles:', error);
+      safeError('Error fetching created raffles:', error);
       return [];
     }
   }
@@ -201,7 +202,7 @@ class RafflePositionService {
    * Get all active raffles (for browsing)
    */
   async getActiveRaffles(publicClient: any, limit: number = 20): Promise<CreatedRaffle[]> {
-    console.log('🔍 Getting active raffles');
+    safeLog('🔍 Getting active raffles');
     
     if (!publicClient) {
       console.log('❌ No publicClient provided');
@@ -263,7 +264,7 @@ class RafflePositionService {
       return activeRaffles.reverse(); // Show newest first
 
     } catch (error) {
-      console.error('Error fetching active raffles:', error);
+      safeError('Error fetching active raffles:', error);
       return [];
     }
   }

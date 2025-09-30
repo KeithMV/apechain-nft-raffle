@@ -2,6 +2,7 @@ import { writeContract, readContract, waitForTransactionReceipt } from '@wagmi/c
 import { wagmiConfig } from '../config/wagmi';
 import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { parseEther } from 'viem';
+import { safeLog, safeError } from '../utils/logSanitizer';
 
 export interface RaffleInfo {
   nftContract: string;
@@ -28,14 +29,14 @@ class RaffleContractService {
    * Buy tickets for a raffle
    */
   async buyTickets(params: BuyTicketsParams): Promise<string> {
-    console.log('🔄 Buying tickets with params:', params);
+    safeLog('🔄 Buying tickets with params:', params);
 
     try {
       // Get current raffle info to validate
       const raffleInfo = await this.getRaffleInfo(params.raffleContract);
       const availableTickets = Number(raffleInfo.maxTickets - raffleInfo.ticketsSold);
       
-      console.log('📊 Raffle validation:', {
+      safeLog('📊 Raffle validation:', {
         availableTickets,
         requestedQuantity: params.quantity,
         completed: raffleInfo.completed,
@@ -58,7 +59,7 @@ class RaffleContractService {
       }
       
       const totalCost = parseEther((parseFloat(params.ticketPrice) * params.quantity).toString());
-      console.log('💰 Total cost:', totalCost.toString(), 'wei');
+      safeLog('💰 Total cost:', totalCost.toString(), 'wei');
       
       const hash = await writeContract(wagmiConfig, {
         address: params.raffleContract as `0x${string}`,
@@ -69,7 +70,7 @@ class RaffleContractService {
         gas: BigInt(300000), // Increased gas for potential winner selection
       });
 
-      console.log('✅ Ticket purchase transaction submitted:', hash);
+      safeLog('✅ Ticket purchase transaction submitted:', hash);
 
       // Wait for confirmation with longer timeout for winner selection
       const receipt = await waitForTransactionReceipt(wagmiConfig, {
@@ -78,7 +79,7 @@ class RaffleContractService {
         timeout: 60000, // 60 second timeout
       });
 
-      console.log('✅ Ticket purchase confirmed:', receipt.status);
+      safeLog('✅ Ticket purchase confirmed:', receipt.status);
       
       if (receipt.status === 'reverted') {
         throw new Error('Transaction reverted - check your APE balance and allowance');
@@ -87,7 +88,7 @@ class RaffleContractService {
       return hash;
 
     } catch (error: any) {
-      console.error('❌ Ticket purchase failed:', error);
+      safeError('❌ Ticket purchase failed:', error);
       
       // Provide more specific error messages
       if (error.message?.includes('insufficient funds')) {
@@ -150,7 +151,7 @@ class RaffleContractService {
         return info as RaffleInfo;
       }
     } catch (error) {
-      console.error('Failed to get raffle info:', error);
+      safeError('Failed to get raffle info:', error);
       throw error;
     }
   }
@@ -167,7 +168,7 @@ class RaffleContractService {
       });
       return active as boolean;
     } catch (error) {
-      console.error('Failed to check raffle status:', error);
+      safeError('Failed to check raffle status:', error);
       return false;
     }
   }
@@ -185,7 +186,7 @@ class RaffleContractService {
       });
       return Number(tickets);
     } catch (error) {
-      console.error('Failed to get user tickets:', error);
+      safeError('Failed to get user tickets:', error);
       return 0;
     }
   }
@@ -195,7 +196,7 @@ class RaffleContractService {
    */
   async selectWinner(raffleContract: string): Promise<string> {
     try {
-      console.log('🔄 Selecting winner for raffle:', raffleContract);
+      safeLog('🔄 Selecting winner for raffle:', raffleContract);
       
       const hash = await writeContract(wagmiConfig, {
         address: raffleContract as `0x${string}`,
@@ -204,7 +205,7 @@ class RaffleContractService {
         gas: BigInt(150000), // Set reasonable gas limit
       });
 
-      console.log('✅ Winner selection transaction submitted:', hash);
+      safeLog('✅ Winner selection transaction submitted:', hash);
 
       // Wait for confirmation with timeout
       await waitForTransactionReceipt(wagmiConfig, {
@@ -213,11 +214,11 @@ class RaffleContractService {
         timeout: 30000, // 30 second timeout
       });
 
-      console.log('✅ Winner selection confirmed');
+      safeLog('✅ Winner selection confirmed');
       return hash;
 
     } catch (error) {
-      console.error('❌ Winner selection failed:', error);
+      safeError('❌ Winner selection failed:', error);
       throw error;
     }
   }

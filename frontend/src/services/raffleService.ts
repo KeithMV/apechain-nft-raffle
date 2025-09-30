@@ -2,6 +2,7 @@ import { writeContract, readContract, waitForTransactionReceipt } from '@wagmi/c
 import { wagmiConfig } from '../config/wagmi';
 import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem';
+import { safeLog, safeError } from '../utils/logSanitizer';
 
 export interface CreateRaffleParams {
   nftContract: string;
@@ -31,7 +32,7 @@ class RaffleService {
       });
       return fee as bigint;
     } catch (error) {
-      console.error('Failed to get platform fee:', error);
+      safeError('Failed to get platform fee:', error);
       return BigInt(1000); // Default 10%
     }
   }
@@ -48,7 +49,7 @@ class RaffleService {
       });
       return Number(counter);
     } catch (error) {
-      console.error('Failed to get raffle counter:', error);
+      safeError('Failed to get raffle counter:', error);
       return 0;
     }
   }
@@ -57,7 +58,7 @@ class RaffleService {
    * Create a new NFT raffle
    */
   async createRaffle(params: CreateRaffleParams): Promise<RaffleResult> {
-    console.log('🔄 Starting raffle creation with params:', params);
+    safeLog('🔄 Starting raffle creation with params:', params);
 
     try {
       const hash = await writeContract(wagmiConfig, {
@@ -74,7 +75,7 @@ class RaffleService {
         gas: BigInt(500000), // Set reasonable gas limit
       });
 
-      console.log('✅ Raffle creation transaction submitted:', hash);
+      safeLog('✅ Raffle creation transaction submitted:', hash);
 
       // Wait for transaction confirmation
       const receipt = await waitForTransactionReceipt(wagmiConfig, {
@@ -82,7 +83,7 @@ class RaffleService {
         confirmations: 1,
       });
 
-      console.log('✅ Raffle creation confirmed:', receipt);
+      safeLog('✅ Raffle creation confirmed:', receipt);
 
       // Try to get raffle ID and contract address
       let raffleId: number | undefined;
@@ -92,9 +93,9 @@ class RaffleService {
         const currentCounter = await this.getRaffleCounter();
         raffleId = currentCounter - 1; // Latest raffle ID
         raffleContract = await this.getRaffleContract(raffleId);
-        console.log('🎯 Raffle created - ID:', raffleId, 'Contract:', raffleContract);
+        safeLog('🎯 Raffle created - ID:', raffleId, 'Contract:', raffleContract);
       } catch (error) {
-        console.warn('⚠️ Could not retrieve raffle details:', error);
+        safeError('⚠️ Could not retrieve raffle details:', error);
       }
 
       return {
@@ -104,7 +105,7 @@ class RaffleService {
       };
 
     } catch (error) {
-      console.error('❌ Raffle creation failed:', error);
+      safeError('❌ Raffle creation failed:', error);
       throw error;
     }
   }
@@ -122,7 +123,7 @@ class RaffleService {
       });
       return raffleContract as string;
     } catch (error) {
-      console.error('Failed to get raffle contract:', error);
+      safeError('Failed to get raffle contract:', error);
       throw error;
     }
   }
@@ -140,7 +141,7 @@ class RaffleService {
       });
       return isApproved as boolean;
     } catch (error) {
-      console.error('Failed to check approval status:', error);
+      safeError('Failed to check approval status:', error);
       return false;
     }
   }
@@ -150,7 +151,7 @@ class RaffleService {
    */
   async approveForAll(nftContract: string): Promise<string> {
     try {
-      console.log('🔄 Approving NFT contract for raffle:', nftContract);
+      safeLog('🔄 Approving NFT contract for raffle:', nftContract);
       
       const hash = await writeContract(wagmiConfig, {
         address: nftContract as `0x${string}`,
@@ -160,7 +161,7 @@ class RaffleService {
         gas: BigInt(100000), // Set reasonable gas limit for approval
       });
 
-      console.log('✅ Approval transaction submitted:', hash);
+      safeLog('✅ Approval transaction submitted:', hash);
 
       // Wait for confirmation
       await waitForTransactionReceipt(wagmiConfig, {
@@ -168,10 +169,10 @@ class RaffleService {
         confirmations: 1,
       });
 
-      console.log('✅ Approval confirmed');
+      safeLog('✅ Approval confirmed');
       return hash;
     } catch (error) {
-      console.error('❌ Approval failed:', error);
+      safeError('❌ Approval failed:', error);
       throw error;
     }
   }
@@ -181,7 +182,7 @@ class RaffleService {
    */
   async revokeApproval(nftContract: string): Promise<string> {
     try {
-      console.log('🔄 Revoking NFT contract approval:', nftContract);
+      safeLog('🔄 Revoking NFT contract approval:', nftContract);
       
       const hash = await writeContract(wagmiConfig, {
         address: nftContract as `0x${string}`,
@@ -191,7 +192,7 @@ class RaffleService {
         gas: BigInt(100000), // Set reasonable gas limit
       });
 
-      console.log('✅ Revoke transaction submitted:', hash);
+      safeLog('✅ Revoke transaction submitted:', hash);
 
       // Wait for confirmation
       await waitForTransactionReceipt(wagmiConfig, {
@@ -199,10 +200,10 @@ class RaffleService {
         confirmations: 1,
       });
 
-      console.log('✅ Approval revoked');
+      safeLog('✅ Approval revoked');
       return hash;
     } catch (error) {
-      console.error('❌ Revoke failed:', error);
+      safeError('❌ Revoke failed:', error);
       throw error;
     }
   }
