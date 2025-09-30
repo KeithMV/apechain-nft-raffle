@@ -157,7 +157,7 @@ export default function BrowseRaffles() {
                     <NFTImage 
                       contractAddress={raffle.nftContract}
                       tokenId={raffle.tokenId.toString()}
-                      className="w-full h-48 sm:h-56"
+                      className="w-full h-80 sm:h-96"
                       showName={true}
                     />
                     <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1">

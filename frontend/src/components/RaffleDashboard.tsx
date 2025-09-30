@@ -134,7 +134,7 @@ export default function RaffleDashboard() {
                 userPositions.map((position) => (
                   <div key={`${position.raffleContract}-${position.raffleId}`} className="bg-slate-900/50 border border-slate-700/50 rounded-xl overflow-hidden">
                     <div className="flex flex-col sm:flex-row">
-                      <div className="w-full sm:w-48 h-48 sm:h-auto">
+                      <div className="w-full sm:w-64 h-64 sm:h-auto">
                         <NFTImage 
                           contractAddress={position.nftContract}
                           tokenId={position.tokenId.toString()}
@@ -206,7 +206,7 @@ export default function RaffleDashboard() {
                 createdRaffles.map((raffle) => (
                   <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className="bg-slate-900/50 border border-slate-700/50 rounded-xl overflow-hidden">
                     <div className="flex flex-col sm:flex-row">
-                      <div className="w-full sm:w-48 h-48 sm:h-auto">
+                      <div className="w-full sm:w-64 h-64 sm:h-auto">
                         <NFTImage 
                           contractAddress={raffle.nftContract}
                           tokenId={raffle.tokenId.toString()}
