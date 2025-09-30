@@ -85,9 +85,13 @@ export default function BrowseRaffles() {
       if (error.message?.includes('User rejected')) {
         toast.error('Transaction cancelled by user');
       } else if (error.message?.includes('insufficient funds')) {
-        toast.error('Insufficient APE balance');
+        toast.error('Insufficient APE balance - you need ' + totalCost + ' APE tokens');
+      } else if (error.message?.includes('execution reverted')) {
+        toast.error('Transaction failed - ensure you have enough APE tokens and try again');
+      } else if (error.message?.includes('allowance')) {
+        toast.error('Please approve APE spending for this contract first');
       } else {
-        toast.error('Failed to buy tickets: ' + error.message);
+        toast.error('Failed to buy tickets: ' + (error.message || 'Unknown error'));
       }
     } finally {
       setBuyingTickets(null);
@@ -219,6 +223,15 @@ export default function BrowseRaffles() {
                       <div className="text-right">
                         <p className="text-xs text-slate-400 mb-1">Total Cost</p>
                         <p className="text-white font-mono font-semibold">{totalCost} APE</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-500/10 border border-yellow-400/30 rounded-lg p-3 mb-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-yellow-400 text-sm">⚠️</span>
+                        <p className="text-yellow-300 text-xs">
+                          <strong>Requires APE tokens:</strong> Make sure you have {totalCost} APE in your wallet
+                        </p>
                       </div>
                     </div>
 
