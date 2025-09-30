@@ -23,6 +23,7 @@ export interface BuyTicketsParams {
   raffleContract: string;
   quantity: number;
   ticketPrice: string; // In APE
+  useBatch?: boolean; // Optional flag to force batch mode
 }
 
 class RaffleContractService {
@@ -30,7 +31,7 @@ class RaffleContractService {
 
   
   /**
-   * Buy tickets for a raffle
+   * Buy tickets for a raffle (standard method)
    */
   async buyTickets(params: BuyTicketsParams): Promise<string> {
     safeLog('🔄 Buying tickets with params:', params);
@@ -66,10 +67,13 @@ class RaffleContractService {
       const totalCost = await apeTokenService.calculateTotalCost(params.ticketPrice, params.quantity);
       safeLog('💰 Total cost:', totalCost.toString(), 'wei');
       
+      // Choose method based on quantity
+      const functionName = params.quantity > 100 ? 'buyTicketsBatch' : 'buyTickets';
+      
       const hash = await writeContract(wagmiConfig, {
         address: params.raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
-        functionName: 'buyTickets',
+        functionName,
         args: [BigInt(params.quantity)],
         value: totalCost,
         // Gas will be estimated automatically
@@ -94,6 +98,69 @@ class RaffleContractService {
 
     } catch (error: any) {
       safeError('❌ Ticket purchase failed:', error);
+      throw new Error(ErrorHandlingService.parseContractError(error));
+    }
+  }
+
+  /**
+   * Buy tickets in batch (for large quantities)
+   */
+  async buyTicketsBatch(params: BuyTicketsParams): Promise<string> {
+    safeLog('🔄 Buying tickets in batch with params:', params);
+
+    try {
+      // Validate batch size
+      if (params.quantity > 500) {
+        throw new Error('Maximum 500 tickets per batch purchase');
+      }
+
+      // Get current raffle info to validate
+      const raffleInfo = await this.getRaffleInfo(params.raffleContract);
+      const availableTickets = Number(raffleInfo.maxTickets - raffleInfo.ticketsSold);
+      
+      if (params.quantity > availableTickets) {
+        throw new Error(`Only ${availableTickets} tickets available`);
+      }
+      
+      if (raffleInfo.completed) {
+        throw new Error('Raffle has already completed');
+      }
+      
+      const now = Math.floor(Date.now() / 1000);
+      if (now >= Number(raffleInfo.endTime)) {
+        throw new Error('Raffle has expired');
+      }
+      
+      const totalCost = await apeTokenService.calculateTotalCost(params.ticketPrice, params.quantity);
+      safeLog('💰 Batch total cost:', totalCost.toString(), 'wei');
+      
+      const hash = await writeContract(wagmiConfig, {
+        address: params.raffleContract as `0x${string}`,
+        abi: RAFFLE_CONTRACT_ABI,
+        functionName: 'buyTicketsBatch',
+        args: [BigInt(params.quantity)],
+        value: totalCost,
+        gas: BigInt(8000000), // Higher gas limit for batch operations
+      });
+
+      safeLog('✅ Batch ticket purchase transaction submitted:', hash);
+
+      const receipt = await waitForTransactionReceipt(wagmiConfig, {
+        hash,
+        confirmations: 1,
+        timeout: 120000, // 2 minute timeout for batch operations
+      });
+
+      safeLog('✅ Batch ticket purchase confirmed:', receipt.status);
+      
+      if (receipt.status === 'reverted') {
+        throw new Error('Batch transaction reverted - check your APE balance');
+      }
+      
+      return hash;
+
+    } catch (error: any) {
+      safeError('❌ Batch ticket purchase failed:', error);
       throw new Error(ErrorHandlingService.parseContractError(error));
     }
   }

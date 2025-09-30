@@ -75,6 +75,8 @@ contract RaffleContract is ReentrancyGuard, Pausable, Initializable {
         uint256 _platformFee
     ) external initializer {
         require(IERC721(_nftContract).ownerOf(_tokenId) == _creator, "Not NFT owner");
+        require(_maxTickets <= 10000, "Max 10000 tickets per raffle");
+        require(_maxTickets >= 1, "Min 1 ticket required");
         
         factory = msg.sender;
         raffle = RaffleInfo({
@@ -92,13 +94,13 @@ contract RaffleContract is ReentrancyGuard, Pausable, Initializable {
     }
     
     /**
-     * @dev Buy raffle tickets
+     * @dev Buy raffle tickets with batch support
      * @param quantity Number of tickets to purchase
      */
     function buyTickets(uint256 quantity) external payable nonReentrant raffleActive {
         require(msg.sender != raffle.creator, "Creator cannot buy own raffle");
         require(quantity > 0, "Invalid quantity");
-        require(quantity <= 50, "Max 50 tickets per tx"); // Prevent gas issues
+        require(quantity <= 100, "Max 100 tickets per tx"); // Increased for batch support
         require(raffle.ticketsSold + quantity <= raffle.maxTickets, "Not enough tickets");
         require(msg.value == raffle.ticketPrice * quantity, "Wrong payment");
         
@@ -106,9 +108,10 @@ contract RaffleContract is ReentrancyGuard, Pausable, Initializable {
         ticketsPurchased[msg.sender] += quantity;
         raffle.ticketsSold += quantity;
         
-        // Assign tickets to buyer
+        // Assign tickets to buyer (gas-optimized batch assignment)
+        uint256 startTicket = totalTickets;
         for(uint256 i = 0; i < quantity; i++) {
-            ticketToOwner[totalTickets + i] = msg.sender;
+            ticketToOwner[startTicket + i] = msg.sender;
         }
         totalTickets += quantity;
         
@@ -117,6 +120,50 @@ contract RaffleContract is ReentrancyGuard, Pausable, Initializable {
         // Check if raffle is complete
         if(raffle.ticketsSold >= raffle.maxTickets) {
             // Auto-complete with simple randomness for immediate completion
+            uint256 autoSeed = uint256(keccak256(abi.encodePacked(
+                block.timestamp,
+                block.prevrandao,
+                totalTickets,
+                msg.sender
+            )));
+            _selectWinner(autoSeed);
+        }
+    }
+    
+    /**
+     * @dev Buy tickets in multiple batches automatically
+     * @param totalQuantity Total tickets to purchase across batches
+     */
+    function buyTicketsBatch(uint256 totalQuantity) external payable nonReentrant raffleActive {
+        require(msg.sender != raffle.creator, "Creator cannot buy own raffle");
+        require(totalQuantity > 0, "Invalid quantity");
+        require(totalQuantity <= 500, "Max 500 tickets per batch call");
+        require(raffle.ticketsSold + totalQuantity <= raffle.maxTickets, "Not enough tickets");
+        require(msg.value == raffle.ticketPrice * totalQuantity, "Wrong payment");
+        
+        uint256 remaining = totalQuantity;
+        uint256 batchSize = 100; // Process in chunks of 100
+        
+        while(remaining > 0) {
+            uint256 currentBatch = remaining > batchSize ? batchSize : remaining;
+            
+            // Update ticket counts
+            ticketsPurchased[msg.sender] += currentBatch;
+            raffle.ticketsSold += currentBatch;
+            
+            // Assign tickets to buyer
+            uint256 startTicket = totalTickets;
+            for(uint256 i = 0; i < currentBatch; i++) {
+                ticketToOwner[startTicket + i] = msg.sender;
+            }
+            totalTickets += currentBatch;
+            remaining -= currentBatch;
+            
+            emit TicketsPurchased(msg.sender, currentBatch, raffle.ticketPrice * currentBatch);
+        }
+        
+        // Check if raffle is complete
+        if(raffle.ticketsSold >= raffle.maxTickets) {
             uint256 autoSeed = uint256(keccak256(abi.encodePacked(
                 block.timestamp,
                 block.prevrandao,

@@ -113,6 +113,13 @@ export const RAFFLE_CONTRACT_ABI = [
     "type": "function"
   },
   {
+    "inputs": [{"internalType": "uint256", "name": "totalQuantity", "type": "uint256"}],
+    "name": "buyTicketsBatch",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
     "inputs": [{"internalType": "bytes32", "name": "_commitHash", "type": "bytes32"}],
     "name": "commitRandomness",
     "outputs": [],
