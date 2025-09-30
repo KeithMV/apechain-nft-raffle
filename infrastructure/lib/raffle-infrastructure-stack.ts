@@ -14,18 +14,27 @@ export class RaffleInfrastructureStack extends cdk.Stack {
     // S3 Bucket for frontend hosting
     this.s3Bucket = new s3.Bucket(this, 'RaffleFrontendBucket', {
       bucketName: `apechain-nft-raffle-${this.account}-${this.region}`,
-      websiteIndexDocument: 'index.html',
-      websiteErrorDocument: 'index.html',
-      publicReadAccess: true,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ACLS,
+      versioned: true,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      publicReadAccess: false,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Origin Access Control for secure S3 access
+    const originAccessControl = new cloudfront.OriginAccessControl(this, 'RaffleOAC', {
+      description: 'OAC for Raffle S3 bucket',
     });
 
     // CloudFront Distribution
     const distribution = new cloudfront.Distribution(this, 'RaffleDistribution', {
       defaultBehavior: {
-        origin: new origins.S3Origin(this.s3Bucket),
+        origin: origins.S3BucketOrigin.withOriginAccessControl(this.s3Bucket, {
+          originAccessControl,
+        }),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
       },
       defaultRootObject: 'index.html',
       errorResponses: [
@@ -35,6 +44,7 @@ export class RaffleInfrastructureStack extends cdk.Stack {
           responsePagePath: '/index.html',
         },
       ],
+      minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
     });
 
     this.cloudFrontDistributionId = distribution.distributionId;
