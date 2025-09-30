@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAccount, usePublicClient } from 'wagmi';
 import { rafflePositionService, UserRafflePosition, CreatedRaffle } from '../services/rafflePositionService';
 import { raffleContractService } from '../services/raffleContractService';
+import NFTImage from './NFTImage';
 import toast from 'react-hot-toast';
 
 export default function RaffleDashboard() {
@@ -131,16 +132,23 @@ export default function RaffleDashboard() {
                 </div>
               ) : (
                 userPositions.map((position) => (
-                  <div key={`${position.raffleContract}-${position.raffleId}`} className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-                      <div className="flex-1">
+                  <div key={`${position.raffleContract}-${position.raffleId}`} className="bg-slate-900/50 border border-slate-700/50 rounded-xl overflow-hidden">
+                    <div className="flex flex-col sm:flex-row">
+                      <div className="w-full sm:w-48 h-48 sm:h-auto">
+                        <NFTImage 
+                          contractAddress={position.nftContract}
+                          tokenId={position.tokenId.toString()}
+                          className="w-full h-full"
+                        />
+                      </div>
+                      <div className="flex-1 p-6">
                         <div className="flex items-center space-x-3 mb-2">
                           <h4 className="text-lg font-semibold text-white">
                             NFT #{position.tokenId}
                           </h4>
                         </div>
                         <p className="text-slate-400 text-sm font-mono mb-3">
-                          Contract: {position.nftContract.slice(0, 6)}...{position.nftContract.slice(-4)}
+                          {position.nftContract.slice(0, 6)}...{position.nftContract.slice(-4)}
                         </p>
                         <div className="flex items-center space-x-3 mb-2">
                           {position.isWinner && (
@@ -196,17 +204,26 @@ export default function RaffleDashboard() {
                 </div>
               ) : (
                 createdRaffles.map((raffle) => (
-                  <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h4 className="text-lg font-semibold text-white">
-                            NFT #{raffle.tokenId}
-                          </h4>
-                        </div>
-                        <p className="text-slate-400 text-sm font-mono mb-3">
-                          Contract: {raffle.nftContract.slice(0, 6)}...{raffle.nftContract.slice(-4)}
-                        </p>
+                  <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className="bg-slate-900/50 border border-slate-700/50 rounded-xl overflow-hidden">
+                    <div className="flex flex-col sm:flex-row">
+                      <div className="w-full sm:w-48 h-48 sm:h-auto">
+                        <NFTImage 
+                          contractAddress={raffle.nftContract}
+                          tokenId={raffle.tokenId.toString()}
+                          className="w-full h-full"
+                        />
+                      </div>
+                      <div className="flex-1 p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-4 sm:space-y-0">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <h4 className="text-lg font-semibold text-white">
+                                NFT #{raffle.tokenId}
+                              </h4>
+                            </div>
+                            <p className="text-slate-400 text-sm font-mono mb-3">
+                              {raffle.nftContract.slice(0, 6)}...{raffle.nftContract.slice(-4)}
+                            </p>
                         <div className="flex items-center space-x-3 mb-2">
                           {raffle.completed && (
                             <span className="px-2 py-1 bg-green-500/20 border border-green-400/30 rounded-full text-green-300 text-xs font-medium">
@@ -239,23 +256,25 @@ export default function RaffleDashboard() {
                           </div>
                         </div>
                         
-                        {raffle.completed && raffle.winner && (
-                          <div className="mt-3 p-3 bg-green-500/10 border border-green-400/20 rounded-lg">
-                            <p className="text-green-300 text-sm">
-                              🏆 Winner: {raffle.winner.slice(0, 6)}...{raffle.winner.slice(-4)}
-                            </p>
+                            {raffle.completed && raffle.winner && (
+                              <div className="mt-3 p-3 bg-green-500/10 border border-green-400/20 rounded-lg">
+                                <p className="text-green-300 text-sm">
+                                  🏆 Winner: {raffle.winner.slice(0, 6)}...{raffle.winner.slice(-4)}
+                                </p>
+                              </div>
+                            )}
                           </div>
-                        )}
+                          
+                          {!raffle.isActive && !raffle.completed && raffle.ticketsSold > 0 && (
+                            <button
+                              onClick={() => handleSelectWinner(raffle.raffleContract)}
+                              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                            >
+                              Select Winner
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      
-                      {!raffle.isActive && !raffle.completed && raffle.ticketsSold > 0 && (
-                        <button
-                          onClick={() => handleSelectWinner(raffle.raffleContract)}
-                          className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                        >
-                          Select Winner
-                        </button>
-                      )}
                     </div>
                   </div>
                 ))

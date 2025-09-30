@@ -3,6 +3,7 @@ import { useAccount, usePublicClient } from 'wagmi';
 import { rafflePositionService, CreatedRaffle } from '../services/rafflePositionService';
 import { raffleContractService } from '../services/raffleContractService';
 import ApeTokenBalance from './ApeTokenBalance';
+import NFTImage from './NFTImage';
 import toast from 'react-hot-toast';
 
 export default function BrowseRaffles() {
@@ -150,111 +151,106 @@ export default function BrowseRaffles() {
               const availableTickets = raffle.maxTickets - raffle.ticketsSold;
               
               return (
-                <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-6 hover:border-purple-400/30 transition-colors">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h4 className="text-lg font-semibold text-white mb-1">
-                        NFT #{raffle.tokenId}
-                      </h4>
-                      <p className="text-slate-400 text-sm font-mono">
-                        Contract: {raffle.nftContract.slice(0, 6)}...{raffle.nftContract.slice(-4)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-purple-300 font-semibold">{raffle.ticketPrice} APE</p>
-                      <p className="text-slate-400 text-sm">per ticket</p>
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="mb-4">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-slate-400">Tickets Available</span>
-                      <span className="text-white">{availableTickets}/{raffle.maxTickets}</span>
-                    </div>
-                    <div className="w-full bg-slate-700/50 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                    <div>
-                      <p className="text-slate-400">Time Left</p>
-                      <p className="text-white font-mono">{formatTimeRemaining(raffle.endTime)}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-400">Win Chance</p>
-                      <p className="text-white font-mono">{raffle.ticketsSold > 0 ? (quantity / (raffle.ticketsSold + quantity) * 100).toFixed(1) : '0.0'}%</p>
-                    </div>
-                  </div>
-
-                  {/* APE Token Balance */}
-                  <div className="mb-4">
-                    <ApeTokenBalance 
-                      requiredAmount={totalCost}
+                <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className="bg-slate-900/50 border border-slate-700/50 rounded-xl overflow-hidden hover:border-purple-400/30 transition-colors">
+                  {/* NFT Image */}
+                  <div className="relative">
+                    <NFTImage 
+                      contractAddress={raffle.nftContract}
+                      tokenId={raffle.tokenId.toString()}
+                      className="w-full h-48 sm:h-56"
+                      showName={true}
                     />
+                    <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1">
+                      <p className="text-purple-300 font-semibold text-sm">{raffle.ticketPrice} APE</p>
+                      <p className="text-slate-400 text-xs">per ticket</p>
+                    </div>
                   </div>
+                  
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h4 className="text-lg font-semibold text-white mb-1">
+                          NFT #{raffle.tokenId}
+                        </h4>
+                        <p className="text-slate-400 text-sm font-mono">
+                          {raffle.nftContract.slice(0, 6)}...{raffle.nftContract.slice(-4)}
+                        </p>
+                      </div>
+                    </div>
 
-                  {/* Buy Tickets Section */}
-                  <div className="border-t border-slate-700/50 pt-4">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <div className="flex-1">
-                        <label className="block text-xs text-slate-400 mb-1">Quantity</label>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => setTicketQuantity(raffle.raffleContract, quantity - 1, availableTickets)}
-                            disabled={quantity <= 1}
-                            className="w-8 h-8 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg flex items-center justify-center text-sm font-bold transition-colors"
-                          >
-                            -
-                          </button>
+                    {/* Progress Bar */}
+                    <div className="mb-4">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-slate-400">Tickets Available</span>
+                        <span className="text-white">{availableTickets}/{raffle.maxTickets}</span>
+                      </div>
+                      <div className="w-full bg-slate-700/50 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${progress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                      <div>
+                        <p className="text-slate-400">Time Left</p>
+                        <p className="text-white font-mono">{formatTimeRemaining(raffle.endTime)}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-400">Win Chance</p>
+                        <p className="text-white font-mono">{raffle.ticketsSold > 0 ? (quantity / (raffle.ticketsSold + quantity) * 100).toFixed(1) : '0.0'}%</p>
+                      </div>
+                    </div>
+
+                    {/* APE Token Balance */}
+                    <div className="mb-4">
+                      <ApeTokenBalance 
+                        requiredAmount={totalCost}
+                      />
+                    </div>
+
+                    {/* Buy Tickets Section */}
+                    <div className="border-t border-slate-700/50 pt-4">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="flex-1">
+                          <label className="block text-xs text-slate-400 mb-1">Quantity</label>
                           <input
                             type="number"
                             min="1"
                             max={Math.min(50, availableTickets)}
                             value={quantity}
                             onChange={(e) => setTicketQuantity(raffle.raffleContract, parseInt(e.target.value) || 1, availableTickets)}
-                            className="w-16 bg-slate-800/50 border border-slate-600/50 rounded-lg px-2 py-1 text-white text-center text-sm focus:border-purple-400 focus:ring-1 focus:ring-purple-400 transition-colors"
+                            className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg px-3 py-2 text-white text-sm focus:border-purple-400/50 focus:outline-none"
                           />
-                          <button
-                            onClick={() => setTicketQuantity(raffle.raffleContract, quantity + 1, availableTickets)}
-                            disabled={quantity >= Math.min(50, availableTickets)}
-                            className="w-8 h-8 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg flex items-center justify-center text-sm font-bold transition-colors"
-                          >
-                            +
-                          </button>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-slate-400 mb-1">Total Cost</p>
+                          <p className="text-white font-semibold">{totalCost} APE</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-slate-400 mb-1">Total Cost</p>
-                        <p className="text-white font-mono font-semibold">{totalCost} APE</p>
-                      </div>
+                      
+                      <button
+                        onClick={() => handleBuyTickets(raffle)}
+                        disabled={buyingTickets === raffle.raffleContract || availableTickets === 0}
+                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                      >
+                        {buyingTickets === raffle.raffleContract ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Buying...</span>
+                          </>
+                        ) : availableTickets === 0 ? (
+                          <span>Sold Out</span>
+                        ) : (
+                          <>
+                            <span>🎫</span>
+                            <span>Buy {quantity} Ticket{quantity > 1 ? 's' : ''}</span>
+                          </>
+                        )}
+                      </button>
                     </div>
-
-
-
-                    <button
-                      onClick={() => handleBuyTickets(raffle)}
-                      disabled={buyingTickets === raffle.raffleContract || !address || availableTickets === 0}
-                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                    >
-                      {buyingTickets === raffle.raffleContract ? (
-                        <span className="flex items-center justify-center">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                          Buying Tickets...
-                        </span>
-                      ) : !address ? (
-                        'Connect Wallet'
-                      ) : availableTickets === 0 ? (
-                        'Sold Out'
-                      ) : (
-                        `Buy ${quantity} Ticket${quantity > 1 ? 's' : ''}`
-                      )}
-                    </button>
                   </div>
                 </div>
               );
