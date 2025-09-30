@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount } from 'wagmi';
 import { wagmiConfig } from './config/wagmi';
-import { raffleService } from './services/raffleService';
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
-import { NETWORK_CONFIG } from './config/addresses';
 import { Toaster } from 'react-hot-toast';
 import CreateRafflePage from './components/CreateRafflePage';
 import RaffleDashboard from './components/RaffleDashboard';
@@ -131,7 +129,7 @@ function Hero() {
 }
 
 function RaffleApp() {
-  const { isConnected, address } = useAccount();
+  const { isConnected } = useAccount();
   const [currentPage, setCurrentPage] = useState<'create' | 'dashboard' | 'browse'>('browse');
 
   if (!isConnected) {

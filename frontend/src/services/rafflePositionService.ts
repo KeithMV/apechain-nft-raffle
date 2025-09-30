@@ -1,8 +1,6 @@
-import { readContract } from '@wagmi/core';
-import { wagmiConfig } from '../config/wagmi';
 import { parseAbiItem } from 'viem';
 import { RAFFLE_FACTORY_ADDRESS } from '../config/contracts';
-import { raffleContractService, RaffleInfo } from './raffleContractService';
+import { raffleContractService } from './raffleContractService';
 import { safeLog, safeError } from '../utils/logSanitizer';
 
 export interface UserRafflePosition {
