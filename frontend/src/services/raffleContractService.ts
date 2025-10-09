@@ -370,6 +370,36 @@ class RaffleContractService {
   }
 
   /**
+   * Cancel raffle (creator only, no tickets sold)
+   */
+  async cancelRaffle(raffleContract: string): Promise<string> {
+    try {
+      safeLog('🔄 Cancelling raffle:', raffleContract);
+      
+      const hash = await writeContract(wagmiConfig, {
+        address: raffleContract as `0x${string}`,
+        abi: RAFFLE_CONTRACT_ABI,
+        functionName: 'cancelRaffle',
+      });
+
+      safeLog('✅ Cancel raffle transaction submitted:', hash);
+
+      await waitForTransactionReceipt(wagmiConfig, {
+        hash,
+        confirmations: 1,
+        timeout: 30000,
+      });
+
+      safeLog('✅ Raffle cancelled confirmed');
+      return hash;
+
+    } catch (error) {
+      safeError('❌ Cancel raffle failed:', error);
+      throw new Error(ErrorHandlingService.parseContractError(error));
+    }
+  }
+
+  /**
    * Calculate win probability for user
    */
   calculateWinProbability(userTickets: number, totalTickets: number): number {

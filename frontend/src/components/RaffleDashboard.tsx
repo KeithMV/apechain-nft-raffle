@@ -66,6 +66,18 @@ export default function RaffleDashboard() {
     }
   };
 
+  const handleCancelRaffle = async (raffleContract: string) => {
+    try {
+      // Call cancel raffle function
+      await raffleContractService.cancelRaffle(raffleContract);
+      toast.success('Raffle cancelled successfully!');
+      loadUserData(); // Refresh data
+    } catch (error: any) {
+      console.error('Failed to cancel raffle:', error);
+      toast.error('Failed to cancel raffle: ' + error.message);
+    }
+  };
+
   if (loading) {
     return (
       <div className="relative bg-gray-900/95 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl shadow-emerald-500/10 p-8">
@@ -276,14 +288,26 @@ export default function RaffleDashboard() {
                             )}
                           </div>
                           
-                          {!raffle.isActive && !raffle.completed && raffle.ticketsSold > 0 && (
-                            <button
-                              onClick={() => handleSelectWinner(raffle.raffleContract)}
-                              className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
-                            >
-                              <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                              <span className="relative">Select Winner</span>
-                            </button>
+                          {!raffle.isActive && !raffle.completed && (
+                            <div className="space-y-2">
+                              {raffle.ticketsSold > 0 ? (
+                                <button
+                                  onClick={() => handleSelectWinner(raffle.raffleContract)}
+                                  className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
+                                >
+                                  <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                  <span className="relative">Select Winner</span>
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleCancelRaffle(raffle.raffleContract)}
+                                  className="relative bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-red-500/25 hover:shadow-xl hover:shadow-red-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
+                                >
+                                  <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/20 to-red-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                  <span className="relative">Cancel Raffle</span>
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>

@@ -142,6 +142,13 @@ export const RAFFLE_CONTRACT_ABI = [
   },
   {
     "inputs": [],
+    "name": "cancelRaffle",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getTotalTickets",
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",

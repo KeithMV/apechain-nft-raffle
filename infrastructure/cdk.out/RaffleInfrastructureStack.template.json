@@ -3,14 +3,24 @@
   "RaffleFrontendBucketDBF26C7D": {
    "Type": "AWS::S3::Bucket",
    "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
     "BucketName": "apechain-nft-raffle-856872546342-us-east-1",
     "PublicAccessBlockConfiguration": {
      "BlockPublicAcls": true,
-     "IgnorePublicAcls": true
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
     },
-    "WebsiteConfiguration": {
-     "ErrorDocument": "index.html",
-     "IndexDocument": "index.html"
+    "VersioningConfiguration": {
+     "Status": "Enabled"
     }
    },
    "UpdateReplacePolicy": "Delete",
@@ -28,10 +38,67 @@
     "PolicyDocument": {
      "Statement": [
       {
-       "Action": "s3:GetObject",
-       "Effect": "Allow",
+       "Action": "s3:*",
+       "Condition": {
+        "Bool": {
+         "aws:SecureTransport": "false"
+        }
+       },
+       "Effect": "Deny",
        "Principal": {
         "AWS": "*"
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "RaffleFrontendBucketDBF26C7D",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "RaffleFrontendBucketDBF26C7D",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "s3:GetObject",
+       "Condition": {
+        "StringEquals": {
+         "AWS:SourceArn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":cloudfront::",
+            {
+             "Ref": "AWS::AccountId"
+            },
+            ":distribution/",
+            {
+             "Ref": "RaffleDistributionDE46C7C4"
+            }
+           ]
+          ]
+         }
+        }
+       },
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "cloudfront.amazonaws.com"
        },
        "Resource": {
         "Fn::Join": [
@@ -56,10 +123,48 @@
     "aws:cdk:path": "RaffleInfrastructureStack/RaffleFrontendBucket/Policy/Resource"
    }
   },
+  "RaffleOAC079EB503": {
+   "Type": "AWS::CloudFront::OriginAccessControl",
+   "Properties": {
+    "OriginAccessControlConfig": {
+     "Description": "OAC for Raffle S3 bucket",
+     "Name": "RaffleInfrastructureStackRaffleOAC4CCC656E",
+     "OriginAccessControlOriginType": "s3",
+     "SigningBehavior": "always",
+     "SigningProtocol": "sigv4"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleInfrastructureStack/RaffleOAC/Resource"
+   }
+  },
+  "RaffleCertificateEC01A829": {
+   "Type": "AWS::CertificateManager::Certificate",
+   "Properties": {
+    "DomainName": "apechain-raffles.com",
+    "SubjectAlternativeNames": [
+     "www.apechain-raffles.com"
+    ],
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "RaffleInfrastructureStack/RaffleCertificate"
+     }
+    ],
+    "ValidationMethod": "DNS"
+   },
+   "Metadata": {
+    "aws:cdk:path": "RaffleInfrastructureStack/RaffleCertificate/Resource"
+   }
+  },
   "RaffleDistributionDE46C7C4": {
    "Type": "AWS::CloudFront::Distribution",
    "Properties": {
     "DistributionConfig": {
+     "Aliases": [
+      "apechain-raffles.com",
+      "www.apechain-raffles.com"
+     ],
      "CustomErrorResponses": [
       {
        "ErrorCode": 404,
@@ -79,31 +184,31 @@
      "IPV6Enabled": true,
      "Origins": [
       {
-       "CustomOriginConfig": {
-        "OriginProtocolPolicy": "http-only",
-        "OriginSSLProtocols": [
-         "TLSv1.2"
-        ]
-       },
        "DomainName": {
-        "Fn::Select": [
-         2,
-         {
-          "Fn::Split": [
-           "/",
-           {
-            "Fn::GetAtt": [
-             "RaffleFrontendBucketDBF26C7D",
-             "WebsiteURL"
-            ]
-           }
-          ]
-         }
+        "Fn::GetAtt": [
+         "RaffleFrontendBucketDBF26C7D",
+         "RegionalDomainName"
         ]
        },
-       "Id": "RaffleInfrastructureStackRaffleDistributionOrigin17AF643E5"
+       "Id": "RaffleInfrastructureStackRaffleDistributionOrigin17AF643E5",
+       "OriginAccessControlId": {
+        "Fn::GetAtt": [
+         "RaffleOAC079EB503",
+         "Id"
+        ]
+       },
+       "S3OriginConfig": {
+        "OriginAccessIdentity": ""
+       }
       }
-     ]
+     ],
+     "ViewerCertificate": {
+      "AcmCertificateArn": {
+       "Ref": "RaffleCertificateEC01A829"
+      },
+      "MinimumProtocolVersion": "TLSv1.2_2021",
+      "SslSupportMethod": "sni-only"
+     }
     }
    },
    "Metadata": {
@@ -113,7 +218,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/02MwQrCMBBEv6X3dI1VEK/qXakfIG2SwrY1keyuRUL+XWoFPc28xzAV7DToopmoNHYoR2whXbkxg2omuiXaQDqIGRyrY+e/bYlLGNG8fnrhrMwYxHYxeIZ0QuKIrTAGPy//OefZnIUf8jmvHQWJxmXlg3XQ0+pZaVjvYVv0hFhG8Yx3B/WSbyftgeu5AAAA"
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/22NMQ7CMAxFz8KemtIywAhlB8EBUHBTZNo6KHFAKMrdUSkSHZi+39P/cgHFYgX5TD99hnWbdXSBeBKNrdJPf46+hLgN2BpRVcPfa4yD7QhfPz1yUtjZUDfOskA8lXtHV+INovG+sizOdsPkn96RF0eXIGR56Ew5KTROqCHUYnrN+mocxOrnhsEEU/p8CXIPkhTb2sDNzx9FDos1LGc3T5S5wEK9geOYb80LovULAQAA"
    },
    "Metadata": {
     "aws:cdk:path": "RaffleInfrastructureStack/CDKMetadata/Default"
@@ -132,10 +237,21 @@
    }
   },
   "WebsiteURL": {
+   "Value": "https://apechain-raffles.com"
+  },
+  "CloudFrontURL": {
    "Value": {
-    "Fn::GetAtt": [
-     "RaffleDistributionDE46C7C4",
-     "DomainName"
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Fn::GetAtt": [
+        "RaffleDistributionDE46C7C4",
+        "DomainName"
+       ]
+      }
+     ]
     ]
    }
   },

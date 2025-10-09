@@ -1,6 +1,7 @@
 {
-  "short_name": "NFT Raffle",
+  "short_name": "ApeRaffle",
   "name": "ApeCoin NFT Raffle System",
+  "description": "Decentralized NFT raffle platform on ApeChain",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,8 +9,11 @@
       "type": "image/x-icon"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "orientation": "portrait-primary",
+  "theme_color": "#1f2937",
+  "background_color": "#ffffff",
+  "categories": ["finance", "games", "utilities"],
+  "lang": "en-US"
 }

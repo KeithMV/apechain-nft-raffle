@@ -62,6 +62,7 @@ class RaffleService {
    */
   async createRaffle(params: CreateRaffleParams): Promise<RaffleResult> {
     safeLog('🔄 Starting raffle creation with params:', params);
+    safeLog('⛽ Using gas limit: 800000');
 
     try {
       // Pre-calculate APE amount to avoid async in transaction args
@@ -78,7 +79,7 @@ class RaffleService {
           BigInt(params.maxTickets),
           BigInt(params.duration)
         ],
-        // Gas will be estimated automatically
+        gas: 800000n // Set reasonable gas limit
       });
 
       safeLog('✅ Raffle creation transaction submitted:', hash);
@@ -164,7 +165,7 @@ class RaffleService {
         abi: ERC721_ABI,
         functionName: 'setApprovalForAll',
         args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
-        // Gas will be estimated automatically
+        gas: 100000n // Set reasonable gas limit for approval
       });
 
       safeLog('✅ Approval transaction submitted:', hash);

@@ -82,7 +82,11 @@ contract RaffleFactory is Ownable, ReentrancyGuard, Pausable {
         // Clone raffle template first
         address raffleContract = Clones.clone(raffleTemplate);
         
-        // Initialize raffle (includes NFT ownership validation)
+        // Transfer NFT first (will revert if not owner)
+        IERC721 nft = IERC721(nftContract);
+        nft.transferFrom(msg.sender, raffleContract, tokenId);
+        
+        // Initialize raffle after successful transfer
         RaffleContract(raffleContract).initialize(
             nftContract,
             tokenId,
@@ -92,11 +96,6 @@ contract RaffleFactory is Ownable, ReentrancyGuard, Pausable {
             duration,
             platformFee
         );
-        
-        // Transfer NFT to raffle contract (double-check ownership)
-        IERC721 nft = IERC721(nftContract);
-        require(nft.ownerOf(tokenId) == msg.sender, "Not NFT owner");
-        nft.transferFrom(msg.sender, raffleContract, tokenId);
         
         // Store mapping
         raffleContracts[raffleCounter] = raffleContract;

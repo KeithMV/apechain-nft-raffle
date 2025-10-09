@@ -1,15 +1,16 @@
 {
-  "version": "31.0.0",
+  "version": "48.0.0",
   "files": {
-    "a279b8ed654f59951a91ff407ba982cf87ccd1be0316850b799e0aad9f28187f": {
+    "e67d303a5387a28fd42b3b4615132531ead61343486239bcbefffad6fcf93606": {
+      "displayName": "RaffleInfrastructureStack Template",
       "source": {
         "path": "RaffleInfrastructureStack.template.json",
         "packaging": "file"
       },
       "destinations": {
-        "856872546342-us-east-1": {
+        "856872546342-us-east-1-fa8897c9": {
           "bucketName": "cdk-hnb659fds-assets-856872546342-us-east-1",
-          "objectKey": "a279b8ed654f59951a91ff407ba982cf87ccd1be0316850b799e0aad9f28187f.json",
+          "objectKey": "e67d303a5387a28fd42b3b4615132531ead61343486239bcbefffad6fcf93606.json",
           "region": "us-east-1",
           "assumeRoleArn": "arn:${AWS::Partition}:iam::856872546342:role/cdk-hnb659fds-file-publishing-role-856872546342-us-east-1"
         }

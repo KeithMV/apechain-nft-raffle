@@ -6,7 +6,13 @@ import { CicdStack } from '../lib/cicd-stack';
 
 const app = new cdk.App();
 
+// Get domain configuration from context
+const domainName = app.node.tryGetContext('domainName');
+const hostedZoneId = app.node.tryGetContext('hostedZoneId');
+
 const infraStack = new RaffleInfrastructureStack(app, 'RaffleInfrastructureStack', {
+  domainName,
+  hostedZoneId,
   env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
 });
 

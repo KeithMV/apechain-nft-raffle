@@ -182,6 +182,15 @@
     "Artifacts": {
      "Type": "NO_ARTIFACTS"
     },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "EncryptionKey": {
+     "Fn::GetAtt": [
+      "RafflePipelineArtifactsBucketEncryptionKeyFF4CA582",
+      "Arn"
+     ]
+    },
     "Environment": {
      "ComputeType": "BUILD_GENERAL1_SMALL",
      "EnvironmentVariables": [
@@ -216,15 +225,6 @@
      "Location": "https://github.com/KeithMV/apechain-nft-raffle.git",
      "ReportBuildStatus": true,
      "Type": "GITHUB"
-    },
-    "Cache": {
-     "Type": "NO_CACHE"
-    },
-    "EncryptionKey": {
-     "Fn::GetAtt": [
-      "RafflePipelineArtifactsBucketEncryptionKeyFF4CA582",
-      "Arn"
-     ]
     }
    },
    "Metadata": {
@@ -457,6 +457,22 @@
   "RafflePipeline11A3F1DD": {
    "Type": "AWS::CodePipeline::Pipeline",
    "Properties": {
+    "ArtifactStore": {
+     "EncryptionKey": {
+      "Id": {
+       "Fn::GetAtt": [
+        "RafflePipelineArtifactsBucketEncryptionKeyFF4CA582",
+        "Arn"
+       ]
+      },
+      "Type": "KMS"
+     },
+     "Location": {
+      "Ref": "RafflePipelineArtifactsBucketBC7D869E"
+     },
+     "Type": "S3"
+    },
+    "Name": "NFT-Raffle-Pipeline",
     "RoleArn": {
      "Fn::GetAtt": [
       "RafflePipelineRole4DAB643F",
@@ -527,23 +543,7 @@
       ],
       "Name": "Build"
      }
-    ],
-    "ArtifactStore": {
-     "EncryptionKey": {
-      "Id": {
-       "Fn::GetAtt": [
-        "RafflePipelineArtifactsBucketEncryptionKeyFF4CA582",
-        "Arn"
-       ]
-      },
-      "Type": "KMS"
-     },
-     "Location": {
-      "Ref": "RafflePipelineArtifactsBucketBC7D869E"
-     },
-     "Type": "S3"
-    },
-    "Name": "NFT-Raffle-Pipeline"
+    ]
    },
    "DependsOn": [
     "RafflePipelineRoleDefaultPolicy1618EDBC",
@@ -566,12 +566,12 @@
       "MatchEquals": "refs/heads/{Branch}"
      }
     ],
+    "RegisterWithThirdParty": true,
     "TargetAction": "GitHub_Source",
     "TargetPipeline": {
      "Ref": "RafflePipeline11A3F1DD"
     },
-    "TargetPipelineVersion": 1,
-    "RegisterWithThirdParty": true
+    "TargetPipelineVersion": 1
    },
    "Metadata": {
     "aws:cdk:path": "RaffleCicdStack/RafflePipeline/Source/GitHub_Source/WebhookResource"
@@ -586,7 +586,12 @@
        "Action": "sts:AssumeRole",
        "Effect": "Allow",
        "Principal": {
-        "AWS": "arn:aws:iam::856872546342:root"
+        "AWS": {
+         "Fn::GetAtt": [
+          "RafflePipelineRole4DAB643F",
+          "Arn"
+         ]
+        }
        }
       }
      ],
@@ -633,7 +638,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/02OwQ6CMBBEv8V7WRFNjEf16IXgwaMpZY1LS0soSEzTfzctTeQ0bzaT2SngmEO+4bPNRCMzRTW4+8iFZHy2TydMg/VEqgFXDqZFMbLrSyf0jHgHrjIKwzVqaRSJbwxF8ixU9NSjIo3gykQxseIH1m9jpGeys+BuGCuCnBVxG0wEz+we3GUSEuOSRIv8f6+996xCa6ZBLCsTe6ZNg9Da7afIYXeCw6a1RNkw6ZE6hGrRHyP6HcAgAQAA"
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/02OsQ6CMBCGn4W9nIAOOqqjC8HB0ZT2jEcLJRQkpum7mxYSmb7vLn/+uwKK/AhZwmebCqlSTTW4+8iFYny2TyeMxHoiLcGVg2lQjOz66lb1jHgLrjIawzayNJrEN4aieRYqeupRU4fgytViYuMPrN/GKM9Ua8HdMFYEnDVxG4Yontk9uMskFMZPVlvwv72dvWcVWjMNAj3rjERo7O5TZJCf4JA0ligdpm6kFqFa+APy4bHLFQEAAA=="
    },
    "Metadata": {
     "aws:cdk:path": "RaffleCicdStack/CDKMetadata/Default"

@@ -55,9 +55,9 @@ class RafflePositionService {
     }
     
     try {
-      // Get all RaffleCreated events (last 50000 blocks)
+      // Get all RaffleCreated events (last 200000 blocks)
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
+      const fromBlock = currentBlock > 200000n ? currentBlock - 200000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -142,17 +142,19 @@ class RafflePositionService {
     try {
       // Get RaffleCreated events where user is the creator
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
+      const fromBlock = currentBlock > 200000n ? currentBlock - 200000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
         event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
-        fromBlock,
-        toBlock: 'latest',
         args: {
-          creator: userAddress as `0x${string}` // Filter by creator
-        }
+          creator: userAddress as `0x${string}`
+        },
+        fromBlock,
+        toBlock: 'latest'
       });
+      
+      console.log(`Found ${raffleEvents.length} events for creator ${userAddress}`);
 
       if (raffleEvents.length === 0) {
         return [];
@@ -210,9 +212,9 @@ class RafflePositionService {
     }
     
     try {
-      // Get recent RaffleCreated events
+      // Get RaffleCreated events from a wider range
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 10000n ? currentBlock - 10000n : 0n;
+      const fromBlock = currentBlock > 100000n ? currentBlock - 100000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -225,19 +227,33 @@ class RafflePositionService {
         return [];
       }
 
-      // Process and filter active raffles
-      const rafflePromises = raffleEvents.slice(-limit).map(async (event: any) => {
+      console.log(`Found ${raffleEvents.length} total raffle events`);
+      
+      // Process all raffles first to see what we have
+      const recentEvents = raffleEvents.slice(-Math.min(limit * 2, raffleEvents.length));
+      const rafflePromises = recentEvents.map(async (event: any) => {
         try {
           const { raffleId, raffleContract, nftContract, tokenId, creator, ticketPrice, maxTickets } = event.args;
+          console.log(`Processing raffle ${raffleId}: ${raffleContract}`);
+          
+          const raffleInfo = await raffleContractService.getRaffleInfo(raffleContract as string);
+          console.log(`Raffle ${raffleId} info:`, {
+            completed: raffleInfo.completed,
+            endTime: Number(raffleInfo.endTime),
+            currentTime: Math.floor(Date.now() / 1000),
+            ticketsSold: Number(raffleInfo.ticketsSold),
+            maxTickets: Number(maxTickets)
+          });
           
           // Check if raffle is still active
-          const isActive = await raffleContractService.isActive(raffleContract as string);
+          const now = Math.floor(Date.now() / 1000);
+          const isActive = !raffleInfo.completed && now < Number(raffleInfo.endTime) && Number(raffleInfo.ticketsSold) < Number(maxTickets);
+          
+          console.log(`Raffle ${raffleId} active:`, isActive);
           
           if (!isActive) {
-            return null; // Skip inactive raffles
+            return null;
           }
-
-          const raffleInfo = await raffleContractService.getRaffleInfo(raffleContract as string);
 
           return {
             raffleId: Number(raffleId),
@@ -253,7 +269,7 @@ class RafflePositionService {
             completed: false
           };
         } catch (error) {
-          console.log('Error processing active raffle:', error);
+          console.log('Error processing raffle:', error);
           return null;
         }
       });

@@ -1,0 +1,13 @@
+{
+  "FirstName": "ApeChain",
+  "LastName": "Raffle",
+  "ContactType": "COMPANY",
+  "OrganizationName": "ApeChain Raffle Platform",
+  "AddressLine1": "123 Blockchain Ave",
+  "City": "San Francisco",
+  "State": "CA",
+  "CountryCode": "US",
+  "ZipCode": "94102",
+  "PhoneNumber": "+1.5551234567",
+  "Email": "admin@example.com"
+}

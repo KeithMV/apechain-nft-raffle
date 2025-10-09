@@ -2,13 +2,21 @@ import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as certificatemanager from 'aws-cdk-lib/aws-certificatemanager';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import { Construct } from 'constructs';
+
+export interface RaffleInfrastructureStackProps extends cdk.StackProps {
+  domainName?: string;
+  hostedZoneId?: string;
+}
 
 export class RaffleInfrastructureStack extends cdk.Stack {
   public readonly s3Bucket: s3.Bucket;
   public readonly cloudFrontDistributionId: string;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: RaffleInfrastructureStackProps) {
     super(scope, id, props);
 
     // S3 Bucket for frontend hosting
@@ -23,9 +31,24 @@ export class RaffleInfrastructureStack extends cdk.Stack {
     });
 
     // Origin Access Control for secure S3 access
-    const originAccessControl = new cloudfront.OriginAccessControl(this, 'RaffleOAC', {
+    const originAccessControl = new cloudfront.S3OriginAccessControl(this, 'RaffleOAC', {
       description: 'OAC for Raffle S3 bucket',
     });
+
+    // SSL Certificate and Domain Setup (if domain provided)
+    let certificate: certificatemanager.ICertificate | undefined;
+    let domainNames: string[] | undefined;
+    
+    if (props?.domainName) {
+      // Create SSL certificate in us-east-1 (required for CloudFront)
+      certificate = new certificatemanager.Certificate(this, 'RaffleCertificate', {
+        domainName: props.domainName,
+        subjectAlternativeNames: [`www.${props.domainName}`],
+        validation: certificatemanager.CertificateValidation.fromDns(),
+      });
+      
+      domainNames = [props.domainName, `www.${props.domainName}`];
+    }
 
     // CloudFront Distribution
     const distribution = new cloudfront.Distribution(this, 'RaffleDistribution', {
@@ -36,6 +59,8 @@ export class RaffleInfrastructureStack extends cdk.Stack {
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
       },
+      domainNames,
+      certificate,
       defaultRootObject: 'index.html',
       errorResponses: [
         {
@@ -46,6 +71,27 @@ export class RaffleInfrastructureStack extends cdk.Stack {
       ],
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
     });
+
+    // Route53 DNS Records (if hosted zone provided)
+    if (props?.domainName && props?.hostedZoneId) {
+      const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+        hostedZoneId: props.hostedZoneId,
+        zoneName: props.domainName,
+      });
+
+      // A record for root domain
+      new route53.ARecord(this, 'RaffleARecord', {
+        zone: hostedZone,
+        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
+      });
+
+      // A record for www subdomain
+      new route53.ARecord(this, 'RaffleWwwARecord', {
+        zone: hostedZone,
+        recordName: 'www',
+        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
+      });
+    }
 
     this.cloudFrontDistributionId = distribution.distributionId;
 
@@ -59,7 +105,11 @@ export class RaffleInfrastructureStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'WebsiteURL', {
-      value: distribution.distributionDomainName,
+      value: props?.domainName ? `https://${props.domainName}` : `https://${distribution.distributionDomainName}`,
+    });
+
+    new cdk.CfnOutput(this, 'CloudFrontURL', {
+      value: `https://${distribution.distributionDomainName}`,
     });
   }
 }

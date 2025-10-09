@@ -26,8 +26,13 @@ export default function BrowseRaffles() {
     
     setLoading(true);
     try {
+      console.log('Loading active raffles...');
       const raffles = await rafflePositionService.getActiveRaffles(publicClient, 50);
+      console.log('Loaded raffles:', raffles.length);
       setActiveRaffles(raffles);
+      if (raffles.length === 0) {
+        console.log('No active raffles found');
+      }
     } catch (error) {
       console.error('Failed to load active raffles:', error);
       toast.error('Failed to load raffles');
@@ -55,8 +60,8 @@ export default function BrowseRaffles() {
     const quantity = ticketQuantities[raffle.raffleContract] || 1;
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
     
-    if (quantity < 1 || quantity > 50) {
-      toast.error('Please enter a valid quantity (1-50)');
+    if (quantity < 1 || quantity > 100) {
+      toast.error('Please enter a valid quantity (1-100)');
       return;
     }
     
@@ -181,8 +186,8 @@ export default function BrowseRaffles() {
                         <h4 className="text-lg font-semibold text-white mb-1">
                           NFT #{raffle.tokenId}
                         </h4>
-                        <p className="text-slate-400 text-sm font-mono">
-                          {raffle.nftContract.slice(0, 6)}...{raffle.nftContract.slice(-4)}
+                        <p className="text-slate-400 text-xs font-mono break-all">
+                          {raffle.nftContract}
                         </p>
                       </div>
                     </div>
@@ -209,7 +214,7 @@ export default function BrowseRaffles() {
                       </div>
                       <div>
                         <p className="text-slate-400">Win Chance</p>
-                        <p className="text-white font-mono">{raffle.ticketsSold > 0 ? (quantity / (raffle.ticketsSold + quantity) * 100).toFixed(1) : '0.0'}%</p>
+                        <p className="text-white font-mono">{(quantity / raffle.maxTickets * 100).toFixed(1)}%</p>
                       </div>
                     </div>
 
@@ -238,7 +243,7 @@ export default function BrowseRaffles() {
                               <input
                                 type="number"
                                 min="1"
-                                max={Math.min(50, availableTickets)}
+                                max={Math.min(100, availableTickets)}
                                 value={quantity}
                                 onChange={(e) => setTicketQuantity(raffle.raffleContract, parseInt(e.target.value) || 1, availableTickets)}
                                 className="w-full bg-slate-800/80 border border-emerald-400/30 rounded-xl px-3 py-2 text-slate-100 text-sm font-mono focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 focus:outline-none transition-all"

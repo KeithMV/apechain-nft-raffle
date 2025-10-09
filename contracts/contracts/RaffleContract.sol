@@ -74,7 +74,7 @@ contract RaffleContract is ReentrancyGuard, Pausable, Initializable {
         uint256 _duration,
         uint256 _platformFee
     ) external initializer {
-        require(IERC721(_nftContract).ownerOf(_tokenId) == _creator, "Not NFT owner");
+        // Ownership validation moved to factory after NFT transfer
         require(_maxTickets <= 10000, "Max 10000 tickets per raffle");
         require(_maxTickets >= 1, "Min 1 ticket required");
         

@@ -48,15 +48,14 @@ export default function NFTImage({ contractAddress, tokenId, className = '', sho
   if (error || !metadata?.image) {
     return (
       <div className={`relative bg-gray-800/90 border border-emerald-500/30 rounded-lg flex flex-col items-center justify-center ${className} backdrop-blur-sm`}>
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-lg blur-sm animate-pulse"></div>
-        <div className="relative flex flex-col items-center">
-          <span className="text-emerald-400 text-2xl mb-2">⚡</span>
-          <span className="text-emerald-300/70 text-xs text-center font-mono tracking-wider">NFT #{tokenId}</span>
-          {showName && (
-            <span className="text-emerald-200 text-sm mt-1 text-center font-mono">
-              {metadata?.name || `NFT #${tokenId}`}
-            </span>
-          )}
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-lg blur-sm"></div>
+        <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-xl flex items-center justify-center mb-3">
+          <span className="text-emerald-400 text-2xl">🖼️</span>
+        </div>
+        <span className="text-emerald-300 text-sm font-medium text-center">NFT #{tokenId}</span>
+        {showName && metadata?.name && <span className="text-emerald-200 text-xs mt-1 text-center">{metadata.name}</span>}
+        <div className="mt-2 px-2 py-1 bg-emerald-500/10 border border-emerald-400/30 rounded text-emerald-400 text-xs">
+          {contractAddress.slice(0, 6)}...{contractAddress.slice(-4)}
         </div>
       </div>
     );
@@ -64,20 +63,21 @@ export default function NFTImage({ contractAddress, tokenId, className = '', sho
 
   return (
     <div className={`relative overflow-hidden rounded-lg border border-emerald-500/30 ${className}`}>
+      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-lg blur-sm"></div>
       <img
         src={metadata.image}
         alt={metadata.name || `NFT #${tokenId}`}
-        className="w-full h-full object-cover"
-        onError={() => setError(true)}
+        className="relative w-full h-full object-cover"
+        onError={(e) => {
+          console.error('Image failed to load:', metadata.image);
+          setError(true);
+        }}
       />
-      {showName && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900/90 via-gray-800/50 to-transparent p-2 border-t border-emerald-500/20">
-          <p className="text-emerald-200 text-sm font-medium truncate font-mono tracking-wide">
-            {metadata.name || `NFT #${tokenId}`}
-          </p>
+      {showName && metadata.name && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900/90 to-transparent p-2">
+          <p className="text-emerald-200 text-sm truncate">{metadata.name}</p>
         </div>
       )}
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-teal-500/5 pointer-events-none"></div>
     </div>
   );
 }
