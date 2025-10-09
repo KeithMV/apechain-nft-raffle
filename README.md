@@ -4,7 +4,7 @@ A production-ready decentralized raffle platform for NFTs on ApeChain, allowing 
 
 ## 🌟 Live Platform
 
-**🚀 Production URL**: https://d3mce6qq270l98.cloudfront.net
+**🚀 Production URL**: https://apechain-raffles.com
 
 **📋 Deployed Contracts (ApeChain Mainnet)**:
 - **RaffleFactory**: `0xa7652f6175C664bd09A7d726A5a51ebeBe2A2DBC`
@@ -15,7 +15,7 @@ A production-ready decentralized raffle platform for NFTs on ApeChain, allowing 
 ## 🚀 Quick Start
 
 ### For Users
-1. Visit https://d3mce6qq270l98.cloudfront.net
+1. Visit https://apechain-raffles.com
 2. Connect MetaMask to ApeChain network
 3. Ensure you have APE tokens for transactions
 4. Start creating or participating in raffles!
@@ -242,7 +242,7 @@ aws cloudfront create-invalidation --distribution-id E1234567890 --paths "/*"
 
 Built on proven Web3 architecture that eliminates traditional backend complexity while providing enterprise-grade security and unlimited scalability through blockchain technology.
 
-**Live Platform**: https://d3mce6qq270l98.cloudfront.net
+**Live Platform**: https://apechain-raffles.com
 
 **Why This Architecture Matters:**
 - Demonstrates the future of decentralized applications
