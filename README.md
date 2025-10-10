@@ -107,6 +107,12 @@ Servers                   ❌ Not Needed
 - Frontend reads live data directly from blockchain
 - No APIs or databases - just contract queries
 
+**🖼️ Optimized NFT Metadata:**
+- Multi-gateway IPFS fallback system for reliable image loading
+- CORS-optimized requests with balanced timeouts (12s)
+- Intelligent caching and error handling for metadata fetching
+- Support for multiple NFT standards and storage providers
+
 **💸 Instant Payouts:**
 - Winners receive NFTs immediately upon selection
 - Creators get APE revenue instantly (minus platform fee)
@@ -116,7 +122,7 @@ Servers                   ❌ Not Needed
 This project reuses 80% of the codebase from the proven ApeChain NFT Fractionalization platform, enhanced with additional security measures:
 
 - ✅ **Smart Contract Architecture**: Factory pattern with security audit improvements
-- ✅ **Frontend Services**: Transaction handling with enhanced error management
+- ✅ **Frontend Services**: Transaction handling with enhanced error management and optimized NFT metadata fetching
 - ✅ **UI Components**: Modern React components with responsive design
 - ✅ **AWS Infrastructure**: Serverless deployment with CloudFront CDN
 - ✅ **Security Enhancements**: Commit-reveal randomness, gas optimization, safe external calls
@@ -152,6 +158,7 @@ This project reuses 80% of the codebase from the proven ApeChain NFT Fractionali
 - **Unsafe External Calls**: Updated to use safe `.call{value:}("")` pattern
 - **Access Control**: Enhanced ownership verification and permission checks
 - **Decimal Handling**: Fixed APE token decimal precision issues
+- **NFT Metadata CORS**: Optimized IPFS gateway requests to prevent CORS blocking
 
 ### Security Measures:
 - **ReentrancyGuard**: Prevents reentrancy attacks
