@@ -1,6 +1,6 @@
 import { PublicClient } from 'viem';
 
-// Updated NFT metadata service with improved reliability
+// NFT metadata service with reliable gateways only
 interface NFTMetadata {
   name?: string;
   description?: string;
@@ -65,8 +65,6 @@ class NFTMetadataService {
         metadata.image = imageGateways[0];
         (metadata as any).imageAlternatives = imageGateways.slice(1);
       }
-      
-
 
       this.metadataCache.set(cacheKey, metadata);
       return metadata;
@@ -77,7 +75,7 @@ class NFTMetadataService {
   }
 
   private async fetchWithFallback(url: string): Promise<NFTMetadata | null> {
-    // Build reliable gateway list
+    // Build comprehensive gateway list for Web3 resilience
     const gateways = [];
     
     if (url.includes('ipfs')) {
@@ -86,15 +84,20 @@ class NFTMetadataService {
         url,
         url.replace(/https:\/\/[^/]+/, 'https://ipfs.io'),
         url.replace(/https:\/\/[^/]+/, 'https://dweb.link'),
-        url.replace(/https:\/\/[^/]+/, 'https://nftstorage.link')
+        url.replace(/https:\/\/[^/]+/, 'https://nftstorage.link'),
+        url.replace(/https:\/\/[^/]+/, 'https://4everland.io')
       );
     } else {
-      // Direct URL first, then CORS proxies
+      // For problematic direct URLs, use multiple CORS proxies
       gateways.push(
-        url,
         `https://corsproxy.io/?${encodeURIComponent(url)}`,
         `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
       );
+      
+      // Only try direct URL if it's not a known problematic endpoint
+      if (!url.includes('api.op.xyz') && !url.includes('api.other.page')) {
+        gateways.unshift(url); // Add direct URL as first option
+      }
     }
 
     for (const gateway of gateways) {
@@ -115,28 +118,6 @@ class NFTMetadataService {
       }
     }
     return null;
-  }
-
-  private async validateImageUrl(url: string): Promise<boolean> {
-    try {
-      const response = await fetch(url, { 
-        method: 'HEAD',
-        signal: AbortSignal.timeout(3000)
-      });
-      return response.ok;
-    } catch {
-      // If HEAD fails, try GET with range to check if it's an image
-      try {
-        const response = await fetch(url, { 
-          method: 'GET',
-          headers: { 'Range': 'bytes=0-1023' },
-          signal: AbortSignal.timeout(3000)
-        });
-        return response.ok;
-      } catch {
-        return false;
-      }
-    }
   }
 }
 

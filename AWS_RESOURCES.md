@@ -16,15 +16,17 @@
 ### **CloudFront Distribution (CDN)**
 - **ID**: `EH7R5RBQF66DL`
 - **URL**: https://d3mce6qq270l98.cloudfront.net
+- **Custom Domain**: https://apechain-raffles.com
 - **Purpose**: Global content delivery
 - **Origin**: S3 bucket above
+- **Status**: Production Ready
 
 ## 🔄 **Deployment Commands**
 
 ### **Update Frontend**
 ```bash
 # Build React app
-cd frontend
+cd /home/ubuntu/apechain-nft-raffle/frontend
 npm run build
 
 # Deploy to S3
@@ -69,7 +71,16 @@ Users → CloudFront CDN → S3 Bucket → React App → ApeChain Blockchain
 - No traditional servers or databases needed
 - Static hosting only - all dynamic data from blockchain
 - Global CDN for fast loading worldwide
+- Web3-optimized NFT metadata service with multiple IPFS gateways
+- SSL-resilient fetching with CORS proxy fallbacks
+
+## 🔧 **Current Services**
+- **NFT Metadata Service**: `nftMetadataServiceV2.ts` (Web3-optimized)
+- **IPFS Gateways**: ipfs.io, dweb.link, nftstorage.link, 4everland.io
+- **CORS Proxies**: corsproxy.io, api.codetabs.com
+- **SSL Error Handling**: Skips problematic endpoints (api.op.xyz, api.other.page)
 
 ---
-**Last Updated**: 2025-09-30
-**Live URL**: https://d3mce6qq270l98.cloudfront.net
+**Last Updated**: 2025-10-10
+**Live URL**: https://apechain-raffles.com
+**CloudFront URL**: https://d3mce6qq270l98.cloudfront.net

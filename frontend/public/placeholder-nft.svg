@@ -1,0 +1,8 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="300" fill="#f3f4f6"/>
+  <rect x="50" y="50" width="200" height="200" rx="20" fill="#e5e7eb" stroke="#d1d5db" stroke-width="2"/>
+  <circle cx="120" cy="130" r="15" fill="#9ca3af"/>
+  <circle cx="180" cy="130" r="15" fill="#9ca3af"/>
+  <path d="M130 170 Q150 190 170 170" stroke="#9ca3af" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <text x="150" y="280" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="14">NFT Image</text>
+</svg>

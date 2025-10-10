@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePublicClient } from 'wagmi';
-import { nftMetadataService } from '../services/nftMetadataService';
+import { nftMetadataService } from '../services/nftMetadataServiceV2';
 
 interface NFTImageProps {
   contractAddress: string;
@@ -23,10 +23,12 @@ export default function NFTImage({ contractAddress, tokenId, className = '', sho
       setError(false);
       
       try {
+        console.log(`Loading NFT metadata for ${contractAddress} #${tokenId}`);
         const data = await nftMetadataService.getNFTMetadata(publicClient, contractAddress, tokenId);
+        console.log('NFT metadata loaded:', data);
         setMetadata(data);
       } catch (err) {
-        console.error('Failed to load NFT metadata:', err);
+        console.error(`Failed to load NFT metadata for ${contractAddress} #${tokenId}:`, err);
         setError(true);
       } finally {
         setLoading(false);
@@ -45,17 +47,21 @@ export default function NFTImage({ contractAddress, tokenId, className = '', sho
     );
   }
 
-  if (error || !metadata?.image) {
+  if (error || !metadata?.image || metadata?.image === '/placeholder-nft.png') {
     return (
-      <div className={`relative bg-gray-800/90 border border-emerald-500/30 rounded-lg flex flex-col items-center justify-center ${className} backdrop-blur-sm`}>
+      <div className={`relative overflow-hidden rounded-lg border border-emerald-500/30 ${className}`}>
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-lg blur-sm"></div>
-        <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-xl flex items-center justify-center mb-3">
-          <span className="text-emerald-400 text-2xl">🖼️</span>
-        </div>
-        <span className="text-emerald-300 text-sm font-medium text-center">NFT #{tokenId}</span>
-        {showName && metadata?.name && <span className="text-emerald-200 text-xs mt-1 text-center">{metadata.name}</span>}
-        <div className="mt-2 px-2 py-1 bg-emerald-500/10 border border-emerald-400/30 rounded text-emerald-400 text-xs">
-          {contractAddress.slice(0, 6)}...{contractAddress.slice(-4)}
+        <img
+          src="/placeholder-nft.svg"
+          alt={metadata?.name || `NFT #${tokenId}`}
+          className="relative w-full h-full object-cover opacity-60"
+        />
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/40">
+          <span className="text-emerald-300 text-sm font-medium text-center">NFT #{tokenId}</span>
+          {showName && metadata?.name && <span className="text-emerald-200 text-xs mt-1 text-center">{metadata.name}</span>}
+          <div className="mt-2 px-2 py-1 bg-emerald-500/10 border border-emerald-400/30 rounded text-emerald-400 text-xs">
+            {contractAddress.slice(0, 6)}...{contractAddress.slice(-4)}
+          </div>
         </div>
       </div>
     );
@@ -70,6 +76,28 @@ export default function NFTImage({ contractAddress, tokenId, className = '', sho
         className="relative w-full h-full object-cover"
         onError={(e) => {
           console.error('Image failed to load:', metadata.image);
+          
+          // Check if it's a problematic SSL domain
+          const isProblematicDomain = metadata.image.includes('img.op.xyz') || metadata.image.includes('img.other.page');
+          
+          if (isProblematicDomain && !metadata.image.includes('corsproxy.io')) {
+            // Try CORS proxy for SSL issues
+            const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(metadata.image)}`;
+            console.log('Trying CORS proxy for SSL issue:', proxiedUrl);
+            setMetadata({ ...metadata, image: proxiedUrl });
+            return;
+          }
+          
+          // Try alternative gateways if available
+          if (metadata.imageAlternatives && metadata.imageAlternatives.length > 0) {
+            const nextImage = metadata.imageAlternatives.shift();
+            if (nextImage) {
+              console.log('Trying alternative image URL:', nextImage);
+              setMetadata({ ...metadata, image: nextImage });
+              return;
+            }
+          }
+          
           setError(true);
         }}
       />

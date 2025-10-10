@@ -107,8 +107,10 @@ Servers                   ❌ Not Needed
 - Frontend reads live data directly from blockchain
 - No APIs or databases - just contract queries
 
-**🖼️ Optimized NFT Metadata:**
+**🖼️ SSL-Resilient NFT Metadata:**
 - Multi-gateway IPFS fallback system for reliable image loading
+- SSL-resilient image loading with automatic CORS proxy fallback
+- Handles problematic SSL domains (img.op.xyz, img.other.page) gracefully
 - CORS-optimized requests with balanced timeouts (12s)
 - Intelligent caching and error handling for metadata fetching
 - Support for multiple NFT standards and storage providers
