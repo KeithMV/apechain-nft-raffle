@@ -170,45 +170,102 @@ class RaffleContractService {
    */
   async getRaffleInfo(raffleContract: string): Promise<RaffleInfo> {
     try {
-      const info = await readContract(wagmiConfig, {
-        address: raffleContract as `0x${string}`,
-        abi: RAFFLE_CONTRACT_ABI,
-        functionName: 'getRaffleInfo',
-      });
-      
-      // Handle both tuple and object return types
-      const EXPECTED_RAFFLE_INFO_FIELDS = 10;
-      if (Array.isArray(info) && info.length === EXPECTED_RAFFLE_INFO_FIELDS) {
-        const [
-          nftContract,
-          tokenId,
-          creator,
-          ticketPrice,
-          maxTickets,
-          ticketsSold,
-          endTime,
-          winner,
-          completed,
-          platformFee
-        ] = info;
-
+      // First try the new struct format (newer contracts)
+      try {
+        const structInfo = await readContract(wagmiConfig, {
+          address: raffleContract as `0x${string}`,
+          abi: [{
+            "inputs": [],
+            "name": "getRaffleInfo",
+            "outputs": [{
+              "components": [
+                {"internalType": "address", "name": "nftContract", "type": "address"},
+                {"internalType": "uint256", "name": "tokenId", "type": "uint256"},
+                {"internalType": "address", "name": "creator", "type": "address"},
+                {"internalType": "uint256", "name": "ticketPrice", "type": "uint256"},
+                {"internalType": "uint256", "name": "maxTickets", "type": "uint256"},
+                {"internalType": "uint256", "name": "ticketsSold", "type": "uint256"},
+                {"internalType": "uint256", "name": "endTime", "type": "uint256"},
+                {"internalType": "address", "name": "winner", "type": "address"},
+                {"internalType": "bool", "name": "completed", "type": "bool"},
+                {"internalType": "uint256", "name": "platformFee", "type": "uint256"}
+              ],
+              "internalType": "struct RaffleContract.RaffleInfo",
+              "name": "",
+              "type": "tuple"
+            }],
+            "stateMutability": "view",
+            "type": "function"
+          }],
+          functionName: 'getRaffleInfo',
+        });
+        
+        // Handle struct format (newer contracts)
         return {
-          nftContract: nftContract as string,
-          tokenId: tokenId as bigint,
-          creator: creator as string,
-          ticketPrice: ticketPrice as bigint,
-          maxTickets: maxTickets as bigint,
-          ticketsSold: ticketsSold as bigint,
-          endTime: endTime as bigint,
-          winner: winner as string,
-          completed: completed as boolean,
-          platformFee: platformFee as bigint
+          nftContract: structInfo.nftContract,
+          tokenId: structInfo.tokenId,
+          creator: structInfo.creator,
+          ticketPrice: structInfo.ticketPrice,
+          maxTickets: structInfo.maxTickets,
+          ticketsSold: structInfo.ticketsSold,
+          endTime: structInfo.endTime,
+          winner: structInfo.winner,
+          completed: structInfo.completed,
+          platformFee: structInfo.platformFee
         };
-      } else if (typeof info === 'object' && info !== null) {
-        // Handle object return type
-        return info as RaffleInfo;
-      } else {
-        throw new Error('Invalid raffle info format returned from contract');
+      } catch (structError) {
+        // If struct format fails, try the old array format (older contracts)
+        const arrayInfo = await readContract(wagmiConfig, {
+          address: raffleContract as `0x${string}`,
+          abi: [{
+            "inputs": [],
+            "name": "getRaffleInfo",
+            "outputs": [
+              {"internalType": "address", "name": "nftContract", "type": "address"},
+              {"internalType": "uint256", "name": "tokenId", "type": "uint256"},
+              {"internalType": "address", "name": "creator", "type": "address"},
+              {"internalType": "uint256", "name": "ticketPrice", "type": "uint256"},
+              {"internalType": "uint256", "name": "maxTickets", "type": "uint256"},
+              {"internalType": "uint256", "name": "ticketsSold", "type": "uint256"},
+              {"internalType": "uint256", "name": "endTime", "type": "uint256"},
+              {"internalType": "address", "name": "winner", "type": "address"},
+              {"internalType": "bool", "name": "completed", "type": "bool"}
+            ],
+            "stateMutability": "view",
+            "type": "function"
+          }],
+          functionName: 'getRaffleInfo',
+        });
+        
+        // Handle array format (older contracts)
+        if (Array.isArray(arrayInfo) && arrayInfo.length === 9) {
+          const [
+            nftContract,
+            tokenId,
+            creator,
+            ticketPrice,
+            maxTickets,
+            ticketsSold,
+            endTime,
+            winner,
+            completed
+          ] = arrayInfo;
+
+          return {
+            nftContract: nftContract as string,
+            tokenId: tokenId as bigint,
+            creator: creator as string,
+            ticketPrice: ticketPrice as bigint,
+            maxTickets: maxTickets as bigint,
+            ticketsSold: ticketsSold as bigint,
+            endTime: endTime as bigint,
+            winner: winner as string,
+            completed: completed as boolean,
+            platformFee: 0n // Default platform fee for older contracts
+          };
+        } else {
+          throw new Error('Invalid raffle info format returned from contract');
+        }
       }
     } catch (error) {
       safeError('Failed to get raffle info:', error);

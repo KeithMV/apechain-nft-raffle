@@ -214,7 +214,7 @@ class RafflePositionService {
     try {
       // Get RaffleCreated events from a wider range
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 100000n ? currentBlock - 100000n : 0n;
+      const fromBlock = currentBlock > 200000n ? currentBlock - 200000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
