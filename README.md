@@ -1,18 +1,40 @@
-# ApeCoin NFT Raffle System
+# ApeChain NFT Raffle Platform
 
-A production-ready decentralized raffle platform for NFTs on ApeChain, allowing users to raffle expensive NFTs for affordable APE tickets. **Security audited and deployed to mainnet.**
+A production-ready, white-label NFT raffle platform built for blockchain communities. Create branded raffle experiences with complete smart contract security and zero server costs.
 
-## 🌟 Live Platform
+**🎯 White-Label Ready** | **🔒 Security Audited** | **⚡ 7-Day Deployment**
 
-**🚀 Production URL**: https://apechain-raffles.com
+## 🌟 Live Demo Platform
+
+**🚀 Production Demo**: https://apechain-raffles.com  
+**🎨 White-Label Landing**: https://keithvose.com/whitelabel-landing.html
 
 **📋 Deployed Contracts (ApeChain Mainnet)**:
 - **RaffleFactory**: `0x05139110Db8FF9cF82A836Af95eff4530011c705`
 - **RaffleTemplate**: `0x33F9Ea3ec0ce47B15f4b6B757FF3Fc3948D06995`
 
-**🏆 Production Readiness Score**: 9.2/10
+**🏆 Production Readiness**: ✅ Battle-tested with real users and transactions  
+**🎯 White-Label Status**: Ready for client deployment
 
-**🎯 Current Status**: 4 Active Raffles Live!
+## 💼 White-Label Business Model
+
+**Perfect for:**
+- NFT Projects seeking community engagement tools
+- Gaming guilds wanting branded raffle systems  
+- Crypto communities needing revenue generation
+- DAOs requiring transparent prize distribution
+
+**Pricing:**
+- **Setup**: $8,000 (complete branded deployment)
+- **Monthly**: $850 (support, updates, maintenance)
+- **Timeline**: 7 days from contract to live platform
+
+**What Clients Get:**
+- Fully branded platform (logo, colors, domain)
+- Smart contracts deployed on their preferred network
+- Mobile-responsive design
+- Admin dashboard and analytics
+- Ongoing technical support
 
 ## 🚀 Quick Start
 
@@ -255,25 +277,54 @@ aws cloudfront create-invalidation --distribution-id E1234567890 --paths "/*"
 - ✅ **Revenue Model**: 10% platform fee implemented
 - ✅ **Scalable Architecture**: Serverless AWS infrastructure
 
-## 📞 Support
+## 🤝 White-Label Partnership
 
-Built on proven Web3 architecture that eliminates traditional backend complexity while providing enterprise-grade security and unlimited scalability through blockchain technology.
+**Ready to launch your branded raffle platform?**
 
-**Live Platform**: https://apechain-raffles.com
+**Contact Information:**
+- **Email**: kmvose@gmail.com
+- **Demo**: https://apechain-raffles.com
+- **Portfolio**: https://keithvose.com
 
-**Why This Architecture Matters:**
-- Demonstrates the future of decentralized applications
-- Proves blockchain can replace traditional backend infrastructure
-- Shows how Web3 enables truly global, permissionless platforms
-- Provides a template for building cost-effective, scalable dApps
+**What Makes This Special:**
+- ✅ **Proven Platform**: Live with real users and revenue
+- ✅ **Zero Server Costs**: Runs entirely on blockchain + CDN
+- ✅ **Fast Deployment**: 7 days from contract to launch
+- ✅ **Complete Branding**: Looks like you built it in-house
+- ✅ **Recurring Revenue**: 2-5% platform fees built-in
+- ✅ **Professional Support**: Ongoing updates and maintenance
 
-For technical support or partnership inquiries, contact the development team.
+**Technical Advantages:**
+- Smart contract security (funds never at risk)
+- Mobile-optimized design (60% of users)
+- Advanced caching (90% faster repeat visits)
+- Multi-network support (easy to expand)
+- Professional AWS infrastructure
 
-## 📋 AWS Resources
+**Business Benefits:**
+- Increase community engagement dramatically
+- Generate automatic revenue through platform fees
+- No technical team required
+- Proven model already generating revenue
+- Complete white-label solution
 
-See [AWS_RESOURCES.md](AWS_RESOURCES.md) for complete infrastructure details.
+Built on enterprise-grade Web3 architecture that eliminates traditional backend complexity while providing unlimited scalability through blockchain technology.
+
+## 📋 Resources
+
+**Technical Documentation:**
+- [AWS Resources](AWS_RESOURCES.md) - Infrastructure details
+- [White-Label Business Plan](white-label-business/) - Complete business strategy
+- [Platform Education](white-label-business/PLATFORM_EDUCATION.md) - Technical overview
+- [Demo Script](white-label-business/DEMO_SCRIPT.md) - Sales presentation guide
 
 **Quick Deploy:**
 ```bash
 ./scripts/deploy.sh
+```
+
+**White-Label Deployment:**
+```bash
+# Contact kmvose@gmail.com for white-label deployment
+# 7-day setup includes: branding, testing, domain configuration
 ```
