@@ -171,19 +171,37 @@ class NFTMetadataService {
   }
   
   private isTrustedDomain(url: string): boolean {
-    const trustedDomains = [
-      'opensea.io', 'api.opensea.io',
-      'metadata.ens.domains',
-      'api.pudgypenguins.io',
-      'boredapeyachtclub.com',
-      'mutantapeyachtclub.com'
-    ];
-    
     try {
       const parsedUrl = new URL(url);
-      return trustedDomains.some(domain => 
-        parsedUrl.hostname === domain || parsedUrl.hostname.endsWith('.' + domain)
-      );
+      const hostname = parsedUrl.hostname.toLowerCase();
+      
+      // Explicit trusted domains
+      const trustedDomains = [
+        'opensea.io', 'api.opensea.io', 'metadata.ens.domains',
+        'api.pudgypenguins.io', 'boredapeyachtclub.com', 'mutantapeyachtclub.com',
+        'metadata.azuki.com', 'api.coolcats.com', 'nft.doodles.app',
+        'metadata.cryptopunks.app', 'api.artblocks.io', 'metadata.moonbirds.xyz',
+        'api.axieinfinity.com', 'metadata.sandbox.game', 'api.decentraland.org',
+        'api.looksrare.org', 'metadata.x2y2.io', 'api.blur.io', 'nft.coinbase.com',
+        'metadata.alchemy.com', 'api.moralis.io', 'nft.storage', 'arweave.net'
+      ];
+      
+      // Check explicit domains
+      if (trustedDomains.some(domain => 
+        hostname === domain || hostname.endsWith('.' + domain)
+      )) {
+        return true;
+      }
+      
+      // Pattern-based allowlist
+      const trustedPatterns = [
+        /^(api|metadata|nft)\.[a-z0-9-]+\.(com|io|xyz|app|org)$/,
+        /^[a-z0-9-]+\.mypinata\.cloud$/,
+        /^[a-z0-9-]+\.ipfs2\.eth\.limo$/,
+        /^[a-z0-9-]+\.w3s\.link$/
+      ];
+      
+      return trustedPatterns.some(pattern => pattern.test(hostname));
     } catch {
       return false;
     }
