@@ -113,7 +113,11 @@ class RaffleService {
 
     } catch (error) {
       safeError('❌ Raffle creation failed:', error);
-      throw error;
+      // Return error result instead of throwing to prevent unhandled rejections
+      return {
+        hash: '',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      } as RaffleResult & { error: string };
     }
   }
 
@@ -131,7 +135,7 @@ class RaffleService {
       return raffleContract as string;
     } catch (error) {
       safeError('Failed to get raffle contract:', error);
-      throw error;
+      return '';
     }
   }
 

@@ -36,5 +36,19 @@ artifacts/
 cache/
 typechain-types/
 
+# Test files
+test-*.js
+check-*.js
+**/test-*.js
+
+# Build artifacts
+artifacts/
+cache/
+build-info/
+cdk.out/
+
+# Backup files
+*.backup.*
+
 # AWS
 .aws/

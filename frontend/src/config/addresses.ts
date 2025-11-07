@@ -28,8 +28,8 @@ const NETWORK_CONFIGS = {
 
 const CONTRACT_ADDRESSES = {
   33139: { // ApeChain
-    RAFFLE_FACTORY: '0x05139110Db8FF9cF82A836Af95eff4530011c705',
-    RAFFLE_TEMPLATE: '0x33F9Ea3ec0ce47B15f4b6B757FF3Fc3948D06995'
+    RAFFLE_FACTORY: '0xa7652f6175C664bd09A7d726A5a51ebeBe2A2DBC',
+    RAFFLE_TEMPLATE: '0xB92a6C1132C6F42fC7335aa341B0AABF33ee609E'
   },
   8453: { // Base Mainnet - To be deployed
     RAFFLE_FACTORY: '', // Deploy here
@@ -58,14 +58,14 @@ function getNetworkConfig(chainId?: number) {
     const config = NETWORK_CONFIGS[currentChainId as keyof typeof NETWORK_CONFIGS];
     
     if (!config) {
-      console.warn(`⚠️ Unsupported network ${currentChainId}, falling back to ApeChain`);
+      // Fallback to ApeChain for unsupported networks
       return NETWORK_CONFIGS[33139];
     }
     
     return config;
   } catch (error) {
-    console.error('Error getting network config:', error);
-    return NETWORK_CONFIGS[33139]; // Safe fallback
+    // Safe fallback to ApeChain on error
+    return NETWORK_CONFIGS[33139];
   }
 }
 
@@ -75,20 +75,20 @@ function getContracts(chainId?: number) {
     const contracts = CONTRACT_ADDRESSES[currentChainId as keyof typeof CONTRACT_ADDRESSES];
     
     if (!contracts) {
-      console.warn(`⚠️ No contracts configured for chain ${currentChainId}, falling back to ApeChain`);
+      // Fallback to ApeChain for unconfigured chains
       return CONTRACT_ADDRESSES[33139];
     }
     
     // Validate that required contracts are configured
     if (!contracts.RAFFLE_FACTORY || !contracts.RAFFLE_TEMPLATE) {
-      console.warn(`⚠️ Incomplete contract configuration for chain ${currentChainId}, falling back to ApeChain`);
+      // Fallback to ApeChain for incomplete configurations
       return CONTRACT_ADDRESSES[33139];
     }
     
     return contracts;
   } catch (error) {
-    console.error('Error getting contract addresses:', error);
-    return CONTRACT_ADDRESSES[33139]; // Safe fallback
+    // Safe fallback to ApeChain on error
+    return CONTRACT_ADDRESSES[33139];
   }
 }
 
@@ -102,7 +102,6 @@ function getRaffleFactoryAddress(chainId?: number): string {
     
     return address;
   } catch (error) {
-    console.error('Error getting Raffle Factory address:', error);
     // Return ApeChain address as safe fallback
     return CONTRACT_ADDRESSES[33139].RAFFLE_FACTORY;
   }
@@ -118,7 +117,6 @@ function getRaffleTemplateAddress(chainId?: number): string {
     
     return address;
   } catch (error) {
-    console.error('Error getting Raffle Template address:', error);
     // Return ApeChain address as safe fallback
     return CONTRACT_ADDRESSES[33139].RAFFLE_TEMPLATE;
   }

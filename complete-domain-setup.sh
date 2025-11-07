@@ -1,10 +1,15 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # Complete domain setup after DNS validation
 echo "🔄 Completing domain setup..."
 
 # Update CloudFront with custom domain
-bash update-cloudfront.sh apechain-raffles.com arn:aws:acm:us-east-1:856872546342:certificate/3259def5-920b-4cf9-99c7-de4e44a56cc3
+if ! bash update-cloudfront.sh apechain-raffles.com arn:aws:acm:us-east-1:856872546342:certificate/3259def5-920b-4cf9-99c7-de4e44a56cc3; then
+    echo "❌ Failed to update CloudFront"
+    exit 1
+fi
 
 echo ""
 echo "📋 Final DNS Records to Add:"

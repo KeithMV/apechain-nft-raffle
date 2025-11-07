@@ -1,0 +1,334 @@
+/* Professional Design System - Inspired by Modern Web3 Platforms */
+
+:root {
+    /* Typography */
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-title: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    
+    /* Brand Colors */
+    --primary: #3b82f6;
+    --primary-light: #60a5fa;
+    --primary-dark: #1d4ed8;
+    --accent: #f97316;
+    --accent-light: #fb923c;
+    
+    /* Neutral Scale */
+    --neutral-50: #fafafa;
+    --neutral-100: #f4f4f5;
+    --neutral-200: #e4e4e7;
+    --neutral-300: #d4d4d8;
+    --neutral-400: #a1a1aa;
+    --neutral-500: #71717a;
+    --neutral-600: #52525b;
+    --neutral-700: #3f3f46;
+    --neutral-800: #27272a;
+    --neutral-900: #18181b;
+    
+    /* Layout */
+    --max-content-width: 1280px;
+    --nav-height: 64px;
+    --border-radius: 12px;
+    --border-radius-lg: 16px;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Base Styles */
+*, *::before, *::after {
+    box-sizing: border-box;
+    border: 0 solid var(--neutral-200);
+}
+
+html {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    -moz-tab-size: 4;
+    tab-size: 4;
+    font-family: var(--font-sans);
+    font-feature-settings: normal;
+    font-variation-settings: normal;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    width: 100%;
+    min-height: 100vh;
+    background-color: var(--neutral-900);
+    color: var(--neutral-100);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--neutral-700);
+    border-radius: 6px;
+    border: 2px solid var(--neutral-800);
+}
+
+::-webkit-scrollbar-track {
+    background: var(--neutral-800);
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--neutral-600);
+}
+
+/* Firefox scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--neutral-700) var(--neutral-800);
+}
+
+/* Professional Button Styles */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary {
+    background: var(--neutral-800);
+    color: var(--neutral-200);
+    border: 1px solid var(--neutral-700);
+    border-radius: var(--border-radius);
+    padding: 12px 24px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: var(--neutral-700);
+    border-color: var(--neutral-600);
+}
+
+/* Card Styles */
+.card {
+    background: var(--neutral-800);
+    border: 1px solid var(--neutral-700);
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.2s ease;
+}
+
+.card:hover {
+    border-color: var(--neutral-600);
+    box-shadow: var(--shadow-xl);
+}
+
+.card-header {
+    border-bottom: 1px solid var(--neutral-700);
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+}
+
+.card-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--neutral-100);
+    margin: 0;
+}
+
+.card-subtitle {
+    font-size: 14px;
+    color: var(--neutral-400);
+    margin: 4px 0 0 0;
+}
+
+/* Input Styles */
+.input {
+    background: var(--neutral-900);
+    border: 1px solid var(--neutral-700);
+    border-radius: var(--border-radius);
+    padding: 12px 16px;
+    color: var(--neutral-100);
+    font-size: 14px;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+}
+
+.input::placeholder {
+    color: var(--neutral-500);
+}
+
+/* Badge Styles */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.badge-success {
+    background: rgb(34 197 94 / 0.1);
+    color: rgb(34 197 94);
+    border: 1px solid rgb(34 197 94 / 0.2);
+}
+
+.badge-warning {
+    background: rgb(251 146 60 / 0.1);
+    color: rgb(251 146 60);
+    border: 1px solid rgb(251 146 60 / 0.2);
+}
+
+.badge-error {
+    background: rgb(239 68 68 / 0.1);
+    color: rgb(239 68 68);
+    border: 1px solid rgb(239 68 68 / 0.2);
+}
+
+/* Layout Utilities */
+.container {
+    max-width: var(--max-content-width);
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.gap-4 {
+    gap: 16px;
+}
+
+.gap-6 {
+    gap: 24px;
+}
+
+/* Text Utilities */
+.text-sm {
+    font-size: 14px;
+}
+
+.text-lg {
+    font-size: 18px;
+}
+
+.text-xl {
+    font-size: 20px;
+}
+
+.text-2xl {
+    font-size: 24px;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.text-primary {
+    color: var(--primary);
+}
+
+.text-accent {
+    color: var(--accent);
+}
+
+.text-muted {
+    color: var(--neutral-400);
+}
+
+/* Spacing */
+.mb-4 {
+    margin-bottom: 16px;
+}
+
+.mb-6 {
+    margin-bottom: 24px;
+}
+
+.mt-4 {
+    margin-top: 16px;
+}
+
+.mt-6 {
+    margin-top: 24px;
+}
+
+.p-4 {
+    padding: 16px;
+}
+
+.p-6 {
+    padding: 24px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 16px;
+    }
+    
+    .card {
+        padding: 16px;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}

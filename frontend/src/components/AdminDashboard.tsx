@@ -9,11 +9,24 @@ const ADMIN_ADDRESSES: string[] = [
   // Add additional admin wallet addresses here
 ];
 
+// Validate admin addresses - use fallback for invalid configuration
+const validatedAdmins = ADMIN_ADDRESSES.filter(addr => addr && typeof addr === 'string');
+
 export default function AdminDashboard() {
   const { address } = useAccount();
 
   // Check if current user is admin (you can implement more sophisticated logic)
-  const isAdmin = address && ADMIN_ADDRESSES.includes(address.toLowerCase());
+  const isAdmin = (() => {
+    try {
+      if (!address) return false;
+      return validatedAdmins.some(adminAddr => 
+        adminAddr.toLowerCase() === address.toLowerCase()
+      );
+    } catch (error) {
+      // Return false on error checking admin status
+      return false;
+    }
+  })();
 
   if (!address) {
     return (

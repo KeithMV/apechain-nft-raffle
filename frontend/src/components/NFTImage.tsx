@@ -75,7 +75,7 @@ export default function NFTImage({ contractAddress, tokenId, className = '', sho
         alt={metadata.name || `NFT #${tokenId}`}
         className="relative w-full h-full object-cover"
         onError={(e) => {
-          console.error('Image failed to load:', metadata.image);
+          // Handle image load error gracefully
           
           // Check if it's a problematic SSL domain
           const isProblematicDomain = metadata.image.includes('img.op.xyz') || metadata.image.includes('img.other.page');

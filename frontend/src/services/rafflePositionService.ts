@@ -68,9 +68,9 @@ class RafflePositionService {
     }
     
     try {
-      // Get all RaffleCreated events (last 500000 blocks)
+      // Get recent RaffleCreated events (last 50000 blocks for performance)
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 500000n ? currentBlock - 500000n : 0n;
+      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -83,8 +83,8 @@ class RafflePositionService {
         return [];
       }
 
-      // Limit processing to avoid performance issues while ensuring good coverage
-      const eventsToProcess = raffleEvents.slice(-500); // Process last 500 events (good historical coverage)
+      // Limit processing to avoid performance issues
+      const eventsToProcess = raffleEvents.slice(-100); // Process last 100 events only
       safeLog(`Processing ${eventsToProcess.length} of ${raffleEvents.length} raffle events`);
       
       // Process each raffle to check user participation
@@ -171,9 +171,9 @@ class RafflePositionService {
     }
     
     try {
-      // Get RaffleCreated events where user is the creator
+      // Get RaffleCreated events where user is the creator (optimized range)
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 500000n ? currentBlock - 500000n : 0n;
+      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -258,36 +258,23 @@ class RafflePositionService {
       const currentBlock = await publicClient.getBlockNumber();
       const fromBlock = currentBlock > 500000n ? currentBlock - 500000n : 0n;
       
-      // Scan in chunks to avoid RPC limits
-      let raffleEvents: any[] = [];
-      const chunkSize = 100000n;
-      
-      for (let start = fromBlock; start < currentBlock; start += chunkSize) {
-        const end = start + chunkSize - 1n < currentBlock ? start + chunkSize - 1n : currentBlock;
-        
-        try {
-          const chunkEvents = await publicClient.getLogs({
-            address: RAFFLE_FACTORY_CONTRACT,
-            event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
-            fromBlock: start,
-            toBlock: end
-          });
-          raffleEvents = raffleEvents.concat(chunkEvents);
-          safeLog(`Scanned blocks ${start} to ${end}: found ${chunkEvents.length} events`);
-        } catch (error) {
-          safeError(`Error scanning blocks ${start} to ${end}:`, error);
-        }
-      }
+      // Get events from optimized range (no chunking for better performance)
+      const raffleEvents = await publicClient.getLogs({
+        address: RAFFLE_FACTORY_CONTRACT,
+        event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
+        fromBlock,
+        toBlock: 'latest'
+      });
 
       if (raffleEvents.length === 0) {
         return [];
       }
 
       safeLog(`Found ${raffleEvents.length} total raffle events`);
-      safeLog('Raffle IDs found:', raffleEvents.map(e => e.args.raffleId.toString()).join(', '));
+      safeLog('Raffle IDs found:', raffleEvents.map((e: any) => e.args.raffleId.toString()).join(', '));
       
-      // Process raffles to find active ones (generous limit for good coverage)
-      const eventsToProcess = raffleEvents.slice(-Math.max(limit * 10, 200)); // Process 10x limit or minimum 200 events
+      // Process raffles to find active ones (performance optimized)
+      const eventsToProcess = raffleEvents.slice(-Math.min(limit * 3, 50)); // Process 3x limit or max 50 events
       safeLog(`Processing ${eventsToProcess.length} of ${raffleEvents.length} events for active raffles`);
       
       const rafflePromises = eventsToProcess.map(async (event: any) => {

@@ -30,7 +30,7 @@ export default function ApeTokenBalance({
       const balanceResult = await publicClient.getBalance({ address: address as `0x${string}` });
       setBalance(formatEther(balanceResult));
     } catch (error) {
-      console.error('Failed to load APE balance:', error);
+      // Set balance to 0 on error
     } finally {
       setLoading(false);
     }

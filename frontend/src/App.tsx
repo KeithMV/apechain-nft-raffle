@@ -11,6 +11,7 @@ import CreateRafflePage from './components/CreateRafflePage';
 import RaffleDashboard from './components/RaffleDashboard';
 import BrowseRaffles from './components/BrowseRaffles';
 import WalletInfo from './components/WalletInfo';
+import ProfessionalDemo from './components/ProfessionalDemo';
 
 import '@rainbow-me/rainbowkit/styles.css';
 import './index.css';
@@ -166,6 +167,15 @@ function Hero() {
 function RaffleApp() {
   const { isConnected } = useAccount();
   const [currentPage, setCurrentPage] = useState<'create' | 'dashboard' | 'browse'>('browse');
+  
+  // Check if we're on demo route (memoized)
+  const isDemoRoute = React.useMemo(() => {
+    return window.location.hash === '#/demo' || window.location.pathname.includes('/demo');
+  }, []);
+  
+  if (isDemoRoute) {
+    return <ProfessionalDemo />;
+  }
 
   if (!isConnected) {
     return (

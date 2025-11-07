@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 echo "🚀 Quick Deploy - ApeCoin NFT Raffle System"
 echo ""
 echo "Your production build is ready at:"

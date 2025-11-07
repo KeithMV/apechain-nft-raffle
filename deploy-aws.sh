@@ -1,9 +1,9 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # 🚀 AWS S3 + CloudFront Deployment Script
 # ApeCoin NFT Raffle System
-
-set -e
 
 BUCKET_NAME="apechain-nft-raffle"
 REGION="us-east-1"
@@ -92,7 +92,7 @@ DISTRIBUTION_CONFIG='{
   }
 }'
 
-DISTRIBUTION_ID=$(aws cloudfront create-distribution --distribution-config "$DISTRIBUTION_CONFIG" --query 'Distribution.Id' --output text)
+DISTRIBUTION_ID=$(aws cloudfront create-distribution --distribution-config "$DISTRIBUTION_CONFIG" --query 'Distribution.Id' --output text || { echo "❌ Failed to create CloudFront distribution"; exit 1; })
 
 echo "✅ Deployment Complete!"
 echo ""

@@ -1,9 +1,11 @@
 #!/bin/bash
 
+set -euo pipefail
+
 echo "🔄 Finalizing Route53 setup for apechain-raffles.com..."
 
 # Check registration status
-STATUS=$(aws route53domains get-operation-detail --operation-id 28dfc473-20ba-4cc5-b5d7-6418d76452d6 --query 'Status' --output text)
+STATUS=$(aws route53domains get-operation-detail --operation-id 28dfc473-20ba-4cc5-b5d7-6418d76452d6 --query 'Status' --output text || { echo "❌ Failed to check domain status"; exit 1; })
 
 if [ "$STATUS" != "SUCCESSFUL" ]; then
     echo "⏳ Domain registration still in progress. Status: $STATUS"
@@ -14,7 +16,12 @@ fi
 echo "✅ Domain registration complete!"
 
 # Get hosted zone ID
-HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-name --dns-name apechain-raffles.com --query 'HostedZones[0].Id' --output text | cut -d'/' -f3)
+HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-name --dns-name apechain-raffles.com --query 'HostedZones[0].Id' --output text | cut -d'/' -f3 || { echo "❌ Failed to get hosted zone ID"; exit 1; })
+
+if [ -z "$HOSTED_ZONE_ID" ] || [ "$HOSTED_ZONE_ID" = "None" ]; then
+    echo "❌ No hosted zone found for apechain-raffles.com"
+    exit 1
+fi
 
 echo "📋 Hosted Zone ID: $HOSTED_ZONE_ID"
 

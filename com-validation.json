@@ -1,0 +1,22 @@
+{
+  "Changes": [
+    {
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "_b285b31925e0d25cada7687ffeb70958.apechainraffles.com",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [{"Value": "_6f0a45ca28a1436a78b737f563a08d98.jkddzztszm.acm-validations.aws."}]
+      }
+    },
+    {
+      "Action": "CREATE", 
+      "ResourceRecordSet": {
+        "Name": "_07eeab0b5c1ba99cadcc6205d6bacd11.www.apechainraffles.com",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [{"Value": "_fda1194fcbbef3ba1e0e150b2f1821e6.jkddzztszm.acm-validations.aws."}]
+      }
+    }
+  ]
+}

@@ -10,14 +10,25 @@ const app = new cdk.App();
 const domainName = app.node.tryGetContext('domainName');
 const hostedZoneId = app.node.tryGetContext('hostedZoneId');
 
-const infraStack = new RaffleInfrastructureStack(app, 'RaffleInfrastructureStack', {
-  domainName,
-  hostedZoneId,
-  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
-});
+// Validate environment variables
+if (!process.env.CDK_DEFAULT_ACCOUNT || !process.env.CDK_DEFAULT_REGION) {
+  console.error('CDK_DEFAULT_ACCOUNT and CDK_DEFAULT_REGION must be set');
+  process.exit(1);
+}
 
-new CicdStack(app, 'RaffleCicdStack', {
-  s3Bucket: infraStack.s3Bucket,
-  cloudFrontDistributionId: infraStack.cloudFrontDistributionId,
-  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
-});
+try {
+  const infraStack = new RaffleInfrastructureStack(app, 'RaffleInfrastructureStack', {
+    domainName,
+    hostedZoneId,
+    env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+  });
+
+  new CicdStack(app, 'RaffleCicdStack', {
+    s3Bucket: infraStack.s3Bucket,
+    cloudFrontDistributionId: infraStack.cloudFrontDistributionId,
+    env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+  });
+} catch (error) {
+  console.error('Failed to create CDK stacks:', error);
+  process.exit(1);
+}

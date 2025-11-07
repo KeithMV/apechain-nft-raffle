@@ -264,12 +264,36 @@ class RaffleContractService {
             platformFee: 0n // Default platform fee for older contracts
           };
         } else {
-          throw new Error('Invalid raffle info format returned from contract');
+          // Return default values for invalid format
+          return {
+            nftContract: '',
+            tokenId: 0n,
+            creator: '',
+            ticketPrice: 0n,
+            maxTickets: 0n,
+            ticketsSold: 0n,
+            endTime: 0n,
+            winner: '',
+            completed: true,
+            platformFee: 0n
+          };
         }
       }
     } catch (error) {
       safeError('Failed to get raffle info:', error);
-      throw error;
+      // Return default raffle info to prevent crashes
+      return {
+        nftContract: '',
+        tokenId: 0n,
+        creator: '',
+        ticketPrice: 0n,
+        maxTickets: 0n,
+        ticketsSold: 0n,
+        endTime: 0n,
+        winner: '',
+        completed: true,
+        platformFee: 0n
+      };
     }
   }
 

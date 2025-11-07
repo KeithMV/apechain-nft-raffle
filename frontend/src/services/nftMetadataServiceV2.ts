@@ -69,13 +69,19 @@ class NFTMetadataService {
       this.metadataCache.set(cacheKey, metadata);
       return metadata;
     } catch (error) {
-      console.error('Failed to fetch NFT metadata:', error);
+      // Return null on metadata fetch failure
       return null;
     }
   }
 
   private async fetchWithFallback(url: string): Promise<NFTMetadata | null> {
-    // Build comprehensive gateway list for Web3 resilience
+    // Validate URL to prevent SSRF
+    if (!this.isValidMetadataUrl(url)) {
+      // Block invalid or unsafe URLs
+      return null;
+    }
+    
+    // Build secure gateway list
     const gateways = [];
     
     if (url.includes('ipfs')) {
@@ -88,15 +94,9 @@ class NFTMetadataService {
         url.replace(/https:\/\/[^/]+/, 'https://4everland.io')
       );
     } else {
-      // For problematic direct URLs, use multiple CORS proxies
-      gateways.push(
-        `https://corsproxy.io/?${encodeURIComponent(url)}`,
-        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-      );
-      
-      // Only try direct URL if it's not a known problematic endpoint
-      if (!url.includes('api.op.xyz') && !url.includes('api.other.page')) {
-        gateways.unshift(url); // Add direct URL as first option
+      // Only allow trusted domains for direct URLs
+      if (this.isTrustedDomain(url)) {
+        gateways.push(url);
       }
     }
 
@@ -113,11 +113,80 @@ class NFTMetadataService {
           return data;
         }
       } catch (error) {
-        console.warn(`Failed to fetch from ${gateway}:`, error);
+        // Continue to next gateway on failure
         continue;
       }
     }
     return null;
+  }
+  
+  private isValidMetadataUrl(url: string): boolean {
+    try {
+      const parsedUrl = new URL(url);
+      
+      // Only allow HTTPS and IPFS protocols
+      if (!['https:', 'ipfs:'].includes(parsedUrl.protocol)) {
+        return false;
+      }
+      
+      // Block private IP ranges, localhost, and internal networks
+      const hostname = parsedUrl.hostname.toLowerCase();
+      
+      // Block localhost variations
+      if (['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(hostname)) {
+        return false;
+      }
+      
+      // Block private IP ranges (RFC 1918)
+      if (hostname.match(/^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\.|^192\.168\./)) {
+        return false;
+      }
+      
+      // Block link-local addresses
+      if (hostname.match(/^169\.254\.|^fe80:/)) {
+        return false;
+      }
+      
+      // Block multicast addresses
+      if (hostname.match(/^224\.|^ff[0-9a-f][0-9a-f]:/)) {
+        return false;
+      }
+      
+      // For IPFS, only allow known safe gateways
+      if (parsedUrl.protocol === 'ipfs:') {
+        return true; // Will be converted to safe gateway
+      }
+      
+      // For HTTPS, only allow trusted domains or IPFS gateways
+      const trustedGateways = [
+        'ipfs.io', 'dweb.link', 'nftstorage.link', '4everland.io',
+        'cloudflare-ipfs.com', 'gateway.pinata.cloud'
+      ];
+      
+      return this.isTrustedDomain(url) || 
+             trustedGateways.some(gateway => hostname.includes(gateway));
+    } catch {
+      return false;
+    }
+  }
+  
+  private isTrustedDomain(url: string): boolean {
+    const trustedDomains = [
+      'opensea.io', 'api.opensea.io',
+      'metadata.ens.domains',
+      'api.pudgypenguins.io',
+      'boredapeyachtclub.com',
+      'mutantapeyachtclub.com'
+    ];
+    
+    try {
+      const parsedUrl = new URL(url);
+      return trustedDomains.some(domain => 
+        parsedUrl.hostname === domain || parsedUrl.hostname.endsWith('.' + domain)
+      );
+    } catch {
+      return false;
+    }
   }
 }
 
