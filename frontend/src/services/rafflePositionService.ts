@@ -363,19 +363,31 @@ class RafflePositionService {
           safeLog(`Processing raffle`, raffleId, raffleContract);
           
           const raffleInfo = await raffleContractService.getRaffleInfo(raffleContract as string);
-          safeLog(`Raffle ${raffleId} info:`, {
+          const now = Math.floor(Date.now() / 1000);
+          const endTime = Number(raffleInfo.endTime);
+          const timeRemaining = endTime - now;
+          
+          safeLog(`Raffle ${raffleId} detailed info:`, {
             completed: raffleInfo.completed,
-            endTime: Number(raffleInfo.endTime),
-            currentTime: Math.floor(Date.now() / 1000),
+            endTime: endTime,
+            currentTime: now,
+            timeRemaining: timeRemaining,
+            timeRemainingHours: (timeRemaining / 3600).toFixed(2),
             ticketsSold: Number(raffleInfo.ticketsSold),
-            maxTickets: Number(maxTickets)
+            maxTickets: Number(maxTickets),
+            isTimeExpired: now >= endTime,
+            isCompleted: raffleInfo.completed,
+            isMaxTicketsSold: Number(raffleInfo.ticketsSold) >= Number(maxTickets)
           });
           
           // Check if raffle is still active
-          const now = Math.floor(Date.now() / 1000);
-          const isActive = !raffleInfo.completed && now < Number(raffleInfo.endTime) && Number(raffleInfo.ticketsSold) < Number(maxTickets);
+          const isActive = !raffleInfo.completed && now < endTime && Number(raffleInfo.ticketsSold) < Number(maxTickets);
           
-          safeLog(`Raffle ${raffleId} active:`, isActive);
+          safeLog(`Raffle ${raffleId} active:`, isActive, 'Reasons:', {
+            notCompleted: !raffleInfo.completed,
+            notExpired: now < endTime,
+            hasAvailableTickets: Number(raffleInfo.ticketsSold) < Number(maxTickets)
+          });
           
           if (!isActive) {
             return null;

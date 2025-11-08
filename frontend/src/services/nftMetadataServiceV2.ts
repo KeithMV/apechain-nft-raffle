@@ -94,8 +94,15 @@ class NFTMetadataService {
         url.replace(/https:\/\/[^/]+/, 'https://4everland.io')
       );
     } else {
-      // Only allow trusted domains for direct URLs
-      if (this.isTrustedDomain(url)) {
+      // Check for problematic SSL domains that need CORS proxy
+      const hostname = new URL(url).hostname;
+      const problematicDomains = ['api.op.xyz', 'img.op.xyz'];
+      
+      if (problematicDomains.some(domain => hostname.includes(domain))) {
+        // Use CORS proxy for SSL issues
+        gateways.push(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+        gateways.push(url); // Try direct as fallback
+      } else if (this.isTrustedDomain(url)) {
         gateways.push(url);
       }
     }
@@ -162,6 +169,12 @@ class NFTMetadataService {
         'ipfs.io', 'dweb.link', 'nftstorage.link', '4everland.io',
         'cloudflare-ipfs.com', 'gateway.pinata.cloud'
       ];
+      
+      // Allow problematic SSL domains (will use CORS proxy)
+      const problematicDomains = ['api.op.xyz', 'img.op.xyz'];
+      if (problematicDomains.some(domain => hostname.includes(domain))) {
+        return true;
+      }
       
       return this.isTrustedDomain(url) || 
              trustedGateways.some(gateway => hostname.includes(gateway));

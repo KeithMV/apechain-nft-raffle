@@ -5,7 +5,7 @@ set -euo pipefail
 # 🚀 AWS S3 + CloudFront Deployment Script
 # ApeCoin NFT Raffle System
 
-BUCKET_NAME="apechain-nft-raffle"
+BUCKET_NAME="apechain-nft-raffle-856872546342-us-east-1"
 REGION="us-east-1"
 BUILD_DIR="/home/ubuntu/apechain-nft-raffle/frontend/build"
 
