@@ -68,9 +68,9 @@ class RafflePositionService {
     }
     
     try {
-      // Get recent RaffleCreated events (last 50000 blocks for performance)
+      // Get recent RaffleCreated events (wider range for expired raffles)
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
+      const fromBlock = currentBlock > 200000n ? currentBlock - 200000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -171,9 +171,9 @@ class RafflePositionService {
     }
     
     try {
-      // Get RaffleCreated events where user is the creator (optimized range)
+      // Get RaffleCreated events where user is the creator (wider range for expired raffles)
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
+      const fromBlock = currentBlock > 200000n ? currentBlock - 200000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -231,6 +231,86 @@ class RafflePositionService {
 
     } catch (error) {
       safeError('Error fetching created raffles:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all raffles (active and expired)
+   */
+  async getAllRaffles(publicClient: any, limit: number = 20): Promise<CreatedRaffle[]> {
+    safeLog('🔍 Getting all raffles');
+    
+    if (!publicClient) {
+      console.log('❌ No publicClient provided');
+      return [];
+    }
+    
+    try {
+      // Get RaffleCreated events from a wider range
+      const currentBlock = await publicClient.getBlockNumber();
+      const fromBlock = currentBlock > 500000n ? currentBlock - 500000n : 0n;
+      
+      const raffleEvents = await publicClient.getLogs({
+        address: RAFFLE_FACTORY_CONTRACT,
+        event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
+        fromBlock,
+        toBlock: 'latest'
+      });
+
+      if (raffleEvents.length === 0) {
+        return [];
+      }
+
+      safeLog(`Found ${raffleEvents.length} total raffle events`);
+      
+      // Process recent raffles (get latest ones)
+      const eventsToProcess = raffleEvents.slice(-Math.min(limit * 2, 100));
+      safeLog(`Processing ${eventsToProcess.length} of ${raffleEvents.length} events for all raffles`);
+      
+      const rafflePromises = eventsToProcess.map(async (event: any) => {
+        try {
+          const { raffleId, raffleContract, nftContract, tokenId, creator, ticketPrice, maxTickets } = event.args;
+          
+          const raffleInfo = await raffleContractService.getRaffleInfo(raffleContract as string);
+          
+          // Include all raffles (active and expired)
+          const now = Math.floor(Date.now() / 1000);
+          const isActive = !raffleInfo.completed && now < Number(raffleInfo.endTime) && Number(raffleInfo.ticketsSold) < Number(maxTickets);
+          
+          return {
+            raffleId: Number(raffleId),
+            raffleContract: raffleContract as string,
+            nftContract: nftContract as string,
+            tokenId: tokenId.toString(),
+            creator: creator as string,
+            ticketPrice: (Number(ticketPrice) / 1e18).toString(),
+            maxTickets: Number(maxTickets),
+            ticketsSold: Number(raffleInfo.ticketsSold),
+            endTime: Number(raffleInfo.endTime),
+            isActive,
+            completed: raffleInfo.completed,
+            winner: raffleInfo.completed ? raffleInfo.winner : undefined
+          };
+        } catch (error) {
+          safeError('Error processing raffle:', error);
+          return null;
+        }
+      });
+
+      const results = await Promise.all(rafflePromises);
+      const allRaffles = results.filter(raffle => raffle !== null) as CreatedRaffle[];
+      
+      // Sort by newest first and apply limit
+      const limitedRaffles = allRaffles
+        .sort((a, b) => b.raffleId - a.raffleId)
+        .slice(0, limit);
+      
+      safeLog(`🔍 Found ${limitedRaffles.length} total raffles (${limitedRaffles.filter(r => r.isActive).length} active, ${limitedRaffles.filter(r => !r.isActive).length} expired)`);
+      return limitedRaffles;
+
+    } catch (error) {
+      safeError('Error fetching all raffles:', error);
       return [];
     }
   }

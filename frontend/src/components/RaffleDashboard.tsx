@@ -13,6 +13,7 @@ export default function RaffleDashboard() {
   const [createdRaffles, setCreatedRaffles] = useState<CreatedRaffle[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'participated' | 'created'>('participated');
+  const [showExpired, setShowExpired] = useState(true);
 
   useEffect(() => {
     if (address && publicClient) {
@@ -110,9 +111,10 @@ export default function RaffleDashboard() {
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs and Filters */}
         <div className="relative px-4 sm:px-8 pt-6 z-10">
-          <div className="flex space-x-1">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+            <div className="flex space-x-1">
             <button
               onClick={() => setActiveTab('participated')}
               className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 overflow-hidden group font-mono tracking-wider ${
@@ -135,23 +137,37 @@ export default function RaffleDashboard() {
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
               <span className="relative">Created ({createdRaffles.length})</span>
             </button>
+            </div>
+            <div className="flex items-center space-x-3">
+              <label className="flex items-center space-x-2 text-sm text-emerald-300 font-mono">
+                <input
+                  type="checkbox"
+                  checked={showExpired}
+                  onChange={(e) => setShowExpired(e.target.checked)}
+                  className="rounded border-emerald-400/50 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                />
+                <span>Show Expired</span>
+              </label>
+            </div>
           </div>
         </div>
 
         <div className="relative p-4 sm:p-8 z-10">
           {activeTab === 'participated' ? (
             <div className="space-y-4">
-              {userPositions.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
-                    <span className="relative text-cyan-400 text-2xl">⚡</span>
+              {(() => {
+                const filteredPositions = showExpired ? userPositions : userPositions.filter(p => p.isActive || p.completed);
+                return filteredPositions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
+                      <span className="relative text-cyan-400 text-2xl">⚡</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffle Participation</h3>
+                    <p className="text-cyan-400/70 font-mono">{showExpired ? "You haven't participated in any raffles yet" : "No active or completed raffles to show"}</p>
                   </div>
-                  <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffle Participation</h3>
-                  <p className="text-cyan-400/70 font-mono">You haven't participated in any raffles yet</p>
-                </div>
-              ) : (
-                userPositions.map((position) => (
+                ) : (
+                  filteredPositions.map((position) => (
                   <div key={`${position.raffleContract}-${position.raffleId}`} className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
                     <div className="flex flex-col sm:flex-row">
@@ -210,22 +226,25 @@ export default function RaffleDashboard() {
                       </div>
                     </div>
                   </div>
-                ))
-              )}
+                  ))
+                );
+              })()}
             </div>
           ) : (
             <div className="space-y-4">
-              {createdRaffles.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
-                    <span className="relative text-cyan-400 text-2xl">⚡</span>
+              {(() => {
+                const filteredRaffles = showExpired ? createdRaffles : createdRaffles.filter(r => r.isActive || (Date.now() / 1000 - r.endTime < 86400));
+                return filteredRaffles.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
+                      <span className="relative text-cyan-400 text-2xl">⚡</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffles Created</h3>
+                    <p className="text-cyan-400/70 font-mono">{showExpired ? "You haven't created any raffles yet" : "No active or recent raffles to show"}</p>
                   </div>
-                  <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffles Created</h3>
-                  <p className="text-cyan-400/70 font-mono">You haven't created any raffles yet</p>
-                </div>
-              ) : (
-                createdRaffles.map((raffle) => (
+                ) : (
+                  filteredRaffles.map((raffle) => (
                   <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
                     <div className="flex flex-col sm:flex-row">
@@ -313,8 +332,9 @@ export default function RaffleDashboard() {
                       </div>
                     </div>
                   </div>
-                ))
-              )}
+                  ))
+                );
+              })()}
             </div>
           )}
         </div>

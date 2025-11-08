@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 
 async function main() {
-  const factoryAddress = "0xa7652f6175C664bd09A7d726A5a51ebeBe2A2DBC";
+  const factoryAddress = "0x05139110Db8FF9cF82A836Af95eff4530011c705";
   
   const factory = await ethers.getContractAt("RaffleFactory", factoryAddress);
   

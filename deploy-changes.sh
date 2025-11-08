@@ -59,7 +59,7 @@ fi
 if [[ -d "frontend" ]]; then
     print_status "Installing frontend dependencies..."
     cd frontend
-    npm install
+    npm install --legacy-peer-deps
     cd ..
     print_success "Frontend dependencies installed"
 fi
