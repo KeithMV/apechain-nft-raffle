@@ -99,7 +99,8 @@ class NFTMetadataService {
       const problematicDomains = ['api.op.xyz', 'img.op.xyz'];
       
       if (problematicDomains.some(domain => hostname.includes(domain))) {
-        // Use CORS proxy for SSL issues
+        // Use multiple CORS proxies for SSL issues
+        gateways.push(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
         gateways.push(`https://corsproxy.io/?${encodeURIComponent(url)}`);
         gateways.push(url); // Try direct as fallback
       } else if (this.isTrustedDomain(url)) {

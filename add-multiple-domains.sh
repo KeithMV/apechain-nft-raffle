@@ -22,7 +22,7 @@ ETAG=$(jq -r '.ETag' current-config.json)
 jq '.DistributionConfig' current-config.json > distribution-config.json
 
 # Build domains array (keep existing + add new)
-DOMAIN_LIST='["apechain-raffles.com", "www.apechain-raffles.com"'
+DOMAIN_LIST='["apechain-raffles.com", "www.apechain-raffles.com", "apechainraffles.io", "www.apechainraffles.io"'
 for domain in "${DOMAINS[@]}"; do
     DOMAIN_LIST+=", \"$domain\", \"www.$domain\""
 done
