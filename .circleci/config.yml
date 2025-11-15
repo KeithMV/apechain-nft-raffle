@@ -12,6 +12,11 @@ jobs:
             cd frontend
             npm install --legacy-peer-deps
       - run:
+          name: Run frontend tests
+          command: |
+            cd frontend
+            npm test -- --coverage --watchAll=false --passWithNoTests
+      - run:
           name: Build frontend
           command: |
             cd frontend
@@ -46,16 +51,11 @@ jobs:
 
   test:
     docker:
-      - image: cimg/node:18.20
+      - image: cimg/python:3.9
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - run:
-          name: Run frontend tests
-          command: |
-            cd frontend
-            npm test -- --coverage --watchAll=false --passWithNoTests
       - run:
           name: Security Analysis with Slither
           command: |
