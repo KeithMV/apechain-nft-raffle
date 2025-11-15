@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { WagmiProvider } from 'wagmi';
-import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount } from 'wagmi';
 import { wagmiConfig } from './config/wagmi';
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
@@ -15,7 +13,7 @@ import WalletConnection from './components/WalletConnection';
 import NetworkStatus from './components/NetworkStatus';
 import ProfessionalDemo from './components/ProfessionalDemo';
 
-import '@rainbow-me/rainbowkit/styles.css';
+
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -224,17 +222,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={wagmiConfig}>
-        <RainbowKitProvider 
-          theme={darkTheme({
-            accentColor: '#10b981',
-            accentColorForeground: 'white',
-            borderRadius: 'large',
-            fontStack: 'system',
-          })}
-        >
-          <RaffleApp />
-          <Toaster position="top-right" />
-        </RainbowKitProvider>
+        <RaffleApp />
+        <Toaster position="top-right" />
       </WagmiProvider>
     </QueryClientProvider>
   );
