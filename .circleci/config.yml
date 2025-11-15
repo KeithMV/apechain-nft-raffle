@@ -57,6 +57,14 @@ jobs:
             cd frontend
             npm test -- --coverage --watchAll=false --passWithNoTests
       - run:
+          name: Security Analysis with Slither
+          command: |
+            cd contracts
+            pip install slither-analyzer
+            echo "Running Slither security analysis..."
+            slither . --json slither-report.json || true
+            echo "Security analysis complete - check slither-report.json for details"
+      - run:
           name: Validate infrastructure templates
           command: |
             echo "Validating CloudFormation templates..."
