@@ -70,7 +70,7 @@ jobs:
 
   deploy:
     docker:
-      - image: cimg/aws:2023.10
+      - image: cimg/aws:2024.03
     steps:
       - checkout
       - attach_workspace:
