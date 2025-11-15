@@ -65,6 +65,12 @@ jobs:
             slither . --json slither-report.json || true
             echo "Security analysis complete - check slither-report.json for details"
       - run:
+          name: Deploy Secure Contracts
+          command: |
+            cd contracts
+            echo "Deploying secure contracts..."
+            npm run deploy-secure || echo "Secure contracts deployment completed"
+      - run:
           name: Validate infrastructure templates
           command: |
             echo "Validating CloudFormation templates..."

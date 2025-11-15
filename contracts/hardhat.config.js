@@ -27,8 +27,8 @@ module.exports = {
   networks: {
     apechain: {
       url: "https://apechain.calderachain.xyz/http",
-      accounts: process.env.DEPLOYER_PRIVATE_KEY && process.env.DEPLOYER_PRIVATE_KEY !== 'your_private_key_here' 
-        ? [process.env.DEPLOYER_PRIVATE_KEY] 
+      accounts: process.env.CREATOR_PRIVATE_KEY && process.env.CREATOR_PRIVATE_KEY !== 'your_private_key_here_without_0x' 
+        ? [`0x${process.env.CREATOR_PRIVATE_KEY}`] 
         : ["0x1234567890123456789012345678901234567890123456789012345678901234"]
     },
     base: {

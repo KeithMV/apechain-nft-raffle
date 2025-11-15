@@ -28,8 +28,9 @@ const NETWORK_CONFIGS = {
 
 const CONTRACT_ADDRESSES = {
   33139: { // ApeChain
-    RAFFLE_FACTORY: '0x05139110Db8FF9cF82A836Af95eff4530011c705',
-    RAFFLE_TEMPLATE: '0xB92a6C1132C6F42fC7335aa341B0AABF33ee609E'
+    RAFFLE_FACTORY: '0xf5cD6d3F118a3C31742DfFB50BFbFE452F5300D0', // v3-secure
+    RAFFLE_TEMPLATE: '0xF038C04c3384419B91094Fbc21437E96c8fC1e59',
+    RAFFLE_FACTORY_LEGACY: '0x05139110Db8FF9cF82A836Af95eff4530011c705' // v2-legacy
   },
   8453: { // Base Mainnet - To be deployed
     RAFFLE_FACTORY: '', // Deploy here
@@ -43,8 +44,9 @@ const CONTRACT_ADDRESSES = {
 
 const PROTOCOL_INFO = {
   name: 'ApeCoin NFT Raffle System',
-  version: 'v2-secure',
-  status: 'Active - Secure NFT Raffle Platform'
+  version: 'v3-secure',
+  status: 'Active - Enterprise Security NFT Raffle Platform',
+  securityFixes: ['Fixed reentrancy', 'Enhanced randomness', 'Block-based timing']
 } as const;
 
 function getCurrentChainId(): number {

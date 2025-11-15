@@ -4,6 +4,8 @@
   "scripts": {
     "compile": "npx hardhat compile",
     "deploy": "npx hardhat run scripts/deploy.js --network apechain",
+    "deploy-secure": "npx hardhat run scripts/deploy-secure.js --network apechain",
+    "security-check": "npx hardhat run scripts/security-comparison.js",
     "verify": "npx hardhat verify --network apechain"
   },
   "devDependencies": {
