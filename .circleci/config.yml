@@ -60,7 +60,7 @@ jobs:
           name: Install Python tools for security analysis
           command: |
             sudo apt-get update && sudo apt-get install -y python3-pip
-            pip3 install slither-analyzer mythril
+            pip3 install slither-analyzer
       - run:
           name: Security Analysis with Slither
           command: |
