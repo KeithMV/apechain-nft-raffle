@@ -94,11 +94,15 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Deploy to AWS
+          name: Deploy to AWS S3
           command: |
-            echo "Deployment would happen here with AWS credentials"
-            echo "Frontend build artifacts ready for S3 upload"
-            ls -la frontend/build/ || echo "No build artifacts found"
+            # Sync frontend build to S3 bucket
+            aws s3 sync frontend/build/ s3://apechain-nft-raffle-856872546342-us-east-1 --delete
+            
+            # Invalidate CloudFront cache
+            aws cloudfront create-invalidation --distribution-id EH7R5RBQF66DL --paths "/*"
+            
+            echo "✅ Deployment complete!"
 
 workflows:
   version: 2
