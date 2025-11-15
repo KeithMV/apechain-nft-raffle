@@ -15,7 +15,7 @@ jobs:
           name: Build frontend
           command: |
             cd frontend
-            npm run build
+            CI=false npm run build
       - persist_to_workspace:
           root: .
           paths:
