@@ -150,10 +150,10 @@ class RafflePositionService {
   }
 
   /**
-   * Get all raffles created by user
+   * Get all raffles created by user with pagination
    */
-  async getCreatedRaffles(userAddress: string, publicClient: any): Promise<CreatedRaffle[]> {
-    safeLog('🎨 Getting created raffles for:', userAddress);
+  async getCreatedRaffles(userAddress: string, publicClient: any, page: number = 0): Promise<CreatedRaffle[]> {
+    safeLog('🎨 Getting created raffles for:', userAddress, 'page:', page);
     
     if (!publicClient) {
       console.log('❌ No publicClient provided');
@@ -161,7 +161,7 @@ class RafflePositionService {
     }
     
     // Check cache first
-    const cacheKey = `created_${userAddress.toLowerCase()}`;
+    const cacheKey = `created_${userAddress.toLowerCase()}_page_${page}`;
     const lastUpdate = this.lastUpdate.get(cacheKey) || 0;
     const now = Date.now();
     
@@ -171,9 +171,11 @@ class RafflePositionService {
     }
     
     try {
-      // Get RaffleCreated events where user is the creator (wider range for expired raffles)
+      // Progressive loading: 50K blocks per page (~2 weeks each)
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 200000n ? currentBlock - 200000n : 0n;
+      const BLOCKS_PER_PAGE = 50000n;
+      const fromBlock = currentBlock - BigInt((page + 1) * Number(BLOCKS_PER_PAGE));
+      const toBlock = page === 0 ? currentBlock : currentBlock - BigInt(page * Number(BLOCKS_PER_PAGE));
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -181,8 +183,8 @@ class RafflePositionService {
         args: {
           creator: userAddress as `0x${string}`
         },
-        fromBlock,
-        toBlock: 'latest'
+        fromBlock: fromBlock > 0n ? fromBlock : 0n,
+        toBlock
       });
       
       safeLog(`Found ${raffleEvents.length} events for creator`, userAddress);
@@ -238,7 +240,7 @@ class RafflePositionService {
   /**
    * Get all raffles (active and expired)
    */
-  async getAllRaffles(publicClient: any, limit: number = 20): Promise<CreatedRaffle[]> {
+  async getAllRaffles(publicClient: any, limit: number = 20, offset: number = 0): Promise<CreatedRaffle[]> {
     safeLog('🔍 Getting all raffles');
     
     if (!publicClient) {
@@ -301,10 +303,10 @@ class RafflePositionService {
       const results = await Promise.all(rafflePromises);
       const allRaffles = results.filter(raffle => raffle !== null) as CreatedRaffle[];
       
-      // Sort by newest first and apply limit
+      // Sort by newest first and apply offset + limit
       const limitedRaffles = allRaffles
         .sort((a, b) => b.raffleId - a.raffleId)
-        .slice(0, limit);
+        .slice(offset, offset + limit);
       
       safeLog(`🔍 Found ${limitedRaffles.length} total raffles (${limitedRaffles.filter(r => r.isActive).length} active, ${limitedRaffles.filter(r => !r.isActive).length} expired)`);
       return limitedRaffles;

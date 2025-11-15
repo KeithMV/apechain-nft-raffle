@@ -1,0 +1,24 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: RaffleFactory
+    network: apechain
+    source:
+      address: "0x05139110Db8FF9cF82A836Af95eff4530011c705"
+      abi: RaffleFactory
+      startBlock: 2000000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - RaffleCreated
+      abis:
+        - name: RaffleFactory
+          file: ./abis/RaffleFactory.json
+      eventHandlers:
+        - event: RaffleCreated(indexed uint256,indexed address,indexed address,uint256,address,uint256,uint256)
+          handler: handleRaffleCreated
+      file: ./src/raffle-factory.ts

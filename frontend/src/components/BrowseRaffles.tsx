@@ -12,9 +12,12 @@ export default function BrowseRaffles() {
   
   const [raffles, setRaffles] = useState<CreatedRaffle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [buyingTickets, setBuyingTickets] = useState<string | null>(null);
   const [ticketQuantities, setTicketQuantities] = useState<{[key: string]: number}>({});
   const [showExpired, setShowExpired] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
   useEffect(() => {
     if (publicClient) {
@@ -22,15 +25,28 @@ export default function BrowseRaffles() {
     }
   }, [publicClient]);
 
-  const loadRaffles = async () => {
+  const loadRaffles = async (reset = true) => {
     if (!publicClient) return;
     
-    setLoading(true);
+    if (reset) {
+      setLoading(true);
+      setCurrentPage(0);
+      setHasMoreRaffles(true);
+    }
+    
     try {
       console.log('Loading all raffles...');
-      const allRaffles = await rafflePositionService.getAllRaffles(publicClient, 50);
+      const allRaffles = await rafflePositionService.getAllRaffles(publicClient, 30);
       console.log('Loaded raffles:', allRaffles.length);
-      setRaffles(allRaffles);
+      
+      if (reset) {
+        setRaffles(allRaffles);
+      }
+      
+      if (allRaffles.length < 30) {
+        setHasMoreRaffles(false);
+      }
+      
       if (allRaffles.length === 0) {
         console.log('No raffles found');
       }
@@ -39,6 +55,36 @@ export default function BrowseRaffles() {
       toast.error('Failed to load raffles');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMoreRaffles = async () => {
+    if (!publicClient || loadingMore || !hasMoreRaffles) return;
+    
+    setLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      console.log('Loading more raffles, page:', nextPage);
+      
+      const moreRaffles = await rafflePositionService.getAllRaffles(publicClient, 20, nextPage * 20);
+      console.log('Loaded more raffles:', moreRaffles.length);
+      
+      if (moreRaffles.length === 0) {
+        setHasMoreRaffles(false);
+        toast('No more raffles to load', { icon: '📭' });
+      } else {
+        setRaffles(prev => [...prev, ...moreRaffles]);
+        setCurrentPage(nextPage);
+        
+        if (moreRaffles.length < 20) {
+          setHasMoreRaffles(false);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load more raffles:', error);
+      toast.error('Failed to load more raffles');
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -358,6 +404,30 @@ export default function BrowseRaffles() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+              
+              {/* Load More Button */}
+              {filteredRaffles.length > 0 && hasMoreRaffles && (
+                <div className="mt-8 text-center">
+                  <button
+                    onClick={loadMoreRaffles}
+                    disabled={loadingMore}
+                    className="relative bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 disabled:from-slate-800 disabled:to-slate-800 text-slate-300 hover:text-white disabled:text-slate-500 font-semibold py-3 px-8 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-3 mx-auto overflow-hidden group border border-slate-600/50 hover:border-slate-500/50"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-500/0 via-slate-500/10 to-slate-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    {loadingMore ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="relative">Loading older raffles...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="relative">📜</span>
+                        <span className="relative">Load More Raffles</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
             </>

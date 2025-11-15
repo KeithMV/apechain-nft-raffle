@@ -14,31 +14,49 @@ export default function RaffleDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'participated' | 'created'>('participated');
   const [showExpired, setShowExpired] = useState(true);
+  const [page, setPage] = useState(0);
+  const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
   useEffect(() => {
     if (address && publicClient) {
-      loadUserData();
+      setPage(0);
+      setCreatedRaffles([]);
+      loadUserData(0, false);
     }
   }, [address, publicClient]);
 
-  const loadUserData = async () => {
+  const loadUserData = async (pageNum: number = 0, append: boolean = false) => {
     if (!address || !publicClient) return;
     
     setLoading(true);
     try {
       const [positions, created] = await Promise.all([
         rafflePositionService.getUserRafflePositions(address, publicClient),
-        rafflePositionService.getCreatedRaffles(address, publicClient)
+        rafflePositionService.getCreatedRaffles(address, publicClient, pageNum)
       ]);
       
       setUserPositions(positions);
-      setCreatedRaffles(created);
+      
+      if (append) {
+        setCreatedRaffles(prev => [...prev, ...created]);
+      } else {
+        setCreatedRaffles(created);
+      }
+      
+      // Check if there are more raffles (if we got results, there might be more)
+      setHasMoreRaffles(created.length > 0);
     } catch (error) {
       console.error('Failed to load user data:', error);
       toast.error('Failed to load raffle data');
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadMoreRaffles = async () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    await loadUserData(nextPage, true);
   };
 
   const formatTimeRemaining = (endTime: number) => {
@@ -335,6 +353,27 @@ export default function RaffleDashboard() {
                   ))
                 );
               })()}
+              
+              {/* Load More Button for Created Raffles */}
+              {activeTab === 'created' && hasMoreRaffles && createdRaffles.length > 0 && (
+                <div className="text-center pt-6">
+                  <button
+                    onClick={loadMoreRaffles}
+                    disabled={loading}
+                    className="relative bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:from-gray-600 disabled:to-gray-600 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/20 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    {loading ? (
+                      <span className="relative flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Loading...</span>
+                      </span>
+                    ) : (
+                      <span className="relative">Load More Raffles</span>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

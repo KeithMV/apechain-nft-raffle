@@ -96,7 +96,7 @@ class NFTMetadataService {
     } else {
       // Check for problematic SSL domains that need CORS proxy
       const hostname = new URL(url).hostname;
-      const problematicDomains = ['api.op.xyz', 'img.op.xyz'];
+      const problematicDomains = ['api.op.xyz', 'img.op.xyz', 'img.other.page'];
       
       if (problematicDomains.some(domain => hostname.includes(domain))) {
         // Use multiple CORS proxies for SSL issues
@@ -172,7 +172,7 @@ class NFTMetadataService {
       ];
       
       // Allow problematic SSL domains (will use CORS proxy)
-      const problematicDomains = ['api.op.xyz', 'img.op.xyz'];
+      const problematicDomains = ['api.op.xyz', 'img.op.xyz', 'img.other.page'];
       if (problematicDomains.some(domain => hostname.includes(domain))) {
         return true;
       }

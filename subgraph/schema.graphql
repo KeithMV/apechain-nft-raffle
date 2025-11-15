@@ -1,0 +1,13 @@
+type RaffleCreated @entity(immutable: true) {
+  id: Bytes!
+  raffleId: BigInt! # uint256
+  creator: Bytes! # address
+  nftContract: Bytes! # address
+  tokenId: BigInt! # uint256
+  raffleContract: Bytes! # address
+  ticketPrice: BigInt! # uint256
+  maxTickets: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
