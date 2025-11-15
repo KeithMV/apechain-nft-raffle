@@ -10,34 +10,81 @@ export default function BrowseRaffles() {
   const { address } = useAccount();
   const publicClient = usePublicClient();
   
-  const [activeRaffles, setActiveRaffles] = useState<CreatedRaffle[]>([]);
+  const [raffles, setRaffles] = useState<CreatedRaffle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [buyingTickets, setBuyingTickets] = useState<string | null>(null);
   const [ticketQuantities, setTicketQuantities] = useState<{[key: string]: number}>({});
+  const [showExpired, setShowExpired] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
   useEffect(() => {
     if (publicClient) {
-      loadActiveRaffles();
+      loadRaffles();
     }
   }, [publicClient]);
 
-  const loadActiveRaffles = async () => {
+  const loadRaffles = async (reset = true) => {
     if (!publicClient) return;
     
-    setLoading(true);
+    if (reset) {
+      setLoading(true);
+      setCurrentPage(0);
+      setHasMoreRaffles(true);
+    }
+    
     try {
-      console.log('Loading active raffles...');
-      const raffles = await rafflePositionService.getActiveRaffles(publicClient, 50);
-      console.log('Loaded raffles:', raffles.length);
-      setActiveRaffles(raffles);
-      if (raffles.length === 0) {
-        console.log('No active raffles found');
+      console.log('Loading all raffles...');
+      const allRaffles = await rafflePositionService.getAllRaffles(publicClient, 30);
+      console.log('Loaded raffles:', allRaffles.length);
+      
+      if (reset) {
+        setRaffles(allRaffles);
+      }
+      
+      if (allRaffles.length < 30) {
+        setHasMoreRaffles(false);
+      }
+      
+      if (allRaffles.length === 0) {
+        console.log('No raffles found');
       }
     } catch (error) {
-      console.error('Failed to load active raffles:', error);
+      console.error('Failed to load raffles:', error);
       toast.error('Failed to load raffles');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMoreRaffles = async () => {
+    if (!publicClient || loadingMore || !hasMoreRaffles) return;
+    
+    setLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      console.log('Loading more raffles, page:', nextPage);
+      
+      const moreRaffles = await rafflePositionService.getAllRaffles(publicClient, 20, nextPage * 20);
+      console.log('Loaded more raffles:', moreRaffles.length);
+      
+      if (moreRaffles.length === 0) {
+        setHasMoreRaffles(false);
+        toast('No more raffles to load', { icon: '📭' });
+      } else {
+        setRaffles(prev => [...prev, ...moreRaffles]);
+        setCurrentPage(nextPage);
+        
+        if (moreRaffles.length < 20) {
+          setHasMoreRaffles(false);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load more raffles:', error);
+      toast.error('Failed to load more raffles');
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -79,7 +126,7 @@ export default function BrowseRaffles() {
       });
       
       toast.success(`Successfully bought ${quantity} ticket${quantity > 1 ? 's' : ''}!`);
-      loadActiveRaffles(); // Refresh data
+      loadRaffles(); // Refresh data
       
       // Reset quantity
       setTicketQuantities(prev => ({
@@ -139,151 +186,253 @@ export default function BrowseRaffles() {
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-2xl blur-sm animate-pulse"></div>
               <span className="relative text-slate-900 text-xl sm:text-2xl font-bold">🎆</span>
             </div>
-            <div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">Active Raffles</h2>
+            <div className="flex-1">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">NFT Raffles</h2>
               <p className="text-slate-300 mt-1 text-sm sm:text-base font-medium">Discover amazing NFTs • Win incredible prizes</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowExpired(!showExpired)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  showExpired 
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' 
+                    : 'bg-slate-700/50 text-slate-400 border border-slate-600/30 hover:bg-slate-600/50'
+                }`}
+              >
+                {showExpired ? 'Hide Expired' : 'Show Expired'}
+              </button>
             </div>
           </div>
         </div>
 
       <div className="p-4 sm:p-8">
-        {activeRaffles.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-400/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-emerald-400 text-2xl">🎆</span>
-            </div>
-            <h3 className="text-lg font-semibold text-emerald-300 mb-2">No Active Raffles</h3>
-            <p className="text-slate-400">Check back soon for new exciting NFT raffles</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {activeRaffles.map((raffle) => {
-              const quantity = ticketQuantities[raffle.raffleContract] || 1;
-              const totalCost = (parseFloat(raffle.ticketPrice) * quantity).toFixed(3);
-              const progress = (raffle.ticketsSold / raffle.maxTickets) * 100;
-              const availableTickets = raffle.maxTickets - raffle.ticketsSold;
-              
-              return (
-                <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className="relative bg-slate-800/60 border border-emerald-400/20 rounded-2xl overflow-hidden hover:border-emerald-400/50 hover:shadow-lg hover:shadow-emerald-500/20 transition-all duration-300 group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  {/* NFT Image */}
-                  <div className="relative">
-                    <NFTImage 
-                      contractAddress={raffle.nftContract}
-                      tokenId={raffle.tokenId.toString()}
-                      className="w-full h-80 sm:h-96"
-                      showName={true}
-                    />
-                    <div className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm border border-emerald-400/30 rounded-xl px-3 py-2">
-                      <p className="text-emerald-300 font-semibold text-sm">{raffle.ticketPrice} APE</p>
-                      <p className="text-slate-400 text-xs">per ticket</p>
-                    </div>
+        {(() => {
+          const filteredRaffles = showExpired ? raffles : raffles.filter(r => r.isActive);
+          const activeCount = raffles.filter(r => r.isActive).length;
+          const expiredCount = raffles.filter(r => !r.isActive).length;
+          
+          return (
+            <>
+              {raffles.length > 0 && (
+                <div className="mb-6 flex flex-wrap gap-4 text-sm">
+                  <div className="bg-emerald-500/10 border border-emerald-400/30 rounded-xl px-4 py-2">
+                    <span className="text-emerald-300 font-medium">{activeCount} Active</span>
                   </div>
-                  
-                  <div className="relative z-10 p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h4 className="text-lg font-semibold text-white mb-1">
-                          NFT #{raffle.tokenId}
-                        </h4>
-                        <p className="text-slate-400 text-xs font-mono break-all">
-                          {raffle.nftContract}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="mb-4">
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-slate-400">Tickets Available</span>
-                        <span className="text-white">{availableTickets}/{raffle.maxTickets}</span>
-                      </div>
-                      <div className="w-full bg-slate-700/50 rounded-full h-3">
-                        <div 
-                          className="bg-gradient-to-r from-emerald-400 to-teal-400 h-3 rounded-full transition-all duration-300 shadow-sm shadow-emerald-400/50"
-                          style={{ width: `${progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                      <div>
-                        <p className="text-slate-400">Time Left</p>
-                        <p className="text-white font-mono">{formatTimeRemaining(raffle.endTime)}</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-400">Win Chance</p>
-                        <p className="text-white font-mono">{(quantity / raffle.maxTickets * 100).toFixed(1)}%</p>
-                      </div>
-                    </div>
-
-                    {/* APE Token Balance */}
-                    <div className="mb-4">
-                      <ApeTokenBalance 
-                        requiredAmount={totalCost}
-                      />
-                    </div>
-
-                    {/* Buy Tickets Section */}
-                    <div className="border-t border-slate-700/50 pt-4">
-                      {address && raffle.creator.toLowerCase() === address.toLowerCase() ? (
-                        <div className="text-center py-4">
-                          <div className="w-12 h-12 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-                            <span className="text-yellow-400 text-xl">👑</span>
-                          </div>
-                          <p className="text-yellow-400 font-mono font-semibold mb-1">YOUR RAFFLE</p>
-                          <p className="text-slate-400 text-sm font-mono">Creators cannot buy their own tickets</p>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-center space-x-3 mb-3">
-                            <div className="flex-1">
-                              <label className="block text-xs text-slate-400 mb-1">Quantity</label>
-                              <input
-                                type="number"
-                                min="1"
-                                max={Math.min(100, availableTickets)}
-                                value={quantity}
-                                onChange={(e) => setTicketQuantity(raffle.raffleContract, parseInt(e.target.value) || 1, availableTickets)}
-                                className="w-full bg-slate-800/80 border border-emerald-400/30 rounded-xl px-3 py-2 text-slate-100 text-sm font-mono focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 focus:outline-none transition-all"
-                              />
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs text-slate-400 mb-1">Total Cost</p>
-                              <p className="text-white font-semibold">{totalCost} APE</p>
-                            </div>
-                          </div>
-                          
-                          <button
-                            onClick={() => handleBuyTickets(raffle)}
-                            disabled={buyingTickets === raffle.raffleContract || availableTickets === 0}
-                            className="relative w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 overflow-hidden group shadow-lg hover:shadow-emerald-500/25"
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                            {buyingTickets === raffle.raffleContract ? (
-                              <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                <span className="relative">PROCESSING...</span>
-                              </>
-                            ) : availableTickets === 0 ? (
-                              <span className="relative">PROTOCOL.FULL</span>
-                            ) : (
-                              <>
-                                <span className="relative">⚡</span>
-                                <span className="relative">ACQUIRE {quantity} TICKET{quantity > 1 ? 'S' : ''}</span>
-                              </>
-                            )}
-                          </button>
-                        </>
-                      )}
-                    </div>
+                  <div className="bg-slate-700/50 border border-slate-600/30 rounded-xl px-4 py-2">
+                    <span className="text-slate-400 font-medium">{expiredCount} Expired</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              )}
+              
+              {filteredRaffles.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-400/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <span className="text-emerald-400 text-2xl">🎆</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-emerald-300 mb-2">
+                    {showExpired ? 'No Raffles Found' : 'No Active Raffles'}
+                  </h3>
+                  <p className="text-slate-400">
+                    {showExpired ? 'No raffles available' : 'Check back soon for new exciting NFT raffles'}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {filteredRaffles.map((raffle) => {
+                    const quantity = ticketQuantities[raffle.raffleContract] || 1;
+                    const totalCost = (parseFloat(raffle.ticketPrice) * quantity).toFixed(3);
+                    const progress = (raffle.ticketsSold / raffle.maxTickets) * 100;
+                    const availableTickets = raffle.maxTickets - raffle.ticketsSold;
+                    const isExpired = !raffle.isActive;
+              
+                    return (
+                      <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className={`relative bg-slate-800/60 border rounded-2xl overflow-hidden transition-all duration-300 group ${
+                        isExpired 
+                          ? 'border-slate-600/30 opacity-75' 
+                          : 'border-emerald-400/20 hover:border-emerald-400/50 hover:shadow-lg hover:shadow-emerald-500/20'
+                      }`}>
+                        {!isExpired && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        )}
+                        {/* NFT Image */}
+                        <div className="relative">
+                          <NFTImage 
+                            contractAddress={raffle.nftContract}
+                            tokenId={raffle.tokenId.toString()}
+                            className="w-full h-80 sm:h-96"
+                            showName={true}
+                          />
+                          <div className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm border border-emerald-400/30 rounded-xl px-3 py-2">
+                            <p className="text-emerald-300 font-semibold text-sm">{raffle.ticketPrice} APE</p>
+                            <p className="text-slate-400 text-xs">per ticket</p>
+                          </div>
+                          {isExpired && (
+                            <div className="absolute top-3 left-3 bg-red-900/90 backdrop-blur-sm border border-red-400/30 rounded-xl px-3 py-2">
+                              <p className="text-red-300 font-semibold text-sm">EXPIRED</p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="relative z-10 p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h4 className="text-lg font-semibold text-white mb-1">
+                                NFT #{raffle.tokenId}
+                              </h4>
+                              <p className="text-slate-400 text-xs font-mono break-all">
+                                {raffle.nftContract}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="mb-4">
+                            <div className="flex justify-between text-sm mb-2">
+                              <span className="text-slate-400">{isExpired ? 'Final Results' : 'Tickets Available'}</span>
+                              <span className="text-white">{isExpired ? `${raffle.ticketsSold}/${raffle.maxTickets} sold` : `${availableTickets}/${raffle.maxTickets}`}</span>
+                            </div>
+                            <div className="w-full bg-slate-700/50 rounded-full h-3">
+                              <div 
+                                className={`h-3 rounded-full transition-all duration-300 shadow-sm ${
+                                  isExpired 
+                                    ? 'bg-gradient-to-r from-slate-500 to-slate-600 shadow-slate-500/50' 
+                                    : 'bg-gradient-to-r from-emerald-400 to-teal-400 shadow-emerald-400/50'
+                                }`}
+                                style={{ width: `${progress}%` }}
+                              ></div>
+                            </div>
+                          </div>
+
+                          {/* Stats Grid */}
+                          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                            <div>
+                              <p className="text-slate-400">{isExpired ? 'Status' : 'Time Left'}</p>
+                              <p className={`font-mono ${
+                                isExpired ? 'text-red-300' : 'text-white'
+                              }`}>
+                                {isExpired ? 'Ended' : formatTimeRemaining(raffle.endTime)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-slate-400">{isExpired ? 'Winner' : 'Win Chance'}</p>
+                              <p className="text-white font-mono">
+                                {isExpired 
+                                  ? (raffle.winner && raffle.winner !== '0x0000000000000000000000000000000000000000' 
+                                      ? `${raffle.winner.slice(0, 6)}...${raffle.winner.slice(-4)}` 
+                                      : 'No winner')
+                                  : `${(quantity / raffle.maxTickets * 100).toFixed(1)}%`
+                                }
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* APE Token Balance */}
+                          {!isExpired && (
+                            <div className="mb-4">
+                              <ApeTokenBalance 
+                                requiredAmount={totalCost}
+                              />
+                            </div>
+                          )}
+
+                          {/* Buy Tickets Section */}
+                          <div className="border-t border-slate-700/50 pt-4">
+                            {isExpired ? (
+                              <div className="text-center py-4">
+                                <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                  <span className="text-red-400 text-xl">⏰</span>
+                                </div>
+                                <p className="text-red-400 font-mono font-semibold mb-1">RAFFLE ENDED</p>
+                                <p className="text-slate-400 text-sm font-mono">
+                                  {raffle.winner && raffle.winner !== '0x0000000000000000000000000000000000000000' 
+                                    ? `Winner: ${raffle.winner.slice(0, 6)}...${raffle.winner.slice(-4)}` 
+                                    : 'No tickets were sold'}
+                                </p>
+                              </div>
+                            ) : address && raffle.creator.toLowerCase() === address.toLowerCase() ? (
+                              <div className="text-center py-4">
+                                <div className="w-12 h-12 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                  <span className="text-yellow-400 text-xl">👑</span>
+                                </div>
+                                <p className="text-yellow-400 font-mono font-semibold mb-1">YOUR RAFFLE</p>
+                                <p className="text-slate-400 text-sm font-mono">Creators cannot buy their own tickets</p>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-center space-x-3 mb-3">
+                                  <div className="flex-1">
+                                    <label className="block text-xs text-slate-400 mb-1">Quantity</label>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      max={Math.min(100, availableTickets)}
+                                      value={quantity}
+                                      onChange={(e) => setTicketQuantity(raffle.raffleContract, parseInt(e.target.value) || 1, availableTickets)}
+                                      className="w-full bg-slate-800/80 border border-emerald-400/30 rounded-xl px-3 py-2 text-slate-100 text-sm font-mono focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 focus:outline-none transition-all"
+                                    />
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-xs text-slate-400 mb-1">Total Cost</p>
+                                    <p className="text-white font-semibold">{totalCost} APE</p>
+                                  </div>
+                                </div>
+                                
+                                <button
+                                  onClick={() => handleBuyTickets(raffle)}
+                                  disabled={buyingTickets === raffle.raffleContract || availableTickets === 0}
+                                  className="relative w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 overflow-hidden group shadow-lg hover:shadow-emerald-500/25"
+                                >
+                                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                  {buyingTickets === raffle.raffleContract ? (
+                                    <>
+                                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                      <span className="relative">PROCESSING...</span>
+                                    </>
+                                  ) : availableTickets === 0 ? (
+                                    <span className="relative">PROTOCOL.FULL</span>
+                                  ) : (
+                                    <>
+                                      <span className="relative">⚡</span>
+                                      <span className="relative">ACQUIRE {quantity} TICKET{quantity > 1 ? 'S' : ''}</span>
+                                    </>
+                                  )}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              
+              {/* Load More Button */}
+              {filteredRaffles.length > 0 && hasMoreRaffles && (
+                <div className="mt-8 text-center">
+                  <button
+                    onClick={loadMoreRaffles}
+                    disabled={loadingMore}
+                    className="relative bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 disabled:from-slate-800 disabled:to-slate-800 text-slate-300 hover:text-white disabled:text-slate-500 font-semibold py-3 px-8 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-3 mx-auto overflow-hidden group border border-slate-600/50 hover:border-slate-500/50"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-500/0 via-slate-500/10 to-slate-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    {loadingMore ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="relative">Loading older raffles...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="relative">📜</span>
+                        <span className="relative">Load More Raffles</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </>
+          );
+        })()}
       </div>
       </div>
     </div>

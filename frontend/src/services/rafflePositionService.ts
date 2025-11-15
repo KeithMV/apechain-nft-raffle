@@ -68,9 +68,9 @@ class RafflePositionService {
     }
     
     try {
-      // Get recent RaffleCreated events (last 50000 blocks for performance)
+      // Get recent RaffleCreated events (wider range for expired raffles)
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
+      const fromBlock = currentBlock > 200000n ? currentBlock - 200000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -150,10 +150,10 @@ class RafflePositionService {
   }
 
   /**
-   * Get all raffles created by user
+   * Get all raffles created by user with pagination
    */
-  async getCreatedRaffles(userAddress: string, publicClient: any): Promise<CreatedRaffle[]> {
-    safeLog('🎨 Getting created raffles for:', userAddress);
+  async getCreatedRaffles(userAddress: string, publicClient: any, page: number = 0): Promise<CreatedRaffle[]> {
+    safeLog('🎨 Getting created raffles for:', userAddress, 'page:', page);
     
     if (!publicClient) {
       console.log('❌ No publicClient provided');
@@ -161,7 +161,7 @@ class RafflePositionService {
     }
     
     // Check cache first
-    const cacheKey = `created_${userAddress.toLowerCase()}`;
+    const cacheKey = `created_${userAddress.toLowerCase()}_page_${page}`;
     const lastUpdate = this.lastUpdate.get(cacheKey) || 0;
     const now = Date.now();
     
@@ -171,9 +171,11 @@ class RafflePositionService {
     }
     
     try {
-      // Get RaffleCreated events where user is the creator (optimized range)
+      // Progressive loading: 50K blocks per page (~2 weeks each)
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
+      const BLOCKS_PER_PAGE = 50000n;
+      const fromBlock = currentBlock - BigInt((page + 1) * Number(BLOCKS_PER_PAGE));
+      const toBlock = page === 0 ? currentBlock : currentBlock - BigInt(page * Number(BLOCKS_PER_PAGE));
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -181,8 +183,8 @@ class RafflePositionService {
         args: {
           creator: userAddress as `0x${string}`
         },
-        fromBlock,
-        toBlock: 'latest'
+        fromBlock: fromBlock > 0n ? fromBlock : 0n,
+        toBlock
       });
       
       safeLog(`Found ${raffleEvents.length} events for creator`, userAddress);
@@ -236,6 +238,86 @@ class RafflePositionService {
   }
 
   /**
+   * Get all raffles (active and expired)
+   */
+  async getAllRaffles(publicClient: any, limit: number = 20, offset: number = 0): Promise<CreatedRaffle[]> {
+    safeLog('🔍 Getting all raffles');
+    
+    if (!publicClient) {
+      console.log('❌ No publicClient provided');
+      return [];
+    }
+    
+    try {
+      // Get RaffleCreated events from a wider range
+      const currentBlock = await publicClient.getBlockNumber();
+      const fromBlock = currentBlock > 500000n ? currentBlock - 500000n : 0n;
+      
+      const raffleEvents = await publicClient.getLogs({
+        address: RAFFLE_FACTORY_CONTRACT,
+        event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
+        fromBlock,
+        toBlock: 'latest'
+      });
+
+      if (raffleEvents.length === 0) {
+        return [];
+      }
+
+      safeLog(`Found ${raffleEvents.length} total raffle events`);
+      
+      // Process recent raffles (get latest ones)
+      const eventsToProcess = raffleEvents.slice(-Math.min(limit * 2, 100));
+      safeLog(`Processing ${eventsToProcess.length} of ${raffleEvents.length} events for all raffles`);
+      
+      const rafflePromises = eventsToProcess.map(async (event: any) => {
+        try {
+          const { raffleId, raffleContract, nftContract, tokenId, creator, ticketPrice, maxTickets } = event.args;
+          
+          const raffleInfo = await raffleContractService.getRaffleInfo(raffleContract as string);
+          
+          // Include all raffles (active and expired)
+          const now = Math.floor(Date.now() / 1000);
+          const isActive = !raffleInfo.completed && now < Number(raffleInfo.endTime) && Number(raffleInfo.ticketsSold) < Number(maxTickets);
+          
+          return {
+            raffleId: Number(raffleId),
+            raffleContract: raffleContract as string,
+            nftContract: nftContract as string,
+            tokenId: tokenId.toString(),
+            creator: creator as string,
+            ticketPrice: (Number(ticketPrice) / 1e18).toString(),
+            maxTickets: Number(maxTickets),
+            ticketsSold: Number(raffleInfo.ticketsSold),
+            endTime: Number(raffleInfo.endTime),
+            isActive,
+            completed: raffleInfo.completed,
+            winner: raffleInfo.completed ? raffleInfo.winner : undefined
+          };
+        } catch (error) {
+          safeError('Error processing raffle:', error);
+          return null;
+        }
+      });
+
+      const results = await Promise.all(rafflePromises);
+      const allRaffles = results.filter(raffle => raffle !== null) as CreatedRaffle[];
+      
+      // Sort by newest first and apply offset + limit
+      const limitedRaffles = allRaffles
+        .sort((a, b) => b.raffleId - a.raffleId)
+        .slice(offset, offset + limit);
+      
+      safeLog(`🔍 Found ${limitedRaffles.length} total raffles (${limitedRaffles.filter(r => r.isActive).length} active, ${limitedRaffles.filter(r => !r.isActive).length} expired)`);
+      return limitedRaffles;
+
+    } catch (error) {
+      safeError('Error fetching all raffles:', error);
+      return [];
+    }
+  }
+
+  /**
    * Get all active raffles (for browsing)
    */
   async getActiveRaffles(publicClient: any, limit: number = 20): Promise<CreatedRaffle[]> {
@@ -283,19 +365,31 @@ class RafflePositionService {
           safeLog(`Processing raffle`, raffleId, raffleContract);
           
           const raffleInfo = await raffleContractService.getRaffleInfo(raffleContract as string);
-          safeLog(`Raffle ${raffleId} info:`, {
+          const now = Math.floor(Date.now() / 1000);
+          const endTime = Number(raffleInfo.endTime);
+          const timeRemaining = endTime - now;
+          
+          safeLog(`Raffle ${raffleId} detailed info:`, {
             completed: raffleInfo.completed,
-            endTime: Number(raffleInfo.endTime),
-            currentTime: Math.floor(Date.now() / 1000),
+            endTime: endTime,
+            currentTime: now,
+            timeRemaining: timeRemaining,
+            timeRemainingHours: (timeRemaining / 3600).toFixed(2),
             ticketsSold: Number(raffleInfo.ticketsSold),
-            maxTickets: Number(maxTickets)
+            maxTickets: Number(maxTickets),
+            isTimeExpired: now >= endTime,
+            isCompleted: raffleInfo.completed,
+            isMaxTicketsSold: Number(raffleInfo.ticketsSold) >= Number(maxTickets)
           });
           
           // Check if raffle is still active
-          const now = Math.floor(Date.now() / 1000);
-          const isActive = !raffleInfo.completed && now < Number(raffleInfo.endTime) && Number(raffleInfo.ticketsSold) < Number(maxTickets);
+          const isActive = !raffleInfo.completed && now < endTime && Number(raffleInfo.ticketsSold) < Number(maxTickets);
           
-          safeLog(`Raffle ${raffleId} active:`, isActive);
+          safeLog(`Raffle ${raffleId} active:`, isActive, 'Reasons:', {
+            notCompleted: !raffleInfo.completed,
+            notExpired: now < endTime,
+            hasAvailableTickets: Number(raffleInfo.ticketsSold) < Number(maxTickets)
+          });
           
           if (!isActive) {
             return null;

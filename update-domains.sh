@@ -21,14 +21,16 @@ jq '.DistributionConfig' current-config.json > distribution-config.json
 # Update with all domains
 jq --arg cert "$CERT_ARN" '
 .Aliases = {
-  "Quantity": 6,
+  "Quantity": 8,
   "Items": [
     "apechain-raffles.com",
     "www.apechain-raffles.com", 
     "apechainraffles.com",
     "www.apechainraffles.com",
     "apechainraffles.xyz", 
-    "www.apechainraffles.xyz"
+    "www.apechainraffles.xyz",
+    "apechainraffles.io",
+    "www.apechainraffles.io"
   ]
 } |
 .ViewerCertificate = {
@@ -54,6 +56,10 @@ echo ""
 echo "For apechainraffles.xyz:"
 echo "  A Record: apechainraffles.xyz → d3mce6qq270l98.cloudfront.net" 
 echo "  CNAME: www.apechainraffles.xyz → d3mce6qq270l98.cloudfront.net"
+echo ""
+echo "For apechainraffles.io:"
+echo "  A Record: apechainraffles.io → d3mce6qq270l98.cloudfront.net"
+echo "  CNAME: www.apechainraffles.io → d3mce6qq270l98.cloudfront.net"
 
 # Cleanup
 rm -f current-config.json distribution-config.json updated-config.json

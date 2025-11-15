@@ -78,11 +78,11 @@ export default function NFTImage({ contractAddress, tokenId, className = '', sho
           // Handle image load error gracefully
           
           // Check if it's a problematic SSL domain
-          const isProblematicDomain = metadata.image.includes('img.op.xyz') || metadata.image.includes('img.other.page');
+          const isProblematicDomain = metadata.image.includes('img.op.xyz') || metadata.image.includes('img.other.page') || metadata.image.includes('api.op.xyz');
           
-          if (isProblematicDomain && !metadata.image.includes('corsproxy.io')) {
+          if (isProblematicDomain && !metadata.image.includes('allorigins.win') && !metadata.image.includes('corsproxy.io')) {
             // Try CORS proxy for SSL issues
-            const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(metadata.image)}`;
+            const proxiedUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(metadata.image)}`;
             console.log('Trying CORS proxy for SSL issue:', proxiedUrl);
             setMetadata({ ...metadata, image: proxiedUrl });
             return;

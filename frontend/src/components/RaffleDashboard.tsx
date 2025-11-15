@@ -13,31 +13,50 @@ export default function RaffleDashboard() {
   const [createdRaffles, setCreatedRaffles] = useState<CreatedRaffle[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'participated' | 'created'>('participated');
+  const [showExpired, setShowExpired] = useState(true);
+  const [page, setPage] = useState(0);
+  const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
   useEffect(() => {
     if (address && publicClient) {
-      loadUserData();
+      setPage(0);
+      setCreatedRaffles([]);
+      loadUserData(0, false);
     }
   }, [address, publicClient]);
 
-  const loadUserData = async () => {
+  const loadUserData = async (pageNum: number = 0, append: boolean = false) => {
     if (!address || !publicClient) return;
     
     setLoading(true);
     try {
       const [positions, created] = await Promise.all([
         rafflePositionService.getUserRafflePositions(address, publicClient),
-        rafflePositionService.getCreatedRaffles(address, publicClient)
+        rafflePositionService.getCreatedRaffles(address, publicClient, pageNum)
       ]);
       
       setUserPositions(positions);
-      setCreatedRaffles(created);
+      
+      if (append) {
+        setCreatedRaffles(prev => [...prev, ...created]);
+      } else {
+        setCreatedRaffles(created);
+      }
+      
+      // Check if there are more raffles (if we got results, there might be more)
+      setHasMoreRaffles(created.length > 0);
     } catch (error) {
       console.error('Failed to load user data:', error);
       toast.error('Failed to load raffle data');
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadMoreRaffles = async () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    await loadUserData(nextPage, true);
   };
 
   const formatTimeRemaining = (endTime: number) => {
@@ -110,9 +129,10 @@ export default function RaffleDashboard() {
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs and Filters */}
         <div className="relative px-4 sm:px-8 pt-6 z-10">
-          <div className="flex space-x-1">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+            <div className="flex space-x-1">
             <button
               onClick={() => setActiveTab('participated')}
               className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 overflow-hidden group font-mono tracking-wider ${
@@ -135,23 +155,37 @@ export default function RaffleDashboard() {
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
               <span className="relative">Created ({createdRaffles.length})</span>
             </button>
+            </div>
+            <div className="flex items-center space-x-3">
+              <label className="flex items-center space-x-2 text-sm text-emerald-300 font-mono">
+                <input
+                  type="checkbox"
+                  checked={showExpired}
+                  onChange={(e) => setShowExpired(e.target.checked)}
+                  className="rounded border-emerald-400/50 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                />
+                <span>Show Expired</span>
+              </label>
+            </div>
           </div>
         </div>
 
         <div className="relative p-4 sm:p-8 z-10">
           {activeTab === 'participated' ? (
             <div className="space-y-4">
-              {userPositions.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
-                    <span className="relative text-cyan-400 text-2xl">⚡</span>
+              {(() => {
+                const filteredPositions = showExpired ? userPositions : userPositions.filter(p => p.isActive || p.completed);
+                return filteredPositions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
+                      <span className="relative text-cyan-400 text-2xl">⚡</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffle Participation</h3>
+                    <p className="text-cyan-400/70 font-mono">{showExpired ? "You haven't participated in any raffles yet" : "No active or completed raffles to show"}</p>
                   </div>
-                  <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffle Participation</h3>
-                  <p className="text-cyan-400/70 font-mono">You haven't participated in any raffles yet</p>
-                </div>
-              ) : (
-                userPositions.map((position) => (
+                ) : (
+                  filteredPositions.map((position) => (
                   <div key={`${position.raffleContract}-${position.raffleId}`} className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
                     <div className="flex flex-col sm:flex-row">
@@ -210,22 +244,25 @@ export default function RaffleDashboard() {
                       </div>
                     </div>
                   </div>
-                ))
-              )}
+                  ))
+                );
+              })()}
             </div>
           ) : (
             <div className="space-y-4">
-              {createdRaffles.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
-                    <span className="relative text-cyan-400 text-2xl">⚡</span>
+              {(() => {
+                const filteredRaffles = showExpired ? createdRaffles : createdRaffles.filter(r => r.isActive || (Date.now() / 1000 - r.endTime < 86400));
+                return filteredRaffles.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
+                      <span className="relative text-cyan-400 text-2xl">⚡</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffles Created</h3>
+                    <p className="text-cyan-400/70 font-mono">{showExpired ? "You haven't created any raffles yet" : "No active or recent raffles to show"}</p>
                   </div>
-                  <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffles Created</h3>
-                  <p className="text-cyan-400/70 font-mono">You haven't created any raffles yet</p>
-                </div>
-              ) : (
-                createdRaffles.map((raffle) => (
+                ) : (
+                  filteredRaffles.map((raffle) => (
                   <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
                     <div className="flex flex-col sm:flex-row">
@@ -313,7 +350,29 @@ export default function RaffleDashboard() {
                       </div>
                     </div>
                   </div>
-                ))
+                  ))
+                );
+              })()}
+              
+              {/* Load More Button for Created Raffles */}
+              {activeTab === 'created' && hasMoreRaffles && createdRaffles.length > 0 && (
+                <div className="text-center pt-6">
+                  <button
+                    onClick={loadMoreRaffles}
+                    disabled={loading}
+                    className="relative bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:from-gray-600 disabled:to-gray-600 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/20 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    {loading ? (
+                      <span className="relative flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Loading...</span>
+                      </span>
+                    ) : (
+                      <span className="relative">Load More Raffles</span>
+                    )}
+                  </button>
+                </div>
               )}
             </div>
           )}
