@@ -50,7 +50,14 @@ const PROTOCOL_INFO = {
 } as const;
 
 function getCurrentChainId(): number {
-  // Default to ApeChain, will be updated by wallet connection
+  // Try to get chain ID from window.ethereum if available
+  if (typeof window !== 'undefined' && window.ethereum) {
+    const chainId = window.ethereum.chainId;
+    if (chainId) {
+      return parseInt(chainId, 16);
+    }
+  }
+  // Default to ApeChain
   return 33139;
 }
 

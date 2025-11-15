@@ -11,6 +11,8 @@ import CreateRafflePage from './components/CreateRafflePage';
 import RaffleDashboard from './components/RaffleDashboard';
 import BrowseRaffles from './components/BrowseRaffles';
 import WalletInfo from './components/WalletInfo';
+import WalletConnection from './components/WalletConnection';
+import NetworkStatus from './components/NetworkStatus';
 import ProfessionalDemo from './components/ProfessionalDemo';
 
 import '@rainbow-me/rainbowkit/styles.css';
@@ -91,9 +93,10 @@ function Header({ currentPage, setCurrentPage }: {
             </nav>
           </div>
           <div className="flex items-center space-x-3">
+            {isConnected && <NetworkStatus />}
             {isConnected && <WalletInfo />}
             <div className="scale-90 sm:scale-100">
-              <ConnectButton />
+              <WalletConnection />
             </div>
           </div>
         </div>
@@ -195,7 +198,7 @@ function RaffleApp() {
               <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4 font-sans tracking-tight">Connect Your Wallet</h3>
               <p className="text-slate-300 mb-6 sm:mb-8 text-base sm:text-lg px-2">Connect your wallet to start creating and participating in NFT raffles</p>
               <div className="flex justify-center">
-                <ConnectButton />
+                <WalletConnection />
               </div>
             </div>
           </div>
