@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { useAccount } from 'wagmi';
-import { config, apeChain } from './config/wagmi';
+import { config } from './config/wagmi';
 import { addApeChainToMetaMask } from './utils/addApeChain';
-import '@rainbow-me/rainbowkit/styles.css';
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
 import CreateRafflePage from './components/CreateRafflePage';
@@ -228,10 +226,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={config}>
-        <RainbowKitProvider initialChain={apeChain}>
-          <RaffleApp />
-          <Toaster position="top-right" />
-        </RainbowKitProvider>
+        <RaffleApp />
+        <Toaster position="top-right" />
       </WagmiProvider>
     </QueryClientProvider>
   );

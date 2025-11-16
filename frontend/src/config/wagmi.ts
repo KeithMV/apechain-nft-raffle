@@ -1,4 +1,5 @@
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { createConfig, http } from 'wagmi';
+import { injected, walletConnect, coinbaseWallet, metaMask } from 'wagmi/connectors';
 import { defineChain } from 'viem';
 
 export const apeChain = defineChain({
@@ -18,9 +19,31 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-export const config = getDefaultConfig({
-  appName: 'ApeChain NFT Raffles',
-  projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '2f05a7cde2bb14b518a6484396a6fda8',
+export const config = createConfig({
   chains: [apeChain],
-  ssr: false, // Disable SSR for custom chains
+  connectors: [
+    metaMask({
+      dappMetadata: {
+        name: 'ApeChain NFT Raffles',
+        url: 'https://www.apechainraffles.com',
+      },
+    }),
+    walletConnect({
+      projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '2f05a7cde2bb14b518a6484396a6fda8',
+      metadata: {
+        name: 'ApeChain NFT Raffles',
+        description: 'Decentralized NFT raffle platform on ApeChain',
+        url: 'https://www.apechainraffles.com',
+        icons: ['https://www.apechainraffles.com/logo192.png'],
+      },
+    }),
+    coinbaseWallet({
+      appName: 'ApeChain NFT Raffles',
+      appLogoUrl: 'https://www.apechainraffles.com/logo192.png',
+    }),
+    injected(),
+  ],
+  transports: {
+    [apeChain.id]: http('https://apechain.calderachain.xyz/http'),
+  },
 });
