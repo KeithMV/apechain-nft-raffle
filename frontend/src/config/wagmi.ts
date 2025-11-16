@@ -1,5 +1,5 @@
 import { createConfig, http } from 'wagmi';
-import { injected, walletConnect, coinbaseWallet, metaMask } from 'wagmi/connectors';
+import { injected, walletConnect, coinbaseWallet, metaMask } from '@wagmi/connectors';
 import { defineChain } from 'viem';
 
 export const apeChain = defineChain({
@@ -29,7 +29,7 @@ export const config = createConfig({
       },
     }),
     walletConnect({
-      projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '2f05a7cde2bb14b518a6484396a6fda8',
+      projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID!,
       metadata: {
         name: 'ApeChain NFT Raffles',
         description: 'Decentralized NFT raffle platform on ApeChain',

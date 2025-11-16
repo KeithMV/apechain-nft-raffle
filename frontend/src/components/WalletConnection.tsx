@@ -1,24 +1,37 @@
 import React, { useState } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
+import type { Connector } from 'wagmi';
 import { apeChain } from '../config/wagmi';
 
 export default function WalletConnection() {
   const { address, isConnected } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
+  const { connect, connectors, isPending, error } = useConnect();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const [showConnectors, setShowConnectors] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
-  const handleConnect = (connector: any) => {
-    connect({ connector });
-    setShowConnectors(false);
+  const handleConnect = async (connector: Connector) => {
+    try {
+      setConnectionError(null);
+      await connect({ connector });
+      setShowConnectors(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Connection failed';
+      setConnectionError(message);
+    }
   };
 
-  const handleSwitchNetwork = () => {
-    switchChain({ chainId: apeChain.id });
+  const handleSwitchNetwork = async () => {
+    try {
+      await switchChain({ chainId: apeChain.id });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Network switch failed';
+      setConnectionError(message);
+    }
   };
 
   const formatAddress = (addr: string) => {
@@ -81,12 +94,19 @@ export default function WalletConnection() {
   }
 
   return (
-    <button
-      onClick={() => setShowConnectors(true)}
-      disabled={isPending}
-      className="px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 rounded-lg text-sm font-medium hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
-    >
-      {isPending ? 'Connecting...' : 'Connect Wallet'}
-    </button>
+    <div className="flex flex-col items-end space-y-2">
+      {(connectionError || error) && (
+        <div className="text-red-400 text-xs max-w-xs text-right">
+          {connectionError || error?.message}
+        </div>
+      )}
+      <button
+        onClick={() => setShowConnectors(true)}
+        disabled={isPending}
+        className="px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 rounded-lg text-sm font-medium hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+      >
+        {isPending ? 'Connecting...' : 'Connect Wallet'}
+      </button>
+    </div>
   );
 }
