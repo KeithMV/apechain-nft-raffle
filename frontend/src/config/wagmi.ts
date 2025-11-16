@@ -35,8 +35,8 @@ const getConnectors = () => {
       metadata: {
         name: 'ApeChain NFT Raffles',
         description: 'Decentralized NFT raffle platform on ApeChain',
-        url: 'https://d3mce6qq270l98.cloudfront.net',
-        icons: ['https://d3mce6qq270l98.cloudfront.net/logo192.png'],
+        url: typeof window !== 'undefined' ? window.location.origin : 'https://www.apechainraffles.com',
+        icons: ['https://www.apechainraffles.com/logo192.png'],
       },
       showQrModal: !isMobileDevice(),
     })
@@ -46,7 +46,7 @@ const getConnectors = () => {
   connectors.push(
     coinbaseWallet({
       appName: 'ApeChain NFT Raffles',
-      appLogoUrl: 'https://d3mce6qq270l98.cloudfront.net/logo192.png',
+      appLogoUrl: 'https://www.apechainraffles.com/logo192.png',
     })
   );
   
