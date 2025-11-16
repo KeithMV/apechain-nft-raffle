@@ -15,10 +15,12 @@ export const apeChain = defineChain({
   blockExplorers: {
     default: { name: 'ApeChain Explorer', url: 'https://apechain.calderaexplorer.xyz' },
   },
+  testnet: false,
 });
 
 export const config = getDefaultConfig({
   appName: 'ApeChain NFT Raffles',
   projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '2f05a7cde2bb14b518a6484396a6fda8',
   chains: [apeChain],
+  ssr: false, // Disable SSR for custom chains
 });
