@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
@@ -6,11 +6,6 @@ import { useAccount } from 'wagmi';
 import { config, apeChain } from './config/wagmi';
 import { addApeChainToMetaMask } from './utils/addApeChain';
 import '@rainbow-me/rainbowkit/styles.css';
-
-// Auto-add ApeChain to MetaMask on load
-if (typeof window !== 'undefined') {
-  addApeChainToMetaMask();
-}
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
 import CreateRafflePage from './components/CreateRafflePage';
@@ -20,8 +15,6 @@ import WalletInfo from './components/WalletInfo';
 import WalletConnection from './components/WalletConnection';
 import NetworkStatus from './components/NetworkStatus';
 import ProfessionalDemo from './components/ProfessionalDemo';
-
-
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -227,6 +220,11 @@ function RaffleApp() {
 }
 
 function App() {
+  useEffect(() => {
+    // Auto-add ApeChain to MetaMask on load
+    addApeChainToMetaMask();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={config}>
