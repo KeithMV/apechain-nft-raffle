@@ -1,22 +1,37 @@
 import React, { useEffect, useState } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import { apeChainMainnet } from '../config/wagmi';
-import { NETWORK_CONFIGS } from '../config/addresses';
 
 export default function WalletConnection() {
   const { address, isConnected, connector } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
+  const { connect, connectors, isPending, error } = useConnect();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const [isWrongNetwork, setIsWrongNetwork] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
     setIsWrongNetwork(isConnected && chainId !== apeChainMainnet.id);
-  }, [isConnected, chainId]);
+    if (error) {
+      setConnectionError(error.message);
+    }
+  }, [isConnected, chainId, error]);
 
-  const handleConnect = (connectorToUse: any) => {
-    connect({ connector: connectorToUse });
+  useEffect(() => {
+    if (isConnected) {
+      setConnectionError(null);
+    }
+  }, [isConnected]);
+
+  const handleConnect = async () => {
+    try {
+      setConnectionError(null);
+      const connector = connectors[0]; // Use first available connector
+      await connect({ connector });
+    } catch (err) {
+      setConnectionError(err instanceof Error ? err.message : 'Connection failed');
+    }
   };
 
   const handleSwitchToApeChain = () => {
@@ -57,23 +72,19 @@ export default function WalletConnection() {
   }
 
   return (
-    <div className="flex items-center space-x-2">
-      {connectors.map((connectorItem) => (
-        <button
-          key={connectorItem.id}
-          onClick={() => handleConnect(connectorItem)}
-          disabled={isPending}
-          className="relative px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 rounded-lg text-sm font-medium hover:bg-emerald-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <span className="relative flex items-center space-x-2">
-            {connectorItem.name === 'MetaMask' && <span>🦊</span>}
-            {connectorItem.name === 'WalletConnect' && <span>🔗</span>}
-            {connectorItem.name === 'Injected' && <span>💼</span>}
-            <span>{isPending ? 'Connecting...' : `Connect ${connectorItem.name}`}</span>
-          </span>
-        </button>
-      ))}
+    <div className="flex items-center space-x-3">
+      {connectionError && (
+        <div className="text-red-400 text-sm">
+          {connectionError}
+        </div>
+      )}
+      <button
+        onClick={handleConnect}
+        disabled={isPending}
+        className="px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 rounded-lg text-sm font-medium hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+      >
+        {isPending ? 'Connecting...' : 'Connect Wallet'}
+      </button>
     </div>
   );
 }
