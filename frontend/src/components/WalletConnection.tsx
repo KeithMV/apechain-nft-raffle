@@ -49,24 +49,15 @@ export default function WalletConnection() {
   };
 
   const getBestConnector = () => {
-    const isMobile = isMobileDevice();
+    if (connectors.length === 0) return null;
     
-    if (isMobile) {
-      // Prioritize WalletConnect for mobile
-      const walletConnectConnector = connectors.find(c => c.id === 'walletConnect');
-      if (walletConnectConnector) return walletConnectConnector;
-      
-      // Fallback to Coinbase Wallet for mobile Safari
-      const coinbaseConnector = connectors.find(c => c.id === 'coinbaseWalletSDK');
-      if (coinbaseConnector) return coinbaseConnector;
+    if (isMobileDevice()) {
+      // Mobile: prioritize WalletConnect
+      return connectors.find(c => c.id === 'walletConnect') || connectors[0];
     }
     
-    // Desktop: prefer MetaMask if available
-    const metaMaskConnector = connectors.find(c => c.name?.toLowerCase().includes('metamask'));
-    if (metaMaskConnector) return metaMaskConnector;
-    
-    // Fallback to first available
-    return connectors[0];
+    // Desktop: prefer injected (MetaMask) if available
+    return connectors.find(c => c.id === 'injected') || connectors[0];
   };
 
   const handleSwitchToApeChain = () => {
@@ -123,16 +114,16 @@ export default function WalletConnection() {
           >
             {isPending ? 'Connecting...' : 'Connect Wallet'}
           </button>
-          {isMobileDevice() && (
+          {isMobileDevice() && connectors.length === 0 && (
             <div className="text-xs text-slate-400 max-w-xs text-right">
-              Mobile users: Use MetaMask app or Trust Wallet browser
+              Please use MetaMask app or Trust Wallet browser
             </div>
           )}
         </div>
       ) : (
         <div className="flex flex-col space-y-2 bg-slate-800/90 border border-slate-700/50 rounded-lg p-3 min-w-48">
           <div className="text-slate-300 text-xs font-medium mb-1">Choose Wallet:</div>
-          {connectors.map((connector) => (
+          {connectors.filter(c => c.id !== 'injected' || typeof window !== 'undefined' && window.ethereum).map((connector) => (
             <button
               key={connector.id}
               onClick={() => handleConnect(connector)}
