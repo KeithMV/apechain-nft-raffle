@@ -1,5 +1,4 @@
-import { createConfig, http } from 'wagmi';
-import { injected, walletConnect, metaMask } from 'wagmi/connectors';
+import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { defineChain } from 'viem';
 
 export const apeChain = defineChain({
@@ -18,21 +17,8 @@ export const apeChain = defineChain({
   },
 });
 
-export const config = createConfig({
+export const config = getDefaultConfig({
+  appName: 'ApeChain NFT Raffles',
+  projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '2f05a7cde2bb14b518a6484396a6fda8',
   chains: [apeChain],
-  connectors: [
-    metaMask({
-      dappMetadata: {
-        name: 'ApeChain NFT Raffles',
-        url: 'https://www.apechainraffles.com',
-      },
-    }),
-    injected(),
-    walletConnect({
-      projectId: '2f05a7cde2bb14b518a6484396a6fda8',
-    }),
-  ],
-  transports: {
-    [apeChain.id]: http('https://apechain.calderachain.xyz/http'),
-  },
 });
