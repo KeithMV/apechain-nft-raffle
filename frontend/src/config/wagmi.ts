@@ -25,42 +25,26 @@ export const isMobileDevice = () => {
   return typeof window !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
-const getConnectors = () => {
-  const connectors = [];
-  
-  // Always include WalletConnect (works everywhere)
-  connectors.push(
+// Static connector configuration to prevent SSR hydration mismatch
+export const wagmiConfig = createConfig({
+  chains,
+  connectors: [
     walletConnect({
-      projectId: '2f05a7cde2bb14b518a6484396a6fda8',
+      projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '2f05a7cde2bb14b518a6484396a6fda8',
       metadata: {
         name: 'ApeChain NFT Raffles',
         description: 'Decentralized NFT raffle platform on ApeChain',
-        url: typeof window !== 'undefined' ? window.location.origin : 'https://www.apechainraffles.com',
+        url: 'https://www.apechainraffles.com',
         icons: ['https://www.apechainraffles.com/logo192.png'],
       },
-      showQrModal: !isMobileDevice(),
-    })
-  );
-  
-  // Always include Coinbase Wallet (works in mobile browsers)
-  connectors.push(
+      showQrModal: true,
+    }),
     coinbaseWallet({
       appName: 'ApeChain NFT Raffles',
       appLogoUrl: 'https://www.apechainraffles.com/logo192.png',
-    })
-  );
-  
-  // Only add injected if ethereum exists
-  if (typeof window !== 'undefined' && window.ethereum) {
-    connectors.push(injected());
-  }
-  
-  return connectors;
-};
-
-export const wagmiConfig = createConfig({
-  chains,
-  connectors: getConnectors(),
+    }),
+    injected(),
+  ],
   transports: {
     [apeChainMainnet.id]: http('https://apechain.calderachain.xyz/http'),
   },

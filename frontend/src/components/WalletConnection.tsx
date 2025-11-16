@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import { apeChainMainnet, isMobileDevice } from '../config/wagmi';
+import type { Connector } from 'wagmi';
 
 export default function WalletConnection() {
-  const { address, isConnected, connector } = useAccount();
+  const { address, isConnected } = useAccount();
   const { connect, connectors, isPending, error } = useConnect();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
@@ -26,45 +27,60 @@ export default function WalletConnection() {
     }
   }, [isConnected]);
 
-  const handleConnect = async (selectedConnector?: any) => {
+  const handleConnect = async (selectedConnector?: Connector) => {
     try {
       setConnectionError(null);
       const connectorToUse = selectedConnector || getBestConnector();
       
       if (!connectorToUse) {
-        throw new Error('No wallet found. Please install MetaMask or use WalletConnect.');
+        setConnectionError('No wallet available. Please install MetaMask or use WalletConnect.');
+        return;
       }
       
       await connect({ connector: connectorToUse });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Connection failed';
-      
-      // Handle specific mobile Safari issues
-      if (errorMessage.includes('provider not found') && isMobileDevice()) {
-        setConnectionError('Please use a Web3 browser like MetaMask mobile or Trust Wallet.');
-      } else {
-        setConnectionError(errorMessage);
-      }
+      setConnectionError(errorMessage);
     }
   };
 
-  const getBestConnector = () => {
+  const getBestConnector = (): Connector | null => {
     if (connectors.length === 0) return null;
     
+    // Filter available connectors based on environment
+    const availableConnectors = getAvailableConnectors();
+    
     if (isMobileDevice()) {
-      // Mobile: prioritize WalletConnect
-      return connectors.find(c => c.id === 'walletConnect') || connectors[0];
+      return availableConnectors.find(c => c.id === 'walletConnect') || availableConnectors[0] || null;
     }
     
-    // Desktop: prefer injected (MetaMask) if available
-    return connectors.find(c => c.id === 'injected') || connectors[0];
+    return availableConnectors.find(c => c.id === 'injected') || availableConnectors[0] || null;
   };
 
-  const handleSwitchToApeChain = () => {
-    switchChain({ chainId: apeChainMainnet.id });
+  const getAvailableConnectors = (): Connector[] => {
+    return connectors.filter(connector => {
+      // Always show WalletConnect and Coinbase Wallet
+      if (connector.id === 'walletConnect' || connector.id === 'coinbaseWalletSDK') {
+        return true;
+      }
+      // Only show injected if ethereum provider exists
+      if (connector.id === 'injected') {
+        return typeof window !== 'undefined' && window.ethereum;
+      }
+      return true;
+    });
   };
 
-  const formatAddress = (addr: string) => {
+  const handleSwitchToApeChain = async () => {
+    try {
+      await switchChain({ chainId: apeChainMainnet.id });
+    } catch (err) {
+      setConnectionError('Failed to switch network. Please switch manually in your wallet.');
+    }
+  };
+
+  const formatAddress = (addr: string | undefined) => {
+    if (!addr) return '';
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
@@ -83,7 +99,7 @@ export default function WalletConnection() {
         <div className="flex items-center space-x-2 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2">
           <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
           <span className="text-slate-300 text-sm font-mono">
-            {formatAddress(address!)}
+            {formatAddress(address)}
           </span>
         </div>
         
@@ -114,7 +130,7 @@ export default function WalletConnection() {
           >
             {isPending ? 'Connecting...' : 'Connect Wallet'}
           </button>
-          {isMobileDevice() && connectors.length === 0 && (
+          {isMobileDevice() && getAvailableConnectors().length === 0 && (
             <div className="text-xs text-slate-400 max-w-xs text-right">
               Please use MetaMask app or Trust Wallet browser
             </div>
@@ -123,7 +139,7 @@ export default function WalletConnection() {
       ) : (
         <div className="flex flex-col space-y-2 bg-slate-800/90 border border-slate-700/50 rounded-lg p-3 min-w-48">
           <div className="text-slate-300 text-xs font-medium mb-1">Choose Wallet:</div>
-          {connectors.filter(c => c.id !== 'injected' || typeof window !== 'undefined' && window.ethereum).map((connector) => (
+          {getAvailableConnectors().map((connector) => (
             <button
               key={connector.id}
               onClick={() => handleConnect(connector)}
