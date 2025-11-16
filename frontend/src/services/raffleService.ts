@@ -1,5 +1,5 @@
 import { writeContract, readContract, waitForTransactionReceipt } from '@wagmi/core';
-import { wagmiConfig } from '../config/wagmi';
+import { config } from '../config/wagmi';
 import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem';
 import { apeTokenService } from './apeTokenService';
@@ -26,7 +26,7 @@ class RaffleService {
    */
   async getPlatformFee(): Promise<bigint> {
     try {
-      const fee = await readContract(wagmiConfig, {
+      const fee = await readContract(config, {
         address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
         functionName: 'platformFee',
@@ -45,7 +45,7 @@ class RaffleService {
    */
   async getRaffleCounter(): Promise<number> {
     try {
-      const counter = await readContract(wagmiConfig, {
+      const counter = await readContract(config, {
         address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
         functionName: 'raffleCounter',
@@ -68,7 +68,7 @@ class RaffleService {
       // Pre-calculate APE amount to avoid async in transaction args
       const ticketPriceWei = await apeTokenService.parseApe(params.ticketPrice);
       
-      const hash = await writeContract(wagmiConfig, {
+      const hash = await writeContract(config, {
         address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
         functionName: 'createRaffle',
@@ -85,7 +85,7 @@ class RaffleService {
       safeLog('✅ Raffle creation transaction submitted:', hash);
 
       // Wait for transaction confirmation
-      const receipt = await waitForTransactionReceipt(wagmiConfig, {
+      const receipt = await waitForTransactionReceipt(config, {
         hash,
         confirmations: 1,
       });
@@ -126,7 +126,7 @@ class RaffleService {
    */
   async getRaffleContract(raffleId: number): Promise<string> {
     try {
-      const raffleContract = await readContract(wagmiConfig, {
+      const raffleContract = await readContract(config, {
         address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
         functionName: 'getRaffleContract',
@@ -144,7 +144,7 @@ class RaffleService {
    */
   async isApprovedForAll(nftContract: string, userAddress: string): Promise<boolean> {
     try {
-      const isApproved = await readContract(wagmiConfig, {
+      const isApproved = await readContract(config, {
         address: nftContract as `0x${string}`,
         abi: ERC721_ABI,
         functionName: 'isApprovedForAll',
@@ -164,7 +164,7 @@ class RaffleService {
     try {
       safeLog('🔄 Approving NFT contract for raffle:', nftContract);
       
-      const hash = await writeContract(wagmiConfig, {
+      const hash = await writeContract(config, {
         address: nftContract as `0x${string}`,
         abi: ERC721_ABI,
         functionName: 'setApprovalForAll',
@@ -175,7 +175,7 @@ class RaffleService {
       safeLog('✅ Approval transaction submitted:', hash);
 
       // Wait for confirmation
-      await waitForTransactionReceipt(wagmiConfig, {
+      await waitForTransactionReceipt(config, {
         hash,
         confirmations: 1,
       });
@@ -195,7 +195,7 @@ class RaffleService {
     try {
       safeLog('🔄 Revoking NFT contract approval:', nftContract);
       
-      const hash = await writeContract(wagmiConfig, {
+      const hash = await writeContract(config, {
         address: nftContract as `0x${string}`,
         abi: ERC721_ABI,
         functionName: 'setApprovalForAll',
@@ -206,7 +206,7 @@ class RaffleService {
       safeLog('✅ Revoke transaction submitted:', hash);
 
       // Wait for confirmation
-      await waitForTransactionReceipt(wagmiConfig, {
+      await waitForTransactionReceipt(config, {
         hash,
         confirmations: 1,
       });
@@ -226,13 +226,13 @@ class RaffleService {
     try {
       safeLog('🚨 Emergency pausing raffle factory');
       
-      const hash = await writeContract(wagmiConfig, {
+      const hash = await writeContract(config, {
         address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
         functionName: 'emergencyPause',
       });
 
-      await waitForTransactionReceipt(wagmiConfig, { hash });
+      await waitForTransactionReceipt(config, { hash });
       safeLog('✅ Emergency pause activated');
       return hash;
     } catch (error) {
@@ -248,13 +248,13 @@ class RaffleService {
     try {
       safeLog('🔄 Resuming raffle operations');
       
-      const hash = await writeContract(wagmiConfig, {
+      const hash = await writeContract(config, {
         address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
         functionName: 'emergencyUnpause',
       });
 
-      await waitForTransactionReceipt(wagmiConfig, { hash });
+      await waitForTransactionReceipt(config, { hash });
       safeLog('✅ Operations resumed');
       return hash;
     } catch (error) {
@@ -268,7 +268,7 @@ class RaffleService {
    */
   async isPaused(): Promise<boolean> {
     try {
-      const paused = await readContract(wagmiConfig, {
+      const paused = await readContract(config, {
         address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
         functionName: 'paused',

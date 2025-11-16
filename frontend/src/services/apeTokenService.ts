@@ -1,5 +1,5 @@
 import { readContract } from '@wagmi/core';
-import { wagmiConfig } from '../config/wagmi';
+import { config } from '../config/wagmi';
 import { parseUnits, formatUnits } from 'viem';
 
 // APE Token on ApeChain - need to verify actual address

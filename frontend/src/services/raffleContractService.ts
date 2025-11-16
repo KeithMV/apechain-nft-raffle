@@ -1,5 +1,5 @@
 import { writeContract, readContract, waitForTransactionReceipt } from '@wagmi/core';
-import { wagmiConfig } from '../config/wagmi';
+import { config } from '../config/wagmi';
 import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { parseEther } from 'viem';
 import { apeTokenService } from './apeTokenService';
@@ -70,7 +70,7 @@ class RaffleContractService {
       // Choose method based on quantity
       const functionName = params.quantity > 100 ? 'buyTicketsBatch' : 'buyTickets';
       
-      const hash = await writeContract(wagmiConfig, {
+      const hash = await writeContract(config, {
         address: params.raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
         functionName,
@@ -82,7 +82,7 @@ class RaffleContractService {
       safeLog('✅ Ticket purchase transaction submitted:', hash);
 
       // Wait for confirmation with longer timeout for winner selection
-      const receipt = await waitForTransactionReceipt(wagmiConfig, {
+      const receipt = await waitForTransactionReceipt(config, {
         hash,
         confirmations: 1,
         timeout: 60000, // 60 second timeout
@@ -134,7 +134,7 @@ class RaffleContractService {
       const totalCost = await apeTokenService.calculateTotalCost(params.ticketPrice, params.quantity);
       safeLog('💰 Batch total cost:', totalCost.toString(), 'wei');
       
-      const hash = await writeContract(wagmiConfig, {
+      const hash = await writeContract(config, {
         address: params.raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
         functionName: 'buyTicketsBatch',
@@ -145,7 +145,7 @@ class RaffleContractService {
 
       safeLog('✅ Batch ticket purchase transaction submitted:', hash);
 
-      const receipt = await waitForTransactionReceipt(wagmiConfig, {
+      const receipt = await waitForTransactionReceipt(config, {
         hash,
         confirmations: 1,
         timeout: 120000, // 2 minute timeout for batch operations
@@ -172,7 +172,7 @@ class RaffleContractService {
     try {
       // First try the new struct format (newer contracts)
       try {
-        const structInfo = await readContract(wagmiConfig, {
+        const structInfo = await readContract(config, {
           address: raffleContract as `0x${string}`,
           abi: [{
             "inputs": [],
@@ -215,7 +215,7 @@ class RaffleContractService {
         };
       } catch (structError) {
         // If struct format fails, try the old array format (older contracts)
-        const arrayInfo = await readContract(wagmiConfig, {
+        const arrayInfo = await readContract(config, {
           address: raffleContract as `0x${string}`,
           abi: [{
             "inputs": [],
@@ -302,7 +302,7 @@ class RaffleContractService {
    */
   async isActive(raffleContract: string): Promise<boolean> {
     try {
-      const active = await readContract(wagmiConfig, {
+      const active = await readContract(config, {
         address: raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
         functionName: 'isActive',
@@ -319,7 +319,7 @@ class RaffleContractService {
    */
   async getUserTickets(raffleContract: string, userAddress: string): Promise<number> {
     try {
-      const tickets = await readContract(wagmiConfig, {
+      const tickets = await readContract(config, {
         address: raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
         functionName: 'ticketsPurchased',
@@ -339,7 +339,7 @@ class RaffleContractService {
     try {
       safeLog('🔄 Emergency winner selection for raffle:', raffleContract);
       
-      const hash = await writeContract(wagmiConfig, {
+      const hash = await writeContract(config, {
         address: raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
         functionName: 'emergencySelectWinner',
@@ -347,7 +347,7 @@ class RaffleContractService {
 
       safeLog('✅ Emergency winner selection transaction submitted:', hash);
 
-      await waitForTransactionReceipt(wagmiConfig, {
+      await waitForTransactionReceipt(config, {
         hash,
         confirmations: 1,
         timeout: 30000,
@@ -369,7 +369,7 @@ class RaffleContractService {
     try {
       safeLog('🔄 Committing randomness for raffle:', raffleContract);
       
-      const hash = await writeContract(wagmiConfig, {
+      const hash = await writeContract(config, {
         address: raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
         functionName: 'commitRandomness',
@@ -378,7 +378,7 @@ class RaffleContractService {
 
       safeLog('✅ Commit randomness transaction submitted:', hash);
 
-      await waitForTransactionReceipt(wagmiConfig, {
+      await waitForTransactionReceipt(config, {
         hash,
         confirmations: 1,
         timeout: 30000,
@@ -400,7 +400,7 @@ class RaffleContractService {
     try {
       safeLog('🔄 Revealing randomness and selecting winner:', raffleContract);
       
-      const hash = await writeContract(wagmiConfig, {
+      const hash = await writeContract(config, {
         address: raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
         functionName: 'revealAndSelectWinner',
@@ -409,7 +409,7 @@ class RaffleContractService {
 
       safeLog('✅ Reveal and select winner transaction submitted:', hash);
 
-      await waitForTransactionReceipt(wagmiConfig, {
+      await waitForTransactionReceipt(config, {
         hash,
         confirmations: 1,
         timeout: 30000,
@@ -457,7 +457,7 @@ class RaffleContractService {
     try {
       safeLog('🔄 Cancelling raffle:', raffleContract);
       
-      const hash = await writeContract(wagmiConfig, {
+      const hash = await writeContract(config, {
         address: raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
         functionName: 'cancelRaffle',
@@ -465,7 +465,7 @@ class RaffleContractService {
 
       safeLog('✅ Cancel raffle transaction submitted:', hash);
 
-      await waitForTransactionReceipt(wagmiConfig, {
+      await waitForTransactionReceipt(config, {
         hash,
         confirmations: 1,
         timeout: 30000,
