@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
-import { wagmiConfig } from './config/wagmi';
+import { config } from './config/wagmi';
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
 import CreateRafflePage from './components/CreateRafflePage';
@@ -221,7 +221,7 @@ function RaffleApp() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={wagmiConfig}>
+      <WagmiProvider config={config}>
         <RaffleApp />
         <Toaster position="top-right" />
       </WagmiProvider>
