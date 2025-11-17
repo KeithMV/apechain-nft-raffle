@@ -114,10 +114,6 @@ workflows:
           requires:
             - build-frontend
             - build-contracts
-      - approve:
-          type: approval
-          requires:
-            - test
       - deploy:
           requires:
-            - approve
+            - test
