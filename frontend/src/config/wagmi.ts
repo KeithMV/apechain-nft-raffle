@@ -25,7 +25,7 @@ export const config = createConfig({
     metaMask({
       dappMetadata: {
         name: 'ApeChain NFT Raffles',
-        url: 'https://www.apechainraffles.com',
+        url: typeof window !== 'undefined' ? window.location.origin : 'https://www.apechainraffles.com',
       },
     }),
     walletConnect({
@@ -33,13 +33,13 @@ export const config = createConfig({
       metadata: {
         name: 'ApeChain NFT Raffles',
         description: 'Decentralized NFT raffle platform on ApeChain',
-        url: 'https://www.apechainraffles.com',
-        icons: ['https://www.apechainraffles.com/logo192.png'],
+        url: typeof window !== 'undefined' ? window.location.origin : 'https://www.apechainraffles.com',
+        icons: [`${typeof window !== 'undefined' ? window.location.origin : 'https://www.apechainraffles.com'}/logo192.png`],
       },
     }),
     coinbaseWallet({
       appName: 'ApeChain NFT Raffles',
-      appLogoUrl: 'https://www.apechainraffles.com/logo192.png',
+      appLogoUrl: `${typeof window !== 'undefined' ? window.location.origin : 'https://www.apechainraffles.com'}/logo192.png`,
     }),
     injected(),
   ],
