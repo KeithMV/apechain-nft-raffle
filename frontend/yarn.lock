@@ -3698,7 +3698,7 @@
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.3.0.tgz#d06bbb384ebcf6c505fde1c3d0ed4ddffe0aaff8"
   integrity sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==
 
-"@wagmi/connectors@6.1.4", "@wagmi/connectors@^6.1.4":
+"@wagmi/connectors@6.1.4":
   version "6.1.4"
   resolved "https://registry.yarnpkg.com/@wagmi/connectors/-/connectors-6.1.4.tgz#ff49c2a07c0dc2977d04ff3e573ebe89c269c26a"
   integrity sha512-phfBOBBfkH1huSoyyTcHn1Brsm/YN9Vad4Z1ZYJ7iCE05CDUvipXI0TD9Idzgq+CkAJAxdAv3LBTIwTb3tysZw==
