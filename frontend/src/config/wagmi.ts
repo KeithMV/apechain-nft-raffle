@@ -28,15 +28,15 @@ export const config = createConfig({
         url: 'https://www.apechainraffles.com',
       },
     }),
-    ...(process.env.REACT_APP_WALLETCONNECT_PROJECT_ID ? [walletConnect({
-      projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID,
+    walletConnect({
+      projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '7aca6566c4e099d07b70a3c27981ac9f',
       metadata: {
         name: 'ApeChain NFT Raffles',
         description: 'Decentralized NFT raffle platform on ApeChain',
-        url: 'https://www.apechainraffles.com',
-        icons: ['https://www.apechainraffles.com/logo192.png'],
+        url: 'https://apechain-raffles.com',
+        icons: ['https://apechain-raffles.com/favicon.ico'],
       },
-    })] : []),
+    }),
     coinbaseWallet({
       appName: 'ApeChain NFT Raffles',
       appLogoUrl: 'https://www.apechainraffles.com/logo192.png',

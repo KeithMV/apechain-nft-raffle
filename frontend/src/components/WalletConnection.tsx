@@ -17,7 +17,7 @@ export default function WalletConnection() {
   const handleConnect = async (connector: Connector) => {
     try {
       setConnectionError(null);
-      console.log('Attempting to connect with:', connector.name);
+      console.log('Attempting to connect with connector');
       await connect({ connector });
       setShowConnectors(false);
     } catch (err) {
