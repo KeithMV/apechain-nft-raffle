@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import type { Connector } from 'wagmi';
 import { apeChain } from '../config/wagmi';
@@ -12,16 +12,33 @@ export default function WalletConnection() {
   const [showConnectors, setShowConnectors] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
+  // Debug connector availability
+  useEffect(() => {
+    if (connectors.length === 0) {
+      console.warn('No wallet connectors available');
+      setConnectionError('No wallet connectors available');
+    } else {
+      console.log(`${connectors.length} wallet connectors loaded`);
+    }
+  }, [connectors]);
+
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
   const handleConnect = async (connector: Connector) => {
     try {
       setConnectionError(null);
-      console.log('Attempting to connect with connector');
+      
+      // Validate connector before attempting connection
+      if (!connector || !connector.id) {
+        throw new Error('Invalid connector');
+      }
+      
+      console.log('Attempting wallet connection');
       await connect({ connector });
       setShowConnectors(false);
+      console.log('Wallet connection successful');
     } catch (err) {
-      console.error('Connection error:', err);
+      console.error('Wallet connection failed:', err instanceof Error ? err.message : 'Unknown error');
       const message = err instanceof Error ? err.message : 'Connection failed';
       setConnectionError(message);
     }
@@ -74,16 +91,22 @@ export default function WalletConnection() {
       <div className="relative">
         <div className="absolute right-0 top-0 sm:relative sm:right-auto sm:top-auto bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3 min-w-48 max-w-[calc(100vw-2rem)] sm:max-w-none z-50 shadow-xl wallet-dropdown">
           <div className="text-slate-300 text-xs font-medium mb-2">Choose Wallet:</div>
-          {connectors.map((connector) => (
-            <button
-              key={connector.id}
-              onClick={() => handleConnect(connector)}
-              disabled={isPending}
-              className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded text-sm hover:bg-slate-600/50 transition-colors disabled:opacity-50 text-left mb-1 min-h-[44px] flex items-center"
-            >
-              {connector.name}
-            </button>
-          ))}
+          {connectors.length === 0 ? (
+            <div className="text-red-400 text-xs p-2 text-center">
+              No wallet connectors available
+            </div>
+          ) : (
+            connectors.map((connector) => (
+              <button
+                key={connector.id}
+                onClick={() => handleConnect(connector)}
+                disabled={isPending}
+                className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded text-sm hover:bg-slate-600/50 transition-colors disabled:opacity-50 text-left mb-1 min-h-[44px] flex items-center"
+              >
+                {connector.name}
+              </button>
+            ))
+          )}
           <button
             onClick={() => setShowConnectors(false)}
             className="w-full px-3 py-2 text-slate-400 text-xs hover:text-slate-300 transition-colors mt-2 min-h-[36px]"
