@@ -142,6 +142,34 @@ code {
   html, body {
     overflow-x: hidden;
   }
+  
+  /* Prevent wallet dropdown cutoff */
+  .wallet-dropdown {
+    position: fixed !important;
+    right: 1rem !important;
+    left: 1rem !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+  
+  /* Ensure proper spacing for mobile header */
+  header {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  /* Mobile-friendly button spacing */
+  .mobile-button-group {
+    gap: 0.5rem !important;
+  }
+  
+  /* Prevent text overflow in wallet components */
+  .wallet-text {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 /* Focus states */

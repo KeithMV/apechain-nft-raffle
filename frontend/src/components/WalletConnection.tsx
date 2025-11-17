@@ -42,26 +42,26 @@ export default function WalletConnection() {
 
   if (isConnected) {
     return (
-      <div className="flex items-center space-x-3">
+      <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
         {isWrongNetwork && (
           <button
             onClick={handleSwitchNetwork}
-            className="px-4 py-2 bg-red-500/20 border border-red-400/50 text-red-300 rounded-lg text-sm font-medium hover:bg-red-500/30 transition-colors"
+            className="px-3 py-2 bg-red-500/20 border border-red-400/50 text-red-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-red-500/30 transition-colors min-h-[44px] whitespace-nowrap"
           >
             Switch to ApeChain
           </button>
         )}
         
-        <div className="flex items-center space-x-2 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2">
-          <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-          <span className="text-slate-300 text-sm font-mono">
+        <div className="flex items-center space-x-2 bg-slate-800/50 border border-slate-700/50 rounded-lg px-2 sm:px-3 py-2 min-h-[44px]">
+          <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shrink-0"></div>
+          <span className="text-slate-300 text-xs sm:text-sm font-mono wallet-text">
             {address ? formatAddress(address) : ''}
           </span>
         </div>
         
         <button
           onClick={() => disconnect()}
-          className="px-4 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-600/50 transition-colors"
+          className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 transition-colors min-h-[44px] whitespace-nowrap"
         >
           Disconnect
         </button>
@@ -72,21 +72,21 @@ export default function WalletConnection() {
   if (showConnectors) {
     return (
       <div className="relative">
-        <div className="absolute right-0 top-0 bg-slate-800/90 border border-slate-700/50 rounded-lg p-3 min-w-48 z-50">
+        <div className="absolute right-0 top-0 sm:relative sm:right-auto sm:top-auto bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3 min-w-48 max-w-[calc(100vw-2rem)] sm:max-w-none z-50 shadow-xl wallet-dropdown">
           <div className="text-slate-300 text-xs font-medium mb-2">Choose Wallet:</div>
           {connectors.map((connector) => (
             <button
               key={connector.id}
               onClick={() => handleConnect(connector)}
               disabled={isPending}
-              className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded text-sm hover:bg-slate-600/50 transition-colors disabled:opacity-50 text-left mb-1"
+              className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded text-sm hover:bg-slate-600/50 transition-colors disabled:opacity-50 text-left mb-1 min-h-[44px] flex items-center"
             >
               {connector.name}
             </button>
           ))}
           <button
             onClick={() => setShowConnectors(false)}
-            className="w-full px-3 py-1 text-slate-400 text-xs hover:text-slate-300 transition-colors mt-2"
+            className="w-full px-3 py-2 text-slate-400 text-xs hover:text-slate-300 transition-colors mt-2 min-h-[36px]"
           >
             Cancel
           </button>
@@ -98,14 +98,14 @@ export default function WalletConnection() {
   return (
     <div className="flex flex-col items-end space-y-2">
       {(connectionError || error) && (
-        <div className="text-red-400 text-xs max-w-xs text-right">
+        <div className="text-red-400 text-xs max-w-[200px] sm:max-w-xs text-right break-words">
           {connectionError || error?.message}
         </div>
       )}
       <button
         onClick={() => setShowConnectors(true)}
         disabled={isPending}
-        className="px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 rounded-lg text-sm font-medium hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+        className="px-3 sm:px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-emerald-500/30 transition-colors disabled:opacity-50 min-h-[44px] whitespace-nowrap"
       >
         {isPending ? 'Connecting...' : 'Connect Wallet'}
       </button>

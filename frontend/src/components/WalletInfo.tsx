@@ -33,17 +33,17 @@ export default function WalletInfo() {
   if (!address) return null;
 
   return (
-    <div className="flex items-center space-x-3 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2">
-      <div className="flex items-center space-x-2">
-        <div className="w-5 h-5 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center">
+    <div className="flex items-center space-x-2 sm:space-x-3 bg-slate-800/50 border border-slate-700/50 rounded-lg px-2 sm:px-3 py-2 min-h-[44px]">
+      <div className="flex items-center space-x-1 sm:space-x-2">
+        <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center shrink-0">
           <span className="text-white text-xs">🐵</span>
         </div>
-        <span className="text-slate-300 text-sm font-medium">APE:</span>
+        <span className="text-slate-300 text-xs sm:text-sm font-medium">APE:</span>
       </div>
       {loading ? (
-        <div className="w-4 h-4 border border-orange-400 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-3 h-3 sm:w-4 sm:h-4 border border-orange-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
       ) : (
-        <span className="text-orange-400 font-mono font-semibold text-sm">
+        <span className="text-orange-400 font-mono font-semibold text-xs sm:text-sm truncate">
           {parseFloat(apeBalance).toFixed(2)}
         </span>
       )}

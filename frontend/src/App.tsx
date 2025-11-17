@@ -89,10 +89,14 @@ function Header({ currentPage, setCurrentPage }: {
               </button>
             </nav>
           </div>
-          <div className="flex items-center space-x-3">
-            {isConnected && <NetworkStatus />}
-            {isConnected && <WalletInfo />}
-            <div className="scale-90 sm:scale-100">
+          <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 min-w-0">
+            {isConnected && (
+              <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                <NetworkStatus />
+                <WalletInfo />
+              </div>
+            )}
+            <div className="shrink-0">
               <WalletConnection />
             </div>
           </div>
