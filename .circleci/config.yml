@@ -10,17 +10,17 @@ jobs:
           name: Install frontend dependencies
           command: |
             cd frontend
-            npm install --legacy-peer-deps
+            yarn install
       - run:
           name: Run frontend tests
           command: |
             cd frontend
-            npm test -- --coverage --watchAll=false --passWithNoTests
+            yarn test --coverage --watchAll=false --passWithNoTests
       - run:
           name: Build frontend
           command: |
             cd frontend
-            CI=false npm run build
+            CI=false yarn build
       - persist_to_workspace:
           root: .
           paths:
