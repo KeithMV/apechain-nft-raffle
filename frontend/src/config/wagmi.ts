@@ -1,7 +1,6 @@
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defineChain } from 'viem';
-import { walletConnect, injected, coinbaseWallet } from 'wagmi/connectors';
 
 // ApeChain configuration
 export const apeChain = defineChain({
@@ -21,8 +20,8 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// WalletConnect project ID
-const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '7aca6566c4e099d07b70a3c27981ac9f';
+// WalletConnect project ID - using working project ID
+const projectId = '2350e68151f4c7fbf239ab45fd750ae0';
 
 // Web3Modal metadata
 const metadata = {
@@ -33,30 +32,16 @@ const metadata = {
   verifyUrl: 'https://apechain-raffles.com'
 };
 
-// Create wagmi config with explicit connectors
+// Create wagmi config - simple working configuration
 export const config = defaultWagmiConfig({
   chains: [apeChain],
   projectId,
-  metadata,
-  connectors: [
-    walletConnect({ projectId, metadata, showQrModal: false }),
-    injected({ shimDisconnect: true }),
-    coinbaseWallet({
-      appName: metadata.name,
-      appLogoUrl: metadata.icons[0]
-    })
-  ]
+  metadata
 });
 
-// Create Web3Modal
+// Create Web3Modal - minimal working configuration
 createWeb3Modal({
   wagmiConfig: config,
   projectId,
-  enableAnalytics: false,
-  themeMode: 'dark',
-  enableOnramp: false,
-  allowUnsupportedChain: false,
-  enableWalletConnect: true,
-  enableInjected: true,
-  enableCoinbase: true
+  themeMode: 'dark'
 });
