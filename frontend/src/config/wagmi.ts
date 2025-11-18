@@ -36,7 +36,12 @@ export const config = createConfig({
         url: 'https://apechain-raffles.com',
         icons: ['https://apechain-raffles.com/favicon.ico'],
       },
-      showQrModal: true, // Works on mobile
+      qrModalOptions: {
+        themeMode: 'dark',
+        themeVariables: {
+          '--wcm-z-index': '1000'
+        }
+      }
     }),
   ],
   transports: {
