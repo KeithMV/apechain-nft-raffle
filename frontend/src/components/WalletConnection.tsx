@@ -10,16 +10,6 @@ export default function WalletConnection() {
   const { switchChain } = useSwitchChain();
   const { open } = useWeb3Modal();
 
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-  const handleConnect = async () => {
-    try {
-      await open({ view: 'Connect' });
-    } catch (error) {
-      console.error('Connection failed:', error);
-    }
-  };
-
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
   const handleSwitchNetwork = async () => {
@@ -65,7 +55,7 @@ export default function WalletConnection() {
 
   return (
     <button
-      onClick={handleConnect}
+      onClick={() => open()}
       className="px-3 sm:px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-emerald-500/30 transition-colors min-h-[44px] whitespace-nowrap"
     >
       Connect Wallet
