@@ -1,5 +1,5 @@
-import { createConfig, http } from 'wagmi';
-import { walletConnect, injected } from 'wagmi/connectors';
+import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
+import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defineChain } from 'viem';
 
 // ApeChain configuration
@@ -12,7 +12,7 @@ export const apeChain = defineChain({
     symbol: 'APE',
   },
   rpcUrls: {
-    default: { http: ['https://apechain.calderachain.xyz/http'] },
+    default: { http: ['https://apechain-mainnet.g.alchemy.com/v2/3YobnRFCSYEuIC5c1ySEs'] },
   },
   blockExplorers: {
     default: { name: 'ApeChain Explorer', url: 'https://apechain.calderaexplorer.xyz' },
@@ -21,30 +21,27 @@ export const apeChain = defineChain({
 });
 
 // WalletConnect project ID
-const WALLETCONNECT_PROJECT_ID = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '7aca6566c4e099d07b70a3c27981ac9f';
+const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '7aca6566c4e099d07b70a3c27981ac9f';
 
-// Simple, working configuration
-export const config = createConfig({
+// Web3Modal metadata
+const metadata = {
+  name: 'ApeChain NFT Raffles',
+  description: 'Decentralized NFT raffle platform on ApeChain',
+  url: 'https://apechain-raffles.com',
+  icons: ['https://apechain-raffles.com/favicon.ico']
+};
+
+// Create wagmi config
+export const config = defaultWagmiConfig({
   chains: [apeChain],
-  connectors: [
-    injected(), // Works with MetaMask on desktop
-    walletConnect({
-      projectId: WALLETCONNECT_PROJECT_ID,
-      metadata: {
-        name: 'ApeChain NFT Raffles',
-        description: 'Decentralized NFT raffle platform on ApeChain',
-        url: 'https://apechain-raffles.com',
-        icons: ['https://apechain-raffles.com/favicon.ico'],
-      },
-      qrModalOptions: {
-        themeMode: 'dark',
-        themeVariables: {
-          '--wcm-z-index': '1000'
-        }
-      }
-    }),
-  ],
-  transports: {
-    [apeChain.id]: http('https://apechain.calderachain.xyz/http'),
-  },
+  projectId,
+  metadata,
+});
+
+// Create Web3Modal
+createWeb3Modal({
+  wagmiConfig: config,
+  projectId,
+  enableAnalytics: false,
+  themeMode: 'dark'
 });

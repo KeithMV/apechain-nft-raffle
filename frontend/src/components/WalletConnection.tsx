@@ -1,55 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import type { Connector } from 'wagmi';
+import React from 'react';
+import { useAccount, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
+import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { apeChain } from '../config/wagmi';
 
 export default function WalletConnection() {
   const { address, isConnected } = useAccount();
-  const { connect, connectors, isPending, error } = useConnect();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const [showConnectors, setShowConnectors] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-
-  // Debug connector availability
-  useEffect(() => {
-    if (connectors.length === 0) {
-      console.warn('No wallet connectors available');
-      setConnectionError('No wallet connectors available');
-    } else {
-      console.log(`${connectors.length} wallet connectors loaded`);
-    }
-  }, [connectors]);
+  const { open } = useWeb3Modal();
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
-
-  const handleConnect = async (connector: Connector) => {
-    try {
-      setConnectionError(null);
-      
-      // Validate connector before attempting connection
-      if (!connector || !connector.id) {
-        throw new Error('Invalid connector');
-      }
-      
-      console.log('Attempting wallet connection');
-      await connect({ connector });
-      setShowConnectors(false);
-      console.log('Wallet connection successful');
-    } catch (err) {
-      console.error('Wallet connection failed:', err instanceof Error ? err.message : 'Unknown error');
-      const message = err instanceof Error ? err.message : 'Connection failed';
-      setConnectionError(message);
-    }
-  };
 
   const handleSwitchNetwork = async () => {
     try {
       await switchChain({ chainId: apeChain.id });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Network switch failed';
-      setConnectionError(message);
+      console.error('Network switch failed:', err);
     }
   };
 
@@ -86,52 +53,12 @@ export default function WalletConnection() {
     );
   }
 
-  if (showConnectors) {
-    return (
-      <div className="relative">
-        <div className="absolute right-0 top-0 sm:relative sm:right-auto sm:top-auto bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3 min-w-48 max-w-[calc(100vw-2rem)] sm:max-w-none z-50 shadow-xl wallet-dropdown">
-          <div className="text-slate-300 text-xs font-medium mb-2">Choose Wallet:</div>
-          {connectors.length === 0 ? (
-            <div className="text-red-400 text-xs p-2 text-center">
-              No wallet connectors available
-            </div>
-          ) : (
-            connectors.map((connector) => (
-              <button
-                key={connector.id}
-                onClick={() => handleConnect(connector)}
-                disabled={isPending}
-                className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded text-sm hover:bg-slate-600/50 transition-colors disabled:opacity-50 text-left mb-1 min-h-[44px] flex items-center"
-              >
-                {connector.name}
-              </button>
-            ))
-          )}
-          <button
-            onClick={() => setShowConnectors(false)}
-            className="w-full px-3 py-2 text-slate-400 text-xs hover:text-slate-300 transition-colors mt-2 min-h-[36px]"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col items-end space-y-2">
-      {(connectionError || error) && (
-        <div className="text-red-400 text-xs max-w-[200px] sm:max-w-xs text-right break-words">
-          {connectionError || error?.message}
-        </div>
-      )}
-      <button
-        onClick={() => setShowConnectors(true)}
-        disabled={isPending}
-        className="px-3 sm:px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-emerald-500/30 transition-colors disabled:opacity-50 min-h-[44px] whitespace-nowrap"
-      >
-        {isPending ? 'Connecting...' : 'Connect Wallet'}
-      </button>
-    </div>
+    <button
+      onClick={() => open()}
+      className="px-3 sm:px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-emerald-500/30 transition-colors min-h-[44px] whitespace-nowrap"
+    >
+      Connect Wallet
+    </button>
   );
 }
