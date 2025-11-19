@@ -60,11 +60,11 @@ class RafflePositionService {
   private readonly ACTIVE_RAFFLES_CACHE_DURATION = 60000; // 1 minute for active raffles
   private readonly ALL_RAFFLES_CACHE_DURATION = 45000; // 45 seconds for all raffles
   
-  // Block scanning strategy - optimized ranges
+  // Block scanning strategy - extended ranges to catch tonight's raffles
   private readonly BLOCK_RANGES: BlockRange[] = [
-    { from: 5000n, to: 0n, maxEvents: 50 },    // Last ~2 hours (most recent)
-    { from: 25000n, to: 5000n, maxEvents: 100 }, // Last ~12 hours
-    { from: 50000n, to: 25000n, maxEvents: 150 } // Last ~24 hours
+    { from: 10000n, to: 0n, maxEvents: 50 },    // Last ~4 hours (most recent)
+    { from: 50000n, to: 10000n, maxEvents: 100 }, // Last ~20 hours
+    { from: 150000n, to: 50000n, maxEvents: 200 } // Last ~3 days (catch all recent)
   ];
   
   private readonly MAX_CONCURRENT_REQUESTS = 5;
@@ -91,9 +91,9 @@ class RafflePositionService {
     }
     
     try {
-      // Get recent RaffleCreated events with optimized range
+      // Get recent RaffleCreated events with extended range to catch tonight's raffles
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 25000n ? currentBlock - 25000n : 0n;
+      const fromBlock = currentBlock > 150000n ? currentBlock - 150000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -200,9 +200,9 @@ class RafflePositionService {
     }
     
     try {
-      // Professional pagination with optimized block ranges
+      // Professional pagination with extended block ranges
       const currentBlock = await publicClient.getBlockNumber();
-      const BLOCKS_PER_PAGE = 25000n; // Consistent range for reliability
+      const BLOCKS_PER_PAGE = 150000n; // Extended range to catch recent raffles
       const fromBlock = currentBlock - BigInt((page + 1) * Number(BLOCKS_PER_PAGE));
       const toBlock = page === 0 ? currentBlock : currentBlock - BigInt(page * Number(BLOCKS_PER_PAGE));
       
