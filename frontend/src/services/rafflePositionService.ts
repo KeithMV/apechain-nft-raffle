@@ -175,9 +175,9 @@ class RafflePositionService {
     }
     
     try {
-      // Progressive loading: 100K blocks per page to catch recent raffles
+      // Smart loading: Start with recent blocks, expand if needed
       const currentBlock = await publicClient.getBlockNumber();
-      const BLOCKS_PER_PAGE = 100000n;
+      const BLOCKS_PER_PAGE = page === 0 ? 50000n : 100000n; // Smaller range for first page
       const fromBlock = currentBlock - BigInt((page + 1) * Number(BLOCKS_PER_PAGE));
       const toBlock = page === 0 ? currentBlock : currentBlock - BigInt(page * Number(BLOCKS_PER_PAGE));
       
@@ -242,7 +242,7 @@ class RafflePositionService {
   }
 
   /**
-   * Get all raffles (active and expired)
+   * Get all raffles (active and expired) with smart block scanning
    */
   async getAllRaffles(publicClient: any, limit: number = 20, offset: number = 0): Promise<CreatedRaffle[]> {
     safeLog('🔍 Getting all raffles');
@@ -253,26 +253,38 @@ class RafflePositionService {
     }
     
     try {
-      // Get RaffleCreated events - scan last 100k blocks (about 1 week)
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 100000n ? currentBlock - 100000n : 0n;
+      let allEvents: any[] = [];
       
-      const raffleEvents = await publicClient.getLogs({
-        address: RAFFLE_FACTORY_CONTRACT,
-        event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
-        fromBlock,
-        toBlock: 'latest'
-      });
+      // Smart scanning: Start with recent blocks, expand if needed
+      const scanRanges = [10000n, 50000n, 100000n]; // Progressive scanning
+      
+      for (const range of scanRanges) {
+        const fromBlock = currentBlock > range ? currentBlock - range : 0n;
+        
+        const events = await publicClient.getLogs({
+          address: RAFFLE_FACTORY_CONTRACT,
+          event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
+          fromBlock,
+          toBlock: 'latest'
+        });
+        
+        allEvents = events;
+        safeLog(`Scanned ${range} blocks, found ${events.length} events`);
+        
+        // If we have enough events or this is the last range, stop
+        if (events.length >= limit * 2 || range === scanRanges[scanRanges.length - 1]) {
+          break;
+        }
+      }
 
-      if (raffleEvents.length === 0) {
+      if (allEvents.length === 0) {
         return [];
       }
 
-      safeLog(`Found ${raffleEvents.length} total raffle events`);
-      
       // Process recent raffles (get latest ones)
-      const eventsToProcess = raffleEvents.slice(-Math.min(limit * 2, 100));
-      safeLog(`Processing ${eventsToProcess.length} of ${raffleEvents.length} events for all raffles`);
+      const eventsToProcess = allEvents.slice(-Math.min(limit * 2, 50));
+      safeLog(`Processing ${eventsToProcess.length} of ${allEvents.length} events for all raffles`);
       
       const rafflePromises = eventsToProcess.map(async (event: any) => {
         try {
@@ -322,7 +334,7 @@ class RafflePositionService {
   }
 
   /**
-   * Get all active raffles (for browsing)
+   * Get all active raffles (for browsing) with smart block scanning
    */
   async getActiveRaffles(publicClient: any, limit: number = 20): Promise<CreatedRaffle[]> {
     safeLog('🔍 Getting active raffles');
@@ -340,64 +352,53 @@ class RafflePositionService {
     }
     
     try {
-      // Get RaffleCreated events - scan last 100k blocks (about 1 week)
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 100000n ? currentBlock - 100000n : 0n;
+      let allEvents: any[] = [];
       
-      // Get events from optimized range (no chunking for better performance)
-      const raffleEvents = await publicClient.getLogs({
-        address: RAFFLE_FACTORY_CONTRACT,
-        event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
-        fromBlock,
-        toBlock: 'latest'
-      });
+      // Smart scanning: Start with recent blocks, expand if needed
+      const scanRanges = [10000n, 50000n, 100000n]; // Progressive scanning
+      
+      for (const range of scanRanges) {
+        const fromBlock = currentBlock > range ? currentBlock - range : 0n;
+        
+        const events = await publicClient.getLogs({
+          address: RAFFLE_FACTORY_CONTRACT,
+          event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
+          fromBlock,
+          toBlock: 'latest'
+        });
+        
+        allEvents = events;
+        safeLog(`Scanned ${range} blocks, found ${events.length} events`);
+        
+        // If we have enough events or this is the last range, stop
+        if (events.length >= limit * 3 || range === scanRanges[scanRanges.length - 1]) {
+          break;
+        }
+      }
 
-      if (raffleEvents.length === 0) {
+      if (allEvents.length === 0) {
         return [];
       }
 
-      safeLog(`Found ${raffleEvents.length} total raffle events`);
-      safeLog('Raffle IDs found:', raffleEvents.map((e: any) => e.args.raffleId.toString()).join(', '));
+      safeLog(`Found ${allEvents.length} total raffle events`);
       
       // Process raffles to find active ones (performance optimized)
-      const eventsToProcess = raffleEvents.slice(-Math.min(limit * 3, 50)); // Process 3x limit or max 50 events
-      safeLog(`Processing ${eventsToProcess.length} of ${raffleEvents.length} events for active raffles`);
+      const eventsToProcess = allEvents.slice(-Math.min(limit * 3, 50)); // Process 3x limit or max 50 events
+      safeLog(`Processing ${eventsToProcess.length} of ${allEvents.length} events for active raffles`);
       
       const rafflePromises = eventsToProcess.map(async (event: any) => {
         try {
           const { raffleId, raffleContract, nftContract, tokenId, creator, ticketPrice, maxTickets } = event.args;
-          safeLog(`Processing raffle`, raffleId, raffleContract);
           
           const raffleInfo = await raffleContractService.getRaffleInfo(raffleContract as string);
           const now = Math.floor(Date.now() / 1000);
           const endTime = Number(raffleInfo.endTime);
-          const timeRemaining = endTime - now;
-          
-          console.log(`Raffle ${raffleId} detailed info:`, {
-            completed: raffleInfo.completed,
-            endTime: endTime,
-            currentTime: now,
-            timeRemaining: timeRemaining,
-            timeRemainingHours: (timeRemaining / 3600).toFixed(2),
-            ticketsSold: Number(raffleInfo.ticketsSold),
-            maxTickets: Number(maxTickets),
-            isTimeExpired: now >= endTime,
-            isCompleted: raffleInfo.completed,
-            isMaxTicketsSold: Number(raffleInfo.ticketsSold) >= Number(maxTickets)
-          });
           
           // Check if raffle is still active (handle invalid timestamps)
           const hasValidEndTime = endTime > 1000000000; // After 1973
           const isTimeValid = hasValidEndTime && now < endTime;
           const isActive = !raffleInfo.completed && (isTimeValid || !hasValidEndTime) && Number(raffleInfo.ticketsSold) < Number(maxTickets);
-          
-          console.log(`Raffle ${raffleId} active:`, isActive, 'Reasons:', {
-            notCompleted: !raffleInfo.completed,
-            notExpired: now < endTime,
-            hasValidEndTime: hasValidEndTime,
-            isTimeValid: isTimeValid,
-            hasAvailableTickets: Number(raffleInfo.ticketsSold) < Number(maxTickets)
-          });
           
           if (!isActive) {
             return null;
