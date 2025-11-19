@@ -35,20 +35,21 @@ export default function BrowseRaffles() {
     }
     
     try {
-      console.log('Loading all raffles...');
-      const allRaffles = await rafflePositionService.getAllRaffles(publicClient, 30);
-      console.log('Loaded raffles:', allRaffles.length);
+      console.log('Loading active raffles...');
+      // Use getActiveRaffles for better performance and to show only active raffles
+      const activeRaffles = await rafflePositionService.getActiveRaffles(publicClient, 30);
+      console.log('Loaded active raffles:', activeRaffles.length);
       
       if (reset) {
-        setRaffles(allRaffles);
+        setRaffles(activeRaffles);
       }
       
-      if (allRaffles.length < 30) {
+      if (activeRaffles.length < 30) {
         setHasMoreRaffles(false);
       }
       
-      if (allRaffles.length === 0) {
-        console.log('No raffles found');
+      if (activeRaffles.length === 0) {
+        console.log('No active raffles found');
       }
     } catch (error) {
       console.error('Failed to load raffles:', error);
@@ -64,8 +65,9 @@ export default function BrowseRaffles() {
     setLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
-      console.log('Loading more raffles, page:', nextPage);
+      console.log('Loading more active raffles, page:', nextPage);
       
+      // For "load more", we can use getAllRaffles with offset for pagination
       const moreRaffles = await rafflePositionService.getAllRaffles(publicClient, 20, nextPage * 20);
       console.log('Loaded more raffles:', moreRaffles.length);
       
@@ -191,6 +193,16 @@ export default function BrowseRaffles() {
               <p className="text-slate-300 mt-1 text-sm sm:text-base font-medium">Discover amazing NFTs • Win incredible prizes</p>
             </div>
             <div className="flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  rafflePositionService.clearAllData();
+                  loadRaffles();
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-medium transition-all bg-slate-700/50 text-slate-400 border border-slate-600/30 hover:bg-slate-600/50"
+                title="Refresh and clear cache"
+              >
+                🔄 Refresh
+              </button>
               <button
                 onClick={() => setShowExpired(!showExpired)}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
