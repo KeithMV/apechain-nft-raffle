@@ -68,9 +68,9 @@ class RafflePositionService {
     }
     
     try {
-      // Get recent RaffleCreated events (wider range for expired raffles)
+      // Get recent RaffleCreated events (Alchemy 10k limit)
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 200000n ? currentBlock - 200000n : 0n;
+      const fromBlock = currentBlock > 9000n ? currentBlock - 9000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -171,9 +171,9 @@ class RafflePositionService {
     }
     
     try {
-      // Progressive loading: 50K blocks per page (~2 weeks each)
+      // Progressive loading: 9K blocks per page (Alchemy limit)
       const currentBlock = await publicClient.getBlockNumber();
-      const BLOCKS_PER_PAGE = 50000n;
+      const BLOCKS_PER_PAGE = 9000n;
       const fromBlock = currentBlock - BigInt((page + 1) * Number(BLOCKS_PER_PAGE));
       const toBlock = page === 0 ? currentBlock : currentBlock - BigInt(page * Number(BLOCKS_PER_PAGE));
       
