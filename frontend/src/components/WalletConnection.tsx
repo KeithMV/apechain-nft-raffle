@@ -53,9 +53,19 @@ export default function WalletConnection() {
     );
   }
 
+  const handleConnect = async () => {
+    console.log('Connect button clicked');
+    try {
+      await open();
+      console.log('Web3Modal opened successfully');
+    } catch (error) {
+      console.error('Failed to open Web3Modal:', error);
+    }
+  };
+
   return (
     <button
-      onClick={() => open()}
+      onClick={handleConnect}
       className="px-3 sm:px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-emerald-500/30 transition-colors min-h-[44px] whitespace-nowrap"
     >
       Connect Wallet

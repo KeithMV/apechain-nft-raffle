@@ -40,8 +40,13 @@ export const config = defaultWagmiConfig({
 });
 
 // Create Web3Modal - minimal working configuration
-createWeb3Modal({
-  wagmiConfig: config,
-  projectId,
-  themeMode: 'dark'
-});
+try {
+  createWeb3Modal({
+    wagmiConfig: config,
+    projectId,
+    themeMode: 'dark'
+  });
+  console.log('Web3Modal initialized successfully with projectId:', projectId);
+} catch (error) {
+  console.error('Failed to initialize Web3Modal:', error);
+}
