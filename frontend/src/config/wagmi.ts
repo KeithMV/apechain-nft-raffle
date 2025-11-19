@@ -20,8 +20,8 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// WalletConnect project ID - using working project ID
-const projectId = '2350e68151f4c7fbf239ab45fd750ae0';
+// WalletConnect project ID - use your own project ID
+const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '7aca6566c4e099d07b70a3c27981ac9f';
 
 // Web3Modal metadata
 const metadata = {
