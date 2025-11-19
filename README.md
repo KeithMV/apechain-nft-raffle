@@ -150,3 +150,4 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 - [White-Label Business Plan](white-label-business/)
 - [Platform Education](white-label-business/PLATFORM_EDUCATION.md)
 - [Demo Script](white-label-business/DEMO_SCRIPT.md)# Pipeline trigger Sun Nov 16 19:59:59 PST 2025
+# Deployment trigger Tue Nov 18 21:27:57 PST 2025
