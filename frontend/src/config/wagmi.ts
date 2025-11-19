@@ -27,9 +27,9 @@ const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '7aca6566c4e
 const metadata = {
   name: 'ApeChain NFT Raffles',
   description: 'Decentralized NFT raffle platform on ApeChain',
-  url: 'https://apechain-raffles.com',
-  icons: ['https://apechain-raffles.com/favicon.ico'],
-  verifyUrl: 'https://apechain-raffles.com'
+  url: 'https://apechainraffles.com',
+  icons: ['https://apechainraffles.com/favicon.ico'],
+  verifyUrl: 'https://apechainraffles.com'
 };
 
 // Create wagmi config - simple working configuration
