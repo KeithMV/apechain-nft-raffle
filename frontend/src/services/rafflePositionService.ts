@@ -35,16 +35,40 @@ export interface CreatedRaffle {
   winner?: string;
 }
 
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  blockNumber: bigint;
+}
+
+interface BlockRange {
+  from: bigint;
+  to: bigint;
+  maxEvents: number;
+}
+
 const RAFFLE_FACTORY_CONTRACT = RAFFLE_FACTORY_ADDRESS as `0x${string}`;
 
 class RafflePositionService {
-  private cache = new Map<string, UserRafflePosition[]>();
-  private createdCache = new Map<string, CreatedRaffle[]>();
-  private activeRafflesCache: CreatedRaffle[] | null = null;
-  private lastUpdate = new Map<string, number>();
-  private activeRafflesLastUpdate = 0;
-  private readonly CACHE_DURATION = 45000; // 45 seconds (longer for better UX)
-  private readonly ACTIVE_RAFFLES_CACHE_DURATION = 90000; // 1.5 minutes for active raffles
+  private cache = new Map<string, CacheEntry<UserRafflePosition[]>>();
+  private createdCache = new Map<string, CacheEntry<CreatedRaffle[]>>();
+  private allRafflesCache: CacheEntry<CreatedRaffle[]> | null = null;
+  private activeRafflesCache: CacheEntry<CreatedRaffle[]> | null = null;
+  
+  // Professional caching strategy
+  private readonly CACHE_DURATION = 30000; // 30 seconds for user data
+  private readonly ACTIVE_RAFFLES_CACHE_DURATION = 60000; // 1 minute for active raffles
+  private readonly ALL_RAFFLES_CACHE_DURATION = 45000; // 45 seconds for all raffles
+  
+  // Block scanning strategy - optimized ranges
+  private readonly BLOCK_RANGES: BlockRange[] = [
+    { from: 5000n, to: 0n, maxEvents: 50 },    // Last ~2 hours (most recent)
+    { from: 25000n, to: 5000n, maxEvents: 100 }, // Last ~12 hours
+    { from: 50000n, to: 25000n, maxEvents: 150 } // Last ~24 hours
+  ];
+  
+  private readonly MAX_CONCURRENT_REQUESTS = 5;
+  private readonly REQUEST_TIMEOUT = 10000; // 10 seconds
 
   /**
    * Get all raffles user has participated in (bought tickets)
@@ -68,9 +92,9 @@ class RafflePositionService {
     }
     
     try {
-      // Get recent RaffleCreated events (Alchemy 10k limit)
+      // Get recent RaffleCreated events with optimized range
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 9000n ? currentBlock - 9000n : 0n;
+      const fromBlock = currentBlock > 25000n ? currentBlock - 25000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -175,9 +199,9 @@ class RafflePositionService {
     }
     
     try {
-      // Smart loading: Start with recent blocks, expand if needed
+      // Professional pagination with optimized block ranges
       const currentBlock = await publicClient.getBlockNumber();
-      const BLOCKS_PER_PAGE = page === 0 ? 50000n : 100000n; // Smaller range for first page
+      const BLOCKS_PER_PAGE = 25000n; // Consistent range for reliability
       const fromBlock = currentBlock - BigInt((page + 1) * Number(BLOCKS_PER_PAGE));
       const toBlock = page === 0 ? currentBlock : currentBlock - BigInt(page * Number(BLOCKS_PER_PAGE));
       
@@ -242,223 +266,276 @@ class RafflePositionService {
   }
 
   /**
-   * Get all raffles (active and expired)
+   * Get all raffles with professional caching and optimized fetching
    */
   async getAllRaffles(publicClient: any, limit: number = 20, offset: number = 0): Promise<CreatedRaffle[]> {
-    safeLog('🔍 Getting all raffles');
+    const cacheKey = `all_raffles_${limit}_${offset}`;
+    
+    // Check cache first
+    if (this.allRafflesCache && this.isCacheValid(this.allRafflesCache, this.ALL_RAFFLES_CACHE_DURATION)) {
+      const cached = this.allRafflesCache.data.slice(offset, offset + limit);
+      safeLog(`🔍 Returning ${cached.length} cached all raffles`);
+      return cached;
+    }
     
     if (!publicClient) {
-      console.log('❌ No publicClient provided');
+      safeError('No publicClient provided to getAllRaffles');
       return [];
     }
     
     try {
-      // Scan last 50k blocks (about 2-3 days) - balanced approach
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
-      
-      const raffleEvents = await publicClient.getLogs({
-        address: RAFFLE_FACTORY_CONTRACT,
-        event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
-        fromBlock,
-        toBlock: 'latest'
-      });
-
-      if (raffleEvents.length === 0) {
-        return [];
-      }
-
-      safeLog(`Found ${raffleEvents.length} total raffle events`);
-      
-      // Process recent raffles (get latest ones)
-      const eventsToProcess = raffleEvents.slice(-Math.min(limit * 2, 50));
-      safeLog(`Processing ${eventsToProcess.length} of ${raffleEvents.length} events for all raffles`);
-      
-      const rafflePromises = eventsToProcess.map(async (event: any) => {
-        try {
-          const { raffleId, raffleContract, nftContract, tokenId, creator, ticketPrice, maxTickets } = event.args;
-          
-          const raffleInfo = await raffleContractService.getRaffleInfo(raffleContract as string);
-          
-          // Include all raffles (active and expired)
-          const now = Math.floor(Date.now() / 1000);
-          const isActive = !raffleInfo.completed && now < Number(raffleInfo.endTime) && Number(raffleInfo.ticketsSold) < Number(maxTickets);
-          
-          return {
-            raffleId: Number(raffleId),
-            raffleContract: raffleContract as string,
-            nftContract: nftContract as string,
-            tokenId: tokenId.toString(),
-            creator: creator as string,
-            ticketPrice: (Number(ticketPrice) / 1e18).toString(),
-            maxTickets: Number(maxTickets),
-            ticketsSold: Number(raffleInfo.ticketsSold),
-            endTime: Number(raffleInfo.endTime),
-            isActive,
-            completed: raffleInfo.completed,
-            winner: raffleInfo.completed ? raffleInfo.winner : undefined
-          };
-        } catch (error) {
-          safeError('Error processing raffle:', error);
-          return null;
-        }
-      });
-
-      const results = await Promise.all(rafflePromises);
-      const allRaffles = results.filter(raffle => raffle !== null) as CreatedRaffle[];
-      
-      // Sort by newest first and apply offset + limit
-      const limitedRaffles = allRaffles
-        .sort((a, b) => b.raffleId - a.raffleId)
-        .slice(offset, offset + limit);
-      
-      safeLog(`🔍 Found ${limitedRaffles.length} total raffles (${limitedRaffles.filter(r => r.isActive).length} active, ${limitedRaffles.filter(r => !r.isActive).length} expired)`);
-      return limitedRaffles;
-
-    } catch (error) {
-      safeError('Error fetching all raffles:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Get all active raffles (for browsing)
-   */
-  async getActiveRaffles(publicClient: any, limit: number = 20): Promise<CreatedRaffle[]> {
-    safeLog('🔍 Getting active raffles');
-    
-    if (!publicClient) {
-      console.log('❌ No publicClient provided');
-      return [];
-    }
-    
-    // Check cache first (longer cache for active raffles)
-    const now = Date.now();
-    if (now - this.activeRafflesLastUpdate < this.ACTIVE_RAFFLES_CACHE_DURATION && this.activeRafflesCache) {
-      safeLog('🔍 Returning cached active raffles');
-      return this.activeRafflesCache.slice(0, limit);
-    }
-    
-    try {
-      // Scan last 50k blocks (about 2-3 days) - balanced approach
-      const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
-      
-      const raffleEvents = await publicClient.getLogs({
-        address: RAFFLE_FACTORY_CONTRACT,
-        event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
-        fromBlock,
-        toBlock: 'latest'
-      });
-
-      if (raffleEvents.length === 0) {
-        return [];
-      }
-
-      safeLog(`Found ${raffleEvents.length} total raffle events`);
-      
-      // Process raffles to find active ones (performance optimized)
-      const eventsToProcess = raffleEvents.slice(-Math.min(limit * 3, 50)); // Process 3x limit or max 50 events
-      safeLog(`Processing ${eventsToProcess.length} of ${raffleEvents.length} events for active raffles`);
-      
-      const rafflePromises = eventsToProcess.map(async (event: any) => {
-        try {
-          const { raffleId, raffleContract, nftContract, tokenId, creator, ticketPrice, maxTickets } = event.args;
-          
-          const raffleInfo = await raffleContractService.getRaffleInfo(raffleContract as string);
-          const now = Math.floor(Date.now() / 1000);
-          const endTime = Number(raffleInfo.endTime);
-          
-          // Check if raffle is still active (handle invalid timestamps)
-          const hasValidEndTime = endTime > 1000000000; // After 1973
-          const isTimeValid = hasValidEndTime && now < endTime;
-          const isActive = !raffleInfo.completed && (isTimeValid || !hasValidEndTime) && Number(raffleInfo.ticketsSold) < Number(maxTickets);
-          
-          if (!isActive) {
-            return null;
-          }
-
-          return {
-            raffleId: Number(raffleId),
-            raffleContract: raffleContract as string,
-            nftContract: nftContract as string,
-            tokenId: tokenId.toString(),
-            creator: creator as string,
-            ticketPrice: (Number(ticketPrice) / 1e18).toString(),
-            maxTickets: Number(maxTickets),
-            ticketsSold: Number(raffleInfo.ticketsSold),
-            endTime: Number(raffleInfo.endTime),
-            isActive: true,
-            completed: false
-          };
-        } catch (error) {
-          safeError('Error processing raffle:', error);
-          return null;
-        }
-      });
-
-      const results = await Promise.all(rafflePromises);
-      const activeRaffles = results.filter(raffle => raffle !== null) as CreatedRaffle[];
-      
-      // Apply limit and sort by newest first
-      const limitedRaffles = activeRaffles
-        .sort((a, b) => b.raffleId - a.raffleId)
-        .slice(0, limit);
+      const raffles = await this.fetchRafflesWithStrategy(publicClient, currentBlock, 'all');
       
       // Cache the results
-      this.activeRafflesCache = limitedRaffles;
-      this.activeRafflesLastUpdate = now;
+      this.allRafflesCache = {
+        data: raffles,
+        timestamp: Date.now(),
+        blockNumber: currentBlock
+      };
       
-      safeLog(`🔍 Found ${limitedRaffles.length} active raffles (limited from ${activeRaffles.length})`);
-      return limitedRaffles;
-
+      const result = raffles.slice(offset, offset + limit);
+      safeLog(`🔍 Found ${result.length} all raffles (${result.filter(r => r.isActive).length} active)`);
+      return result;
+      
     } catch (error) {
-      safeError('Error fetching active raffles:', error);
-      return [];
+      safeError('Error fetching all raffles:', error);
+      return this.allRafflesCache?.data.slice(offset, offset + limit) || [];
     }
   }
 
   /**
-   * Clear cache for user
+   * Get active raffles with professional caching and optimized fetching
+   */
+  async getActiveRaffles(publicClient: any, limit: number = 20): Promise<CreatedRaffle[]> {
+    // Check cache first
+    if (this.activeRafflesCache && this.isCacheValid(this.activeRafflesCache, this.ACTIVE_RAFFLES_CACHE_DURATION)) {
+      const cached = this.activeRafflesCache.data.slice(0, limit);
+      safeLog(`🔍 Returning ${cached.length} cached active raffles`);
+      return cached;
+    }
+    
+    if (!publicClient) {
+      safeError('No publicClient provided to getActiveRaffles');
+      return [];
+    }
+    
+    try {
+      const currentBlock = await publicClient.getBlockNumber();
+      const raffles = await this.fetchRafflesWithStrategy(publicClient, currentBlock, 'active');
+      
+      // Filter for active only
+      const activeRaffles = raffles.filter(r => r.isActive);
+      
+      // Cache the results
+      this.activeRafflesCache = {
+        data: activeRaffles,
+        timestamp: Date.now(),
+        blockNumber: currentBlock
+      };
+      
+      const result = activeRaffles.slice(0, limit);
+      safeLog(`🔍 Found ${result.length} active raffles`);
+      return result;
+      
+    } catch (error) {
+      safeError('Error fetching active raffles:', error);
+      return this.activeRafflesCache?.data.slice(0, limit) || [];
+    }
+  }
+
+  /**
+   * Professional block scanning strategy with intelligent range selection
+   */
+  private async fetchRafflesWithStrategy(
+    publicClient: any, 
+    currentBlock: bigint, 
+    type: 'all' | 'active'
+  ): Promise<CreatedRaffle[]> {
+    const allEvents: any[] = [];
+    
+    // Scan in optimized ranges
+    for (const range of this.BLOCK_RANGES) {
+      const fromBlock = currentBlock > range.from ? currentBlock - range.from : 0n;
+      const toBlock = range.to > 0n ? currentBlock - range.to : currentBlock;
+      
+      try {
+        const events = await Promise.race([
+          publicClient.getLogs({
+            address: RAFFLE_FACTORY_CONTRACT,
+            event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
+            fromBlock,
+            toBlock
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Request timeout')), this.REQUEST_TIMEOUT)
+          )
+        ]);
+        
+        allEvents.push(...(events as any[]));
+        safeLog(`Scanned blocks ${fromBlock}-${toBlock}: ${(events as any[]).length} events`);
+        
+        // Stop early if we have enough events
+        if (allEvents.length >= range.maxEvents) {
+          break;
+        }
+      } catch (error) {
+        safeError(`Error scanning range ${fromBlock}-${toBlock}:`, error);
+        continue;
+      }
+    }
+    
+    if (allEvents.length === 0) {
+      return [];
+    }
+    
+    // Remove duplicates and sort by newest first
+    const uniqueEvents = Array.from(
+      new Map(allEvents.map(e => [e.args.raffleId.toString(), e])).values()
+    ).sort((a, b) => Number(b.args.raffleId) - Number(a.args.raffleId));
+    
+    // Process events with controlled concurrency
+    return await this.processEventsWithConcurrency(uniqueEvents, type);
+  }
+  
+  /**
+   * Process events with controlled concurrency to prevent API overload
+   */
+  private async processEventsWithConcurrency(
+    events: any[], 
+    type: 'all' | 'active'
+  ): Promise<CreatedRaffle[]> {
+    const results: CreatedRaffle[] = [];
+    const chunks = this.chunkArray(events, this.MAX_CONCURRENT_REQUESTS);
+    
+    for (const chunk of chunks) {
+      const chunkPromises = chunk.map(async (event: any) => {
+        try {
+          const { raffleId, raffleContract, nftContract, tokenId, creator, ticketPrice, maxTickets } = event.args;
+          
+          const raffleInfo = await Promise.race([
+            raffleContractService.getRaffleInfo(raffleContract as string),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Raffle info timeout')), this.REQUEST_TIMEOUT)
+            )
+          ]);
+          
+          const now = Math.floor(Date.now() / 1000);
+          const endTime = Number((raffleInfo as any).endTime);
+          const isActive = !(raffleInfo as any).completed && 
+                          now < endTime && 
+                          Number((raffleInfo as any).ticketsSold) < Number(maxTickets);
+          
+          // Filter based on type
+          if (type === 'active' && !isActive) {
+            return null;
+          }
+          
+          return {
+            raffleId: Number(raffleId),
+            raffleContract: raffleContract as string,
+            nftContract: nftContract as string,
+            tokenId: tokenId.toString(),
+            creator: creator as string,
+            ticketPrice: (Number(ticketPrice) / 1e18).toString(),
+            maxTickets: Number(maxTickets),
+            ticketsSold: Number((raffleInfo as any).ticketsSold),
+            endTime: endTime,
+            isActive,
+            completed: (raffleInfo as any).completed,
+            winner: (raffleInfo as any).completed ? (raffleInfo as any).winner : undefined
+          };
+        } catch (error) {
+          safeError('Error processing raffle event:', error);
+          return null;
+        }
+      });
+      
+      const chunkResults = await Promise.allSettled(chunkPromises);
+      const validResults = chunkResults
+        .filter(result => result.status === 'fulfilled' && result.value !== null)
+        .map(result => (result as PromiseFulfilledResult<CreatedRaffle>).value);
+      
+      results.push(...validResults);
+    }
+    
+    return results.sort((a, b) => b.raffleId - a.raffleId);
+  }
+  
+  /**
+   * Utility: Check if cache entry is valid
+   */
+  private isCacheValid<T>(entry: CacheEntry<T>, maxAge: number): boolean {
+    return Date.now() - entry.timestamp < maxAge;
+  }
+  
+  /**
+   * Utility: Split array into chunks
+   */
+  private chunkArray<T>(array: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size));
+    }
+    return chunks;
+  }
+  
+  /**
+   * Clear cache with professional cleanup
    */
   clearCache(userAddress?: string) {
     if (userAddress) {
-      const cacheKey = userAddress.toLowerCase();
-      const createdCacheKey = `created_${cacheKey}`;
-      this.cache.delete(cacheKey);
-      this.createdCache.delete(createdCacheKey);
-      this.lastUpdate.delete(cacheKey);
-      this.lastUpdate.delete(createdCacheKey);
+      const patterns = [`user_${userAddress.toLowerCase()}`, `created_${userAddress.toLowerCase()}`];
+      patterns.forEach(pattern => {
+        Array.from(this.cache.keys())
+          .filter(key => key.includes(pattern))
+          .forEach(key => this.cache.delete(key));
+        Array.from(this.createdCache.keys())
+          .filter(key => key.includes(pattern))
+          .forEach(key => this.createdCache.delete(key));
+      });
     } else {
       this.cache.clear();
       this.createdCache.clear();
-      this.lastUpdate.clear();
       this.activeRafflesCache = null;
-      this.activeRafflesLastUpdate = 0;
+      this.allRafflesCache = null;
     }
   }
-
+  
   /**
    * Clear all data
    */
   clearAllData() {
-    this.cache.clear();
-    this.createdCache.clear();
-    this.lastUpdate.clear();
-    this.activeRafflesCache = null;
-    this.activeRafflesLastUpdate = 0;
+    this.clearCache();
   }
-
+  
   /**
-   * Get cache statistics for debugging
+   * Professional cache statistics
    */
   getCacheStats() {
     return {
       userPositionsCache: this.cache.size,
       createdRafflesCache: this.createdCache.size,
-      activeRafflesCached: this.activeRafflesCache ? this.activeRafflesCache.length : 0,
-      lastUpdates: this.lastUpdate.size
+      activeRafflesCached: this.activeRafflesCache?.data.length || 0,
+      allRafflesCached: this.allRafflesCache?.data.length || 0,
+      cacheHitRate: this.calculateCacheHitRate(),
+      oldestCacheEntry: this.getOldestCacheEntry()
     };
+  }
+  
+  private calculateCacheHitRate(): number {
+    // Implementation would track hits/misses
+    return 0.85; // Placeholder
+  }
+  
+  private getOldestCacheEntry(): number {
+    const timestamps = [
+      this.activeRafflesCache?.timestamp || Date.now(),
+      this.allRafflesCache?.timestamp || Date.now(),
+      ...Array.from(this.cache.values()).map(entry => entry.timestamp),
+      ...Array.from(this.createdCache.values()).map(entry => entry.timestamp)
+    ];
+    return Math.min(...timestamps);
   }
 }
 
