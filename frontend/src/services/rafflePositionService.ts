@@ -249,9 +249,9 @@ class RafflePositionService {
     }
     
     try {
-      // Get RaffleCreated events from a wider range
+      // Get RaffleCreated events with Alchemy's 10k block limit
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 500000n ? currentBlock - 500000n : 0n;
+      const fromBlock = currentBlock > 9000n ? currentBlock - 9000n : 0n;
       
       const raffleEvents = await publicClient.getLogs({
         address: RAFFLE_FACTORY_CONTRACT,
@@ -336,9 +336,9 @@ class RafflePositionService {
     }
     
     try {
-      // Get RaffleCreated events from a wider range
+      // Get RaffleCreated events with Alchemy's 10k block limit
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 500000n ? currentBlock - 500000n : 0n;
+      const fromBlock = currentBlock > 9000n ? currentBlock - 9000n : 0n;
       
       // Get events from optimized range (no chunking for better performance)
       const raffleEvents = await publicClient.getLogs({
