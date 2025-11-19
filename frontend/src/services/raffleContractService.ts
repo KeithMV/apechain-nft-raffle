@@ -57,11 +57,9 @@ class RaffleContractService {
         throw new Error('Raffle has already completed');
       }
       
-      // Check if raffle is still active (not expired) - using block numbers
-      // Note: endTime in newer contracts is actually endBlock (block number)
-      // For backward compatibility, we'll check both timestamp and block-based expiration
-      const currentBlock = await config.publicClient?.getBlockNumber() || 0n;
-      if (currentBlock >= raffleInfo.endTime) {
+      // Check if raffle is still active (not expired)
+      const now = Math.floor(Date.now() / 1000);
+      if (now >= Number(raffleInfo.endTime)) {
         throw new Error('Raffle has expired');
       }
       
@@ -430,37 +428,29 @@ class RaffleContractService {
   }
 
   /**
-   * Calculate time remaining for raffle (handles both timestamp and block-based)
+   * Calculate time remaining for raffle
    */
-  async getTimeRemaining(endTime: bigint): Promise<{
+  getTimeRemaining(endTime: bigint): {
     days: number;
     hours: number;
     minutes: number;
     seconds: number;
     isExpired: boolean;
-  }> {
-    try {
-      const currentBlock = await config.publicClient?.getBlockNumber() || 0n;
-      const endBlock = Number(endTime);
-      const remainingBlocks = endBlock - Number(currentBlock);
+  } {
+    const now = Math.floor(Date.now() / 1000);
+    const end = Number(endTime);
+    const remaining = end - now;
 
-      if (remainingBlocks <= 0) {
-        return { days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true };
-      }
-
-      // Convert blocks to seconds (ApeChain ~15 seconds per block)
-      const remainingSeconds = remainingBlocks * 15;
-      
-      const days = Math.floor(remainingSeconds / 86400);
-      const hours = Math.floor((remainingSeconds % 86400) / 3600);
-      const minutes = Math.floor((remainingSeconds % 3600) / 60);
-      const seconds = remainingSeconds % 60;
-
-      return { days, hours, minutes, seconds, isExpired: false };
-    } catch (error) {
-      safeError('Failed to calculate time remaining:', error);
+    if (remaining <= 0) {
       return { days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true };
     }
+
+    const days = Math.floor(remaining / 86400);
+    const hours = Math.floor((remaining % 86400) / 3600);
+    const minutes = Math.floor((remaining % 3600) / 60);
+    const seconds = remaining % 60;
+
+    return { days, hours, minutes, seconds, isExpired: false };
   }
 
   /**
