@@ -41,6 +41,10 @@ export const config = defaultWagmiConfig({
 
 // Create Web3Modal - minimal working configuration
 try {
+  if (!projectId) {
+    throw new Error('WalletConnect project ID is required');
+  }
+  
   createWeb3Modal({
     wagmiConfig: config,
     projectId,
@@ -49,4 +53,8 @@ try {
   console.log('Web3Modal initialized successfully with projectId:', projectId);
 } catch (error) {
   console.error('Failed to initialize Web3Modal:', error);
+  // Fallback: Continue without Web3Modal to prevent app crash
+  if (typeof window !== 'undefined') {
+    window.alert('Wallet connection may not work properly. Please refresh the page.');
+  }
 }

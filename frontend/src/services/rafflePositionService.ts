@@ -83,9 +83,13 @@ class RafflePositionService {
         return [];
       }
 
-      // Limit processing to avoid performance issues
-      const eventsToProcess = raffleEvents.slice(-100); // Process last 100 events only
+      // Limit processing to avoid performance issues and API timeouts
+      const eventsToProcess = raffleEvents.slice(-20); // Process last 20 events only for better performance
       safeLog(`Processing ${eventsToProcess.length} of ${raffleEvents.length} raffle events`);
+      
+      if (raffleEvents.length === 0) {
+        return [];
+      }
       
       // Process each raffle to check user participation
       const positionPromises = eventsToProcess.map(async (event: any) => {

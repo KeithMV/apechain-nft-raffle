@@ -53,7 +53,7 @@ export default function NFTImage({ contractAddress, tokenId, className = '', sho
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-lg blur-sm"></div>
         <img
           src="/placeholder-nft.svg"
-          alt={metadata?.name || `NFT #${tokenId}`}
+          alt={metadata?.name ? String(metadata.name).replace(/<[^>]*>/g, '') : `NFT #${tokenId}`}
           className="relative w-full h-full object-cover opacity-60"
         />
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/40">
@@ -103,7 +103,7 @@ export default function NFTImage({ contractAddress, tokenId, className = '', sho
       />
       {showName && metadata.name && (
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900/90 to-transparent p-2">
-          <p className="text-emerald-200 text-sm truncate">{metadata.name}</p>
+          <p className="text-emerald-200 text-sm truncate">{String(metadata.name).replace(/<[^>]*>/g, '').substring(0, 50)}</p>
         </div>
       )}
     </div>

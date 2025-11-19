@@ -53,7 +53,11 @@ export default function BrowseRaffles() {
       }
     } catch (error) {
       console.error('Failed to load raffles:', error);
-      toast.error('Failed to load raffles');
+      toast.error('Failed to load raffles. Please try refreshing the page.');
+      // Set empty array to prevent undefined errors
+      if (reset) {
+        setRaffles([]);
+      }
     } finally {
       setLoading(false);
     }
