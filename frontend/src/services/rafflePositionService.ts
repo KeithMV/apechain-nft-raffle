@@ -369,7 +369,7 @@ class RafflePositionService {
           const endTime = Number(raffleInfo.endTime);
           const timeRemaining = endTime - now;
           
-          safeLog(`Raffle ${raffleId} detailed info:`, {
+          console.log(`Raffle ${raffleId} detailed info:`, {
             completed: raffleInfo.completed,
             endTime: endTime,
             currentTime: now,
@@ -385,7 +385,7 @@ class RafflePositionService {
           // Check if raffle is still active
           const isActive = !raffleInfo.completed && now < endTime && Number(raffleInfo.ticketsSold) < Number(maxTickets);
           
-          safeLog(`Raffle ${raffleId} active:`, isActive, 'Reasons:', {
+          console.log(`Raffle ${raffleId} active:`, isActive, 'Reasons:', {
             notCompleted: !raffleInfo.completed,
             notExpired: now < endTime,
             hasAvailableTickets: Number(raffleInfo.ticketsSold) < Number(maxTickets)

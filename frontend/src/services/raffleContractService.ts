@@ -214,6 +214,7 @@ class RaffleContractService {
           platformFee: structInfo.platformFee
         };
       } catch (structError) {
+        console.log('Struct format failed for contract:', raffleContract, 'trying array format. Error:', structError);
         // If struct format fails, try the old array format (older contracts)
         const arrayInfo = await readContract(config, {
           address: raffleContract as `0x${string}`,
@@ -264,6 +265,7 @@ class RaffleContractService {
             platformFee: 0n // Default platform fee for older contracts
           };
         } else {
+          console.error('Invalid array format for contract:', raffleContract, 'arrayInfo:', arrayInfo);
           // Return default values for invalid format
           return {
             nftContract: '',
@@ -280,6 +282,7 @@ class RaffleContractService {
         }
       }
     } catch (error) {
+      console.error('Failed to get raffle info for contract:', raffleContract, error);
       safeError('Failed to get raffle info:', error);
       // Return default raffle info to prevent crashes
       return {
