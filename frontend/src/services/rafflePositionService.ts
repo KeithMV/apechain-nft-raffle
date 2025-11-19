@@ -2,6 +2,7 @@ import { parseAbiItem } from 'viem';
 import { RAFFLE_FACTORY_ADDRESS } from '../config/contracts';
 import { raffleContractService } from './raffleContractService';
 import { safeLog, safeError } from '../utils/logSanitizer';
+import { publicClient, getOptimalBlockLimit } from './rpcService';
 
 export interface UserRafflePosition {
   raffleId: number;
@@ -60,9 +61,11 @@ class RafflePositionService {
   private readonly ACTIVE_RAFFLES_CACHE_DURATION = 60000; // 1 minute for active raffles
   private readonly ALL_RAFFLES_CACHE_DURATION = 45000; // 45 seconds for all raffles
   
-  // Block scanning strategy - respecting 10k block limit with chunking
+  // Dynamic block scanning strategy
   private readonly SCAN_DEPTH = 100000n; // Total depth: ~2-3 days
-  private readonly CHUNK_SIZE = 9000n; // Safe chunk size under 10k limit
+  private getChunkSize(): bigint {
+    return BigInt(getOptimalBlockLimit());
+  }
   
   private readonly MAX_CONCURRENT_REQUESTS = 5;
   private readonly REQUEST_TIMEOUT = 10000; // 10 seconds
@@ -92,10 +95,11 @@ class RafflePositionService {
       const currentBlock = await publicClient.getBlockNumber();
       const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
       
-      // Scan in chunks to respect 10k block limit
+      // Scan in chunks with dynamic sizing
       const allEvents: any[] = [];
-      for (let chunkStart = fromBlock; chunkStart < currentBlock; chunkStart += 9000n) {
-        const chunkEnd = chunkStart + 9000n > currentBlock ? currentBlock : chunkStart + 9000n;
+      const chunkSize = this.getChunkSize();
+      for (let chunkStart = fromBlock; chunkStart < currentBlock; chunkStart += BigInt(chunkSize)) {
+        const chunkEnd = chunkStart + BigInt(chunkSize) > currentBlock ? currentBlock : chunkStart + BigInt(chunkSize);
         try {
           const events = await publicClient.getLogs({
             address: RAFFLE_FACTORY_CONTRACT,
@@ -214,11 +218,12 @@ class RafflePositionService {
       const fromBlock = currentBlock - BigInt((page + 1) * Number(BLOCKS_PER_PAGE));
       const toBlock = page === 0 ? currentBlock : currentBlock - BigInt(page * Number(BLOCKS_PER_PAGE));
       
-      // Scan in chunks to respect 10k block limit
+      // Scan in chunks with dynamic sizing
       const allEvents: any[] = [];
       const scanFrom = fromBlock > 0n ? fromBlock : 0n;
-      for (let chunkStart = scanFrom; chunkStart < toBlock; chunkStart += 9000n) {
-        const chunkEnd = chunkStart + 9000n > toBlock ? toBlock : chunkStart + 9000n;
+      const chunkSize = this.getChunkSize();
+      for (let chunkStart = scanFrom; chunkStart < toBlock; chunkStart += BigInt(chunkSize)) {
+        const chunkEnd = chunkStart + BigInt(chunkSize) > toBlock ? toBlock : chunkStart + BigInt(chunkSize);
         try {
           const events = await publicClient.getLogs({
             address: RAFFLE_FACTORY_CONTRACT,
@@ -379,9 +384,10 @@ class RafflePositionService {
     const allEvents: any[] = [];
     const startBlock = currentBlock > this.SCAN_DEPTH ? currentBlock - this.SCAN_DEPTH : 0n;
     
-    // Scan in 9k block chunks to respect Alchemy limits
-    for (let fromBlock = startBlock; fromBlock < currentBlock; fromBlock += this.CHUNK_SIZE) {
-      const toBlock = fromBlock + this.CHUNK_SIZE > currentBlock ? currentBlock : fromBlock + this.CHUNK_SIZE;
+    // Scan in dynamic chunks based on RPC capabilities
+    const chunkSize = this.getChunkSize();
+    for (let fromBlock = startBlock; fromBlock < currentBlock; fromBlock += chunkSize) {
+      const toBlock = fromBlock + chunkSize > currentBlock ? currentBlock : fromBlock + chunkSize;
       
       try {
         const events = await Promise.race([
