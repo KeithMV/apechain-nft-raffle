@@ -83,12 +83,11 @@ class RafflePositionService {
     
     // Check cache first
     const cacheKey = userAddress.toLowerCase();
-    const lastUpdate = this.lastUpdate.get(cacheKey) || 0;
-    const now = Date.now();
+    const cachedEntry = this.cache.get(cacheKey);
     
-    if (now - lastUpdate < this.CACHE_DURATION && this.cache.has(cacheKey)) {
+    if (cachedEntry && this.isCacheValid(cachedEntry, this.CACHE_DURATION)) {
       safeLog('🎫 Returning cached user raffle positions');
-      return this.cache.get(cacheKey) || [];
+      return cachedEntry.data;
     }
     
     try {
@@ -165,8 +164,11 @@ class RafflePositionService {
       const positions = results.filter(position => position !== null) as UserRafflePosition[];
       
       // Cache the results
-      this.cache.set(cacheKey, positions);
-      this.lastUpdate.set(cacheKey, now);
+      this.cache.set(cacheKey, {
+        data: positions,
+        timestamp: Date.now(),
+        blockNumber: currentBlock
+      });
       
       safeLog(`🎫 Found ${positions.length} raffle positions for user`);
       return positions;
@@ -190,12 +192,11 @@ class RafflePositionService {
     
     // Check cache first
     const cacheKey = `created_${userAddress.toLowerCase()}_page_${page}`;
-    const lastUpdate = this.lastUpdate.get(cacheKey) || 0;
-    const now = Date.now();
+    const cachedEntry = this.createdCache.get(cacheKey);
     
-    if (now - lastUpdate < this.CACHE_DURATION && this.createdCache.has(cacheKey)) {
+    if (cachedEntry && this.isCacheValid(cachedEntry, this.CACHE_DURATION)) {
       safeLog('🎨 Returning cached created raffles');
-      return this.createdCache.get(cacheKey) || [];
+      return cachedEntry.data;
     }
     
     try {
@@ -253,8 +254,11 @@ class RafflePositionService {
       const raffles = results.filter(raffle => raffle !== null) as CreatedRaffle[];
       
       // Cache the results
-      this.createdCache.set(cacheKey, raffles);
-      this.lastUpdate.set(cacheKey, now);
+      this.createdCache.set(cacheKey, {
+        data: raffles,
+        timestamp: Date.now(),
+        blockNumber: currentBlock
+      });
       
       safeLog(`🎨 Found ${raffles.length} created raffles for user`);
       return raffles;
