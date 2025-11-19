@@ -382,12 +382,16 @@ class RafflePositionService {
             isMaxTicketsSold: Number(raffleInfo.ticketsSold) >= Number(maxTickets)
           });
           
-          // Check if raffle is still active
-          const isActive = !raffleInfo.completed && now < endTime && Number(raffleInfo.ticketsSold) < Number(maxTickets);
+          // Check if raffle is still active (handle invalid timestamps)
+          const hasValidEndTime = endTime > 1000000000; // After 1973
+          const isTimeValid = hasValidEndTime && now < endTime;
+          const isActive = !raffleInfo.completed && (isTimeValid || !hasValidEndTime) && Number(raffleInfo.ticketsSold) < Number(maxTickets);
           
           console.log(`Raffle ${raffleId} active:`, isActive, 'Reasons:', {
             notCompleted: !raffleInfo.completed,
             notExpired: now < endTime,
+            hasValidEndTime: hasValidEndTime,
+            isTimeValid: isTimeValid,
             hasAvailableTickets: Number(raffleInfo.ticketsSold) < Number(maxTickets)
           });
           

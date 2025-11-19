@@ -35,21 +35,21 @@ export default function BrowseRaffles() {
     }
     
     try {
-      console.log('Loading active raffles...');
-      // Use getActiveRaffles for better performance and to show only active raffles
-      const activeRaffles = await rafflePositionService.getActiveRaffles(publicClient, 30);
-      console.log('Loaded active raffles:', activeRaffles.length);
+      console.log('Loading all raffles...');
+      // Use getAllRaffles to show both active and expired raffles
+      const allRaffles = await rafflePositionService.getAllRaffles(publicClient, 30);
+      console.log('Loaded all raffles:', allRaffles.length);
       
       if (reset) {
-        setRaffles(activeRaffles);
+        setRaffles(allRaffles);
       }
       
-      if (activeRaffles.length < 30) {
+      if (allRaffles.length < 30) {
         setHasMoreRaffles(false);
       }
       
-      if (activeRaffles.length === 0) {
-        console.log('No active raffles found');
+      if (allRaffles.length === 0) {
+        console.log('No raffles found');
       }
     } catch (error) {
       console.error('Failed to load raffles:', error);
