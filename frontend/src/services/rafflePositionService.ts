@@ -60,12 +60,9 @@ class RafflePositionService {
   private readonly ACTIVE_RAFFLES_CACHE_DURATION = 60000; // 1 minute for active raffles
   private readonly ALL_RAFFLES_CACHE_DURATION = 45000; // 45 seconds for all raffles
   
-  // Block scanning strategy - extended ranges to catch tonight's raffles
-  private readonly BLOCK_RANGES: BlockRange[] = [
-    { from: 10000n, to: 0n, maxEvents: 50 },    // Last ~4 hours (most recent)
-    { from: 50000n, to: 10000n, maxEvents: 100 }, // Last ~20 hours
-    { from: 150000n, to: 50000n, maxEvents: 200 } // Last ~3 days (catch all recent)
-  ];
+  // Block scanning strategy - respecting 10k block limit with chunking
+  private readonly SCAN_DEPTH = 100000n; // Total depth: ~2-3 days
+  private readonly CHUNK_SIZE = 9000n; // Safe chunk size under 10k limit
   
   private readonly MAX_CONCURRENT_REQUESTS = 5;
   private readonly REQUEST_TIMEOUT = 10000; // 10 seconds
@@ -91,16 +88,27 @@ class RafflePositionService {
     }
     
     try {
-      // Get recent RaffleCreated events with extended range to catch tonight's raffles
+      // Get recent RaffleCreated events with chunked scanning
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 150000n ? currentBlock - 150000n : 0n;
+      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
       
-      const raffleEvents = await publicClient.getLogs({
-        address: RAFFLE_FACTORY_CONTRACT,
-        event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
-        fromBlock,
-        toBlock: 'latest'
-      });
+      // Scan in chunks to respect 10k block limit
+      const allEvents: any[] = [];
+      for (let chunkStart = fromBlock; chunkStart < currentBlock; chunkStart += 9000n) {
+        const chunkEnd = chunkStart + 9000n > currentBlock ? currentBlock : chunkStart + 9000n;
+        try {
+          const events = await publicClient.getLogs({
+            address: RAFFLE_FACTORY_CONTRACT,
+            event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
+            fromBlock: chunkStart,
+            toBlock: chunkEnd
+          });
+          allEvents.push(...events);
+        } catch (error) {
+          safeError(`Error scanning chunk ${chunkStart}-${chunkEnd}:`, error);
+        }
+      }
+      const raffleEvents = allEvents;
 
       if (raffleEvents.length === 0) {
         return [];
@@ -200,21 +208,33 @@ class RafflePositionService {
     }
     
     try {
-      // Professional pagination with extended block ranges
+      // Professional pagination with chunked scanning
       const currentBlock = await publicClient.getBlockNumber();
-      const BLOCKS_PER_PAGE = 150000n; // Extended range to catch recent raffles
+      const BLOCKS_PER_PAGE = 50000n; // Safe range for chunked scanning
       const fromBlock = currentBlock - BigInt((page + 1) * Number(BLOCKS_PER_PAGE));
       const toBlock = page === 0 ? currentBlock : currentBlock - BigInt(page * Number(BLOCKS_PER_PAGE));
       
-      const raffleEvents = await publicClient.getLogs({
-        address: RAFFLE_FACTORY_CONTRACT,
-        event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
-        args: {
-          creator: userAddress as `0x${string}`
-        },
-        fromBlock: fromBlock > 0n ? fromBlock : 0n,
-        toBlock
-      });
+      // Scan in chunks to respect 10k block limit
+      const allEvents: any[] = [];
+      const scanFrom = fromBlock > 0n ? fromBlock : 0n;
+      for (let chunkStart = scanFrom; chunkStart < toBlock; chunkStart += 9000n) {
+        const chunkEnd = chunkStart + 9000n > toBlock ? toBlock : chunkStart + 9000n;
+        try {
+          const events = await publicClient.getLogs({
+            address: RAFFLE_FACTORY_CONTRACT,
+            event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
+            args: {
+              creator: userAddress as `0x${string}`
+            },
+            fromBlock: chunkStart,
+            toBlock: chunkEnd
+          });
+          allEvents.push(...events);
+        } catch (error) {
+          safeError(`Error scanning chunk ${chunkStart}-${chunkEnd}:`, error);
+        }
+      }
+      const raffleEvents = allEvents;
       
       safeLog(`Found ${raffleEvents.length} events for creator`, userAddress);
 
@@ -349,7 +369,7 @@ class RafflePositionService {
   }
 
   /**
-   * Professional block scanning strategy with intelligent range selection
+   * Professional block scanning with 10k chunk limit compliance
    */
   private async fetchRafflesWithStrategy(
     publicClient: any, 
@@ -357,11 +377,11 @@ class RafflePositionService {
     type: 'all' | 'active'
   ): Promise<CreatedRaffle[]> {
     const allEvents: any[] = [];
+    const startBlock = currentBlock > this.SCAN_DEPTH ? currentBlock - this.SCAN_DEPTH : 0n;
     
-    // Scan in optimized ranges
-    for (const range of this.BLOCK_RANGES) {
-      const fromBlock = currentBlock > range.from ? currentBlock - range.from : 0n;
-      const toBlock = range.to > 0n ? currentBlock - range.to : currentBlock;
+    // Scan in 9k block chunks to respect Alchemy limits
+    for (let fromBlock = startBlock; fromBlock < currentBlock; fromBlock += this.CHUNK_SIZE) {
+      const toBlock = fromBlock + this.CHUNK_SIZE > currentBlock ? currentBlock : fromBlock + this.CHUNK_SIZE;
       
       try {
         const events = await Promise.race([
@@ -379,8 +399,8 @@ class RafflePositionService {
         allEvents.push(...(events as any[]));
         safeLog(`Scanned blocks ${fromBlock}-${toBlock}: ${(events as any[]).length} events`);
         
-        // Stop early if we have enough events
-        if (allEvents.length >= range.maxEvents) {
+        // Stop if we have enough events (200 max)
+        if (allEvents.length >= 200) {
           break;
         }
       } catch (error) {
