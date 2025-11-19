@@ -242,7 +242,7 @@ class RafflePositionService {
   }
 
   /**
-   * Get all raffles (active and expired) with smart block scanning
+   * Get all raffles (active and expired)
    */
   async getAllRaffles(publicClient: any, limit: number = 20, offset: number = 0): Promise<CreatedRaffle[]> {
     safeLog('🔍 Getting all raffles');
@@ -253,38 +253,26 @@ class RafflePositionService {
     }
     
     try {
+      // Scan last 50k blocks (about 2-3 days) - balanced approach
       const currentBlock = await publicClient.getBlockNumber();
-      let allEvents: any[] = [];
+      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
       
-      // Smart scanning: Start with recent blocks, expand if needed
-      const scanRanges = [10000n, 50000n, 100000n]; // Progressive scanning
-      
-      for (const range of scanRanges) {
-        const fromBlock = currentBlock > range ? currentBlock - range : 0n;
-        
-        const events = await publicClient.getLogs({
-          address: RAFFLE_FACTORY_CONTRACT,
-          event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
-          fromBlock,
-          toBlock: 'latest'
-        });
-        
-        allEvents = events;
-        safeLog(`Scanned ${range} blocks, found ${events.length} events`);
-        
-        // If we have enough events or this is the last range, stop
-        if (events.length >= limit * 2 || range === scanRanges[scanRanges.length - 1]) {
-          break;
-        }
-      }
+      const raffleEvents = await publicClient.getLogs({
+        address: RAFFLE_FACTORY_CONTRACT,
+        event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
+        fromBlock,
+        toBlock: 'latest'
+      });
 
-      if (allEvents.length === 0) {
+      if (raffleEvents.length === 0) {
         return [];
       }
 
+      safeLog(`Found ${raffleEvents.length} total raffle events`);
+      
       // Process recent raffles (get latest ones)
-      const eventsToProcess = allEvents.slice(-Math.min(limit * 2, 50));
-      safeLog(`Processing ${eventsToProcess.length} of ${allEvents.length} events for all raffles`);
+      const eventsToProcess = raffleEvents.slice(-Math.min(limit * 2, 50));
+      safeLog(`Processing ${eventsToProcess.length} of ${raffleEvents.length} events for all raffles`);
       
       const rafflePromises = eventsToProcess.map(async (event: any) => {
         try {
@@ -334,7 +322,7 @@ class RafflePositionService {
   }
 
   /**
-   * Get all active raffles (for browsing) with smart block scanning
+   * Get all active raffles (for browsing)
    */
   async getActiveRaffles(publicClient: any, limit: number = 20): Promise<CreatedRaffle[]> {
     safeLog('🔍 Getting active raffles');
@@ -352,40 +340,26 @@ class RafflePositionService {
     }
     
     try {
+      // Scan last 50k blocks (about 2-3 days) - balanced approach
       const currentBlock = await publicClient.getBlockNumber();
-      let allEvents: any[] = [];
+      const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
       
-      // Smart scanning: Start with recent blocks, expand if needed
-      const scanRanges = [10000n, 50000n, 100000n]; // Progressive scanning
-      
-      for (const range of scanRanges) {
-        const fromBlock = currentBlock > range ? currentBlock - range : 0n;
-        
-        const events = await publicClient.getLogs({
-          address: RAFFLE_FACTORY_CONTRACT,
-          event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
-          fromBlock,
-          toBlock: 'latest'
-        });
-        
-        allEvents = events;
-        safeLog(`Scanned ${range} blocks, found ${events.length} events`);
-        
-        // If we have enough events or this is the last range, stop
-        if (events.length >= limit * 3 || range === scanRanges[scanRanges.length - 1]) {
-          break;
-        }
-      }
+      const raffleEvents = await publicClient.getLogs({
+        address: RAFFLE_FACTORY_CONTRACT,
+        event: parseAbiItem('event RaffleCreated(uint256 indexed raffleId, address indexed creator, address indexed nftContract, uint256 tokenId, address raffleContract, uint256 ticketPrice, uint256 maxTickets)'),
+        fromBlock,
+        toBlock: 'latest'
+      });
 
-      if (allEvents.length === 0) {
+      if (raffleEvents.length === 0) {
         return [];
       }
 
-      safeLog(`Found ${allEvents.length} total raffle events`);
+      safeLog(`Found ${raffleEvents.length} total raffle events`);
       
       // Process raffles to find active ones (performance optimized)
-      const eventsToProcess = allEvents.slice(-Math.min(limit * 3, 50)); // Process 3x limit or max 50 events
-      safeLog(`Processing ${eventsToProcess.length} of ${allEvents.length} events for active raffles`);
+      const eventsToProcess = raffleEvents.slice(-Math.min(limit * 3, 50)); // Process 3x limit or max 50 events
+      safeLog(`Processing ${eventsToProcess.length} of ${raffleEvents.length} events for active raffles`);
       
       const rafflePromises = eventsToProcess.map(async (event: any) => {
         try {
