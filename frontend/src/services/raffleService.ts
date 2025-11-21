@@ -165,33 +165,14 @@ class RaffleService {
     try {
       safeLog('🔄 Approving NFT contract for raffle:', nftContract);
       
-      // Mobile-safe transaction with retry logic
-      let hash: `0x${string}`;
-      try {
-        hash = await writeContract(config, {
-          address: nftContract as `0x${string}`,
-          abi: ERC721_ABI,
-          functionName: 'setApprovalForAll',
-          args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
-          gas: 100000n // Set reasonable gas limit for approval
-        });
-      } catch (writeError: any) {
-        // Handle mobile-specific errors
-        if (writeError.message?.includes('getChainId is not a function')) {
-          safeError('Mobile wallet compatibility issue detected, retrying...');
-          // Wait a moment and retry
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          hash = await writeContract(config, {
-            address: nftContract as `0x${string}`,
-            abi: ERC721_ABI,
-            functionName: 'setApprovalForAll',
-            args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
-            // Remove gas limit for mobile compatibility
-          });
-        } else {
-          throw writeError;
-        }
-      }
+      // Mobile-safe transaction - use minimal config for compatibility
+      const hash = await writeContract(config, {
+        address: nftContract as `0x${string}`,
+        abi: ERC721_ABI,
+        functionName: 'setApprovalForAll',
+        args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
+        // Let wagmi handle gas estimation for mobile compatibility
+      });
 
       safeLog('✅ Approval transaction submitted:', hash);
 
@@ -209,8 +190,8 @@ class RaffleService {
       
       // Enhance error message for mobile users
       if (error instanceof Error) {
-        if (error.message.includes('getChainId is not a function')) {
-          throw new Error('Mobile wallet compatibility issue. Please refresh the page and try again.');
+        if (error.message.includes('getChainId') || error.message.includes('connector')) {
+          throw new Error('Wallet connection issue. Please reconnect your wallet and try again.');
         } else if (error.message.includes('network')) {
           throw new Error('Network connection issue. Please check your connection and try again.');
         }
