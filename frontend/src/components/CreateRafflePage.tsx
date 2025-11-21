@@ -75,15 +75,24 @@ export default function CreateRafflePage() {
 
     setApprovalLoading(true);
     try {
+      console.log('🔄 Approving NFT contract for raffle:', formData.nftContract);
+      
+      // Mobile-safe approval with error handling
       await raffleService.approveForAll(formData.nftContract);
       setApprovalStatus(true);
       toast.success('NFT contract approved successfully!');
     } catch (error: any) {
-      console.error('Approval failed:', error);
-      if (error.message?.includes('User rejected')) {
+      console.error('❌ Approval failed:', error);
+      
+      // Handle mobile-specific errors
+      if (error.message?.includes('getChainId is not a function')) {
+        toast.error('Mobile wallet compatibility issue. Please try refreshing the page.');
+      } else if (error.message?.includes('User rejected')) {
         toast.error('Approval cancelled by user');
+      } else if (error.message?.includes('network')) {
+        toast.error('Network connection issue. Please check your connection and try again.');
       } else {
-        toast.error('Approval failed: ' + error.message);
+        toast.error('Approval failed: ' + (error.message || 'Unknown error'));
       }
     } finally {
       setApprovalLoading(false);

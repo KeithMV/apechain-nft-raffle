@@ -159,31 +159,63 @@ class RaffleService {
 
   /**
    * Approve RaffleFactory to transfer all NFTs from a contract
+   * Mobile-safe with enhanced error handling
    */
   async approveForAll(nftContract: string): Promise<string> {
     try {
       safeLog('🔄 Approving NFT contract for raffle:', nftContract);
       
-      const hash = await writeContract(config, {
-        address: nftContract as `0x${string}`,
-        abi: ERC721_ABI,
-        functionName: 'setApprovalForAll',
-        args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
-        gas: 100000n // Set reasonable gas limit for approval
-      });
+      // Mobile-safe transaction with retry logic
+      let hash: string;
+      try {
+        hash = await writeContract(config, {
+          address: nftContract as `0x${string}`,
+          abi: ERC721_ABI,
+          functionName: 'setApprovalForAll',
+          args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
+          gas: 100000n // Set reasonable gas limit for approval
+        });
+      } catch (writeError: any) {
+        // Handle mobile-specific errors
+        if (writeError.message?.includes('getChainId is not a function')) {
+          safeError('Mobile wallet compatibility issue detected, retrying...');
+          // Wait a moment and retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          hash = await writeContract(config, {
+            address: nftContract as `0x${string}`,
+            abi: ERC721_ABI,
+            functionName: 'setApprovalForAll',
+            args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
+            // Remove gas limit for mobile compatibility
+          });
+        } else {
+          throw writeError;
+        }
+      }
 
       safeLog('✅ Approval transaction submitted:', hash);
 
-      // Wait for confirmation
+      // Wait for confirmation with mobile-safe timeout
       await waitForTransactionReceipt(config, {
         hash,
         confirmations: 1,
+        timeout: 60000, // 60 second timeout for mobile
       });
 
       safeLog('✅ Approval confirmed');
       return hash;
     } catch (error) {
       safeError('❌ Approval failed:', error);
+      
+      // Enhance error message for mobile users
+      if (error instanceof Error) {
+        if (error.message.includes('getChainId is not a function')) {
+          throw new Error('Mobile wallet compatibility issue. Please refresh the page and try again.');
+        } else if (error.message.includes('network')) {
+          throw new Error('Network connection issue. Please check your connection and try again.');
+        }
+      }
+      
       throw error;
     }
   }

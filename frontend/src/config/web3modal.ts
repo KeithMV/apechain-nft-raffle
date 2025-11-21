@@ -31,13 +31,22 @@ export const apeChain = defineChain({
 // Project ID from environment
 const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4'
 
-// Optimized wagmi config with session persistence
+// Mobile-optimized wagmi config with better compatibility
 export const config = createConfig({
   chains: [apeChain],
   connectors: [
     injected({ 
       target: 'metaMask',
       shimDisconnect: true // Prevents password prompts when already unlocked
+    }),
+    // Mobile-friendly injected connector
+    injected({
+      target: () => ({
+        id: 'injected',
+        name: 'Mobile Wallet',
+        provider: typeof window !== 'undefined' ? window.ethereum : undefined,
+      }),
+      shimDisconnect: true
     }),
     walletConnect({ 
       projectId,
@@ -47,7 +56,7 @@ export const config = createConfig({
         url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
         icons: [`${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/favicon.ico`]
       },
-      showQrModal: false, // Reduce bundle size
+      showQrModal: true, // Enable for mobile
       qrModalOptions: {
         themeMode: 'dark'
       }
@@ -55,14 +64,15 @@ export const config = createConfig({
     coinbaseWallet({ 
       appName: 'ApeChain NFT Raffles',
       appLogoUrl: 'https://d3mce6qq270l98.cloudfront.net/favicon.ico',
-      preference: 'smartWalletOnly' // Reduce prompts
+      preference: 'all' // Better mobile support
     }),
   ],
   transports: {
     [apeChain.id]: http(),
   },
-  // Prevent unnecessary reconnection attempts
+  // Mobile optimizations
   ssr: false,
+  multiInjectedProviderDiscovery: false, // Prevent conflicts on mobile
   // Session persistence handled by connection persistence hook
 })
 
