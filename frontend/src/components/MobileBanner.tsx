@@ -10,7 +10,7 @@ export default function MobileBanner() {
 
   useEffect(() => {
     // Detect mobile Safari
-    const isMobileSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isMobileSafari = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isAndroidMobile = /Android/i.test(navigator.userAgent);
     const isMobileDevice = isMobileSafari || isAndroidMobile || window.innerWidth <= 768;
     
