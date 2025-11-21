@@ -3,6 +3,7 @@ import { useAccount } from 'wagmi';
 import { raffleService } from '../services/raffleService';
 import { NETWORK_CONFIG } from '../config/addresses';
 import ApeTokenBalance from './ApeTokenBalance';
+import MobileBanner from './MobileBanner';
 import toast from 'react-hot-toast';
 import { 
   sanitizeAddress, 
@@ -84,9 +85,11 @@ export default function CreateRafflePage() {
     } catch (error: any) {
       console.error('❌ Approval failed:', error);
       
-      // Handle mobile-specific errors
+      // Handle mobile-specific errors with better guidance
       if (error.message?.includes('getChainId is not a function')) {
-        toast.error('Mobile wallet compatibility issue. Please try refreshing the page.');
+        toast.error('Mobile Safari detected. Please use WalletConnect or install a mobile wallet app like MetaMask Mobile.');
+      } else if (error.message?.includes('Ethereum provider not available')) {
+        toast.error('No wallet detected. Please install MetaMask Mobile or use WalletConnect to connect your wallet.');
       } else if (error.message?.includes('User rejected')) {
         toast.error('Approval cancelled by user');
       } else if (error.message?.includes('network')) {
@@ -267,6 +270,9 @@ export default function CreateRafflePage() {
             </div>
           </div>
         </div>
+
+        {/* Mobile Wallet Guidance */}
+        <MobileBanner />
 
         {/* APE Token Balance */}
         <div className="mb-6">
