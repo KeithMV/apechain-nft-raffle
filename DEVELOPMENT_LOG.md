@@ -9,6 +9,7 @@
 **Contract**: `0x0D0cd14b36B5FBb10F274cd3EC2FA3bBa79FC900` - Working perfectly
 **Frontend**: Perfect cross-platform integration - Desktop + Mobile ready
 **TypeScript**: Fixed MSStream legacy property error for modern build compatibility
+**getChainId Fix**: Resolved mobile Safari connector errors with simplified transaction handling
 
 ### 🔍 Final Testing Results - SUCCESS
 - **New Raffle Created**: ID 1, Contract: 0x044F5825c46B8109604B7bC23e3017d327b83e10
@@ -158,6 +159,7 @@ The deployed contract at `0xf5cD6d3F118a3C31742DfFB50BFbFE452F5300D0` is treatin
 - [x] **Transaction Timeout Increase**: Better support for mobile network conditions
 - [x] **TypeScript Compatibility**: Fixed hash type errors for wagmi compatibility
 - [x] **MSStream Legacy Fix**: Removed IE-specific property for modern TypeScript compatibility
+- [x] **getChainId Connector Fix**: Resolved mobile Safari connector errors with simplified transaction handling
 - [x] **Cross-Platform UX**: Professional experience on desktop and mobile
 
 ### 🎉 Completed Phases Summary
@@ -218,6 +220,7 @@ The deployed contract at `0xf5cD6d3F118a3C31742DfFB50BFbFE452F5300D0` is treatin
 
 **Current Status**: Cross-platform wallet compatibility perfected:
 - Mobile Safari wallet compatibility issues resolved
+- getChainId connector errors fixed with simplified transaction handling
 - Professional wallet experience on desktop and mobile
 - 40% bundle size reduction maintained (~1200KB)
 - All wallet functionality working across all platforms
