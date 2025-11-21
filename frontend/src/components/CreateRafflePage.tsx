@@ -4,6 +4,14 @@ import { raffleService } from '../services/raffleService';
 import { NETWORK_CONFIG } from '../config/addresses';
 import ApeTokenBalance from './ApeTokenBalance';
 import toast from 'react-hot-toast';
+import { 
+  sanitizeAddress, 
+  sanitizeTokenId, 
+  sanitizeNumber, 
+  ValidationRules, 
+  validateInput,
+  rateLimiter 
+} from '../utils/inputSanitizer';
 
 interface FormData {
   nftContract: string;
@@ -83,8 +91,42 @@ export default function CreateRafflePage() {
   };
 
   const handleCreateRaffle = async () => {
-    if (!formData.nftContract || !formData.tokenId || !formData.ticketPrice || !formData.maxTickets) {
-      toast.error('Please fill in all required fields');
+    // Rate limiting check
+    if (!rateLimiter.isAllowed('createRaffle', 5, 300000)) { // 5 attempts per 5 minutes
+      toast.error('Too many attempts. Please wait before creating another raffle.');
+      return;
+    }
+
+    // Comprehensive input validation
+    const validationErrors: string[] = [];
+    
+    const addressValidation = validateInput(formData.nftContract, ValidationRules.address);
+    if (!addressValidation.isValid) {
+      validationErrors.push(`NFT Contract: ${addressValidation.error}`);
+    }
+    
+    const tokenIdValidation = validateInput(formData.tokenId, ValidationRules.tokenId);
+    if (!tokenIdValidation.isValid) {
+      validationErrors.push(`Token ID: ${tokenIdValidation.error}`);
+    }
+    
+    const priceValidation = validateInput(formData.ticketPrice, ValidationRules.ticketPrice);
+    if (!priceValidation.isValid) {
+      validationErrors.push(`Ticket Price: ${priceValidation.error}`);
+    }
+    
+    const ticketsValidation = validateInput(formData.maxTickets, ValidationRules.maxTickets);
+    if (!ticketsValidation.isValid) {
+      validationErrors.push(`Max Tickets: ${ticketsValidation.error}`);
+    }
+    
+    const durationValidation = validateInput(formData.duration, ValidationRules.duration);
+    if (!durationValidation.isValid) {
+      validationErrors.push(`Duration: ${durationValidation.error}`);
+    }
+
+    if (validationErrors.length > 0) {
+      toast.error(`Validation errors: ${validationErrors.join(', ')}`);
       return;
     }
 
@@ -93,25 +135,10 @@ export default function CreateRafflePage() {
       return;
     }
 
-    // Validate inputs
+    // Parse validated inputs
     const maxTickets = parseInt(formData.maxTickets);
     const ticketPrice = parseFloat(formData.ticketPrice);
     const duration = parseInt(formData.duration);
-
-    if (maxTickets < 1 || maxTickets > 10000) {
-      toast.error('Max tickets must be between 1 and 10,000');
-      return;
-    }
-
-    if (ticketPrice <= 0) {
-      toast.error('Ticket price must be greater than 0');
-      return;
-    }
-
-    if (duration < 1 || duration > 168) { // Max 1 week
-      toast.error('Duration must be between 1 and 168 hours');
-      return;
-    }
 
     setLoading(true);
     try {
@@ -164,7 +191,28 @@ export default function CreateRafflePage() {
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    let sanitizedValue = value;
+    
+    // Apply field-specific sanitization
+    switch (field) {
+      case 'nftContract':
+        sanitizedValue = sanitizeAddress(value);
+        break;
+      case 'tokenId':
+        sanitizedValue = sanitizeTokenId(value);
+        break;
+      case 'ticketPrice':
+        sanitizedValue = sanitizeNumber(value, 0.001, 1000000);
+        break;
+      case 'maxTickets':
+        sanitizedValue = sanitizeNumber(value, 1, 10000);
+        break;
+      case 'duration':
+        sanitizedValue = value; // Dropdown, already controlled
+        break;
+    }
+    
+    setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
   };
 
   const totalRevenue = (parseFloat(formData.ticketPrice || '0') * parseInt(formData.maxTickets || '0')).toFixed(2);

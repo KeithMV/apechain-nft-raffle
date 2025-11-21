@@ -71,7 +71,11 @@ class NFTMetadataService {
       this.metadataCache.set(cacheKey, metadata);
       return metadata;
     } catch (error) {
-      // Return null on metadata fetch failure
+      // Secure error handling - log safely without exposing sensitive data
+      console.warn('NFT metadata fetch failed for contract:', contractAddress, 'tokenId:', tokenId);
+      if (error instanceof Error) {
+        console.warn('Error type:', error.name);
+      }
       return null;
     }
   }
@@ -114,7 +118,8 @@ class NFTMetadataService {
           return data;
         }
       } catch (error) {
-        // Continue to next gateway on failure
+        // Log gateway failure securely and continue
+        console.warn('Gateway failed:', new URL(gateway).hostname);
         continue;
       }
     }
@@ -130,11 +135,11 @@ class NFTMetadataService {
         return false;
       }
       
-      // Block private IP ranges, localhost, and internal networks
+      // Enhanced security: Block private IP ranges, localhost, and internal networks
       const hostname = parsedUrl.hostname.toLowerCase();
       
-      // Block localhost variations
-      if (['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(hostname)) {
+      // Block localhost variations and loopback
+      if (['localhost', '127.0.0.1', '0.0.0.0', '::1', '0:0:0:0:0:0:0:1'].includes(hostname)) {
         return false;
       }
       
@@ -143,7 +148,7 @@ class NFTMetadataService {
         return false;
       }
       
-      // Block link-local addresses
+      // Block link-local addresses (RFC 3927)
       if (hostname.match(/^169\.254\.|^fe80:/)) {
         return false;
       }
@@ -153,20 +158,35 @@ class NFTMetadataService {
         return false;
       }
       
+      // Block additional dangerous ranges
+      if (hostname.match(/^0\.|^255\.|^::$/)) {
+        return false;
+      }
+      
+      // Block cloud metadata endpoints
+      if (hostname.includes('metadata') || hostname.includes('169.254')) {
+        return false;
+      }
+      
       // For IPFS, only allow known safe gateways
       if (parsedUrl.protocol === 'ipfs:') {
         return true; // Will be converted to safe gateway
       }
       
-      // For HTTPS, only allow trusted domains or IPFS gateways
+      // For HTTPS, only allow explicitly trusted domains
       const trustedGateways = [
         'ipfs.io', 'dweb.link', 'nftstorage.link', '4everland.io',
         'cloudflare-ipfs.com', 'gateway.pinata.cloud'
       ];
       
+      // Strict domain matching - no partial matches to prevent subdomain attacks
       return this.isTrustedDomain(url) || 
-             trustedGateways.some(gateway => hostname.includes(gateway));
-    } catch {
+             trustedGateways.some(gateway => 
+               hostname === gateway || hostname.endsWith('.' + gateway)
+             );
+    } catch (error) {
+      // Secure error handling for URL validation
+      console.warn('URL validation failed - invalid format');
       return false;
     }
   }
@@ -185,30 +205,46 @@ class NFTMetadataService {
       return trustedDomains.some(domain => 
         parsedUrl.hostname === domain || parsedUrl.hostname.endsWith('.' + domain)
       );
-    } catch {
+    } catch (error) {
+      // Secure error handling for trusted domain check
+      console.warn('Domain validation failed - invalid URL format');
       return false;
     }
   }
 
   private async validateImageUrl(url: string): Promise<boolean> {
+    // Only validate URLs that pass our security checks
+    if (!this.isValidMetadataUrl(url)) {
+      return false;
+    }
+    
     try {
+      // Only validate known safe domains to prevent SSRF
+      const parsedUrl = new URL(url);
+      const safeImageDomains = [
+        'ipfs.io', 'dweb.link', 'nftstorage.link', '4everland.io',
+        'cloudflare-ipfs.com', 'gateway.pinata.cloud',
+        'opensea.io', 'api.opensea.io', 'cdn.other.page'
+      ];
+      
+      const isDomainSafe = safeImageDomains.some(domain => 
+        parsedUrl.hostname === domain || parsedUrl.hostname.endsWith('.' + domain)
+      );
+      
+      if (!isDomainSafe) {
+        return false;
+      }
+      
+      // Use HEAD request only for validation, no GET fallback to prevent SSRF
       const response = await fetch(url, { 
         method: 'HEAD',
         signal: AbortSignal.timeout(3000)
       });
       return response.ok;
-    } catch {
-      // If HEAD fails, try GET with range to check if it's an image
-      try {
-        const response = await fetch(url, { 
-          method: 'GET',
-          headers: { 'Range': 'bytes=0-1023' },
-          signal: AbortSignal.timeout(3000)
-        });
-        return response.ok;
-      } catch {
-        return false;
-      }
+    } catch (error) {
+      // Secure error handling for image validation
+      console.warn('Image URL validation failed - network or security error');
+      return false;
     }
   }
 }
