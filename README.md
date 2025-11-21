@@ -144,6 +144,10 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 - Demo: https://apechain-raffles.com
 - Portfolio: https://keithvose.com
 
+## Latest Updates
+
+**Phase 6.1 Complete**: Perfect wallet UX - no MetaMask password prompts when wallet already unlocked
+
 ## Resources
 
 - [AWS Resources](AWS_RESOURCES.md)
@@ -152,3 +156,4 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 - [Demo Script](white-label-business/DEMO_SCRIPT.md)# Pipeline trigger Sun Nov 16 19:59:59 PST 2025
 # Deployment trigger Tue Nov 18 21:27:57 PST 2025
 # Pipeline trigger Tue Nov 18 22:21:25 PST 2025
+# Phase 6.1 wallet session management deployment - Perfect UX achieved

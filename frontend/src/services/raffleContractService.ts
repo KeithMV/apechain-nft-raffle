@@ -1,7 +1,7 @@
 import { writeContract, readContract, waitForTransactionReceipt, getPublicClient } from '@wagmi/core';
 import { config } from '../config/wagmi';
 import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
-import { parseEther } from 'viem';
+import { parseEther } from 'viem/utils';
 import { apeTokenService } from './apeTokenService';
 import { safeLog, safeError } from '../utils/logSanitizer';
 import { ErrorHandlingService } from './errorHandlingService';

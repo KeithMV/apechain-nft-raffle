@@ -1,4 +1,4 @@
-import { keccak256, toBytes } from 'viem';
+import { keccak256, toBytes } from 'viem/utils';
 import { raffleContractService } from './raffleContractService';
 
 export class WinnerSelectionService {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAccount, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+// Web3Modal removed - using minimal wallet connection
 import { apeChain } from '../config/wagmi';
 
 export default function WalletConnection() {
@@ -8,7 +8,7 @@ export default function WalletConnection() {
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const { open } = useWeb3Modal();
+  // Web3Modal removed
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
@@ -54,13 +54,7 @@ export default function WalletConnection() {
   }
 
   const handleConnect = async () => {
-    console.log('Connect button clicked');
-    try {
-      await open();
-      console.log('Web3Modal opened successfully');
-    } catch (error) {
-      console.error('Failed to open Web3Modal:', error);
-    }
+    console.log('WalletConnection deprecated - use MinimalWalletConnection');
   };
 
   return (

@@ -16,11 +16,8 @@
     "@types/node": "^18.19.0",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
-    "@web3modal/siwe": "^5.1.11",
     "@web3modal/wagmi": "^5.1.11",
-    "ajv": "^8.12.0",
     "autoprefixer": "^10.4.16",
-    "axios": "^1.7.2",
     "postcss": "^8.4.31",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -35,9 +32,11 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:optimized": "craco build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "install:clean": "rm -rf node_modules yarn.lock && yarn install"
+    "install:clean": "rm -rf node_modules yarn.lock && yarn install",
+    "analyze": "yarn build && npx webpack-bundle-analyzer build/static/js/*.js"
   },
   "eslintConfig": {
     "extends": [
@@ -58,12 +57,16 @@
     ]
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",
+    "babel-plugin-transform-imports": "^2.0.0",
     "eslint": "^8.55.0",
-    "prettier": "^3.1.0"
+    "prettier": "^3.1.0",
+    "webpack-bundle-analyzer": "^5.0.1"
   },
   "resolutions": {
-    "viem": "^2.21.1"
+    "viem": "^2.21.1",
+    "@web3modal/wagmi": "^5.1.11"
   }
 }

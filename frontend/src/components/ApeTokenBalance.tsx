@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount, usePublicClient } from 'wagmi';
-import { formatEther } from 'viem';
+import { formatEther } from 'viem/utils';
 
 interface ApeTokenBalanceProps {
   requiredAmount?: string;

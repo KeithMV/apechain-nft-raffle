@@ -1,7 +1,7 @@
 import { writeContract, readContract, waitForTransactionReceipt } from '@wagmi/core';
 import { config } from '../config/wagmi';
 import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, ERC721_ABI } from '../config/contracts';
-import { parseEther } from 'viem';
+import { parseEther } from 'viem/utils';
 import { apeTokenService } from './apeTokenService';
 import { safeLog, safeError } from '../utils/logSanitizer';
 

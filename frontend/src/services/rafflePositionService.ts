@@ -1,4 +1,4 @@
-import { parseAbiItem } from 'viem';
+import { parseAbiItem } from 'viem/utils';
 import { RAFFLE_FACTORY_ADDRESS } from '../config/contracts';
 import { raffleContractService } from './raffleContractService';
 import { safeLog, safeError } from '../utils/logSanitizer';

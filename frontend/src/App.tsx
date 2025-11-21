@@ -1,19 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
-import { config } from './config/wagmi';
+import { config } from './config/web3modal';
 import { addApeChainToMetaMask } from './utils/addApeChain';
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
-import CreateRafflePage from './components/CreateRafflePage';
-import RaffleDashboard from './components/RaffleDashboard';
-import BrowseRaffles from './components/BrowseRaffles';
-import WalletInfo from './components/WalletInfo';
-import WalletConnection from './components/WalletConnection';
+import Web3ModalConnection from './components/Web3ModalConnection';
 import NetworkStatus from './components/NetworkStatus';
-import ProfessionalDemo from './components/ProfessionalDemo';
+import { PageLoadingFallback, ComponentLoadingFallback } from './components/LoadingFallback';
+import { initializePerformanceOptimizations, preloadComponent } from './utils/performanceOptimizer';
+import { useConnectionPersistence } from './hooks/useConnectionPersistence';
+import { initializeCleanWalletConnect } from './utils/walletCleanup';
 import './index.css';
+
+// Optimized lazy components
+import { 
+  CreateRafflePage, 
+  RaffleDashboard, 
+  BrowseRaffles, 
+  WalletInfo, 
+  ProfessionalDemo,
+  LazyWrapper 
+} from './components/LazyComponents';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,11 +102,13 @@ function Header({ currentPage, setCurrentPage }: {
             {isConnected && (
               <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
                 <NetworkStatus />
-                <WalletInfo />
+                <LazyWrapper>
+                  <WalletInfo />
+                </LazyWrapper>
               </div>
             )}
             <div className="shrink-0">
-              <WalletConnection />
+              <Web3ModalConnection />
             </div>
           </div>
         </div>
@@ -172,13 +183,20 @@ function RaffleApp() {
   const { isConnected } = useAccount();
   const [currentPage, setCurrentPage] = useState<'create' | 'dashboard' | 'browse'>('browse');
   
+  // Use connection persistence to reduce password prompts
+  useConnectionPersistence();
+  
   // Check if we're on demo route (memoized)
   const isDemoRoute = React.useMemo(() => {
     return window.location.hash === '#/demo' || window.location.pathname.includes('/demo');
   }, []);
   
   if (isDemoRoute) {
-    return <ProfessionalDemo />;
+    return (
+      <LazyWrapper>
+        <ProfessionalDemo />
+      </LazyWrapper>
+    );
   }
 
   if (!isConnected) {
@@ -199,7 +217,7 @@ function RaffleApp() {
               <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4 font-sans tracking-tight">Connect Your Wallet</h3>
               <p className="text-slate-300 mb-6 sm:mb-8 text-base sm:text-lg px-2">Connect your wallet to start creating and participating in NFT raffles</p>
               <div className="flex justify-center">
-                <WalletConnection />
+                <Web3ModalConnection />
               </div>
             </div>
           </div>
@@ -213,9 +231,21 @@ function RaffleApp() {
       <Header currentPage={currentPage} setCurrentPage={setCurrentPage} />
       
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
-        {currentPage === 'create' && <CreateRafflePage />}
-        {currentPage === 'dashboard' && <RaffleDashboard />}
-        {currentPage === 'browse' && <BrowseRaffles />}
+        {currentPage === 'create' && (
+          <LazyWrapper>
+            <CreateRafflePage />
+          </LazyWrapper>
+        )}
+        {currentPage === 'dashboard' && (
+          <LazyWrapper>
+            <RaffleDashboard />
+          </LazyWrapper>
+        )}
+        {currentPage === 'browse' && (
+          <LazyWrapper>
+            <BrowseRaffles />
+          </LazyWrapper>
+        )}
       </div>
     </div>
   );
@@ -223,8 +253,30 @@ function RaffleApp() {
 
 function App() {
   useEffect(() => {
+    // Initialize clean WalletConnect (fixes session errors)
+    initializeCleanWalletConnect();
+    
+    // Initialize performance optimizations
+    initializePerformanceOptimizations();
+    
     // Auto-add ApeChain to MetaMask on load
     addApeChainToMetaMask();
+    
+    // Preload critical components for better UX
+    preloadComponent(() => import('./components/CreateRafflePage'));
+    preloadComponent(() => import('./components/BrowseRaffles'));
+    
+    // Register service worker for performance optimization
+    if (process.env.NODE_ENV === 'production') {
+      import('./utils/serviceWorker').then(({ registerSW, measurePerformance }) => {
+        registerSW({
+          onSuccess: () => console.log('[SW] App cached for offline use'),
+          onUpdate: () => console.log('[SW] New version available'),
+          onOfflineReady: () => console.log('[SW] App ready for offline use')
+        });
+        measurePerformance();
+      });
+    }
   }, []);
 
   return (

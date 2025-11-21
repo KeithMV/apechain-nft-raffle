@@ -1,6 +1,6 @@
 import { readContract } from '@wagmi/core';
 import { config } from '../config/wagmi';
-import { parseUnits, formatUnits } from 'viem';
+import { parseUnits, formatUnits } from 'viem/utils';
 
 // APE Token on ApeChain - need to verify actual address
 const APE_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'; // Placeholder

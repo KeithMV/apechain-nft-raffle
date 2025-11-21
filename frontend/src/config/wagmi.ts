@@ -1,5 +1,4 @@
-import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
-import { createWeb3Modal } from '@web3modal/wagmi/react';
+// Web3Modal removed - using minimal wagmi config
 import { defineChain } from 'viem';
 
 // Environment configuration with validation
@@ -63,71 +62,25 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Web3Modal metadata with environment configuration
+// Dynamic URL detection for proper WalletConnect configuration
+function getCurrentUrl(): string {
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return ENV_CONFIG.environment === 'development' ? 'http://localhost:3000' : ENV_CONFIG.appUrl;
+}
+
+// Web3Modal metadata with dynamic URL configuration
 const metadata = {
   name: ENV_CONFIG.appName,
   description: 'Decentralized NFT raffle platform on ApeChain',
-  url: ENV_CONFIG.environment === 'development' ? 'http://localhost:3000' : ENV_CONFIG.appUrl,
-  icons: [`${ENV_CONFIG.environment === 'development' ? 'http://localhost:3000' : ENV_CONFIG.appUrl}/favicon.ico`],
-  verifyUrl: ENV_CONFIG.environment === 'development' ? 'http://localhost:3000' : ENV_CONFIG.appUrl
+  url: getCurrentUrl(),
+  icons: [`${getCurrentUrl()}/favicon.ico`],
+  verifyUrl: getCurrentUrl()
 };
 
-// Create wagmi config with error handling
-export const config = (() => {
-  try {
-    return defaultWagmiConfig({
-      chains: [apeChain],
-      projectId: ENV_CONFIG.walletConnectProjectId,
-      metadata
-    });
-  } catch (error) {
-    console.error('Failed to create wagmi config:', error);
-    throw new ConfigError('Unable to initialize Web3 configuration');
-  }
-})();
-
-// Initialize Web3Modal with comprehensive error handling
-let web3ModalInitialized = false;
-
-export function initializeWeb3Modal(): boolean {
-  if (web3ModalInitialized) {
-    return true;
-  }
-
-  try {
-    createWeb3Modal({
-      wagmiConfig: config,
-      projectId: ENV_CONFIG.walletConnectProjectId,
-      themeMode: 'dark',
-      enableAnalytics: ENV_CONFIG.environment === 'production',
-      enableOnramp: false, // Disable for security
-    });
-    
-    web3ModalInitialized = true;
-    
-    if (ENV_CONFIG.environment === 'development') {
-      console.log('✅ Web3Modal initialized successfully');
-      console.log('📊 RPC URLs:', buildRpcUrls().length, 'endpoints configured');
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to initialize Web3Modal:', error);
-    
-    // Production-grade error handling
-    if (ENV_CONFIG.environment === 'production') {
-      // Log to monitoring service in production
-      // Example: Sentry.captureException(error);
-    }
-    
-    return false;
-  }
-}
-
-// Auto-initialize in browser environment
-if (typeof window !== 'undefined') {
-  initializeWeb3Modal();
-}
+// Using minimal wagmi config - see wagmi-minimal.ts
+export { config } from './wagmi-minimal';
 
 // Export configuration for debugging (development only)
 export const debugConfig = ENV_CONFIG.environment === 'development' ? {
