@@ -166,7 +166,7 @@ class RaffleService {
       safeLog('🔄 Approving NFT contract for raffle:', nftContract);
       
       // Mobile-safe transaction with retry logic
-      let hash: string;
+      let hash: `0x${string}`;
       try {
         hash = await writeContract(config, {
           address: nftContract as `0x${string}`,
