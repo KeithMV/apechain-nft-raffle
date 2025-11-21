@@ -115,15 +115,21 @@ export default function CreateRafflePage() {
 
     setLoading(true);
     try {
-      // Convert hours to blocks (ApeChain ~15 seconds per block)
-      const durationInBlocks = Math.floor((duration * 3600) / 15); // Convert hours to blocks
+      // Convert hours to seconds (contract expects duration in seconds)
+      const durationInSeconds = duration * 3600; // Convert hours to seconds
+      
+      console.log('🔍 Duration conversion debug:', {
+        inputHours: duration,
+        calculatedSeconds: durationInSeconds,
+        expectedEndTime: 'current_time + ' + durationInSeconds
+      });
       
       const result = await raffleService.createRaffle({
         nftContract: formData.nftContract,
         tokenId: formData.tokenId,
         ticketPrice: formData.ticketPrice,
         maxTickets: maxTickets,
-        duration: durationInBlocks
+        duration: durationInSeconds
       });
 
       toast.success('Raffle created successfully!');

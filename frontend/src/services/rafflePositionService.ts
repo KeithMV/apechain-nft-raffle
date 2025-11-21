@@ -324,6 +324,19 @@ class RafflePositionService {
       };
       
       const result = raffles.slice(offset, offset + limit);
+      const currentTime = Math.floor(Date.now() / 1000);
+      console.log('🔍 All raffles debug:');
+      result.forEach((r, i) => {
+        console.log(`Raffle ${i}:`, {
+          id: r.raffleId,
+          endTime: r.endTime,
+          currentTime: currentTime,
+          timeRemaining: r.endTime - currentTime,
+          isActive: r.isActive,
+          completed: r.completed,
+          calculation: `${r.endTime} - ${currentTime} = ${r.endTime - currentTime}`
+        });
+      });
       safeLog(`🔍 Found ${result.length} all raffles (${result.filter(r => r.isActive).length} active)`);
       return result;
       
@@ -452,9 +465,7 @@ class RafflePositionService {
           
           const now = Math.floor(Date.now() / 1000);
           const endTime = Number((raffleInfo as any).endTime);
-          const isActive = !(raffleInfo as any).completed && 
-                          now < endTime && 
-                          Number((raffleInfo as any).ticketsSold) < Number(maxTickets);
+          const isActive = !(raffleInfo as any).completed && now < endTime;
           
           // Filter based on type
           if (type === 'active' && !isActive) {
@@ -492,6 +503,19 @@ class RafflePositionService {
     return results.sort((a, b) => b.raffleId - a.raffleId);
   }
   
+  /**
+   * Check if raffle is active using block numbers
+   */
+  private async isRaffleActiveByBlock(raffleInfo: any, publicClient: any): Promise<boolean> {
+    if (raffleInfo.completed) return false;
+    try {
+      const currentBlock = await publicClient.getBlockNumber();
+      return Number(currentBlock) < Number(raffleInfo.endTime);
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * Utility: Check if cache entry is valid
    */

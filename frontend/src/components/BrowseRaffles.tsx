@@ -199,6 +199,7 @@ export default function BrowseRaffles() {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => {
+                  console.log('🔄 Clearing cache and refreshing...');
                   rafflePositionService.clearAllData();
                   loadRaffles();
                 }}

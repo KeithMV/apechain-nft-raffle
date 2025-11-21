@@ -67,9 +67,9 @@ export const apeChain = defineChain({
 const metadata = {
   name: ENV_CONFIG.appName,
   description: 'Decentralized NFT raffle platform on ApeChain',
-  url: ENV_CONFIG.appUrl,
-  icons: [`${ENV_CONFIG.appUrl}/favicon.ico`],
-  verifyUrl: ENV_CONFIG.appUrl
+  url: ENV_CONFIG.environment === 'development' ? 'http://localhost:3000' : ENV_CONFIG.appUrl,
+  icons: [`${ENV_CONFIG.environment === 'development' ? 'http://localhost:3000' : ENV_CONFIG.appUrl}/favicon.ico`],
+  verifyUrl: ENV_CONFIG.environment === 'development' ? 'http://localhost:3000' : ENV_CONFIG.appUrl
 };
 
 // Create wagmi config with error handling

@@ -66,7 +66,7 @@ export default function WalletConnection() {
   return (
     <button
       onClick={handleConnect}
-      className="px-3 sm:px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-emerald-500/30 transition-colors min-h-[44px] whitespace-nowrap"
+      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105"
     >
       Connect Wallet
     </button>

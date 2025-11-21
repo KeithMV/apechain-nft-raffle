@@ -10,7 +10,7 @@ export interface CreateRaffleParams {
   tokenId: string;
   ticketPrice: string; // In APE
   maxTickets: number;
-  duration: number; // In blocks (ApeChain ~15 seconds per block)
+  duration: number; // In seconds
 }
 
 export interface RaffleResult {

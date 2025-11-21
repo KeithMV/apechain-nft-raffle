@@ -1,4 +1,4 @@
-import { writeContract, readContract, waitForTransactionReceipt } from '@wagmi/core';
+import { writeContract, readContract, waitForTransactionReceipt, getPublicClient } from '@wagmi/core';
 import { config } from '../config/wagmi';
 import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { parseEther } from 'viem';
@@ -170,7 +170,7 @@ class RaffleContractService {
    */
   async getRaffleInfo(raffleContract: string): Promise<RaffleInfo> {
     try {
-      // First try the new struct format (newer contracts)
+      // First try the secure contract format (uses endBlock)
       try {
         const structInfo = await readContract(config, {
           address: raffleContract as `0x${string}`,
@@ -185,12 +185,12 @@ class RaffleContractService {
                 {"internalType": "uint256", "name": "ticketPrice", "type": "uint256"},
                 {"internalType": "uint256", "name": "maxTickets", "type": "uint256"},
                 {"internalType": "uint256", "name": "ticketsSold", "type": "uint256"},
-                {"internalType": "uint256", "name": "endTime", "type": "uint256"},
+                {"internalType": "uint256", "name": "endBlock", "type": "uint256"},
                 {"internalType": "address", "name": "winner", "type": "address"},
                 {"internalType": "bool", "name": "completed", "type": "bool"},
                 {"internalType": "uint256", "name": "platformFee", "type": "uint256"}
               ],
-              "internalType": "struct RaffleContract.RaffleInfo",
+              "internalType": "struct RaffleContractSecure.RaffleInfo",
               "name": "",
               "type": "tuple"
             }],
@@ -200,7 +200,8 @@ class RaffleContractService {
           functionName: 'getRaffleInfo',
         });
         
-        // Handle struct format (newer contracts)
+        // Handle standard contract format (uses timestamps)
+        
         return {
           nftContract: structInfo.nftContract,
           tokenId: structInfo.tokenId,
@@ -208,13 +209,13 @@ class RaffleContractService {
           ticketPrice: structInfo.ticketPrice,
           maxTickets: structInfo.maxTickets,
           ticketsSold: structInfo.ticketsSold,
-          endTime: structInfo.endTime,
+          endTime: (structInfo as any).endTime || (structInfo as any).endBlock, // Handle both endTime and endBlock
           winner: structInfo.winner,
           completed: structInfo.completed,
           platformFee: structInfo.platformFee
         };
       } catch (structError) {
-        console.log('Struct format failed for contract:', raffleContract, 'trying array format. Error:', structError);
+        console.log('Secure contract format failed for contract:', raffleContract, 'trying legacy format. Error:', structError);
         // If struct format fails, try the old array format (older contracts)
         const arrayInfo = await readContract(config, {
           address: raffleContract as `0x${string}`,
