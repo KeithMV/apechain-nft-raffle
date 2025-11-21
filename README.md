@@ -158,3 +158,4 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 # Pipeline trigger Tue Nov 18 22:21:25 PST 2025
 # Phase 6.1 wallet session management deployment - Perfect UX achieved
 # TypeScript MSStream fix deployment - Modern build compatibility
+# Mobile Safari getChainId connector fix deployment - Enhanced mobile compatibility
