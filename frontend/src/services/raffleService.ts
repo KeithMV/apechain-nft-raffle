@@ -68,22 +68,20 @@ class RaffleService {
       // Pre-calculate APE amount to avoid async in transaction args
       const ticketPriceWei = await apeTokenService.parseApe(params.ticketPrice);
       
-      // Mobile Safari compatibility - use minimal transaction config
-      const txConfig = {
+      // Mobile Safari compatibility - direct writeContract call
+      const hash = await writeContract(config, {
         address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
-        functionName: 'createRaffle' as const,
+        functionName: 'createRaffle',
         args: [
           params.nftContract as `0x${string}`,
           BigInt(params.tokenId),
           ticketPriceWei,
           BigInt(params.maxTickets),
           BigInt(params.duration)
-        ],
+        ] as const,
         // Let wagmi handle gas estimation for mobile compatibility
-      };
-      
-      const hash = await writeContract(config, txConfig);
+      });
 
       safeLog('✅ Raffle creation transaction submitted:', hash);
 
