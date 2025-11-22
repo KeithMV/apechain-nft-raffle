@@ -34,9 +34,8 @@ export const config = createConfig({
     }),
   ],
   transports: {
-    [apeChain.id]: http({
-      // Mobile-safe transport options
-      timeout: 30000, // 30s timeout for mobile networks
+    [apeChain.id]: http(process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http', {
+      timeout: 30000,
       retryCount: 3,
       retryDelay: 1000,
     }),
