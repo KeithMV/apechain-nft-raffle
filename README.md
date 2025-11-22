@@ -1,45 +1,45 @@
 # ApeChain NFT Raffle Platform
 
-A decentralized raffle platform where NFT holders can create raffles for their assets. Built on ApeChain with React frontend and Solidity smart contracts.
+Enterprise-grade decentralized raffle platform optimized for production deployment. NFT holders create raffles with professional UX and cross-platform mobile compatibility.
 
 **Live**: [apechain-raffles.com](https://apechain-raffles.com)
 
-## Architecture
+## Production Architecture
 
-**Smart Contracts:**
-- `RaffleFactory.sol` - Creates raffle instances using minimal proxy pattern
-- `RaffleContract.sol` - Individual raffle logic with NFT escrow
-- Factory pattern reduces deployment gas costs by ~80%
+**Optimized Smart Contracts:**
+- Single factory contract: `0x0D0cd14b36B5FBb10F274cd3EC2FA3bBa79FC900`
+- Minimal proxy pattern with 80% gas cost reduction
+- Professional 35-day scanning range for optimal performance
 
-**Frontend:**
-- React/TypeScript with Wagmi for Web3 integration
-- Direct blockchain reads (no backend API)
-- AWS S3 + CloudFront deployment
+**Enterprise Frontend:**
+- React/TypeScript with optimized Wagmi v2 integration
+- Cross-platform mobile Safari compatibility
+- Production-ready AWS CloudFront deployment
+- Zero legacy code - fully modernized codebase
 
-**Revenue:**
-- 10% platform fee collected automatically on ticket sales
-- Fees sent directly to owner wallet via smart contract
+**Revenue Model:**
+- Automated 10% platform fee collection
+- Direct smart contract fee distribution
 
-## Technical Implementation
+## Production Optimizations
 
-**Randomness:**
-- Commit-reveal scheme for fair winner selection
-- Prevents manipulation through on-chain entropy
+**Performance:**
+- Optimized 35-day blockchain scanning range
+- Single contract architecture eliminates legacy overhead
+- Professional error handling and retry logic
+- Mobile-first responsive design
 
-**Gas Optimization:**
-- Minimal proxy cloning pattern
-- Efficient storage layouts using mappings
+**Cross-Platform Compatibility:**
+- Mobile Safari connector fixes implemented
+- Enhanced wallet session management
+- TypeScript 5.9.3 compatibility maintained
+- Zero MetaMask password prompts for unlocked wallets
 
-**NFT Metadata Handling:**
-- Multi-gateway IPFS fallback for reliability
-- CORS proxy fallback for SSL issues
-- 12s timeout with intelligent caching
-- Dual ABI support for contract compatibility
-
-**Event Processing:**
-- Scans 200k block ranges for raffle discovery
-- Handles both old and new contract formats
-- Optimized batch processing for large datasets
+**Enterprise Features:**
+- Professional dashboard with clean UI
+- Automated raffle discovery and management
+- Production-ready deployment pipeline
+- Comprehensive error handling and logging
 
 ## Security
 
@@ -129,14 +129,14 @@ aws s3 sync build/ s3://bucket-name/
 aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 ```
 
-## Status
+## Deployment Status
 
-- Smart contracts deployed to ApeChain mainnet
-- Frontend live on AWS with CDN
-- Security issues resolved
-- 10% platform fee implemented
-- Handles multiple contract versions
-- 200k block scanning for raffle discovery
+- Production smart contracts on ApeChain mainnet
+- Optimized frontend with AWS CloudFront CDN
+- Enterprise security implementation complete
+- Professional platform fee collection active
+- Single contract architecture (legacy removed)
+- Optimized 35-day scanning for performance
 
 ## Contact
 
@@ -144,23 +144,18 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 - Demo: https://apechain-raffles.com
 - Portfolio: https://keithvose.com
 
-## Latest Updates
+## Production Status
 
-**Phase 6.1 Complete**: Perfect wallet UX - no MetaMask password prompts when wallet already unlocked
+**Platform Optimization Complete**: Enterprise-ready deployment with:
+- Cross-platform mobile compatibility
+- Professional UI/UX optimization
+- Zero legacy code overhead
+- Production-grade error handling
+- Automated deployment pipeline
 
 ## Resources
 
 - [AWS Resources](AWS_RESOURCES.md)
 - [White-Label Business Plan](white-label-business/)
 - [Platform Education](white-label-business/PLATFORM_EDUCATION.md)
-- [Demo Script](white-label-business/DEMO_SCRIPT.md)# Pipeline trigger Sun Nov 16 19:59:59 PST 2025
-# Deployment trigger Tue Nov 18 21:27:57 PST 2025
-# Pipeline trigger Tue Nov 18 22:21:25 PST 2025
-# Phase 6.1 wallet session management deployment - Perfect UX achieved
-# TypeScript MSStream fix deployment - Modern build compatibility
-# Mobile Safari getChainId connector fix deployment - Enhanced mobile compatibility
-# Phase 6.3 professional platform optimization deployment - Production-ready enterprise platform
-# Pipeline trigger Wed Nov 20 15:45:32 PST 2024 - Professional optimization deployment
-# Phase 6.4 mobile Safari getChainId fix deployment - Cross-platform compatibility restored
-# TypeScript args array fix deployment - Pipeline build error resolved
-# Enhanced mobile Safari compatibility fix - getChainId error resolution
+- [Demo Script](white-label-business/DEMO_SCRIPT.md)
