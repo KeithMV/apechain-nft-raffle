@@ -31,11 +31,6 @@ export const config = createConfig({
     // Single generic injected connector for maximum mobile compatibility
     injected({
       shimDisconnect: true,
-      // Mobile-safe options
-      target() {
-        // Return the first available injected wallet
-        return typeof window !== 'undefined' && window.ethereum ? 'injected' : 'metaMask';
-      },
     }),
   ],
   transports: {
