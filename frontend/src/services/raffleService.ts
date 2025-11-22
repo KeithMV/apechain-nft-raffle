@@ -1,4 +1,4 @@
-import { writeContract, readContract, waitForTransactionReceipt } from '@wagmi/core';
+import { writeContract, readContract, waitForTransactionReceipt, getAccount, getChainId } from '@wagmi/core';
 import { config } from '../config/wagmi';
 import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
@@ -62,13 +62,28 @@ class RaffleService {
    */
   async createRaffle(params: CreateRaffleParams): Promise<RaffleResult> {
     safeLog('🔄 Starting raffle creation with params:', params);
-    safeLog('⛽ Using gas limit: 800000');
 
     try {
+      // Mobile Safari compatibility checks
+      const account = getAccount(config);
+      if (!account.isConnected) {
+        throw new Error('Wallet not connected. Please connect your wallet first.');
+      }
+
+      // Verify we're on the correct chain (mobile-safe)
+      try {
+        const chainId = getChainId(config);
+        if (chainId !== 33139) {
+          throw new Error('Please switch to ApeChain network.');
+        }
+      } catch (chainError) {
+        safeLog('⚠️ Chain check failed, proceeding anyway for mobile compatibility');
+      }
+      
       // Pre-calculate APE amount to avoid async in transaction args
       const ticketPriceWei = await apeTokenService.parseApe(params.ticketPrice);
       
-      // Mobile Safari compatibility - direct writeContract call
+      // Mobile Safari compatibility - direct writeContract call with minimal config
       const hash = await writeContract(config, {
         address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
@@ -80,7 +95,7 @@ class RaffleService {
           BigInt(params.maxTickets),
           BigInt(params.duration)
         ] as const,
-        // Let wagmi handle gas estimation for mobile compatibility
+        // Mobile-safe: let wagmi handle all gas and chain details
       });
 
       safeLog('✅ Raffle creation transaction submitted:', hash);

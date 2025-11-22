@@ -24,27 +24,32 @@ export const apeChain = defineChain({
   },
 });
 
-// Mobile-safe wagmi config with enhanced compatibility
+// Ultra mobile-safe wagmi config
 export const config = createConfig({
   chains: [apeChain],
   connectors: [
-    // Generic injected connector for maximum mobile compatibility
+    // Single generic injected connector for maximum mobile compatibility
     injected({
-      shimDisconnect: true, // Better mobile disconnect handling
-    }),
-    // Specific connectors as fallbacks
-    injected({
-      target: 'metaMask',
       shimDisconnect: true,
-    }),
-    injected({
-      target: 'coinbaseWallet', 
-      shimDisconnect: true,
+      // Mobile-safe options
+      target() {
+        // Return the first available injected wallet
+        return typeof window !== 'undefined' && window.ethereum ? 'injected' : 'metaMask';
+      },
     }),
   ],
   transports: {
-    [apeChain.id]: http(),
+    [apeChain.id]: http({
+      // Mobile-safe transport options
+      timeout: 30000, // 30s timeout for mobile networks
+      retryCount: 3,
+      retryDelay: 1000,
+    }),
   },
   // Mobile-safe configuration
-  ssr: false, // Disable SSR for better mobile compatibility
+  ssr: false,
+  // Batch requests for better mobile performance
+  batch: {
+    multicall: true,
+  },
 });
