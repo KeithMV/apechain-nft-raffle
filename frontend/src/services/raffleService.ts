@@ -58,7 +58,7 @@ class RaffleService {
   }
 
   /**
-   * Create a new NFT raffle
+   * Create a new NFT raffle with mobile Safari compatibility
    */
   async createRaffle(params: CreateRaffleParams): Promise<RaffleResult> {
     safeLog('🔄 Starting raffle creation with params:', params);
@@ -68,10 +68,11 @@ class RaffleService {
       // Pre-calculate APE amount to avoid async in transaction args
       const ticketPriceWei = await apeTokenService.parseApe(params.ticketPrice);
       
-      const hash = await writeContract(config, {
+      // Mobile Safari compatibility - use minimal transaction config
+      const txConfig = {
         address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
-        functionName: 'createRaffle',
+        functionName: 'createRaffle' as const,
         args: [
           params.nftContract as `0x${string}`,
           BigInt(params.tokenId),
@@ -79,8 +80,10 @@ class RaffleService {
           BigInt(params.maxTickets),
           BigInt(params.duration)
         ],
-        gas: 800000n // Set reasonable gas limit
-      });
+        // Let wagmi handle gas estimation for mobile compatibility
+      };
+      
+      const hash = await writeContract(config, txConfig);
 
       safeLog('✅ Raffle creation transaction submitted:', hash);
 
@@ -113,10 +116,25 @@ class RaffleService {
 
     } catch (error) {
       safeError('❌ Raffle creation failed:', error);
+      
+      // Enhanced mobile Safari error handling
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        if (error.message.includes('getChainId') || error.message.includes('connector')) {
+          errorMessage = 'Mobile wallet connection issue. Please reconnect your wallet and try again.';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Network connection issue. Please check your connection and try again.';
+        } else if (error.message.includes('rejected') || error.message.includes('denied')) {
+          errorMessage = 'Transaction was rejected by user.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       // Return error result instead of throwing to prevent unhandled rejections
       return {
         hash: '',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: errorMessage
       } as RaffleResult & { error: string };
     }
   }

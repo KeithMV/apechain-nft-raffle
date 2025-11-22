@@ -24,18 +24,27 @@ export const apeChain = defineChain({
   },
 });
 
-// Ultra-minimal wagmi config - injected wallets only (MetaMask, etc.)
+// Mobile-safe wagmi config with enhanced compatibility
 export const config = createConfig({
   chains: [apeChain],
   connectors: [
+    // Generic injected connector for maximum mobile compatibility
+    injected({
+      shimDisconnect: true, // Better mobile disconnect handling
+    }),
+    // Specific connectors as fallbacks
     injected({
       target: 'metaMask',
+      shimDisconnect: true,
     }),
     injected({
-      target: 'coinbaseWallet',
+      target: 'coinbaseWallet', 
+      shimDisconnect: true,
     }),
   ],
   transports: {
     [apeChain.id]: http(),
   },
+  // Mobile-safe configuration
+  ssr: false, // Disable SSR for better mobile compatibility
 });
