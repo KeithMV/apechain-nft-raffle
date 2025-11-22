@@ -66,8 +66,8 @@ class RafflePositionService {
   
   // Professional configuration management
   private readonly config = {
-    // Adaptive scanning depth based on platform usage
-    SCAN_DEPTH: process.env.NODE_ENV === 'production' ? 500000n : 100000n, // 87 days prod, 17 days dev
+    // Professional scanning depth for active platform
+    SCAN_DEPTH: process.env.NODE_ENV === 'production' ? 200000n : 50000n, // 35 days prod, 9 days dev
     CHUNK_SIZE: 5000n, // Optimized for ApeChain RPC limits
     MAX_CONCURRENT_REQUESTS: 3, // Conservative for stability
     REQUEST_TIMEOUT: 30000, // 30s timeout for extended range
@@ -101,7 +101,7 @@ class RafflePositionService {
     }
     
     try {
-      // Get recent RaffleCreated events with chunked scanning
+      // Get recent RaffleCreated events with optimized scanning
       const currentBlock = await publicClient.getBlockNumber();
       const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n;
       
@@ -222,9 +222,9 @@ class RafflePositionService {
     }
     
     try {
-      // Professional pagination with chunked scanning
+      // Professional pagination with optimized scanning
       const currentBlock = await publicClient.getBlockNumber();
-      const BLOCKS_PER_PAGE = 50000n; // Safe range for chunked scanning
+      const BLOCKS_PER_PAGE = 50000n; // Optimized range for performance
       const fromBlock = currentBlock - BigInt((page + 1) * Number(BLOCKS_PER_PAGE));
       const toBlock = page === 0 ? currentBlock : currentBlock - BigInt(page * Number(BLOCKS_PER_PAGE));
       
