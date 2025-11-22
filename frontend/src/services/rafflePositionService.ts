@@ -56,19 +56,29 @@ class RafflePositionService {
   private allRafflesCache: CacheEntry<CreatedRaffle[]> | null = null;
   private activeRafflesCache: CacheEntry<CreatedRaffle[]> | null = null;
   
-  // Professional caching strategy
-  private readonly CACHE_DURATION = 30000; // 30 seconds for user data
-  private readonly ACTIVE_RAFFLES_CACHE_DURATION = 60000; // 1 minute for active raffles
-  private readonly ALL_RAFFLES_CACHE_DURATION = 45000; // 45 seconds for all raffles
+  // Professional caching strategy with adaptive durations
+  private readonly cacheConfig = {
+    USER_DATA: process.env.NODE_ENV === 'production' ? 300000 : 30000, // 5min prod, 30s dev
+    ACTIVE_RAFFLES: process.env.NODE_ENV === 'production' ? 600000 : 60000, // 10min prod, 1min dev
+    ALL_RAFFLES: process.env.NODE_ENV === 'production' ? 300000 : 45000, // 5min prod, 45s dev
+    PERFORMANCE_METRICS: 60000, // 1 minute for metrics
+  };
   
-  // Dynamic block scanning strategy
-  private readonly SCAN_DEPTH = 100000n; // Total depth: ~2-3 days
+  // Professional configuration management
+  private readonly config = {
+    // Adaptive scanning depth based on platform usage
+    SCAN_DEPTH: process.env.NODE_ENV === 'production' ? 500000n : 100000n, // 87 days prod, 17 days dev
+    CHUNK_SIZE: 5000n, // Optimized for ApeChain RPC limits
+    MAX_CONCURRENT_REQUESTS: 3, // Conservative for stability
+    REQUEST_TIMEOUT: 30000, // 30s timeout for extended range
+    MAX_EVENTS_PER_SCAN: 500, // Prevent memory issues
+    RETRY_ATTEMPTS: 3, // Resilient error handling
+    RETRY_DELAY: 1000, // 1s between retries
+  };
+  
   private getChunkSize(): bigint {
-    return BigInt(getOptimalBlockLimit());
+    return this.config.CHUNK_SIZE;
   }
-  
-  private readonly MAX_CONCURRENT_REQUESTS = 5;
-  private readonly REQUEST_TIMEOUT = 10000; // 10 seconds
 
   /**
    * Get all raffles user has participated in (bought tickets)
@@ -85,7 +95,7 @@ class RafflePositionService {
     const cacheKey = userAddress.toLowerCase();
     const cachedEntry = this.cache.get(cacheKey);
     
-    if (cachedEntry && this.isCacheValid(cachedEntry, this.CACHE_DURATION)) {
+    if (cachedEntry && this.isCacheValid(cachedEntry, this.cacheConfig.USER_DATA)) {
       safeLog('🎫 Returning cached user raffle positions');
       return cachedEntry.data;
     }
@@ -206,7 +216,7 @@ class RafflePositionService {
     const cacheKey = `created_${userAddress.toLowerCase()}_page_${page}`;
     const cachedEntry = this.createdCache.get(cacheKey);
     
-    if (cachedEntry && this.isCacheValid(cachedEntry, this.CACHE_DURATION)) {
+    if (cachedEntry && this.isCacheValid(cachedEntry, this.cacheConfig.USER_DATA)) {
       safeLog('🎨 Returning cached created raffles');
       return cachedEntry.data;
     }
@@ -301,7 +311,7 @@ class RafflePositionService {
     const cacheKey = `all_raffles_${limit}_${offset}`;
     
     // Check cache first
-    if (this.allRafflesCache && this.isCacheValid(this.allRafflesCache, this.ALL_RAFFLES_CACHE_DURATION)) {
+    if (this.allRafflesCache && this.isCacheValid(this.allRafflesCache, this.cacheConfig.ALL_RAFFLES)) {
       const cached = this.allRafflesCache.data.slice(offset, offset + limit);
       safeLog(`🔍 Returning ${cached.length} cached all raffles`);
       return cached;
@@ -351,7 +361,7 @@ class RafflePositionService {
    */
   async getActiveRaffles(publicClient: any, limit: number = 20): Promise<CreatedRaffle[]> {
     // Check cache first
-    if (this.activeRafflesCache && this.isCacheValid(this.activeRafflesCache, this.ACTIVE_RAFFLES_CACHE_DURATION)) {
+    if (this.activeRafflesCache && this.isCacheValid(this.activeRafflesCache, this.cacheConfig.ACTIVE_RAFFLES)) {
       const cached = this.activeRafflesCache.data.slice(0, limit);
       safeLog(`🔍 Returning ${cached.length} cached active raffles`);
       return cached;
@@ -387,7 +397,7 @@ class RafflePositionService {
   }
 
   /**
-   * Professional block scanning with 10k chunk limit compliance
+   * Professional block scanning with enterprise-grade error handling
    */
   private async fetchRafflesWithStrategy(
     publicClient: any, 
@@ -395,13 +405,51 @@ class RafflePositionService {
     type: 'all' | 'active'
   ): Promise<CreatedRaffle[]> {
     const allEvents: any[] = [];
-    const startBlock = currentBlock > this.SCAN_DEPTH ? currentBlock - this.SCAN_DEPTH : 0n;
+    const startBlock = currentBlock > this.config.SCAN_DEPTH ? currentBlock - this.config.SCAN_DEPTH : 0n;
+    const totalBlocks = Number(currentBlock - startBlock);
     
-    // Scan in dynamic chunks based on RPC capabilities
+    safeLog(`🔍 Professional scan: ${totalBlocks} blocks (~${Math.round(totalBlocks / 5760)} days)`);
+    
+    // Scan in optimized chunks with retry logic
     const chunkSize = this.getChunkSize();
     for (let fromBlock = startBlock; fromBlock < currentBlock; fromBlock += chunkSize) {
       const toBlock = fromBlock + chunkSize > currentBlock ? currentBlock : fromBlock + chunkSize;
       
+      const events = await this.scanBlockRangeWithRetry(publicClient, fromBlock, toBlock);
+      if (events) {
+        allEvents.push(...events);
+        safeLog(`✅ Scanned blocks ${fromBlock}-${toBlock}: ${events.length} events`);
+        
+        // Professional memory management
+        if (allEvents.length >= this.config.MAX_EVENTS_PER_SCAN) {
+          safeLog(`📊 Reached event limit (${this.config.MAX_EVENTS_PER_SCAN}), stopping scan`);
+          break;
+        }
+      }
+    }
+    
+    if (allEvents.length === 0) {
+      safeLog('📭 No raffle events found in scan range');
+      return [];
+    }
+    
+    // Professional deduplication and sorting
+    const uniqueEvents = this.deduplicateAndSortEvents(allEvents);
+    safeLog(`📋 Processing ${uniqueEvents.length} unique events`);
+    
+    // Process events with enterprise-grade concurrency control
+    return await this.processEventsWithConcurrency(uniqueEvents, type);
+  }
+  
+  /**
+   * Professional block range scanning with retry logic
+   */
+  private async scanBlockRangeWithRetry(
+    publicClient: any,
+    fromBlock: bigint,
+    toBlock: bigint
+  ): Promise<any[] | null> {
+    for (let attempt = 1; attempt <= this.config.RETRY_ATTEMPTS; attempt++) {
       try {
         const events = await Promise.race([
           publicClient.getLogs({
@@ -411,47 +459,54 @@ class RafflePositionService {
             toBlock
           }),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Request timeout')), this.REQUEST_TIMEOUT)
+            setTimeout(() => reject(new Error('Request timeout')), this.config.REQUEST_TIMEOUT)
           )
         ]);
         
-        allEvents.push(...(events as any[]));
-        safeLog(`Scanned blocks ${fromBlock}-${toBlock}: ${(events as any[]).length} events`);
-        
-        // Stop if we have enough events (200 max)
-        if (allEvents.length >= 200) {
-          break;
-        }
+        return events as any[];
       } catch (error) {
-        safeError(`Error scanning range ${fromBlock}-${toBlock}:`, error);
-        continue;
+        safeError(`Attempt ${attempt}/${this.config.RETRY_ATTEMPTS} failed for blocks ${fromBlock}-${toBlock}:`, error);
+        
+        if (attempt < this.config.RETRY_ATTEMPTS) {
+          await new Promise(resolve => setTimeout(resolve, this.config.RETRY_DELAY * attempt));
+        }
       }
     }
     
-    if (allEvents.length === 0) {
-      return [];
-    }
-    
-    // Remove duplicates and sort by newest first
-    const uniqueEvents = Array.from(
-      new Map(allEvents.map(e => [e.args.raffleId.toString(), e])).values()
-    ).sort((a, b) => Number(b.args.raffleId) - Number(a.args.raffleId));
-    
-    // Process events with controlled concurrency
-    return await this.processEventsWithConcurrency(uniqueEvents, type);
+    safeError(`❌ All retry attempts failed for blocks ${fromBlock}-${toBlock}`);
+    return null;
   }
   
   /**
-   * Process events with controlled concurrency to prevent API overload
+   * Professional event deduplication and sorting
+   */
+  private deduplicateAndSortEvents(events: any[]): any[] {
+    const eventMap = new Map();
+    
+    events.forEach(event => {
+      const key = event.args.raffleId.toString();
+      if (!eventMap.has(key) || event.blockNumber > eventMap.get(key).blockNumber) {
+        eventMap.set(key, event);
+      }
+    });
+    
+    return Array.from(eventMap.values())
+      .sort((a, b) => Number(b.args.raffleId) - Number(a.args.raffleId));
+  }
+  
+  /**
+   * Enterprise-grade event processing with controlled concurrency
    */
   private async processEventsWithConcurrency(
     events: any[], 
     type: 'all' | 'active'
   ): Promise<CreatedRaffle[]> {
     const results: CreatedRaffle[] = [];
-    const chunks = this.chunkArray(events, this.MAX_CONCURRENT_REQUESTS);
+    const chunks = this.chunkArray(events, this.config.MAX_CONCURRENT_REQUESTS);
     
-    for (const chunk of chunks) {
+    for (const [index, chunk] of chunks.entries()) {
+      safeLog(`📊 Processing chunk ${index + 1}/${chunks.length} (${chunk.length} events)`);
+      
       const chunkPromises = chunk.map(async (event: any) => {
         try {
           const { raffleId, raffleContract, nftContract, tokenId, creator, ticketPrice, maxTickets } = event.args;
@@ -459,7 +514,7 @@ class RafflePositionService {
           const raffleInfo = await Promise.race([
             raffleContractService.getRaffleInfo(raffleContract as string),
             new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Raffle info timeout')), this.REQUEST_TIMEOUT)
+              setTimeout(() => reject(new Error('Raffle info timeout')), this.config.REQUEST_TIMEOUT)
             )
           ]);
           
@@ -467,7 +522,7 @@ class RafflePositionService {
           const endTime = Number((raffleInfo as any).endTime);
           const isActive = !(raffleInfo as any).completed && now < endTime;
           
-          // Filter based on type
+          // Professional filtering
           if (type === 'active' && !isActive) {
             return null;
           }
@@ -498,8 +553,14 @@ class RafflePositionService {
         .map(result => (result as PromiseFulfilledResult<CreatedRaffle>).value);
       
       results.push(...validResults);
+      
+      // Professional rate limiting between chunks
+      if (index < chunks.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
     }
     
+    safeLog(`✅ Successfully processed ${results.length} raffles`);
     return results.sort((a, b) => b.raffleId - a.raffleId);
   }
   
@@ -564,17 +625,67 @@ class RafflePositionService {
   }
   
   /**
-   * Professional cache statistics
+   * Enterprise-grade performance monitoring
    */
   getCacheStats() {
+    const now = Date.now();
     return {
       userPositionsCache: this.cache.size,
       createdRafflesCache: this.createdCache.size,
       activeRafflesCached: this.activeRafflesCache?.data.length || 0,
       allRafflesCached: this.allRafflesCache?.data.length || 0,
       cacheHitRate: this.calculateCacheHitRate(),
-      oldestCacheEntry: this.getOldestCacheEntry()
+      oldestCacheEntry: this.getOldestCacheEntry(),
+      memoryUsage: this.estimateMemoryUsage(),
+      scanConfiguration: {
+        scanDepth: Number(this.config.SCAN_DEPTH),
+        chunkSize: Number(this.config.CHUNK_SIZE),
+        maxEvents: this.config.MAX_EVENTS_PER_SCAN,
+        estimatedDays: Math.round(Number(this.config.SCAN_DEPTH) / 5760)
+      },
+      cacheHealth: {
+        activeRafflesAge: this.activeRafflesCache ? now - this.activeRafflesCache.timestamp : 0,
+        allRafflesAge: this.allRafflesCache ? now - this.allRafflesCache.timestamp : 0,
+        isHealthy: this.isCacheHealthy()
+      }
     };
+  }
+  
+  /**
+   * Professional memory usage estimation
+   */
+  private estimateMemoryUsage(): { estimated: string; breakdown: any } {
+    const userCacheSize = Array.from(this.cache.values()).reduce((acc, entry) => acc + entry.data.length, 0);
+    const createdCacheSize = Array.from(this.createdCache.values()).reduce((acc, entry) => acc + entry.data.length, 0);
+    const activeCacheSize = this.activeRafflesCache?.data.length || 0;
+    const allCacheSize = this.allRafflesCache?.data.length || 0;
+    
+    const totalEntries = userCacheSize + createdCacheSize + activeCacheSize + allCacheSize;
+    const estimatedMB = Math.round((totalEntries * 2) / 1024); // Rough estimate: 2KB per raffle entry
+    
+    return {
+      estimated: `${estimatedMB}MB`,
+      breakdown: {
+        userPositions: userCacheSize,
+        createdRaffles: createdCacheSize,
+        activeRaffles: activeCacheSize,
+        allRaffles: allCacheSize,
+        totalEntries
+      }
+    };
+  }
+  
+  /**
+   * Professional cache health monitoring
+   */
+  private isCacheHealthy(): boolean {
+    const now = Date.now();
+    const maxAge = this.cacheConfig.ALL_RAFFLES * 2; // 2x normal cache duration
+    
+    const activeAge = this.activeRafflesCache ? now - this.activeRafflesCache.timestamp : 0;
+    const allAge = this.allRafflesCache ? now - this.allRafflesCache.timestamp : 0;
+    
+    return activeAge < maxAge && allAge < maxAge;
   }
   
   private calculateCacheHitRate(): number {
