@@ -1,85 +1,105 @@
-import { getAccount, getChainId, reconnect } from '@wagmi/core';
+import { getAccount, getChainId } from '@wagmi/core';
 import { config } from '../config/wagmi-minimal';
 
 /**
- * Mobile Safari connector recovery utility
- * Handles the persistent "Connector not connected" error on mobile Safari
+ * Professional wallet connection validator
+ * Handles cross-platform wallet connection validation with proper error handling
  */
-export class MobileConnectorFix {
-  
+export class WalletConnectionValidator {
+  private static readonly APECHAIN_ID = 33139;
+  private static readonly CONNECTION_TIMEOUT = 5000;
+
   /**
-   * Validate and recover mobile Safari connection
+   * Validates wallet connection state with comprehensive error handling
    */
-  static async validateConnection(): Promise<{ isValid: boolean; account?: string; error?: string }> {
+  static async validateConnection(): Promise<{
+    isValid: boolean;
+    account?: `0x${string}`;
+    chainId?: number;
+    error?: string;
+  }> {
     try {
-      // Check account connection
       const account = getAccount(config);
+      
+      // Strict validation: require both connection and address
       if (!account.isConnected || !account.address) {
-        return { 
-          isValid: false, 
-          error: 'Wallet not connected. Please connect your wallet first.' 
+        return {
+          isValid: false,
+          error: 'Wallet not connected. Please connect your wallet first.'
         };
       }
 
-      // Try to get chain ID (this often fails on mobile Safari)
+      // Validate chain ID with timeout for mobile networks
+      let chainId: number;
       try {
-        const chainId = getChainId(config);
-        if (chainId !== 33139) {
-          return { 
-            isValid: false, 
-            error: 'Please switch to ApeChain network.' 
+        const chainIdPromise = Promise.resolve(getChainId(config));
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Chain validation timeout')), this.CONNECTION_TIMEOUT)
+        );
+        
+        chainId = await Promise.race([chainIdPromise, timeoutPromise]);
+        
+        if (chainId !== this.APECHAIN_ID) {
+          return {
+            isValid: false,
+            account: account.address as `0x${string}`,
+            chainId,
+            error: `Please switch to ApeChain network (${this.APECHAIN_ID}). Current: ${chainId}`
           };
         }
       } catch (chainError) {
-        console.warn('Mobile Safari: Chain validation failed, attempting recovery');
-        
-        // Attempt reconnection for mobile Safari
-        try {
-          await reconnect(config);
-          const retryChainId = getChainId(config);
-          if (retryChainId !== 33139) {
-            return { 
-              isValid: false, 
-              error: 'Please switch to ApeChain network after reconnection.' 
-            };
-          }
-        } catch (reconnectError) {
-          console.warn('Mobile Safari: Reconnection failed, proceeding with caution');
-          // For mobile Safari, we'll allow the transaction to proceed
-          // The wallet will handle the actual connection validation
-        }
+        return {
+          isValid: false,
+          account: account.address as `0x${string}`,
+          error: 'Unable to verify network. Please ensure you are connected to ApeChain.'
+        };
       }
 
-      return { 
-        isValid: true, 
-        account: account.address 
+      return {
+        isValid: true,
+        account: account.address as `0x${string}`,
+        chainId
       };
       
     } catch (error) {
-      console.error('Connection validation failed:', error);
-      return { 
-        isValid: false, 
-        error: 'Connection validation failed. Please refresh and reconnect.' 
+      const errorMessage = error instanceof Error ? error.message : 'Unknown connection error';
+      return {
+        isValid: false,
+        error: `Connection validation failed: ${errorMessage}`
       };
     }
   }
 
   /**
-   * Mobile-safe transaction wrapper
+   * Executes operation with validated wallet connection
+   * Throws descriptive errors for better UX
    */
-  static async withConnectionValidation<T>(
-    operation: (account: string) => Promise<T>
+  static async withValidatedConnection<T>(
+    operation: (account: `0x${string}`) => Promise<T>
   ): Promise<T> {
     const validation = await this.validateConnection();
     
     if (!validation.isValid) {
-      throw new Error(validation.error || 'Connection validation failed');
+      throw new Error(validation.error || 'Wallet connection validation failed');
     }
 
     if (!validation.account) {
-      throw new Error('No account address available');
+      throw new Error('No wallet address available');
     }
 
     return await operation(validation.account);
+  }
+
+  /**
+   * Quick connection check without chain validation
+   * Used for non-critical operations
+   */
+  static hasConnectedWallet(): boolean {
+    try {
+      const account = getAccount(config);
+      return account.isConnected && !!account.address;
+    } catch {
+      return false;
+    }
   }
 }

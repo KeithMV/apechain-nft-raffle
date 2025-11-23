@@ -4,7 +4,7 @@ import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, ERC721_ABI } from '../confi
 import { parseEther } from 'viem/utils';
 import { apeTokenService } from './apeTokenService';
 import { safeLog, safeError } from '../utils/logSanitizer';
-import { MobileConnectorFix } from '../utils/mobileConnectorFix';
+import { WalletConnectionValidator } from '../utils/mobileConnectorFix';
 
 export interface CreateRaffleParams {
   nftContract: string;
@@ -177,49 +177,54 @@ class RaffleService {
 
   /**
    * Approve RaffleFactory to transfer all NFTs from a contract
-   * Mobile-safe with enhanced error handling
+   * Professional implementation with proper error handling
    */
   async approveForAll(nftContract: string): Promise<string> {
-    return await MobileConnectorFix.withConnectionValidation(async (accountAddress) => {
+    if (!nftContract || !nftContract.startsWith('0x')) {
+      throw new Error('Invalid NFT contract address');
+    }
+
+    return await WalletConnectionValidator.withValidatedConnection(async (account) => {
+      safeLog('🔄 Approving NFT contract for raffle:', nftContract);
+      
       try {
-        safeLog('🔄 Approving NFT contract for raffle:', nftContract);
-        
-        // Mobile-safe transaction with validated account
         const hash = await writeContract(config, {
           address: nftContract as `0x${string}`,
           abi: ERC721_ABI,
           functionName: 'setApprovalForAll',
           args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
-          account: accountAddress as `0x${string}`,
+          account,
         });
 
         safeLog('✅ Approval transaction submitted:', hash);
 
-        // Wait for confirmation with mobile-safe timeout
+        // Wait for confirmation with appropriate timeout
         await waitForTransactionReceipt(config, {
           hash,
           confirmations: 1,
-          timeout: 60000, // 60 second timeout for mobile
+          timeout: 60_000, // 60 seconds for mobile networks
         });
 
-        safeLog('✅ Approval confirmed');
+        safeLog('✅ NFT approval confirmed');
         return hash;
-      } catch (error) {
-        safeError('❌ Approval failed:', error);
         
-        // Enhanced mobile Safari error handling
+      } catch (error) {
+        safeError('❌ NFT approval failed:', error);
+        
+        // Professional error handling with specific user guidance
         if (error instanceof Error) {
-          if (error.message.includes('ConnectorNotConnectedError') || 
-              error.message.includes('Connector not connected') ||
-              error.message.includes('getChainId')) {
-            throw new Error('Mobile wallet connection lost. Please refresh the page and reconnect your wallet.');
-          } else if (error.message.includes('network') || error.message.includes('RPC')) {
-            throw new Error('Network connection issue. Please check your connection and try again.');
-          } else if (error.message.includes('rejected') || error.message.includes('denied')) {
-            throw new Error('Transaction was rejected by user.');
+          if (error.message.includes('rejected') || error.message.includes('denied')) {
+            throw new Error('Transaction was rejected. Please try again.');
+          }
+          if (error.message.includes('insufficient funds')) {
+            throw new Error('Insufficient funds for transaction fees.');
+          }
+          if (error.message.includes('network') || error.message.includes('timeout')) {
+            throw new Error('Network error. Please check your connection and try again.');
           }
         }
         
+        // Re-throw with original error for debugging
         throw error;
       }
     });
