@@ -1,9 +1,10 @@
 import { writeContract, readContract, waitForTransactionReceipt, getAccount, getChainId } from '@wagmi/core';
-import { config } from '../config/wagmi';
+import { config } from '../config/wagmi-minimal';
 import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
 import { apeTokenService } from './apeTokenService';
 import { safeLog, safeError } from '../utils/logSanitizer';
+import { MobileConnectorFix } from '../utils/mobileConnectorFix';
 
 export interface CreateRaffleParams {
   nftContract: string;
@@ -64,68 +65,54 @@ class RaffleService {
     safeLog('🔄 Starting raffle creation with params:', params);
 
     try {
-      // Mobile Safari compatibility checks
-      const account = getAccount(config);
-      if (!account.isConnected) {
-        throw new Error('Wallet not connected. Please connect your wallet first.');
-      }
+      return await MobileConnectorFix.withConnectionValidation(async (accountAddress) => {
+        // Pre-calculate APE amount to avoid async in transaction args
+        const ticketPriceWei = await apeTokenService.parseApe(params.ticketPrice);
+        
+        // Mobile Safari compatibility - validated account for transaction
+        const hash = await writeContract(config, {
+          address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+          abi: RAFFLE_FACTORY_ABI,
+          functionName: 'createRaffle',
+          args: [
+            params.nftContract as `0x${string}`,
+            BigInt(params.tokenId),
+            ticketPriceWei,
+            BigInt(params.maxTickets),
+            BigInt(params.duration)
+          ] as const,
+          account: accountAddress as `0x${string}`,
+        });
 
-      // Verify we're on the correct chain (mobile-safe)
-      try {
-        const chainId = getChainId(config);
-        if (chainId !== 33139) {
-          throw new Error('Please switch to ApeChain network.');
+        safeLog('✅ Raffle creation transaction submitted:', hash);
+
+        // Wait for transaction confirmation
+        const receipt = await waitForTransactionReceipt(config, {
+          hash,
+          confirmations: 1,
+        });
+
+        safeLog('✅ Raffle creation confirmed:', receipt);
+
+        // Try to get raffle ID and contract address
+        let raffleId: number | undefined;
+        let raffleContract: string | undefined;
+        
+        try {
+          const currentCounter = await this.getRaffleCounter();
+          raffleId = currentCounter - 1; // Latest raffle ID
+          raffleContract = await this.getRaffleContract(raffleId);
+          safeLog('🎯 Raffle created - ID:', raffleId, 'Contract:', raffleContract);
+        } catch (error) {
+          safeError('⚠️ Could not retrieve raffle details:', error);
         }
-      } catch (chainError) {
-        safeLog('⚠️ Chain check failed, proceeding anyway for mobile compatibility');
-      }
-      
-      // Pre-calculate APE amount to avoid async in transaction args
-      const ticketPriceWei = await apeTokenService.parseApe(params.ticketPrice);
-      
-      // Mobile Safari compatibility - direct writeContract call with minimal config
-      const hash = await writeContract(config, {
-        address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
-        abi: RAFFLE_FACTORY_ABI,
-        functionName: 'createRaffle',
-        args: [
-          params.nftContract as `0x${string}`,
-          BigInt(params.tokenId),
-          ticketPriceWei,
-          BigInt(params.maxTickets),
-          BigInt(params.duration)
-        ] as const,
-        // Mobile-safe: let wagmi handle all gas and chain details
+
+        return {
+          hash,
+          raffleId,
+          raffleContract
+        };
       });
-
-      safeLog('✅ Raffle creation transaction submitted:', hash);
-
-      // Wait for transaction confirmation
-      const receipt = await waitForTransactionReceipt(config, {
-        hash,
-        confirmations: 1,
-      });
-
-      safeLog('✅ Raffle creation confirmed:', receipt);
-
-      // Try to get raffle ID and contract address
-      let raffleId: number | undefined;
-      let raffleContract: string | undefined;
-      
-      try {
-        const currentCounter = await this.getRaffleCounter();
-        raffleId = currentCounter - 1; // Latest raffle ID
-        raffleContract = await this.getRaffleContract(raffleId);
-        safeLog('🎯 Raffle created - ID:', raffleId, 'Contract:', raffleContract);
-      } catch (error) {
-        safeError('⚠️ Could not retrieve raffle details:', error);
-      }
-
-      return {
-        hash,
-        raffleId,
-        raffleContract
-      };
 
     } catch (error) {
       safeError('❌ Raffle creation failed:', error);
@@ -193,74 +180,82 @@ class RaffleService {
    * Mobile-safe with enhanced error handling
    */
   async approveForAll(nftContract: string): Promise<string> {
-    try {
-      safeLog('🔄 Approving NFT contract for raffle:', nftContract);
-      
-      // Mobile-safe transaction - use minimal config for compatibility
-      const hash = await writeContract(config, {
-        address: nftContract as `0x${string}`,
-        abi: ERC721_ABI,
-        functionName: 'setApprovalForAll',
-        args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
-        // Let wagmi handle gas estimation for mobile compatibility
-      });
+    return await MobileConnectorFix.withConnectionValidation(async (accountAddress) => {
+      try {
+        safeLog('🔄 Approving NFT contract for raffle:', nftContract);
+        
+        // Mobile-safe transaction with validated account
+        const hash = await writeContract(config, {
+          address: nftContract as `0x${string}`,
+          abi: ERC721_ABI,
+          functionName: 'setApprovalForAll',
+          args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
+          account: accountAddress as `0x${string}`,
+        });
 
-      safeLog('✅ Approval transaction submitted:', hash);
+        safeLog('✅ Approval transaction submitted:', hash);
 
-      // Wait for confirmation with mobile-safe timeout
-      await waitForTransactionReceipt(config, {
-        hash,
-        confirmations: 1,
-        timeout: 60000, // 60 second timeout for mobile
-      });
+        // Wait for confirmation with mobile-safe timeout
+        await waitForTransactionReceipt(config, {
+          hash,
+          confirmations: 1,
+          timeout: 60000, // 60 second timeout for mobile
+        });
 
-      safeLog('✅ Approval confirmed');
-      return hash;
-    } catch (error) {
-      safeError('❌ Approval failed:', error);
-      
-      // Enhance error message for mobile users
-      if (error instanceof Error) {
-        if (error.message.includes('getChainId') || error.message.includes('connector')) {
-          throw new Error('Wallet connection issue. Please reconnect your wallet and try again.');
-        } else if (error.message.includes('network')) {
-          throw new Error('Network connection issue. Please check your connection and try again.');
+        safeLog('✅ Approval confirmed');
+        return hash;
+      } catch (error) {
+        safeError('❌ Approval failed:', error);
+        
+        // Enhanced mobile Safari error handling
+        if (error instanceof Error) {
+          if (error.message.includes('ConnectorNotConnectedError') || 
+              error.message.includes('Connector not connected') ||
+              error.message.includes('getChainId')) {
+            throw new Error('Mobile wallet connection lost. Please refresh the page and reconnect your wallet.');
+          } else if (error.message.includes('network') || error.message.includes('RPC')) {
+            throw new Error('Network connection issue. Please check your connection and try again.');
+          } else if (error.message.includes('rejected') || error.message.includes('denied')) {
+            throw new Error('Transaction was rejected by user.');
+          }
         }
+        
+        throw error;
       }
-      
-      throw error;
-    }
+    });
   }
 
   /**
    * Revoke approval for RaffleFactory
    */
   async revokeApproval(nftContract: string): Promise<string> {
-    try {
-      safeLog('🔄 Revoking NFT contract approval:', nftContract);
-      
-      const hash = await writeContract(config, {
-        address: nftContract as `0x${string}`,
-        abi: ERC721_ABI,
-        functionName: 'setApprovalForAll',
-        args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, false],
-        // Gas will be estimated automatically
-      });
+    return await MobileConnectorFix.withConnectionValidation(async (accountAddress) => {
+      try {
+        safeLog('🔄 Revoking NFT contract approval:', nftContract);
+        
+        const hash = await writeContract(config, {
+          address: nftContract as `0x${string}`,
+          abi: ERC721_ABI,
+          functionName: 'setApprovalForAll',
+          args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, false],
+          account: accountAddress as `0x${string}`,
+        });
 
-      safeLog('✅ Revoke transaction submitted:', hash);
+        safeLog('✅ Revoke transaction submitted:', hash);
 
-      // Wait for confirmation
-      await waitForTransactionReceipt(config, {
-        hash,
-        confirmations: 1,
-      });
+        // Wait for confirmation
+        await waitForTransactionReceipt(config, {
+          hash,
+          confirmations: 1,
+        });
 
-      safeLog('✅ Approval revoked');
-      return hash;
-    } catch (error) {
-      safeError('❌ Revoke failed:', error);
-      throw error;
-    }
+        safeLog('✅ Approval revoked');
+        return hash;
+      } catch (error) {
+        safeError('❌ Revoke failed:', error);
+        throw error;
+      }
+    });
   }
 
   /**
