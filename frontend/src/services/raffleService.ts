@@ -4,7 +4,7 @@ import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, ERC721_ABI } from '../confi
 import { parseEther } from 'viem/utils';
 import { apeTokenService } from './apeTokenService';
 import { safeLog, safeError } from '../utils/logSanitizer';
-import { WalletConnectionValidator } from '../utils/mobileConnectorFix';
+import { WalletConnectionService } from '../utils/walletConnectionService';
 
 export interface CreateRaffleParams {
   nftContract: string;
@@ -65,7 +65,7 @@ class RaffleService {
     safeLog('🔄 Starting raffle creation with params:', params);
 
     try {
-      return await WalletConnectionValidator.withValidatedConnection(async (accountAddress) => {
+      return await WalletConnectionService.executeWithWallet(async (accountAddress) => {
         // Pre-calculate APE amount to avoid async in transaction args
         const ticketPriceWei = await apeTokenService.parseApe(params.ticketPrice);
         
@@ -184,7 +184,7 @@ class RaffleService {
       throw new Error('Invalid NFT contract address');
     }
 
-    return await WalletConnectionValidator.withValidatedConnection(async (account) => {
+    return await WalletConnectionService.executeWithWallet(async (account) => {
       safeLog('🔄 Approving NFT contract for raffle:', nftContract);
       
       try {
@@ -234,7 +234,7 @@ class RaffleService {
    * Revoke approval for RaffleFactory
    */
   async revokeApproval(nftContract: string): Promise<string> {
-    return await WalletConnectionValidator.withValidatedConnection(async (accountAddress) => {
+    return await WalletConnectionService.executeWithWallet(async (accountAddress) => {
       try {
         safeLog('🔄 Revoking NFT contract approval:', nftContract);
         
