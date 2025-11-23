@@ -65,7 +65,7 @@ class RaffleService {
     safeLog('🔄 Starting raffle creation with params:', params);
 
     try {
-      return await MobileConnectorFix.withConnectionValidation(async (accountAddress) => {
+      return await WalletConnectionValidator.withValidatedConnection(async (accountAddress) => {
         // Pre-calculate APE amount to avoid async in transaction args
         const ticketPriceWei = await apeTokenService.parseApe(params.ticketPrice);
         
@@ -234,7 +234,7 @@ class RaffleService {
    * Revoke approval for RaffleFactory
    */
   async revokeApproval(nftContract: string): Promise<string> {
-    return await MobileConnectorFix.withConnectionValidation(async (accountAddress) => {
+    return await WalletConnectionValidator.withValidatedConnection(async (accountAddress) => {
       try {
         safeLog('🔄 Revoking NFT contract approval:', nftContract);
         
