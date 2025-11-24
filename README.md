@@ -18,8 +18,10 @@ Enterprise-grade decentralized raffle platform optimized for production deployme
 - Zero legacy code - fully modernized codebase
 
 **Revenue Model:**
-- Automated 10% platform fee collection
+- Dynamic tiered fee structure (1%, 5%, 10%, 20%)
+- Professional fee management with market-responsive pricing
 - Direct smart contract fee distribution
+- Business intelligence-driven fee optimization
 
 ## Production Optimizations
 
@@ -120,6 +122,14 @@ npx hardhat test
 cd frontend  
 npm start
 
+# Fee Management (Professional Tiered System)
+cd contracts
+npm run fee:status          # Check current fee
+npm run fee:promotional     # Set 1% (launch campaigns)
+npm run fee:competitive     # Set 5% (market standard)
+npm run fee:standard        # Set 10% (balanced revenue)
+npm run fee:premium         # Set 20% (exclusive events)
+
 # Verify contracts
 npx hardhat verify --network apechain <CONTRACT_ADDRESS>
 
@@ -146,7 +156,14 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 
 ## Development Log
 
-**Phase 6.5 - Enterprise Wallet Service (Latest)**
+**Phase 6.6 - Professional Tiered Fee System (Latest)**
+- Dynamic fee management with 4-tier structure (1%, 5%, 10%, 20%)
+- Business intelligence-driven fee optimization
+- Real-time fee display with tier detection and competitive analysis
+- Professional fee management CLI with npm scripts
+- Market-responsive pricing strategy implementation
+
+**Phase 6.5 - Enterprise Wallet Service**
 - Implemented professional `WalletConnectionService` following Web3 industry standards
 - Address-first validation pattern used by Uniswap, Aave, Compound
 - Mobile Safari compatibility with graceful network validation fallback
@@ -199,3 +216,4 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 # Pipeline trigger - Enterprise wallet service deployment
 # Retrigger deployment - Mobile Safari compatibility fix
 # Retry pipeline - yarn registry fallback solution
+# Deploy professional tiered fee system - dynamic fee management

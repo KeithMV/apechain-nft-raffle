@@ -7,7 +7,13 @@
     "deploy-secure": "npx hardhat run scripts/deploy-secure.js --network apechain",
     "verify-deployment": "npx hardhat run scripts/verify-secure-deployment.js --network apechain",
     "security-check": "npx hardhat run scripts/security-comparison.js",
-    "verify": "npx hardhat verify --network apechain"
+    "verify": "npx hardhat verify --network apechain",
+    "fee:status": "npx hardhat run scripts/fee-management.js --network apechain -- status",
+    "fee:promotional": "npx hardhat run scripts/fee-management.js --network apechain -- promotional",
+    "fee:competitive": "npx hardhat run scripts/fee-management.js --network apechain -- competitive",
+    "fee:standard": "npx hardhat run scripts/fee-management.js --network apechain -- standard",
+    "fee:premium": "npx hardhat run scripts/fee-management.js --network apechain -- premium",
+    "fee:help": "npx hardhat run scripts/fee-management.js --network apechain -- --help"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",

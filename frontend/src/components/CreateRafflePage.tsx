@@ -4,6 +4,7 @@ import { raffleService } from '../services/raffleService';
 import { NETWORK_CONFIG } from '../config/addresses';
 import ApeTokenBalance from './ApeTokenBalance';
 import MobileBanner from './MobileBanner';
+import FeeDisplay from './FeeDisplay';
 import toast from 'react-hot-toast';
 import { 
   sanitizeAddress, 
@@ -35,7 +36,7 @@ export default function CreateRafflePage() {
   const [loading, setLoading] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<boolean | null>(null);
   const [approvalLoading, setApprovalLoading] = useState(false);
-  const [platformFee, setPlatformFee] = useState<string>('10');
+  const [platformFee, setPlatformFee] = useState<string>('5');
 
   useEffect(() => {
     fetchPlatformFee();
@@ -264,10 +265,7 @@ export default function CreateRafflePage() {
                 <span className="font-semibold">Network:</span> {NETWORK_CONFIG.name} • Chain ID: {NETWORK_CONFIG.chainId}
               </p>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-sm shadow-emerald-400/50"></div>
-              <span className="text-emerald-300 text-sm font-semibold">Platform Fee: {platformFee}%</span>
-            </div>
+            <FeeDisplay className="text-emerald-300 text-sm" />
           </div>
         </div>
 
@@ -361,7 +359,7 @@ export default function CreateRafflePage() {
           </div>
         </div>
 
-        {/* Revenue Summary */}
+        {/* Revenue Summary with Professional Fee Display */}
         <div className="relative bg-gradient-to-r from-pink-900/20 via-fuchsia-900/20 to-purple-900/20 border border-pink-500/30 rounded-xl p-4 sm:p-6 mt-6 backdrop-blur-sm">
           <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 via-fuchsia-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
           <h4 className="relative font-semibold text-pink-200 mb-3 sm:mb-4 flex items-center text-sm sm:text-base font-mono tracking-wider">
@@ -370,19 +368,13 @@ export default function CreateRafflePage() {
             </div>
             Revenue Projection (Full Capacity)
           </h4>
-          <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
-            <div className="text-center p-3 bg-gray-800/60 border border-pink-500/20 rounded-lg backdrop-blur-sm">
-              <p className="text-pink-300/70 mb-1 font-mono tracking-wide">Total Revenue</p>
-              <p className="text-pink-200 font-mono text-lg tracking-wider">{totalRevenue} APE</p>
-            </div>
-            <div className="text-center p-3 bg-gray-800/60 border border-pink-500/20 rounded-lg backdrop-blur-sm">
-              <p className="text-pink-300/70 mb-1 font-mono tracking-wide">Platform Fee ({platformFee}%)</p>
-              <p className="text-red-300 font-mono text-lg tracking-wider">-{platformFeeAmount} APE</p>
-            </div>
-            <div className="text-center p-3 bg-gray-800/60 border border-pink-500/20 rounded-lg backdrop-blur-sm">
-              <p className="text-pink-300/70 mb-1 font-mono tracking-wide">You Receive</p>
-              <p className="text-pink-200 font-mono text-lg tracking-wider">{creatorRevenue} APE</p>
-            </div>
+          
+          <div className="relative mb-4">
+            <FeeDisplay 
+              totalAmount={parseFloat(totalRevenue) || 0}
+              showBreakdown={true}
+              className="bg-gray-800/60 border border-pink-500/20 rounded-lg p-3 backdrop-blur-sm"
+            />
           </div>
         </div>
 
