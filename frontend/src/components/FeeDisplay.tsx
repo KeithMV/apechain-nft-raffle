@@ -1,5 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { feeManagementService, FEE_TIERS, FeeTier } from '../services/feeManagementService';
+import React from 'react';
+import { usePlatformFee } from '../hooks/useRaffleContract';
+
+// Fee tier definitions
+const FEE_TIERS = {
+  PROMOTIONAL: { basisPoints: 100, percentage: 1, label: 'Promotional', color: 'green', useCase: 'Launch campaigns & special events' },
+  COMPETITIVE: { basisPoints: 500, percentage: 5, label: 'Competitive', color: 'blue', useCase: 'Market standard pricing' },
+  STANDARD: { basisPoints: 1000, percentage: 10, label: 'Standard', color: 'gray', useCase: 'Balanced revenue model' },
+  PREMIUM: { basisPoints: 2000, percentage: 20, label: 'Premium', color: 'purple', useCase: 'Exclusive high-value events' },
+} as const;
+
+type FeeTier = typeof FEE_TIERS[keyof typeof FEE_TIERS];
 
 interface FeeDisplayProps {
   totalAmount?: number;
@@ -12,31 +22,40 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
   showBreakdown = false,
   className = ""
 }) => {
-  const [currentFee, setCurrentFee] = useState({
-    basisPoints: 500,
-    percentage: 5,
-    tier: FEE_TIERS.COMPETITIVE as FeeTier | null
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadCurrentFee();
-  }, []);
-
-  const loadCurrentFee = async () => {
-    try {
-      const fee = await feeManagementService.getCurrentPlatformFee();
-      setCurrentFee(fee);
-    } catch (error) {
-      console.error('Failed to load fee:', error);
-    } finally {
-      setLoading(false);
+  // Professional wagmi hook
+  const { data: platformFeeData, isLoading: loading } = usePlatformFee();
+  
+  // Determine current fee tier
+  const getCurrentFeeTier = (basisPoints: number): FeeTier => {
+    switch (basisPoints) {
+      case 100: return FEE_TIERS.PROMOTIONAL;
+      case 500: return FEE_TIERS.COMPETITIVE;
+      case 1000: return FEE_TIERS.STANDARD;
+      case 2000: return FEE_TIERS.PREMIUM;
+      default: return FEE_TIERS.COMPETITIVE;
     }
   };
+  
+  const currentFee = platformFeeData ? {
+    basisPoints: Number(platformFeeData),
+    percentage: Number(platformFeeData) / 100,
+    tier: getCurrentFeeTier(Number(platformFeeData))
+  } : {
+    basisPoints: 500,
+    percentage: 5,
+    tier: FEE_TIERS.COMPETITIVE
+  };
 
-  const feeDisplay = feeManagementService.formatFeeDisplay(currentFee.basisPoints);
-  const breakdown = totalAmount > 0 ? 
-    feeManagementService.calculateFeeAmount(totalAmount, currentFee.basisPoints) : null;
+  const feeDisplay = {
+    percentage: `${currentFee.percentage}%`,
+    badge: currentFee.tier.color,
+    description: currentFee.tier.label
+  };
+  
+  const breakdown = totalAmount > 0 ? {
+    feeAmount: totalAmount * currentFee.percentage / 100,
+    creatorAmount: totalAmount * (1 - currentFee.percentage / 100)
+  } : null;
 
   const getBadgeColor = (badge: string) => {
     const colors = {

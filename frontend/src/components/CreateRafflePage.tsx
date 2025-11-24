@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { raffleService } from '../services/raffleService';
+import { usePlatformFee, useNFTApprovalStatus, useNFTApproval, useCreateRaffle } from '../hooks/useRaffleContract';
 import { NETWORK_CONFIG } from '../config/addresses';
 import ApeTokenBalance from './ApeTokenBalance';
 import MobileBanner from './MobileBanner';
@@ -36,71 +36,114 @@ export default function CreateRafflePage() {
   const [loading, setLoading] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<boolean | null>(null);
   const [approvalLoading, setApprovalLoading] = useState(false);
-  const [platformFee, setPlatformFee] = useState<string>('5');
+  // Professional wagmi hooks
+  const { data: platformFeeData } = usePlatformFee();
+  const { data: approvalData, refetch: refetchApproval } = useNFTApprovalStatus(
+    formData.nftContract, 
+    address || ''
+  );
+  const { 
+    approveNFT, 
+    isPending: approvalPending, 
+    isConfirming: approvalConfirming, 
+    isSuccess: approvalSuccess,
+    error: approvalError 
+  } = useNFTApproval();
+  const {
+    createRaffle,
+    isPending: createPending,
+    isConfirming: createConfirming,
+    isSuccess: createSuccess,
+    error: createError
+  } = useCreateRaffle();
 
+  const platformFee = platformFeeData ? (Number(platformFeeData) / 100).toString() : '5';
+
+  // Update approval status from hook data
   useEffect(() => {
-    fetchPlatformFee();
-  }, []);
+    if (approvalData !== undefined) {
+      setApprovalStatus(approvalData as boolean);
+    }
+  }, [approvalData]);
 
+  // Handle approval success
   useEffect(() => {
-    if (formData.nftContract && address) {
-      checkApprovalStatus();
+    if (approvalSuccess) {
+      setApprovalLoading(false);
+      setApprovalStatus(true);
+      toast.success('NFT contract approved successfully!');
+      refetchApproval();
     }
-  }, [formData.nftContract, address]);
+  }, [approvalSuccess, refetchApproval]);
 
-  const fetchPlatformFee = async () => {
-    try {
-      const fee = await raffleService.getPlatformFee();
-      setPlatformFee((Number(fee) / 100).toString()); // Convert basis points to percentage
-    } catch (error) {
-      console.error('Failed to fetch platform fee:', error);
+  // Handle approval errors
+  useEffect(() => {
+    if (approvalError) {
+      setApprovalLoading(false);
+      console.error('❌ Approval failed:', approvalError);
+      
+      if (approvalError.message?.includes('User rejected')) {
+        toast.error('Approval cancelled by user');
+      } else if (approvalError.message?.includes('insufficient funds')) {
+        toast.error('Insufficient funds for transaction fees');
+      } else {
+        toast.error('Approval failed: ' + (approvalError.message || 'Unknown error'));
+      }
     }
-  };
+  }, [approvalError]);
 
-  const checkApprovalStatus = async () => {
-    if (!formData.nftContract || !address) return;
-    
-    try {
-      const isApproved = await raffleService.isApprovedForAll(formData.nftContract, address);
-      setApprovalStatus(isApproved);
-    } catch (error) {
-      console.error('Failed to check approval:', error);
+  // Handle create raffle success
+  useEffect(() => {
+    if (createSuccess) {
+      setLoading(false);
+      toast.success('Raffle created successfully!');
+      
+      // Reset form
+      setFormData({
+        nftContract: '',
+        tokenId: '',
+        ticketPrice: '0.1',
+        maxTickets: '100',
+        duration: '24'
+      });
       setApprovalStatus(null);
     }
-  };
+  }, [createSuccess]);
 
-  const handleApproval = async () => {
+  // Handle create raffle errors
+  useEffect(() => {
+    if (createError) {
+      setLoading(false);
+      console.error('Create raffle failed:', createError);
+      
+      if (createError.message?.includes('User rejected')) {
+        toast.error('Transaction cancelled by user');
+      } else if (createError.message?.includes('Not NFT owner')) {
+        toast.error('You do not own this NFT');
+      } else if (createError.message?.includes('insufficient funds')) {
+        toast.error('Insufficient funds for transaction');
+      } else {
+        toast.error('Failed to create raffle: ' + createError.message);
+      }
+    }
+  }, [createError]);
+
+  const handleApproval = () => {
     if (!formData.nftContract) {
       toast.error('Please enter NFT contract address first');
       return;
     }
 
-    setApprovalLoading(true);
-    try {
-      console.log('🔄 Approving NFT contract for raffle:', formData.nftContract);
-      
-      // Mobile-safe approval with error handling
-      await raffleService.approveForAll(formData.nftContract);
-      setApprovalStatus(true);
-      toast.success('NFT contract approved successfully!');
-    } catch (error: any) {
-      console.error('❌ Approval failed:', error);
-      
-      // Handle mobile-specific errors with better guidance
-      if (error.message?.includes('getChainId is not a function')) {
-        toast.error('Mobile Safari detected. Please use WalletConnect or install a mobile wallet app like MetaMask Mobile.');
-      } else if (error.message?.includes('Ethereum provider not available')) {
-        toast.error('No wallet detected. Please install MetaMask Mobile or use WalletConnect to connect your wallet.');
-      } else if (error.message?.includes('User rejected')) {
-        toast.error('Approval cancelled by user');
-      } else if (error.message?.includes('network')) {
-        toast.error('Network connection issue. Please check your connection and try again.');
-      } else {
-        toast.error('Approval failed: ' + (error.message || 'Unknown error'));
-      }
-    } finally {
-      setApprovalLoading(false);
+    if (!address) {
+      toast.error('Wallet not connected');
+      return;
     }
+
+    setApprovalLoading(true);
+    console.log('🔄 Approving NFT contract for raffle:', formData.nftContract);
+    
+    // Use professional wagmi hook
+    approveNFT(formData.nftContract);
   };
 
   const handleCreateRaffle = async () => {
@@ -164,41 +207,18 @@ export default function CreateRafflePage() {
         expectedEndTime: 'current_time + ' + durationInSeconds
       });
       
-      const result = await raffleService.createRaffle({
+      // Use professional wagmi hook
+      createRaffle({
         nftContract: formData.nftContract,
         tokenId: formData.tokenId,
         ticketPrice: formData.ticketPrice,
         maxTickets: maxTickets,
         duration: durationInSeconds
       });
-
-      toast.success('Raffle created successfully!');
-      console.log('Raffle created:', result);
-      
-      // Reset form
-      setFormData({
-        nftContract: '',
-        tokenId: '',
-        ticketPrice: '0.1',
-        maxTickets: '100',
-        duration: '24'
-      });
-      setApprovalStatus(null);
       
     } catch (error: any) {
-      console.error('Create raffle failed:', error);
-      if (error.message?.includes('User rejected')) {
-        toast.error('Transaction cancelled by user');
-      } else if (error.message?.includes('Not NFT owner')) {
-        toast.error('You do not own this NFT');
-      } else if (error.message?.includes('ERC721: caller is not token owner')) {
-        toast.error('You do not own this NFT');
-      } else if (error.message?.includes('insufficient funds')) {
-        toast.error('Insufficient funds for transaction');
-      } else {
-        toast.error('Failed to create raffle: ' + error.message);
-      }
-    } finally {
+      console.error('Create raffle validation failed:', error);
+      toast.error('Validation failed: ' + error.message);
       setLoading(false);
     }
   };
@@ -407,14 +427,14 @@ export default function CreateRafflePage() {
                 </div>
                 <button
                   onClick={handleApproval}
-                  disabled={approvalLoading}
+                  disabled={approvalPending || approvalConfirming}
                   className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                  {approvalLoading ? (
+                  {approvalPending || approvalConfirming ? (
                     <span className="relative flex items-center">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      Approving contract...
+                      {approvalConfirming ? 'Confirming...' : 'Approving contract...'}
                     </span>
                   ) : (
                     <span className="relative">Approve NFT Contract</span>
@@ -429,14 +449,14 @@ export default function CreateRafflePage() {
         <div className="relative flex flex-col sm:flex-row gap-3 mt-8">
           <button
             onClick={handleCreateRaffle}
-            disabled={loading || !formData.nftContract || !formData.tokenId || approvalStatus !== true}
+            disabled={createPending || createConfirming || !formData.nftContract || !formData.tokenId || approvalStatus !== true}
             className="relative flex-1 bg-gradient-to-r from-pink-600 via-fuchsia-600 to-purple-600 hover:from-pink-500 hover:via-fuchsia-500 hover:to-purple-500 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-            {loading ? (
+            {createPending || createConfirming ? (
               <span className="relative flex items-center justify-center">
                 <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                <span className="text-sm sm:text-base">Creating raffle...</span>
+                <span className="text-sm sm:text-base">{createConfirming ? 'Confirming...' : 'Creating raffle...'}</span>
               </span>
             ) : approvalStatus !== true ? (
               <span className="relative">NFT Approval Required</span>

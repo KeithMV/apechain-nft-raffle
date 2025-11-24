@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useAccount, usePublicClient } from 'wagmi';
-import { formatEther } from 'viem/utils';
+import React from 'react';
+import { useAccount, useBalance } from 'wagmi';
+import { apeTokenUtils } from '../hooks/useApeToken';
 
 interface ApeTokenBalanceProps {
   requiredAmount?: string;
@@ -10,32 +10,16 @@ export default function ApeTokenBalance({
   requiredAmount
 }: ApeTokenBalanceProps) {
   const { address } = useAccount();
-  const publicClient = usePublicClient();
   
-  const [balance, setBalance] = useState<string>('0');
-  const [loading, setLoading] = useState(true);
+  // Professional wagmi hook for balance
+  const { data: balanceData, isLoading: loading } = useBalance({
+    address: address as `0x${string}`,
+    query: {
+      enabled: !!address,
+    },
+  });
 
-  useEffect(() => {
-    if (address && publicClient) {
-      loadBalance();
-    }
-  }, [address, publicClient]);
-
-  const loadBalance = async () => {
-    if (!address || !publicClient) return;
-    
-    setLoading(true);
-    try {
-      // Get native APE balance
-      const balanceResult = await publicClient.getBalance({ address: address as `0x${string}` });
-      setBalance(formatEther(balanceResult));
-    } catch (error) {
-      // Set balance to 0 on error
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  const balance = balanceData ? balanceData.formatted : '0';
   const hasInsufficientBalance = requiredAmount && parseFloat(balance) < parseFloat(requiredAmount);
 
   if (loading) {
@@ -59,7 +43,7 @@ export default function ApeTokenBalance({
           <span className="text-white font-semibold">APE Balance</span>
         </div>
         <span className="text-orange-400 font-mono font-bold">
-          {parseFloat(balance).toFixed(3)} APE
+          {apeTokenUtils.formatApe(balance)} APE
         </span>
       </div>
 
