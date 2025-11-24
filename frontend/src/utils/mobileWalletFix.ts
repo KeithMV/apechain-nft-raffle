@@ -1,50 +1,48 @@
 /**
  * Mobile wallet compatibility fixes
- * Handles getChainId errors and other mobile-specific issues
+ * Handles mobile-specific wallet connection issues
  */
 
-import { useAccount, useChainId } from 'wagmi';
+import { getAccount, getChainId } from '@wagmi/core';
+import { config } from '../config/wagmi-minimal';
 
-// Mobile-safe chain ID getter
+// Mobile-safe chain ID getter using wagmi core
 export const getMobileChainId = () => {
   try {
-    // Try wagmi hook first
-    const chainId = useChainId();
-    if (chainId) return chainId;
+    return getChainId(config);
   } catch (error) {
     console.warn('Wagmi chainId failed, trying fallback');
-  }
-
-  try {
-    // Fallback to direct ethereum provider
-    if (typeof window !== 'undefined' && window.ethereum) {
-      return parseInt(window.ethereum.chainId || '0x1', 16);
+    
+    try {
+      // Fallback to direct ethereum provider
+      if (typeof window !== 'undefined' && window.ethereum) {
+        return parseInt(window.ethereum.chainId || '0x811f', 16); // ApeChain hex
+      }
+    } catch (error) {
+      console.warn('Direct ethereum chainId failed');
     }
-  } catch (error) {
-    console.warn('Direct ethereum chainId failed');
-  }
 
-  // Default to ApeChain
-  return 33139;
+    // Default to ApeChain
+    return 33139;
+  }
 };
 
-// Mobile-safe account getter
+// Mobile-safe account getter using wagmi core
 export const getMobileAccount = () => {
   try {
-    const { address, connector } = useAccount();
-    return { address, connector };
+    const account = getAccount(config);
+    return { address: account.address };
   } catch (error) {
     console.warn('Wagmi account failed, trying fallback');
     
     // Fallback to direct ethereum provider
     if (typeof window !== 'undefined' && window.ethereum?.selectedAddress) {
       return { 
-        address: window.ethereum.selectedAddress,
-        connector: null 
+        address: window.ethereum.selectedAddress as `0x${string}`
       };
     }
     
-    return { address: undefined, connector: null };
+    return { address: undefined };
   }
 };
 
@@ -57,20 +55,13 @@ export const isMobile = () => {
   ) || window.innerWidth <= 768;
 };
 
-// Mobile-safe connector client getter
-export const getMobileConnectorClient = async () => {
+// Mobile-safe chain validation
+export const validateMobileChain = async (): Promise<boolean> => {
   try {
-    // Try to get connector client safely
-    const { connector } = getMobileAccount();
-    
-    if (connector && typeof connector.getChainId === 'function') {
-      return await connector.getChainId();
-    }
-    
-    // Fallback for mobile
-    return getMobileChainId();
+    const chainId = getMobileChainId();
+    return chainId === 33139;
   } catch (error) {
-    console.warn('Connector client failed, using fallback:', error);
-    return getMobileChainId();
+    console.warn('Chain validation failed:', error);
+    return false;
   }
 };
