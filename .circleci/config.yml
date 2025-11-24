@@ -14,11 +14,11 @@ jobs:
           name: Install frontend dependencies
           command: |
             cd frontend
-            # Try yarn with multiple registries and fallback to npm
-            yarn install --frozen-lockfile --prefer-offline || \
-            yarn install --frozen-lockfile --registry https://registry.npmjs.org/ || \
-            yarn install --frozen-lockfile --registry https://registry.npmmirror.com/ || \
-            npm ci
+            # Try yarn with multiple registries and network configurations
+            yarn install --frozen-lockfile --prefer-offline --network-timeout 300000 || \
+            yarn install --frozen-lockfile --registry https://registry.npmjs.org/ --network-timeout 300000 || \
+            yarn install --frozen-lockfile --registry https://registry.npmmirror.com/ --network-timeout 300000 || \
+            yarn install --registry https://registry.npmjs.org/ --network-timeout 300000
       - save_cache:
           key: yarn-cache-v1-{{ checksum "frontend/yarn.lock" }}
           paths:
