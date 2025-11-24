@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount, usePublicClient } from 'wagmi';
+import NFTImage from './NFTImage';
+import toast from 'react-hot-toast';
+
 // Services temporarily disabled - using hooks instead
 interface UserRafflePosition {
   raffleId: number;
@@ -21,8 +24,6 @@ interface CreatedRaffle {
   winner?: string;
   completed: boolean;
 }
-import NFTImage from './NFTImage';
-import toast from 'react-hot-toast';
 
 export default function RaffleDashboard() {
   const { address } = useAccount();
