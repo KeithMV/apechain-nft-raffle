@@ -12,7 +12,11 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
   showBreakdown = false,
   className = ""
 }) => {
-  const [currentFee, setCurrentFee] = useState({
+  const [currentFee, setCurrentFee] = useState<{
+    basisPoints: number;
+    percentage: number;
+    tier: FeeTier | null;
+  }>({
     basisPoints: 500,
     percentage: 5,
     tier: FEE_TIERS.COMPETITIVE
