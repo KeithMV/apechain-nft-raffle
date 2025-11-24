@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount, usePublicClient } from 'wagmi';
-import { rafflePositionService, CreatedRaffle } from '../services/rafflePositionService';
-import { raffleContractService } from '../services/raffleContractService';
+// Services temporarily disabled - using hooks instead
 import ApeTokenBalance from './ApeTokenBalance';
 import NFTImage from './NFTImage';
 import toast from 'react-hot-toast';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePublicClient } from 'wagmi';
-import { nftMetadataService } from '../services/nftMetadataServiceV2';
+// Service temporarily disabled - using direct implementation
 
 interface NFTImageProps {
   contractAddress: string;

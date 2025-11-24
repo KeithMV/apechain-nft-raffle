@@ -1,7 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount, usePublicClient } from 'wagmi';
-import { rafflePositionService, UserRafflePosition, CreatedRaffle } from '../services/rafflePositionService';
-import { raffleContractService } from '../services/raffleContractService';
+// Services temporarily disabled - using hooks instead
+interface UserRafflePosition {
+  raffleId: number;
+  ticketsPurchased: number;
+  totalSpent: string;
+  raffleContract: string;
+}
+
+interface CreatedRaffle {
+  raffleId: number;
+  raffleContract: string;
+  nftContract: string;
+  tokenId: string;
+  creator: string;
+  ticketPrice: string;
+  maxTickets: number;
+  ticketsSold: number;
+  endTime: number;
+  winner?: string;
+  completed: boolean;
+}
 import NFTImage from './NFTImage';
 import toast from 'react-hot-toast';
 
