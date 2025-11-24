@@ -254,5 +254,31 @@ export const ERC721_ABI = [
   }
 ] as const;
 
+// APE Token Configuration (Native APE on ApeChain)
+export const APE_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'; // Native token
+export const APE_TOKEN_ABI = [
+  {
+    "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
+    "name": "balanceOf",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "symbol",
+    "outputs": [{"internalType": "string", "name": "", "type": "string"}],
+    "stateMutability": "view",
+    "type": "function"
+  }
+] as const;
+
 // Export contract addresses
 export { RAFFLE_FACTORY_ADDRESS };
