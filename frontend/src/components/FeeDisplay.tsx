@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { feeManagementService, FEE_TIERS } from '../services/feeManagementService';
+import { feeManagementService, FEE_TIERS, FeeTier } from '../services/feeManagementService';
 
 interface FeeDisplayProps {
   totalAmount?: number;
@@ -12,14 +12,10 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
   showBreakdown = false,
   className = ""
 }) => {
-  const [currentFee, setCurrentFee] = useState<{
-    basisPoints: number;
-    percentage: number;
-    tier: FeeTier | null;
-  }>({
+  const [currentFee, setCurrentFee] = useState({
     basisPoints: 500,
     percentage: 5,
-    tier: FEE_TIERS.COMPETITIVE
+    tier: FEE_TIERS.COMPETITIVE as FeeTier | null
   });
   const [loading, setLoading] = useState(true);
 
