@@ -63,24 +63,29 @@ class RaffleService {
   async createRaffle(params: CreateRaffleParams): Promise<RaffleResult> {
     safeLog('🔄 Starting raffle creation with params:', params);
 
+    // Professional: Validate connection state first
+    const account = getAccount(config);
+    if (!account.isConnected || !account.address) {
+      throw new Error('Wallet not connected. Please connect your wallet.');
+    }
+
     try {
-      return await WalletConnectionService.executeWithWallet(async (accountAddress) => {
-        // Pre-calculate APE amount to avoid async in transaction args
-        const ticketPriceWei = await apeTokenService.parseApe(params.ticketPrice);
-        
-        // Mobile Safari compatibility - let wagmi handle account automatically
-        const hash = await writeContract(config, {
-          address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
-          abi: RAFFLE_FACTORY_ABI,
-          functionName: 'createRaffle',
-          args: [
-            params.nftContract as `0x${string}`,
-            BigInt(params.tokenId),
-            ticketPriceWei,
-            BigInt(params.maxTickets),
-            BigInt(params.duration)
-          ] as const,
-        });
+      // Pre-calculate APE amount to avoid async in transaction args
+      const ticketPriceWei = await apeTokenService.parseApe(params.ticketPrice);
+      
+      // Professional wagmi implementation
+      const hash = await writeContract(config, {
+        address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+        abi: RAFFLE_FACTORY_ABI,
+        functionName: 'createRaffle',
+        args: [
+          params.nftContract as `0x${string}`,
+          BigInt(params.tokenId),
+          ticketPriceWei,
+          BigInt(params.maxTickets),
+          BigInt(params.duration)
+        ] as const,
+      });
 
         safeLog('✅ Raffle creation transaction submitted:', hash);
 
@@ -105,12 +110,11 @@ class RaffleService {
           safeError('⚠️ Could not retrieve raffle details:', error);
         }
 
-        return {
-          hash,
-          raffleId,
-          raffleContract
-        };
-      });
+      return {
+        hash,
+        raffleId,
+        raffleContract
+      };
 
     } catch (error) {
       safeError('❌ Raffle creation failed:', error);
