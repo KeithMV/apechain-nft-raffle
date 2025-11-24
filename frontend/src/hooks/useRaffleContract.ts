@@ -67,6 +67,7 @@ export function useNFTApproval() {
       abi: ERC721_ABI,
       functionName: 'setApprovalForAll',
       args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
+      chainId: 33139, // Force ApeChain
     });
   };
 
@@ -104,6 +105,7 @@ export function useCreateRaffle() {
         BigInt(params.maxTickets),
         BigInt(params.duration)
       ],
+      chainId: 33139, // Force ApeChain
     });
   };
 
