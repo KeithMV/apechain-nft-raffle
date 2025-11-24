@@ -69,11 +69,12 @@ jobs:
             slither . --json slither-report.json || true
             echo "Security analysis complete - check slither-report.json for details"
       - run:
-          name: Deploy Secure Contracts
+          name: Validate Contract Compilation
           command: |
             cd contracts
-            echo "Deploying secure contracts..."
-            npm run deploy-secure || echo "Secure contracts deployment completed"
+            echo "Validating contract compilation..."
+            npx hardhat compile
+            echo "✅ Contract compilation successful"
       - run:
           name: Validate infrastructure templates
           command: |
