@@ -6,11 +6,23 @@ jobs:
       - image: cimg/node:20.18
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - yarn-cache-v1-{{ checksum "frontend/yarn.lock" }}
+            - yarn-cache-v1-
       - run:
           name: Install frontend dependencies
           command: |
             cd frontend
-            yarn install --network-timeout 100000 --retry 3 || npm install
+            for i in {1..3}; do
+              yarn install --frozen-lockfile --prefer-offline && break
+              echo "Install attempt $i failed, retrying in $((i*2)) seconds..."
+              sleep $((i*2))
+            done
+      - save_cache:
+          key: yarn-cache-v1-{{ checksum "frontend/yarn.lock" }}
+          paths:
+            - ~/.cache/yarn
       - run:
           name: Run frontend tests
           command: |
@@ -32,11 +44,19 @@ jobs:
       - image: cimg/node:20.18
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - npm-cache-v1-{{ checksum "contracts/package-lock.json" }}
+            - npm-cache-v1-
       - run:
           name: Install contract dependencies
           command: |
             cd contracts
-            npm install
+            npm ci --prefer-offline
+      - save_cache:
+          key: npm-cache-v1-{{ checksum "contracts/package-lock.json" }}
+          paths:
+            - ~/.npm
       - run:
           name: Compile contracts
           command: |
