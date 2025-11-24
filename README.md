@@ -195,3 +195,5 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 - [White-Label Business Plan](white-label-business/)
 - [Platform Education](white-label-business/PLATFORM_EDUCATION.md)
 - [Demo Script](white-label-business/DEMO_SCRIPT.md)
+
+# Pipeline trigger - Enterprise wallet service deployment
