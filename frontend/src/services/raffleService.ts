@@ -233,32 +233,35 @@ class RaffleService {
    * Revoke approval for RaffleFactory
    */
   async revokeApproval(nftContract: string): Promise<string> {
-    return await WalletConnectionService.executeWithWallet(async (accountAddress) => {
-      try {
-        safeLog('🔄 Revoking NFT contract approval:', nftContract);
-        
-        const hash = await writeContract(config, {
-          address: nftContract as `0x${string}`,
-          abi: ERC721_ABI,
-          functionName: 'setApprovalForAll',
-          args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, false],
-        });
+    // Professional: Validate connection state first
+    const account = getAccount(config);
+    if (!account.isConnected || !account.address) {
+      throw new Error('Wallet not connected. Please connect your wallet.');
+    }
 
-        safeLog('✅ Revoke transaction submitted:', hash);
+    try {
+      safeLog('🔄 Revoking NFT contract approval:', nftContract);
+      
+      const hash = await writeContract(config, {
+        address: nftContract as `0x${string}`,
+        abi: ERC721_ABI,
+        functionName: 'setApprovalForAll',
+        args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, false],
+      });
 
-        // Wait for confirmation
-        await waitForTransactionReceipt(config, {
-          hash,
-          confirmations: 1,
-        });
+      safeLog('✅ Revoke transaction submitted:', hash);
 
-        safeLog('✅ Approval revoked');
-        return hash;
-      } catch (error) {
-        safeError('❌ Revoke failed:', error);
-        throw error;
-      }
-    });
+      await waitForTransactionReceipt(config, {
+        hash,
+        confirmations: 1,
+      });
+
+      safeLog('✅ Approval revoked');
+      return hash;
+    } catch (error) {
+      safeError('❌ Revoke failed:', error);
+      throw error;
+    }
   }
 
   /**
