@@ -197,3 +197,4 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 - [Demo Script](white-label-business/DEMO_SCRIPT.md)
 
 # Pipeline trigger - Enterprise wallet service deployment
+# Retrigger deployment - Mobile Safari compatibility fix
