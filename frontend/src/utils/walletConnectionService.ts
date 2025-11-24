@@ -10,8 +10,8 @@ export class WalletConnectionService {
   private static readonly VALIDATION_TIMEOUT = 3000;
   
   /**
-   * Comprehensive wallet state validation with mobile compatibility
-   * Follows patterns used by leading Web3 applications
+   * Professional wallet validation with mobile Safari compatibility
+   * Maintains security while handling mobile browser limitations
    */
   static async validateWalletState(): Promise<{
     isValid: boolean;
@@ -30,8 +30,7 @@ export class WalletConnectionService {
         };
       }
 
-      // Mobile-aware connection state check
-      // Some mobile wallets may not set isConnected properly
+      // Validate address format
       const hasValidAddress = accountState.address && accountState.address.startsWith('0x');
       if (!hasValidAddress) {
         return {
@@ -40,29 +39,30 @@ export class WalletConnectionService {
         };
       }
 
-      // Network validation with timeout protection
+      // Professional network validation with mobile Safari compatibility
       let currentChainId: number;
       try {
-        const chainPromise = getChainId(config);
+        // Use timeout for mobile networks
+        const chainIdPromise = getChainId(config);
         const timeoutPromise = new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error('Network timeout')), this.VALIDATION_TIMEOUT)
         );
         
-        currentChainId = await Promise.race([chainPromise, timeoutPromise]);
+        currentChainId = await Promise.race([chainIdPromise, timeoutPromise]);
         
         if (currentChainId !== this.REQUIRED_CHAIN_ID) {
           return {
             isValid: false,
             account: accountState.address as `0x${string}`,
             chainId: currentChainId,
-            error: `Wrong network. Please switch to ApeChain (${this.REQUIRED_CHAIN_ID}).`
+            error: `Please switch to ApeChain network (${this.REQUIRED_CHAIN_ID})`
           };
         }
       } catch (networkError) {
-        // Network validation failed - allow transaction to proceed
-        // The wallet will enforce correct network during transaction
-        console.warn('Network validation failed, proceeding with transaction attempt');
-        currentChainId = this.REQUIRED_CHAIN_ID; // Assume correct network
+        // Mobile Safari: graceful degradation for network validation
+        // Transaction will fail at wallet level if wrong network
+        console.warn('Network validation timeout - proceeding with transaction');
+        currentChainId = this.REQUIRED_CHAIN_ID;
       }
 
       return {
@@ -74,14 +74,14 @@ export class WalletConnectionService {
     } catch (error) {
       return {
         isValid: false,
-        error: error instanceof Error ? error.message : 'Wallet validation failed'
+        error: 'Wallet validation failed. Please reconnect your wallet.'
       };
     }
   }
 
   /**
-   * Executes Web3 operations with validated wallet connection
-   * Industry standard pattern used by major dApps
+   * Professional wallet execution with mobile Safari compatibility
+   * Maintains security standards while handling mobile limitations
    */
   static async executeWithWallet<T>(
     operation: (account: `0x${string}`) => Promise<T>
