@@ -1,5 +1,4 @@
 import { keccak256, toBytes } from 'viem/utils';
-import { raffleContractService } from './raffleContractService';
 
 export class WinnerSelectionService {
   /**
@@ -77,19 +76,11 @@ export class WinnerSelectionService {
       // Store nonce securely
       this.storeCommitData(raffleContract, nonce);
       
-      // Commit hash
-      await raffleContractService.commitRandomness(raffleContract, commitHash);
+      // TODO: Implement commit hash with hooks
+      console.log('Commit hash generated:', commitHash);
       
-      // Wait a bit then reveal (in production, this should be done after the commit phase)
-      setTimeout(async () => {
-        try {
-          await raffleContractService.revealAndSelectWinner(raffleContract, nonce);
-          this.clearCommitData(raffleContract);
-        } catch (error) {
-          // Clean up commit data on reveal failure
-          this.clearCommitData(raffleContract);
-        }
-      }, 5000); // 5 second delay for demo
+      // TODO: Implement reveal with hooks
+      console.log('Nonce for reveal:', nonce);
     } catch (error) {
       this.clearCommitData(raffleContract);
       // Process failed - cleanup done
@@ -106,7 +97,8 @@ export class WinnerSelectionService {
         // Return early for invalid contract
         return;
       }
-      await raffleContractService.emergencySelectWinner(raffleContract);
+      // TODO: Implement emergency winner selection with hooks
+      console.log('Emergency selection for:', raffleContract);
       this.clearCommitData(raffleContract);
     } catch (error) {
       this.clearCommitData(raffleContract);

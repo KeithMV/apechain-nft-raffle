@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useAccount, usePublicClient } from 'wagmi';
+import { useAccount } from 'wagmi';
 import ApeTokenBalance from './ApeTokenBalance';
 import NFTImage from './NFTImage';
 import toast from 'react-hot-toast';
+import { useAllRaffles, useClearRaffleCache } from '../hooks/useRafflePositions';
+import { useCreateRaffle } from '../hooks/useRaffleContract';
 
-// Services temporarily disabled - using hooks instead
 interface CreatedRaffle {
   raffleId: number;
   raffleContract: string;
@@ -22,90 +23,25 @@ interface CreatedRaffle {
 
 export default function BrowseRaffles() {
   const { address } = useAccount();
-  const publicClient = usePublicClient();
   
-  const [raffles, setRaffles] = useState<CreatedRaffle[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [buyingTickets, setBuyingTickets] = useState<string | null>(null);
   const [ticketQuantities, setTicketQuantities] = useState<{[key: string]: number}>({});
   const [showExpired, setShowExpired] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  
+  const { raffles, loading, error, refetch } = useAllRaffles(30, currentPage * 20);
+  const clearCache = useClearRaffleCache();
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
   useEffect(() => {
-    if (publicClient) {
-      loadRaffles();
+    if (raffles.length < 20) {
+      setHasMoreRaffles(false);
     }
-  }, [publicClient]);
+  }, [raffles]);
 
-  const loadRaffles = async (reset = true) => {
-    if (!publicClient) return;
-    
-    if (reset) {
-      setLoading(true);
-      setCurrentPage(0);
-      setHasMoreRaffles(true);
-    }
-    
-    try {
-      console.log('Loading all raffles...');
-      // Use getAllRaffles to show both active and expired raffles
-      const allRaffles = await rafflePositionService.getAllRaffles(publicClient, 30);
-      console.log('Loaded all raffles:', allRaffles.length);
-      
-      if (reset) {
-        setRaffles(allRaffles);
-      }
-      
-      if (allRaffles.length < 30) {
-        setHasMoreRaffles(false);
-      }
-      
-      if (allRaffles.length === 0) {
-        console.log('No raffles found');
-      }
-    } catch (error) {
-      console.error('Failed to load raffles:', error);
-      toast.error('Failed to load raffles. Please try refreshing the page.');
-      // Set empty array to prevent undefined errors
-      if (reset) {
-        setRaffles([]);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadMoreRaffles = async () => {
-    if (!publicClient || loadingMore || !hasMoreRaffles) return;
-    
-    setLoadingMore(true);
-    try {
-      const nextPage = currentPage + 1;
-      console.log('Loading more active raffles, page:', nextPage);
-      
-      // For "load more", we can use getAllRaffles with offset for pagination
-      const moreRaffles = await rafflePositionService.getAllRaffles(publicClient, 20, nextPage * 20);
-      console.log('Loaded more raffles:', moreRaffles.length);
-      
-      if (moreRaffles.length === 0) {
-        setHasMoreRaffles(false);
-        toast('No more raffles to load', { icon: '📭' });
-      } else {
-        setRaffles(prev => [...prev, ...moreRaffles]);
-        setCurrentPage(nextPage);
-        
-        if (moreRaffles.length < 20) {
-          setHasMoreRaffles(false);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load more raffles:', error);
-      toast.error('Failed to load more raffles');
-    } finally {
-      setLoadingMore(false);
-    }
+  const loadMoreRaffles = () => {
+    if (!hasMoreRaffles) return;
+    setCurrentPage(prev => prev + 1);
   };
 
   const formatTimeRemaining = (endTime: number) => {
@@ -139,37 +75,12 @@ export default function BrowseRaffles() {
 
     setBuyingTickets(raffle.raffleContract);
     try {
-      await raffleContractService.buyTickets({
-        raffleContract: raffle.raffleContract,
-        quantity,
-        ticketPrice: raffle.ticketPrice
-      });
-      
-      toast.success(`Successfully bought ${quantity} ticket${quantity > 1 ? 's' : ''}!`);
-      loadRaffles(); // Refresh data
-      
-      // Reset quantity
-      setTicketQuantities(prev => ({
-        ...prev,
-        [raffle.raffleContract]: 1
-      }));
+      // TODO: Implement buy tickets hook
+      toast.error('Buy tickets functionality needs to be implemented with hooks');
       
     } catch (error: any) {
       console.error('Failed to buy tickets:', error);
-      if (error.message?.includes('User rejected')) {
-        toast.error('Transaction cancelled by user');
-      } else if (error.message?.includes('Creator cannot buy own raffle')) {
-        toast.error('Raffle creators cannot buy their own tickets');
-      } else if (error.message?.includes('insufficient funds')) {
-        const requiredAmount = (parseFloat(raffle.ticketPrice) * quantity).toFixed(3);
-        toast.error('Insufficient APE balance - you need ' + requiredAmount + ' APE tokens');
-      } else if (error.message?.includes('execution reverted')) {
-        toast.error('Transaction failed - ensure you have enough APE tokens and try again');
-      } else if (error.message?.includes('allowance')) {
-        toast.error('Please approve APE spending for this contract first');
-      } else {
-        toast.error('Failed to buy tickets: ' + (error.message || 'Unknown error'));
-      }
+      toast.error('Failed to buy tickets: ' + (error.message || 'Unknown error'));
     } finally {
       setBuyingTickets(null);
     }
@@ -214,8 +125,8 @@ export default function BrowseRaffles() {
               <button
                 onClick={() => {
                   console.log('🔄 Clearing cache and refreshing...');
-                  rafflePositionService.clearAllData();
-                  loadRaffles();
+                  clearCache();
+                  refetch();
                 }}
                 className="px-4 py-2 rounded-xl text-sm font-medium transition-all bg-slate-700/50 text-slate-400 border border-slate-600/30 hover:bg-slate-600/50"
                 title="Refresh and clear cache"
@@ -443,11 +354,11 @@ export default function BrowseRaffles() {
                 <div className="mt-8 text-center">
                   <button
                     onClick={loadMoreRaffles}
-                    disabled={loadingMore}
+                    disabled={loading}
                     className="relative bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 disabled:from-slate-800 disabled:to-slate-800 text-slate-300 hover:text-white disabled:text-slate-500 font-semibold py-3 px-8 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-3 mx-auto overflow-hidden group border border-slate-600/50 hover:border-slate-500/50"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-slate-500/0 via-slate-500/10 to-slate-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                    {loadingMore ? (
+                    {loading ? (
                       <>
                         <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
                         <span className="relative">Loading older raffles...</span>

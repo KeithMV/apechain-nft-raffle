@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { useAccount, usePublicClient } from 'wagmi';
+import { useAccount } from 'wagmi';
 import NFTImage from './NFTImage';
 import toast from 'react-hot-toast';
+import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
 
-// Services temporarily disabled - using hooks instead
 interface UserRafflePosition {
   raffleId: number;
-  ticketsPurchased: number;
-  totalSpent: string;
   raffleContract: string;
+  nftContract: string;
+  tokenId: string;
+  userTickets: number;
+  ticketsSold: number;
+  maxTickets: number;
+  endTime: number;
+  completed: boolean;
+  isActive: boolean;
+  isWinner: boolean;
+  winProbability: number;
 }
 
 interface CreatedRaffle {
@@ -23,60 +31,30 @@ interface CreatedRaffle {
   endTime: number;
   winner?: string;
   completed: boolean;
+  isActive: boolean;
 }
 
 export default function RaffleDashboard() {
   const { address } = useAccount();
-  const publicClient = usePublicClient();
   
-  const [userPositions, setUserPositions] = useState<UserRafflePosition[]>([]);
-  const [createdRaffles, setCreatedRaffles] = useState<CreatedRaffle[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'participated' | 'created'>('participated');
   const [showExpired, setShowExpired] = useState(true);
   const [page, setPage] = useState(0);
+  
+  const { positions: userPositions, loading: positionsLoading } = useUserRafflePositions(address);
+  const { raffles: createdRaffles, loading: rafflesLoading } = useCreatedRaffles(address, page);
+  
+  const loading = positionsLoading || rafflesLoading;
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
   useEffect(() => {
-    if (address && publicClient) {
-      setPage(0);
-      setCreatedRaffles([]);
-      loadUserData(0, false);
+    if (createdRaffles.length === 0) {
+      setHasMoreRaffles(false);
     }
-  }, [address, publicClient]);
+  }, [createdRaffles]);
 
-  const loadUserData = async (pageNum: number = 0, append: boolean = false) => {
-    if (!address || !publicClient) return;
-    
-    setLoading(true);
-    try {
-      const [positions, created] = await Promise.all([
-        rafflePositionService.getUserRafflePositions(address, publicClient),
-        rafflePositionService.getCreatedRaffles(address, publicClient, pageNum)
-      ]);
-      
-      setUserPositions(positions);
-      
-      if (append) {
-        setCreatedRaffles(prev => [...prev, ...created]);
-      } else {
-        setCreatedRaffles(created);
-      }
-      
-      // Check if there are more raffles (if we got results, there might be more)
-      setHasMoreRaffles(created.length > 0);
-    } catch (error) {
-      console.error('Failed to load user data:', error);
-      toast.error('Failed to load raffle data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadMoreRaffles = async () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    await loadUserData(nextPage, true);
+  const loadMoreRaffles = () => {
+    setPage(prev => prev + 1);
   };
 
   const formatTimeRemaining = (endTime: number) => {
@@ -96,9 +74,8 @@ export default function RaffleDashboard() {
 
   const handleSelectWinner = async (raffleContract: string) => {
     try {
-      await raffleContractService.emergencySelectWinner(raffleContract);
-      toast.success('Winner selected successfully!');
-      loadUserData(); // Refresh data
+      // TODO: Implement emergency select winner hook
+      toast.error('Winner selection functionality needs to be implemented with hooks');
     } catch (error: any) {
       console.error('Failed to select winner:', error);
       toast.error('Failed to select winner: ' + error.message);
@@ -107,10 +84,8 @@ export default function RaffleDashboard() {
 
   const handleCancelRaffle = async (raffleContract: string) => {
     try {
-      // Call cancel raffle function
-      await raffleContractService.cancelRaffle(raffleContract);
-      toast.success('Raffle cancelled successfully!');
-      loadUserData(); // Refresh data
+      // TODO: Implement cancel raffle hook
+      toast.error('Cancel raffle functionality needs to be implemented with hooks');
     } catch (error: any) {
       console.error('Failed to cancel raffle:', error);
       toast.error('Failed to cancel raffle: ' + error.message);
