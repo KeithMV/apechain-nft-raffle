@@ -217,3 +217,4 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 # Retrigger deployment - Mobile Safari compatibility fix
 # Retry pipeline - yarn registry fallback solution
 # Deploy professional tiered fee system - dynamic fee management
+# Retrigger pipeline - TypeScript 5.9.3 compatibility fix
