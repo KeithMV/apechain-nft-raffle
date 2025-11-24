@@ -1,17 +1,16 @@
-import { getAccount, getChainId } from '@wagmi/core';
+import { getAccount } from '@wagmi/core';
 import { config } from '../config/wagmi-minimal';
 
 /**
  * Enterprise wallet connection service following Web3 industry standards
- * Used by Uniswap, Aave, and other professional dApps
+ * Mobile Safari compatible - bypasses connector validation completely
  */
 export class WalletConnectionService {
   private static readonly REQUIRED_CHAIN_ID = 33139;
-  private static readonly VALIDATION_TIMEOUT = 3000;
   
   /**
    * Mobile Safari compatible wallet validation
-   * Handles ConnectorNotConnectedError gracefully
+   * No connector dependency - address-first validation
    */
   static async validateWalletState(): Promise<{
     isValid: boolean;
@@ -22,7 +21,6 @@ export class WalletConnectionService {
     try {
       const accountState = getAccount(config);
       
-      // Mobile Safari: Accept address even without connector connection
       if (!accountState.address) {
         return {
           isValid: false,
@@ -30,7 +28,6 @@ export class WalletConnectionService {
         };
       }
 
-      // Validate address format
       if (!accountState.address.startsWith('0x')) {
         return {
           isValid: false,
@@ -38,7 +35,6 @@ export class WalletConnectionService {
         };
       }
 
-      // Mobile Safari: Skip network validation to avoid connector errors
       return {
         isValid: true,
         account: accountState.address as `0x${string}`,
@@ -55,25 +51,18 @@ export class WalletConnectionService {
 
   /**
    * Mobile Safari compatible wallet execution
-   * Bypasses ConnectorNotConnectedError
+   * Direct address extraction - no connector validation
    */
   static async executeWithWallet<T>(
     operation: (account: `0x${string}`) => Promise<T>
   ): Promise<T> {
-    try {
-      const accountState = getAccount(config);
-      
-      if (!accountState.address) {
-        throw new Error('No wallet connected. Please connect your wallet.');
-      }
-
-      return await operation(accountState.address as `0x${string}`);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('ConnectorNotConnectedError')) {
-        throw new Error('Wallet connection issue. Please reconnect your wallet.');
-      }
-      throw error;
+    const accountState = getAccount(config);
+    
+    if (!accountState.address) {
+      throw new Error('No wallet connected. Please connect your wallet.');
     }
+
+    return await operation(accountState.address as `0x${string}`);
   }
 
   /**

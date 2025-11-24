@@ -69,7 +69,7 @@ class RaffleService {
         // Pre-calculate APE amount to avoid async in transaction args
         const ticketPriceWei = await apeTokenService.parseApe(params.ticketPrice);
         
-        // Mobile Safari compatibility - validated account for transaction
+        // Mobile Safari compatibility - let wagmi handle account automatically
         const hash = await writeContract(config, {
           address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
           abi: RAFFLE_FACTORY_ABI,
@@ -81,7 +81,6 @@ class RaffleService {
             BigInt(params.maxTickets),
             BigInt(params.duration)
           ] as const,
-          account: accountAddress as `0x${string}`,
         });
 
         safeLog('✅ Raffle creation transaction submitted:', hash);
@@ -193,7 +192,6 @@ class RaffleService {
           abi: ERC721_ABI,
           functionName: 'setApprovalForAll',
           args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
-          account,
         });
 
         safeLog('✅ Approval transaction submitted:', hash);
@@ -243,7 +241,6 @@ class RaffleService {
           abi: ERC721_ABI,
           functionName: 'setApprovalForAll',
           args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, false],
-          account: accountAddress as `0x${string}`,
         });
 
         safeLog('✅ Revoke transaction submitted:', hash);
