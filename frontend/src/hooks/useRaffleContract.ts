@@ -180,3 +180,41 @@ export function useFactoryPauseStatus() {
     functionName: 'paused',
   });
 }
+
+/**
+ * Hook for buying raffle tickets
+ */
+export function useBuyTickets() {
+  const { writeContract, data: hash, error, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const buyTickets = (raffleContract: string, quantity: number, ticketPrice: string) => {
+    const totalCost = parseEther((parseFloat(ticketPrice) * quantity).toString());
+    
+    writeContract({
+      address: raffleContract as `0x${string}`,
+      abi: [{
+        inputs: [{ name: 'quantity', type: 'uint256' }],
+        name: 'buyTickets',
+        outputs: [],
+        stateMutability: 'payable',
+        type: 'function',
+      }],
+      functionName: 'buyTickets',
+      args: [BigInt(quantity)],
+      value: totalCost,
+      chainId: 33139,
+    });
+  };
+
+  return {
+    buyTickets,
+    hash,
+    error,
+    isPending,
+    isConfirming,
+    isSuccess,
+  };
+}

@@ -4,7 +4,7 @@ import ApeTokenBalance from './ApeTokenBalance';
 import NFTImage from './NFTImage';
 import toast from 'react-hot-toast';
 import { useAllRaffles, useClearRaffleCache } from '../hooks/useRafflePositions';
-import { useCreateRaffle } from '../hooks/useRaffleContract';
+import { useBuyTickets } from '../hooks/useRaffleContract';
 
 interface CreatedRaffle {
   raffleId: number;
@@ -59,6 +59,8 @@ export default function BrowseRaffles() {
     return `${minutes}m`;
   };
 
+  const { buyTickets, isPending: buyingPending, isSuccess: buySuccess, error: buyError } = useBuyTickets();
+
   const handleBuyTickets = async (raffle: CreatedRaffle) => {
     const quantity = ticketQuantities[raffle.raffleContract] || 1;
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
@@ -75,16 +77,39 @@ export default function BrowseRaffles() {
 
     setBuyingTickets(raffle.raffleContract);
     try {
-      // TODO: Implement buy tickets hook
-      toast.error('Buy tickets functionality needs to be implemented with hooks');
-      
+      buyTickets(raffle.raffleContract, quantity, raffle.ticketPrice);
     } catch (error: any) {
       console.error('Failed to buy tickets:', error);
       toast.error('Failed to buy tickets: ' + (error.message || 'Unknown error'));
-    } finally {
       setBuyingTickets(null);
     }
   };
+
+  // Handle buy success
+  useEffect(() => {
+    if (buySuccess) {
+      const quantity = Object.values(ticketQuantities)[0] || 1;
+      toast.success(`Successfully bought ${quantity} ticket${quantity > 1 ? 's' : ''}!`);
+      refetch(); // Refresh raffles
+      setBuyingTickets(null);
+      setTicketQuantities({});
+    }
+  }, [buySuccess, ticketQuantities, refetch]);
+
+  // Handle buy error
+  useEffect(() => {
+    if (buyError) {
+      console.error('Buy tickets error:', buyError);
+      if (buyError.message?.includes('User rejected')) {
+        toast.error('Transaction cancelled by user');
+      } else if (buyError.message?.includes('insufficient funds')) {
+        toast.error('Insufficient APE balance');
+      } else {
+        toast.error('Failed to buy tickets: ' + buyError.message);
+      }
+      setBuyingTickets(null);
+    }
+  }, [buyError]);
 
   const setTicketQuantity = (raffleContract: string, quantity: number, maxAvailable: number) => {
     setTicketQuantities(prev => ({
