@@ -28,9 +28,14 @@ export const apeChain = defineChain({
 export const config = createConfig({
   chains: [apeChain],
   connectors: [
-    // Single generic injected connector for maximum mobile compatibility
+    // Professional mobile Safari compatible connector
     injected({
-      shimDisconnect: true,
+      shimDisconnect: false, // Critical for mobile Safari
+      target: () => ({
+        id: 'injected',
+        name: 'Injected',
+        provider: window.ethereum,
+      }),
     }),
   ],
   transports: {

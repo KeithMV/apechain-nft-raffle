@@ -1,10 +1,9 @@
-import { writeContract, readContract, waitForTransactionReceipt, getAccount, getChainId } from '@wagmi/core';
+import { writeContract, readContract, waitForTransactionReceipt, getAccount } from '@wagmi/core';
 import { config } from '../config/wagmi-minimal';
 import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
 import { apeTokenService } from './apeTokenService';
 import { safeLog, safeError } from '../utils/logSanitizer';
-import { WalletConnectionService } from '../utils/walletConnectionService';
 
 export interface CreateRaffleParams {
   nftContract: string;
@@ -176,56 +175,54 @@ class RaffleService {
 
   /**
    * Approve RaffleFactory to transfer all NFTs from a contract
-   * Professional implementation with proper error handling
+   * Professional wagmi implementation with mobile Safari compatibility
    */
   async approveForAll(nftContract: string): Promise<string> {
     if (!nftContract || !nftContract.startsWith('0x')) {
       throw new Error('Invalid NFT contract address');
     }
 
-    return await WalletConnectionService.executeWithWallet(async (account) => {
-      safeLog('🔄 Approving NFT contract for raffle:', nftContract);
+    // Professional: Validate connection state first
+    const account = getAccount(config);
+    if (!account.isConnected || !account.address) {
+      throw new Error('Wallet not connected. Please connect your wallet.');
+    }
+
+    safeLog('🔄 Approving NFT contract for raffle:', nftContract);
+    
+    try {
+      // Professional: Use wagmi with proper error handling
+      const hash = await writeContract(config, {
+        address: nftContract as `0x${string}`,
+        abi: ERC721_ABI,
+        functionName: 'setApprovalForAll',
+        args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
+      });
+
+      safeLog('✅ Approval transaction submitted:', hash);
+
+      await waitForTransactionReceipt(config, {
+        hash,
+        confirmations: 1,
+        timeout: 60_000,
+      });
+
+      safeLog('✅ NFT approval confirmed');
+      return hash;
       
-      try {
-        const hash = await writeContract(config, {
-          address: nftContract as `0x${string}`,
-          abi: ERC721_ABI,
-          functionName: 'setApprovalForAll',
-          args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
-        });
-
-        safeLog('✅ Approval transaction submitted:', hash);
-
-        // Wait for confirmation with appropriate timeout
-        await waitForTransactionReceipt(config, {
-          hash,
-          confirmations: 1,
-          timeout: 60_000, // 60 seconds for mobile networks
-        });
-
-        safeLog('✅ NFT approval confirmed');
-        return hash;
-        
-      } catch (error) {
-        safeError('❌ NFT approval failed:', error);
-        
-        // Professional error handling with specific user guidance
-        if (error instanceof Error) {
-          if (error.message.includes('rejected') || error.message.includes('denied')) {
-            throw new Error('Transaction was rejected. Please try again.');
-          }
-          if (error.message.includes('insufficient funds')) {
-            throw new Error('Insufficient funds for transaction fees.');
-          }
-          if (error.message.includes('network') || error.message.includes('timeout')) {
-            throw new Error('Network error. Please check your connection and try again.');
-          }
+    } catch (error) {
+      safeError('❌ NFT approval failed:', error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('rejected') || error.message.includes('denied')) {
+          throw new Error('Transaction was rejected. Please try again.');
         }
-        
-        // Re-throw with original error for debugging
-        throw error;
+        if (error.message.includes('insufficient funds')) {
+          throw new Error('Insufficient funds for transaction fees.');
+        }
       }
-    });
+      throw error;
+    }
   }
 
   /**
