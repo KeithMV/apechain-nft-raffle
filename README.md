@@ -198,3 +198,4 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 
 # Pipeline trigger - Enterprise wallet service deployment
 # Retrigger deployment - Mobile Safari compatibility fix
+# Retry pipeline - yarn registry fallback solution
