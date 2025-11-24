@@ -10,8 +10,8 @@ export class WalletConnectionService {
   private static readonly VALIDATION_TIMEOUT = 3000;
   
   /**
-   * Professional wallet validation with mobile Safari compatibility
-   * Maintains security while handling mobile browser limitations
+   * Mobile Safari compatible wallet validation
+   * Handles ConnectorNotConnectedError gracefully
    */
   static async validateWalletState(): Promise<{
     isValid: boolean;
@@ -22,7 +22,7 @@ export class WalletConnectionService {
     try {
       const accountState = getAccount(config);
       
-      // Primary validation: ensure wallet address is available
+      // Mobile Safari: Accept address even without connector connection
       if (!accountState.address) {
         return {
           isValid: false,
@@ -31,68 +31,49 @@ export class WalletConnectionService {
       }
 
       // Validate address format
-      const hasValidAddress = accountState.address && accountState.address.startsWith('0x');
-      if (!hasValidAddress) {
+      if (!accountState.address.startsWith('0x')) {
         return {
           isValid: false,
           error: 'Invalid wallet address detected.'
         };
       }
 
-      // Professional network validation with mobile Safari compatibility
-      let currentChainId: number;
-      try {
-        // Use timeout for mobile networks
-        const chainIdPromise = getChainId(config);
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Network timeout')), this.VALIDATION_TIMEOUT)
-        );
-        
-        currentChainId = await Promise.race([chainIdPromise, timeoutPromise]);
-        
-        if (currentChainId !== this.REQUIRED_CHAIN_ID) {
-          return {
-            isValid: false,
-            account: accountState.address as `0x${string}`,
-            chainId: currentChainId,
-            error: `Please switch to ApeChain network (${this.REQUIRED_CHAIN_ID})`
-          };
-        }
-      } catch (networkError) {
-        // Mobile Safari: graceful degradation for network validation
-        // Transaction will fail at wallet level if wrong network
-        console.warn('Network validation timeout - proceeding with transaction');
-        currentChainId = this.REQUIRED_CHAIN_ID;
-      }
-
+      // Mobile Safari: Skip network validation to avoid connector errors
       return {
         isValid: true,
         account: accountState.address as `0x${string}`,
-        chainId: currentChainId
+        chainId: this.REQUIRED_CHAIN_ID
       };
       
     } catch (error) {
       return {
         isValid: false,
-        error: 'Wallet validation failed. Please reconnect your wallet.'
+        error: 'Wallet connection failed. Please reconnect your wallet.'
       };
     }
   }
 
   /**
-   * Professional wallet execution with mobile Safari compatibility
-   * Maintains security standards while handling mobile limitations
+   * Mobile Safari compatible wallet execution
+   * Bypasses ConnectorNotConnectedError
    */
   static async executeWithWallet<T>(
     operation: (account: `0x${string}`) => Promise<T>
   ): Promise<T> {
-    const walletState = await this.validateWalletState();
-    
-    if (!walletState.isValid || !walletState.account) {
-      throw new Error(walletState.error || 'Wallet validation failed');
-    }
+    try {
+      const accountState = getAccount(config);
+      
+      if (!accountState.address) {
+        throw new Error('No wallet connected. Please connect your wallet.');
+      }
 
-    return await operation(walletState.account);
+      return await operation(accountState.address as `0x${string}`);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('ConnectorNotConnectedError')) {
+        throw new Error('Wallet connection issue. Please reconnect your wallet.');
+      }
+      throw error;
+    }
   }
 
   /**
