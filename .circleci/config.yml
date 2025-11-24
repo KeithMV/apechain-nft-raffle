@@ -10,7 +10,7 @@ jobs:
           name: Install frontend dependencies
           command: |
             cd frontend
-            yarn install
+            yarn install --network-timeout 100000 --retry 3 || npm install
       - run:
           name: Run frontend tests
           command: |
