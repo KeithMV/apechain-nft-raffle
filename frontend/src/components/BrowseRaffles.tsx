@@ -1,9 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount, usePublicClient } from 'wagmi';
-// Services temporarily disabled - using hooks instead
 import ApeTokenBalance from './ApeTokenBalance';
 import NFTImage from './NFTImage';
 import toast from 'react-hot-toast';
+
+// Services temporarily disabled - using hooks instead
+interface CreatedRaffle {
+  raffleId: number;
+  raffleContract: string;
+  nftContract: string;
+  tokenId: string;
+  creator: string;
+  ticketPrice: string;
+  maxTickets: number;
+  ticketsSold: number;
+  endTime: number;
+  winner?: string;
+  completed: boolean;
+  isActive: boolean;
+}
 
 export default function BrowseRaffles() {
   const { address } = useAccount();
