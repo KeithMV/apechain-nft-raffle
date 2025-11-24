@@ -52,7 +52,7 @@ jobs:
           name: Install contract dependencies
           command: |
             cd contracts
-            npm ci --prefer-offline
+            npm install --prefer-offline
       - save_cache:
           key: npm-cache-v1-{{ checksum "contracts/package-lock.json" }}
           paths:
