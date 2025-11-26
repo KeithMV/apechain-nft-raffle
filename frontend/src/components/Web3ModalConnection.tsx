@@ -1,48 +1,28 @@
-/**
- * Optimized Web3Modal wallet connection
- * Minimal bundle impact with great UX
- */
-import React, { useState, useCallback } from 'react'
-import { useAccount, useChainId, useSwitchChain } from 'wagmi'
-import { apeChain } from '../config/web3modal'
-import { useConnectionPersistence } from '../hooks/useConnectionPersistence'
+import React from 'react';
+import { useAccount, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
+import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { apeChain } from '../config/wagmi';
 
 export default function Web3ModalConnection() {
-  const { isConnected, address } = useAccount()
-  const chainId = useChainId()
-  const { switchChain } = useSwitchChain()
-  const { enhancedDisconnect } = useConnectionPersistence()
-  const [isConnecting, setIsConnecting] = useState(false)
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const { open } = useWeb3Modal();
 
-  const isWrongNetwork = isConnected && chainId !== apeChain.id
+  const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
-  const handleConnect = useCallback(async () => {
-    if (isConnecting) return
-    
-    setIsConnecting(true)
+  const handleSwitchNetwork = async () => {
     try {
-      // Lazy load Web3Modal only when needed
-      const { getWeb3Modal } = await import('../config/web3modal')
-      const modal = await getWeb3Modal()
-      await modal.open()
-    } catch (error) {
-      console.error('Failed to connect wallet:', error)
-    } finally {
-      setIsConnecting(false)
+      await switchChain({ chainId: apeChain.id });
+    } catch (err) {
+      console.error('Network switch failed:', err);
     }
-  }, [isConnecting])
+  };
 
-  const handleSwitchNetwork = useCallback(async () => {
-    try {
-      await switchChain({ chainId: apeChain.id })
-    } catch (error) {
-      console.error('Failed to switch network:', error)
-    }
-  }, [switchChain])
-
-  const formatAddress = useCallback((addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-  }, [])
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
 
   if (isConnected) {
     return (
@@ -64,29 +44,21 @@ export default function Web3ModalConnection() {
         </div>
         
         <button
-          onClick={enhancedDisconnect}
+          onClick={() => disconnect()}
           className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 transition-colors min-h-[44px] whitespace-nowrap"
         >
           Disconnect
         </button>
       </div>
-    )
+    );
   }
 
   return (
     <button
-      onClick={handleConnect}
-      disabled={isConnecting}
-      className={`px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
+      onClick={() => open()}
+      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105"
     >
-      {isConnecting ? (
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-          <span>Connecting...</span>
-        </div>
-      ) : (
-        'Connect Wallet'
-      )}
+      Connect Wallet
     </button>
-  )
+  );
 }

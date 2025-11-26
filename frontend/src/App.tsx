@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
-import { config } from './config/web3modal';
+import { config } from './config/wagmi';
 import { addApeChainToMetaMask } from './utils/addApeChain';
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
