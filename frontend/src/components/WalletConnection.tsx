@@ -22,9 +22,8 @@ export default function WalletConnection() {
 
   const handleConnect = async () => {
     try {
-      await connect({
-        connector: injected({ target: 'metaMask' })
-      });
+      // Use the pre-configured injected connector from wagmi config
+      await connect();
     } catch (err) {
       console.error('Wallet connection failed:', err);
     }

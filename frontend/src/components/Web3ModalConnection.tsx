@@ -22,10 +22,8 @@ export default function Web3ModalConnection() {
 
   const handleConnect = async () => {
     try {
-      // Use injected MetaMask for both mobile and desktop
-      await connect({
-        connector: injected({ target: 'metaMask' })
-      });
+      // Use the pre-configured injected connector from wagmi config
+      await connect();
     } catch (err) {
       console.error('Wallet connection failed:', err);
     }
