@@ -21,12 +21,35 @@ export default function Web3ModalConnection() {
   };
 
   const handleConnect = async () => {
+    console.log('Connect button clicked');
+    
+    // Mobile detection
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // Mobile: Direct MetaMask deep link
+      const currentUrl = window.location.href;
+      const metamaskUrl = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
+      console.log('Mobile detected, redirecting to MetaMask:', metamaskUrl);
+      window.location.href = metamaskUrl;
+      return;
+    }
+    
+    // Desktop: Use injected connector
     try {
       await connect({
         connector: injected({ target: 'metaMask' })
       });
     } catch (err) {
       console.error('Wallet connection failed:', err);
+      // Fallback: Try generic injected
+      try {
+        await connect({
+          connector: injected()
+        });
+      } catch (fallbackErr) {
+        console.error('Fallback connection failed:', fallbackErr);
+      }
     }
   };
 
