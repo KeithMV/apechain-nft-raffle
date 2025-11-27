@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAccount, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { useAccount, useDisconnect, useChainId, useSwitchChain, useConnect } from 'wagmi';
+import { injected, walletConnect } from 'wagmi/connectors';
 import { apeChain } from '../config/wagmi';
 
 export default function WalletConnection() {
@@ -8,7 +8,7 @@ export default function WalletConnection() {
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const { open } = useWeb3Modal();
+  const { connect, isPending } = useConnect();
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
@@ -17,6 +17,32 @@ export default function WalletConnection() {
       await switchChain({ chainId: apeChain.id });
     } catch (err) {
       console.error('Network switch failed:', err);
+    }
+  };
+
+  const handleConnect = async () => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    try {
+      if (isMobile) {
+        await connect({
+          connector: walletConnect({
+            projectId: 'b848c907908cee0c1bcf0ab0493da6c4',
+            metadata: {
+              name: 'ApeChain NFT Raffles',
+              description: 'NFT Raffle Platform',
+              url: 'https://apechainraffles.io',
+              icons: ['https://apechainraffles.io/favicon.ico']
+            }
+          })
+        });
+      } else {
+        await connect({
+          connector: injected({ target: 'metaMask' })
+        });
+      }
+    } catch (err) {
+      console.error('Wallet connection failed:', err);
     }
   };
 
@@ -53,22 +79,13 @@ export default function WalletConnection() {
     );
   }
 
-  const handleConnect = async () => {
-    console.log('Connect button clicked');
-    try {
-      await open();
-      console.log('Web3Modal opened successfully');
-    } catch (error) {
-      console.error('Failed to open Web3Modal:', error);
-    }
-  };
-
   return (
     <button
       onClick={handleConnect}
-      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105"
+      disabled={isPending}
+      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 disabled:opacity-50"
     >
-      Connect Wallet
+      {isPending ? 'Connecting...' : 'Connect Wallet'}
     </button>
   );
 }
