@@ -16,7 +16,7 @@
     "@types/node": "^18.19.0",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
-    "@web3modal/wagmi": "^5.1.11",
+
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.31",
     "react": "^18.2.0",
@@ -66,7 +66,6 @@
     "webpack-bundle-analyzer": "^5.0.1"
   },
   "resolutions": {
-    "viem": "^2.21.1",
-    "@web3modal/wagmi": "^5.1.11"
+    "viem": "^2.21.1"
   }
 }
