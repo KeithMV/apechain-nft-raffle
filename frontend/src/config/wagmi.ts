@@ -1,6 +1,6 @@
-import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
-import { createWeb3Modal } from '@web3modal/wagmi/react';
+import { createConfig, http } from 'wagmi';
 import { defineChain } from 'viem';
+import { injected } from 'wagmi/connectors';
 
 // ApeChain configuration
 export const apeChain = defineChain({
@@ -22,31 +22,33 @@ export const apeChain = defineChain({
   blockExplorers: {
     default: { name: 'ApeChain Explorer', url: 'https://apechain.calderaexplorer.xyz' },
   },
-  testnet: false,
 });
 
-// WalletConnect project ID - using the working golden build ID
-const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '7aca6566c4e099d07b70a3c27981ac9f';
-
-// Web3Modal metadata
-const metadata = {
-  name: 'ApeChain NFT Raffles',
-  description: 'Decentralized NFT raffle platform on ApeChain',
-  url: typeof window !== 'undefined' ? window.location.origin : 'https://d3mce6qq270l98.cloudfront.net',
-  icons: [typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : 'https://d3mce6qq270l98.cloudfront.net/favicon.ico']
-};
-
-// Create wagmi config - exact golden build setup
-export const config = defaultWagmiConfig({
+// Ultra mobile-safe wagmi config - Phase 6.8 optimized
+export const config = createConfig({
   chains: [apeChain],
-  projectId,
-  metadata,
-});
-
-// Create Web3Modal - minimal golden build setup
-createWeb3Modal({
-  wagmiConfig: config,
-  projectId,
-  enableAnalytics: false,
-  themeMode: 'dark'
+  connectors: [
+    // Professional mobile Safari compatible connector
+    injected({
+      shimDisconnect: false, // Critical for mobile Safari
+      target: () => ({
+        id: 'injected',
+        name: 'Injected',
+        provider: typeof window !== 'undefined' ? window.ethereum : undefined,
+      }),
+    }),
+  ],
+  transports: {
+    [apeChain.id]: http(process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http', {
+      timeout: 30000,
+      retryCount: 3,
+      retryDelay: 1000,
+    }),
+  },
+  // Mobile-safe configuration
+  ssr: false,
+  // Batch requests for better mobile performance
+  batch: {
+    multicall: true,
+  },
 });
