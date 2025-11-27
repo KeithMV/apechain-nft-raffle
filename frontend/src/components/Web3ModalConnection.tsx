@@ -26,6 +26,12 @@ export default function Web3ModalConnection() {
     
     try {
       if (isMobile) {
+        // Clear any stale WalletConnect sessions
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const wcKeys = Object.keys(localStorage).filter(key => key.startsWith('wc@2'));
+          wcKeys.forEach(key => localStorage.removeItem(key));
+        }
+        
         // Mobile: WalletConnect (shows "Return to Safari" after approval)
         await connect({
           connector: walletConnect({
