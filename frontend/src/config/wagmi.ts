@@ -1,6 +1,6 @@
-import { createConfig, http } from 'wagmi';
+import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
+import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defineChain } from 'viem';
-import { injected } from 'wagmi/connectors';
 
 // ApeChain configuration
 export const apeChain = defineChain({
@@ -25,22 +25,28 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Mobile-compatible wagmi config
-export const config = createConfig({
+// WalletConnect project ID - using the working golden build ID
+const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '7aca6566c4e099d07b70a3c27981ac9f';
+
+// Web3Modal metadata
+const metadata = {
+  name: 'ApeChain NFT Raffles',
+  description: 'Decentralized NFT raffle platform on ApeChain',
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://d3mce6qq270l98.cloudfront.net',
+  icons: [typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : 'https://d3mce6qq270l98.cloudfront.net/favicon.ico']
+};
+
+// Create wagmi config - exact golden build setup
+export const config = defaultWagmiConfig({
   chains: [apeChain],
-  connectors: [
-    // Universal injected connector for all mobile wallets
-    injected({
-      target: () => ({
-        id: 'injected',
-        name: 'Wallet',
-        provider: typeof window !== 'undefined' ? window.ethereum : undefined,
-      }),
-    })
-  ],
-  transports: {
-    [apeChain.id]: http(),
-  },
-  ssr: false,
-  multiInjectedProviderDiscovery: false,
+  projectId,
+  metadata,
+});
+
+// Create Web3Modal - minimal golden build setup
+createWeb3Modal({
+  wagmiConfig: config,
+  projectId,
+  enableAnalytics: false,
+  themeMode: 'dark'
 });
