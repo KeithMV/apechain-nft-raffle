@@ -1,6 +1,6 @@
 import { createConfig, http } from 'wagmi';
+import { metaMask, walletConnect, coinbaseWallet, injected } from 'wagmi/connectors';
 import { defineChain } from 'viem';
-import { injected } from 'wagmi/connectors';
 
 // ApeChain configuration
 export const apeChain = defineChain({
@@ -12,29 +12,56 @@ export const apeChain = defineChain({
     symbol: 'APE',
   },
   rpcUrls: {
-    default: { 
-      http: [
-        process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
-        'https://rpc.apechain.com'
-      ] 
+    default: {
+      http: ['https://apechain.calderachain.xyz/http'],
     },
   },
   blockExplorers: {
-    default: { name: 'ApeChain Explorer', url: 'https://apechain.calderaexplorer.xyz' },
+    default: { name: 'Explorer', url: 'https://apechain.calderachain.xyz' },
   },
   testnet: false,
 });
 
-// Minimal wagmi config - no Web3Modal, no WalletConnect
+// Validate ApeChain configuration
+if (!apeChain.id || !apeChain.rpcUrls.default.http[0]) {
+  throw new Error('Invalid ApeChain configuration');
+}
+
+// WalletConnect project ID with validation
+const WALLETCONNECT_PROJECT_ID = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '7aca6566c4e099d07b70a3c27981ac9f';
+
+if (!WALLETCONNECT_PROJECT_ID || WALLETCONNECT_PROJECT_ID.length < 10) {
+  console.error('Invalid WalletConnect project ID');
+}
+
+// Create wagmi configuration
 export const config = createConfig({
   chains: [apeChain],
   connectors: [
-    injected({
-      target: 'metaMask'
-    })
+    metaMask({
+      dappMetadata: {
+        name: 'ApeChain NFT Raffles',
+        url: 'https://apechain-raffles.com',
+      },
+    }),
+    walletConnect({
+      projectId: WALLETCONNECT_PROJECT_ID,
+      metadata: {
+        name: 'ApeChain NFT Raffles',
+        description: 'Decentralized NFT raffle platform on ApeChain',
+        url: 'https://apechain-raffles.com',
+        icons: ['https://apechain-raffles.com/favicon.ico'],
+      },
+      showQrModal: true,
+    }),
+    coinbaseWallet({
+      appName: 'ApeChain NFT Raffles',
+      appLogoUrl: 'https://apechain-raffles.com/logo192.png',
+    }),
+    injected(),
   ],
   transports: {
-    [apeChain.id]: http(),
+    [apeChain.id]: http('https://apechain.calderachain.xyz/http'),
   },
   ssr: false,
 });
