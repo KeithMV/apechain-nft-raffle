@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAccount, useDisconnect, useChainId, useSwitchChain, useConnect } from 'wagmi';
-import { injected } from 'wagmi/connectors';
+import { injected, walletConnect } from 'wagmi/connectors';
 import { apeChain } from '../config/wagmi';
 
 export default function Web3ModalConnection() {
@@ -26,30 +26,28 @@ export default function Web3ModalConnection() {
     // Mobile detection
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
-    if (isMobile) {
-      // Mobile: Direct MetaMask deep link
-      const currentUrl = window.location.href;
-      const metamaskUrl = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
-      console.log('Mobile detected, redirecting to MetaMask:', metamaskUrl);
-      window.location.href = metamaskUrl;
-      return;
-    }
-    
-    // Desktop: Use injected connector
     try {
-      await connect({
-        connector: injected({ target: 'metaMask' })
-      });
+      if (isMobile) {
+        // Mobile: Use WalletConnect for proper wallet connection flow
+        await connect({
+          connector: walletConnect({
+            projectId: 'b848c907908cee0c1bcf0ab0493da6c4',
+            metadata: {
+              name: 'ApeChain NFT Raffles',
+              description: 'NFT Raffle Platform',
+              url: 'https://d3mce6qq270l98.cloudfront.net',
+              icons: ['https://d3mce6qq270l98.cloudfront.net/favicon.ico']
+            }
+          })
+        });
+      } else {
+        // Desktop: Use injected MetaMask
+        await connect({
+          connector: injected({ target: 'metaMask' })
+        });
+      }
     } catch (err) {
       console.error('Wallet connection failed:', err);
-      // Fallback: Try generic injected
-      try {
-        await connect({
-          connector: injected()
-        });
-      } catch (fallbackErr) {
-        console.error('Fallback connection failed:', fallbackErr);
-      }
     }
   };
 
