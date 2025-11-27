@@ -1,38 +1,67 @@
-/**
- * Utility to clean up stale WalletConnect sessions
- * Fixes the session errors and multiple initialization issues
- */
-
-export const clearWalletConnectSessions = () => {
-  try {
-    // Clear WalletConnect related localStorage
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (
-        key.startsWith('wc@2:') ||
-        key.startsWith('@walletconnect') ||
-        key.includes('walletconnect') ||
-        key.includes('wc_')
-      )) {
-        keysToRemove.push(key);
+// Suppress WalletConnect console errors
+export const suppressWalletConnectErrors = () => {
+  if (typeof window !== 'undefined') {
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    
+    console.error = (...args) => {
+      const message = args.join(' ');
+      // Suppress known WalletConnect errors
+      if (
+        message.includes('No matching key') ||
+        message.includes('session topic doesn\'t exist') ||
+        message.includes('Pending session not found') ||
+        message.includes('WalletConnect Core is already initialized')
+      ) {
+        return; // Suppress these errors
       }
-    }
+      originalError.apply(console, args);
+    };
     
-    keysToRemove.forEach(key => {
-      localStorage.removeItem(key);
-    });
-    
-    console.log(`🧹 Cleared ${keysToRemove.length} stale WalletConnect sessions`);
-  } catch (error) {
-    console.warn('Failed to clear WalletConnect sessions:', error);
+    console.warn = (...args) => {
+      const message = args.join(' ');
+      // Suppress known warnings
+      if (
+        message.includes('Ethereum provider not available') ||
+        message.includes('WalletConnect Core is already initialized') ||
+        message.includes('sourcesContent')
+      ) {
+        return; // Suppress these warnings
+      }
+      originalWarn.apply(console, args);
+    };
   }
 };
 
-export const initializeCleanWalletConnect = () => {
-  // Clear stale sessions on app start
-  clearWalletConnectSessions();
-  
-  // Set up periodic cleanup (every 30 minutes)
-  setInterval(clearWalletConnectSessions, 30 * 60 * 1000);
+// Clean all WalletConnect storage
+export const cleanWalletConnectStorage = () => {
+  if (typeof window !== 'undefined') {
+    // Clear localStorage
+    if (window.localStorage) {
+      Object.keys(localStorage).forEach(key => {
+        if (
+          key.includes('walletconnect') || 
+          key.includes('wc@2') || 
+          key.includes('wc_') ||
+          key.startsWith('@walletconnect')
+        ) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
+    
+    // Clear sessionStorage
+    if (window.sessionStorage) {
+      Object.keys(sessionStorage).forEach(key => {
+        if (
+          key.includes('walletconnect') || 
+          key.includes('wc@2') || 
+          key.includes('wc_') ||
+          key.startsWith('@walletconnect')
+        ) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+  }
 };

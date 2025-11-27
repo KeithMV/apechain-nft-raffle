@@ -9,6 +9,7 @@ import { Toaster } from 'react-hot-toast';
 import Web3ModalConnection from './components/Web3ModalConnection';
 import NetworkStatus from './components/NetworkStatus';
 import { PageLoadingFallback, ComponentLoadingFallback } from './components/LoadingFallback';
+import { suppressWalletConnectErrors, cleanWalletConnectStorage } from './utils/walletCleanup';
 
 import './index.css';
 
@@ -236,6 +237,12 @@ function RaffleApp() {
 
 function App() {
   useEffect(() => {
+    // Suppress WalletConnect console errors
+    suppressWalletConnectErrors();
+    
+    // Clean stale WalletConnect storage on app load
+    cleanWalletConnectStorage();
+    
     // Auto-add ApeChain to MetaMask on load
     addApeChainToMetaMask();
   }, []);

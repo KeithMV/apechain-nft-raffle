@@ -26,10 +26,23 @@ export default function Web3ModalConnection() {
     
     try {
       if (isMobile) {
-        // Clear any stale WalletConnect sessions
+        // Aggressive WalletConnect cleanup
         if (typeof window !== 'undefined' && window.localStorage) {
-          const wcKeys = Object.keys(localStorage).filter(key => key.startsWith('wc@2'));
-          wcKeys.forEach(key => localStorage.removeItem(key));
+          // Clear all WalletConnect related storage
+          Object.keys(localStorage).forEach(key => {
+            if (key.includes('walletconnect') || key.includes('wc@2') || key.includes('wc_')) {
+              localStorage.removeItem(key);
+            }
+          });
+        }
+        
+        // Clear session storage too
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          Object.keys(sessionStorage).forEach(key => {
+            if (key.includes('walletconnect') || key.includes('wc@2') || key.includes('wc_')) {
+              sessionStorage.removeItem(key);
+            }
+          });
         }
         
         // Mobile: WalletConnect (shows "Return to Safari" after approval)
@@ -51,7 +64,10 @@ export default function Web3ModalConnection() {
         });
       }
     } catch (err) {
-      console.error('Wallet connection failed:', err);
+      // Suppress WalletConnect session errors
+      if (!err.message?.includes('No matching key') && !err.message?.includes('session topic')) {
+        console.error('Wallet connection failed:', err);
+      }
     }
   };
 
