@@ -22,9 +22,21 @@ export default function Web3ModalConnection() {
 
   const handleConnect = async () => {
     try {
-      await connect({
-        connector: injected({ target: 'metaMask' })
-      });
+      // Mobile wallet detection
+      if (typeof window !== 'undefined' && window.ethereum) {
+        await connect({
+          connector: injected()
+        });
+      } else {
+        // Mobile fallback - redirect to MetaMask mobile
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+          const dappUrl = encodeURIComponent(window.location.href);
+          window.location.href = `https://metamask.app.link/dapp/${window.location.host}`;
+        } else {
+          alert('Please install MetaMask or use a Web3-enabled browser');
+        }
+      }
     } catch (err) {
       console.error('Wallet connection failed:', err);
     }

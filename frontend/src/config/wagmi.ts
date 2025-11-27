@@ -25,16 +25,22 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Minimal wagmi config - no Web3Modal, no WalletConnect
+// Mobile-compatible wagmi config
 export const config = createConfig({
   chains: [apeChain],
   connectors: [
+    // Universal injected connector for all mobile wallets
     injected({
-      target: 'metaMask'
+      target: () => ({
+        id: 'injected',
+        name: 'Wallet',
+        provider: typeof window !== 'undefined' ? window.ethereum : undefined,
+      }),
     })
   ],
   transports: {
     [apeChain.id]: http(),
   },
   ssr: false,
+  multiInjectedProviderDiscovery: false,
 });
