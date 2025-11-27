@@ -21,6 +21,18 @@ export default function Web3ModalConnection() {
   };
 
   const handleConnect = async () => {
+    // Mobile detection
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // Mobile: Direct MetaMask deep link
+      const metamaskUrl = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
+      console.log('Mobile detected, redirecting to MetaMask:', metamaskUrl);
+      window.location.href = metamaskUrl;
+      return;
+    }
+    
+    // Desktop: Use injected connector
     try {
       await connect({
         connector: injected({ target: 'metaMask' })
