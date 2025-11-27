@@ -24,31 +24,16 @@ export const apeChain = defineChain({
   },
 });
 
-// Ultra mobile-safe wagmi config - Phase 6.8 optimized
+// Working Phase 6.7 wagmi config - simple and functional
 export const config = createConfig({
   chains: [apeChain],
   connectors: [
-    // Professional mobile Safari compatible connector
     injected({
-      shimDisconnect: false, // Critical for mobile Safari
-      target: () => ({
-        id: 'injected',
-        name: 'Injected',
-        provider: typeof window !== 'undefined' ? window.ethereum : undefined,
-      }),
-    }),
+      target: 'metaMask'
+    })
   ],
   transports: {
-    [apeChain.id]: http(process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http', {
-      timeout: 30000,
-      retryCount: 3,
-      retryDelay: 1000,
-    }),
+    [apeChain.id]: http(),
   },
-  // Mobile-safe configuration
   ssr: false,
-  // Batch requests for better mobile performance
-  batch: {
-    multicall: true,
-  },
 });

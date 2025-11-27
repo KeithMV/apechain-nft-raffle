@@ -1,39 +1,37 @@
+/**
+ * Working Phase 6.7 wallet connection - minimal and functional
+ */
 import React from 'react';
-import { useAccount, useDisconnect, useChainId, useSwitchChain, useConnect } from 'wagmi';
+import { useConnect, useDisconnect, useAccount, useChainId, useSwitchChain } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 import { apeChain } from '../config/wagmi';
 
 export default function Web3ModalConnection() {
-  const { address, isConnected } = useAccount();
+  const { connect, isPending, error } = useConnect();
   const { disconnect } = useDisconnect();
+  const { isConnected, address } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const { connect, isPending } = useConnect();
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
+
+  const handleConnect = async () => {
+    try {
+      await connect({ 
+        connector: injected({
+          target: 'metaMask'
+        })
+      });
+    } catch (err) {
+      console.error('Wallet connection failed:', err);
+    }
+  };
 
   const handleSwitchNetwork = async () => {
     try {
       await switchChain({ chainId: apeChain.id });
     } catch (err) {
       console.error('Network switch failed:', err);
-    }
-  };
-
-  const handleConnect = async () => {
-    try {
-      await connect({
-        connector: injected({
-          shimDisconnect: false, // Critical for mobile Safari
-          target: () => ({
-            id: 'injected',
-            name: 'Injected',
-            provider: typeof window !== 'undefined' ? window.ethereum : undefined,
-          }),
-        })
-      });
-    } catch (err) {
-      console.error('Wallet connection failed:', err);
     }
   };
 
@@ -71,12 +69,19 @@ export default function Web3ModalConnection() {
   }
 
   return (
-    <button
-      onClick={handleConnect}
-      disabled={isPending}
-      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 disabled:opacity-50"
-    >
-      {isPending ? 'Connecting...' : 'Connect Wallet'}
-    </button>
+    <div className="flex flex-col items-center space-y-2">
+      <button
+        onClick={handleConnect}
+        disabled={isPending}
+        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 disabled:opacity-50"
+      >
+        {isPending ? 'Connecting...' : 'Connect Wallet'}
+      </button>
+      {error && (
+        <div className="text-red-400 text-sm mt-2">
+          Connection failed. Please try again.
+        </div>
+      )}
+    </div>
   );
 }
