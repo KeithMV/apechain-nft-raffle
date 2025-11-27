@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAccount, useDisconnect, useChainId, useSwitchChain, useConnect } from 'wagmi';
-import { injected, walletConnect } from 'wagmi/connectors';
+import { injected } from 'wagmi/connectors';
 import { apeChain } from '../config/wagmi';
 
 export default function Web3ModalConnection() {
@@ -21,54 +21,13 @@ export default function Web3ModalConnection() {
   };
 
   const handleConnect = async () => {
-    // Mobile detection
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
     try {
-      if (isMobile) {
-        // Aggressive WalletConnect cleanup
-        if (typeof window !== 'undefined' && window.localStorage) {
-          // Clear all WalletConnect related storage
-          Object.keys(localStorage).forEach(key => {
-            if (key.includes('walletconnect') || key.includes('wc@2') || key.includes('wc_')) {
-              localStorage.removeItem(key);
-            }
-          });
-        }
-        
-        // Clear session storage too
-        if (typeof window !== 'undefined' && window.sessionStorage) {
-          Object.keys(sessionStorage).forEach(key => {
-            if (key.includes('walletconnect') || key.includes('wc@2') || key.includes('wc_')) {
-              sessionStorage.removeItem(key);
-            }
-          });
-        }
-        
-        // Mobile: WalletConnect (shows "Return to Safari" after approval)
-        await connect({
-          connector: walletConnect({
-            projectId: 'b848c907908cee0c1bcf0ab0493da6c4',
-            metadata: {
-              name: 'ApeChain NFT Raffles',
-              description: 'NFT Raffle Platform',
-              url: 'https://apechainraffles.io',
-              icons: ['https://apechainraffles.io/favicon.ico']
-            }
-          })
-        });
-      } else {
-        // Desktop: Injected MetaMask
-        await connect({
-          connector: injected({ target: 'metaMask' })
-        });
-      }
+      // Use injected MetaMask for both mobile and desktop
+      await connect({
+        connector: injected({ target: 'metaMask' })
+      });
     } catch (err) {
-      // Suppress WalletConnect session errors
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      if (!errorMessage.includes('No matching key') && !errorMessage.includes('session topic')) {
-        console.error('Wallet connection failed:', err);
-      }
+      console.error('Wallet connection failed:', err);
     }
   };
 

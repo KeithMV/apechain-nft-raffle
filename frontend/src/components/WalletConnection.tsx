@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAccount, useDisconnect, useChainId, useSwitchChain, useConnect } from 'wagmi';
-import { injected, walletConnect } from 'wagmi/connectors';
+import { injected } from 'wagmi/connectors';
 import { apeChain } from '../config/wagmi';
 
 export default function WalletConnection() {
@@ -21,26 +21,10 @@ export default function WalletConnection() {
   };
 
   const handleConnect = async () => {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
     try {
-      if (isMobile) {
-        await connect({
-          connector: walletConnect({
-            projectId: 'b848c907908cee0c1bcf0ab0493da6c4',
-            metadata: {
-              name: 'ApeChain NFT Raffles',
-              description: 'NFT Raffle Platform',
-              url: 'https://apechainraffles.io',
-              icons: ['https://apechainraffles.io/favicon.ico']
-            }
-          })
-        });
-      } else {
-        await connect({
-          connector: injected({ target: 'metaMask' })
-        });
-      }
+      await connect({
+        connector: injected({ target: 'metaMask' })
+      });
     } catch (err) {
       console.error('Wallet connection failed:', err);
     }
