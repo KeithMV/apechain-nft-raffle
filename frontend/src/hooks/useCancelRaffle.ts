@@ -1,6 +1,7 @@
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
 import { parseAbi } from 'viem';
 import toast from 'react-hot-toast';
+import { apeChain } from '../config/wagmi';
 
 const RAFFLE_ABI = parseAbi([
   'function cancelRaffle() external',
@@ -15,6 +16,8 @@ export function useCancelRaffle() {
     isPending: isWritePending, 
     error: writeError 
   } = useWriteContract();
+
+  const { switchChain } = useSwitchChain();
 
   const { 
     isLoading: isConfirming, 
@@ -33,10 +36,14 @@ export function useCancelRaffle() {
     try {
       console.log('Canceling raffle:', raffleAddress);
       
+      // Switch to ApeChain first
+      await switchChain({ chainId: apeChain.id });
+      
       await writeContract({
         address: raffleAddress as `0x${string}`,
         abi: RAFFLE_ABI,
         functionName: 'cancelRaffle',
+        chainId: apeChain.id,
       });
 
       toast.success('Cancel transaction submitted!');
