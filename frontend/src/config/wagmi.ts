@@ -25,7 +25,7 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Minimal config with WalletConnect for mobile
+// Config with WalletConnect for mobile (domain now allowed)
 export const config = createConfig({
   chains: [apeChain],
   connectors: [
@@ -35,8 +35,8 @@ export const config = createConfig({
       metadata: {
         name: 'ApeChain NFT Raffles',
         description: 'NFT Raffle Platform',
-        url: 'https://d3mce6qq270l98.cloudfront.net',
-        icons: ['https://d3mce6qq270l98.cloudfront.net/favicon.ico']
+        url: 'https://apechainraffles.io',
+        icons: ['https://apechainraffles.io/favicon.ico']
       }
     })
   ],

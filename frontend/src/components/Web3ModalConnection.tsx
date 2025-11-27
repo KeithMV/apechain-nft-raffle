@@ -23,25 +23,24 @@ export default function Web3ModalConnection() {
   const handleConnect = async () => {
     console.log('Connect button clicked');
     
-    // Mobile detection
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     try {
       if (isMobile) {
-        // Mobile: Use WalletConnect for proper wallet connection flow
+        // Mobile: WalletConnect (domain now allowed)
         await connect({
           connector: walletConnect({
             projectId: 'b848c907908cee0c1bcf0ab0493da6c4',
             metadata: {
               name: 'ApeChain NFT Raffles',
               description: 'NFT Raffle Platform',
-              url: 'https://d3mce6qq270l98.cloudfront.net',
-              icons: ['https://d3mce6qq270l98.cloudfront.net/favicon.ico']
+              url: 'https://apechainraffles.io',
+              icons: ['https://apechainraffles.io/favicon.ico']
             }
           })
         });
       } else {
-        // Desktop: Use injected MetaMask
+        // Desktop: Injected MetaMask
         await connect({
           connector: injected({ target: 'metaMask' })
         });
