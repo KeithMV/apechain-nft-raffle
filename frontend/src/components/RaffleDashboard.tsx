@@ -3,6 +3,7 @@ import { useAccount } from 'wagmi';
 import NFTImage from './NFTImage';
 import toast from 'react-hot-toast';
 import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
+import { useCancelRaffle } from '../hooks/useCancelRaffle';
 
 interface UserRafflePosition {
   raffleId: number;
@@ -82,14 +83,13 @@ export default function RaffleDashboard() {
     }
   };
 
+  const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
+  const { cancelRaffle, isPending: isCancelling } = useCancelRaffle(cancellingRaffle || '');
+
   const handleCancelRaffle = async (raffleContract: string) => {
-    try {
-      // TODO: Implement cancel raffle hook
-      toast.error('Cancel raffle functionality needs to be implemented with hooks');
-    } catch (error: any) {
-      console.error('Failed to cancel raffle:', error);
-      toast.error('Failed to cancel raffle: ' + error.message);
-    }
+    setCancellingRaffle(raffleContract);
+    await cancelRaffle();
+    setCancellingRaffle(null);
   };
 
   if (loading) {
@@ -333,10 +333,20 @@ export default function RaffleDashboard() {
                               ) : (
                                 <button
                                   onClick={() => handleCancelRaffle(raffle.raffleContract)}
-                                  className="relative bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-red-500/25 hover:shadow-xl hover:shadow-red-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
+                                  disabled={isCancelling && cancellingRaffle === raffle.raffleContract}
+                                  className="relative bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 disabled:from-gray-600 disabled:to-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-red-500/25 hover:shadow-xl hover:shadow-red-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
                                 >
                                   <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/20 to-red-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                  <span className="relative">Cancel Raffle</span>
+                                  <span className="relative">
+                                    {isCancelling && cancellingRaffle === raffle.raffleContract ? (
+                                      <span className="flex items-center space-x-2">
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <span>Cancelling...</span>
+                                      </span>
+                                    ) : (
+                                      'Cancel Raffle'
+                                    )}
+                                  </span>
                                 </button>
                               )}
                             </div>
