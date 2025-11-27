@@ -25,14 +25,15 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
+// Export the connector for use in components
+export const metaMaskConnector = injected({
+  target: 'metaMask'
+});
+
 // Simple wagmi config with only injected MetaMask
 export const config = createConfig({
   chains: [apeChain],
-  connectors: [
-    injected({
-      target: 'metaMask'
-    })
-  ],
+  connectors: [metaMaskConnector],
   transports: {
     [apeChain.id]: http(),
   },

@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAccount, useDisconnect, useChainId, useSwitchChain, useConnect } from 'wagmi';
-import { injected } from 'wagmi/connectors';
-import { apeChain } from '../config/wagmi';
+import { apeChain, metaMaskConnector } from '../config/wagmi';
 
 export default function Web3ModalConnection() {
   const { address, isConnected } = useAccount();
@@ -22,8 +21,7 @@ export default function Web3ModalConnection() {
 
   const handleConnect = async () => {
     try {
-      // Use the pre-configured injected connector from wagmi config
-      await connect();
+      await connect({ connector: metaMaskConnector });
     } catch (err) {
       console.error('Wallet connection failed:', err);
     }
