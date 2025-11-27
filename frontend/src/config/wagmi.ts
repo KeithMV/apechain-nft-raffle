@@ -1,6 +1,6 @@
 import { createConfig, http } from 'wagmi';
 import { defineChain } from 'viem';
-import { injected } from 'wagmi/connectors';
+import { injected, walletConnect } from 'wagmi/connectors';
 
 // ApeChain configuration
 export const apeChain = defineChain({
@@ -25,12 +25,21 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Minimal wagmi config - no Web3Modal, no WalletConnect
+// wagmi config with WalletConnect for mobile
 export const config = createConfig({
   chains: [apeChain],
   connectors: [
     injected({
       target: 'metaMask'
+    }),
+    walletConnect({
+      projectId: 'b848c907908cee0c1bcf0ab0493da6c4',
+      metadata: {
+        name: 'ApeChain NFT Raffles',
+        description: 'NFT Raffle Platform',
+        url: 'https://apechainraffles.io',
+        icons: ['https://apechainraffles.io/favicon.ico']
+      }
     })
   ],
   transports: {
