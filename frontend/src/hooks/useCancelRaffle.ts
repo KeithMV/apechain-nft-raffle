@@ -8,7 +8,7 @@ const RAFFLE_ABI = parseAbi([
   'function isActive() external view returns (bool)'
 ]);
 
-export function useCancelRaffle(raffleAddress: string) {
+export function useCancelRaffle() {
   const { 
     writeContract, 
     data: hash, 
@@ -24,9 +24,9 @@ export function useCancelRaffle(raffleAddress: string) {
     hash,
   });
 
-  const cancelRaffle = async () => {
-    if (!raffleAddress) {
-      toast.error('Invalid raffle address');
+  const cancelRaffle = async (raffleAddress: string) => {
+    if (!raffleAddress || !raffleAddress.startsWith('0x') || raffleAddress.length !== 42) {
+      toast.error('Invalid raffle address format');
       return;
     }
 

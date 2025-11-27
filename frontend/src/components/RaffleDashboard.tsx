@@ -84,11 +84,11 @@ export default function RaffleDashboard() {
   };
 
   const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
-  const { cancelRaffle, isPending: isCancelling } = useCancelRaffle(cancellingRaffle || '');
+  const { cancelRaffle, isPending: isCancelling } = useCancelRaffle();
 
   const handleCancelRaffle = async (raffleContract: string) => {
     setCancellingRaffle(raffleContract);
-    await cancelRaffle();
+    await cancelRaffle(raffleContract);
     setCancellingRaffle(null);
   };
 
