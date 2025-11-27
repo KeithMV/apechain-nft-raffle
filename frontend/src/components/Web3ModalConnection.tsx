@@ -65,7 +65,8 @@ export default function Web3ModalConnection() {
       }
     } catch (err) {
       // Suppress WalletConnect session errors
-      if (!err.message?.includes('No matching key') && !err.message?.includes('session topic')) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (!errorMessage.includes('No matching key') && !errorMessage.includes('session topic')) {
         console.error('Wallet connection failed:', err);
       }
     }
