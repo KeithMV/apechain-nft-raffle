@@ -142,7 +142,6 @@ export const NFTImage: React.FC<{
       src={src}
       alt={alt}
       className={`${sizeClasses[size]} rounded-lg object-cover ${className}`}
-      fallbackSrc={fallbackSrc}
       lazy={true}
     />
   );
