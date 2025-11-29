@@ -1,13 +1,17 @@
 import React from 'react';
 import { useAccount, useDisconnect, useChainId, useSwitchChain, useConnect } from 'wagmi';
-import { apeChain, metaMaskConnector } from '../config/wagmi';
+import { apeChain, walletConnectConnector } from '../config/wagmi';
 
 export default function Web3ModalConnection() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const { connect, isPending } = useConnect();
+  const { connect, isPending, error } = useConnect();
+
+  console.log('🔄 Render:', { isConnected, address, isPending, error });
+
+
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
@@ -19,12 +23,9 @@ export default function Web3ModalConnection() {
     }
   };
 
-  const handleConnect = async () => {
-    try {
-      await connect({ connector: metaMaskConnector });
-    } catch (err) {
-      console.error('Wallet connection failed:', err);
-    }
+  const handleConnect = () => {
+    console.log('🔗 Connecting with WalletConnect...');
+    connect({ connector: walletConnectConnector });
   };
 
   const formatAddress = (addr: string) => {
@@ -63,8 +64,10 @@ export default function Web3ModalConnection() {
   return (
     <button
       onClick={handleConnect}
+
       disabled={isPending}
-      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 disabled:opacity-50"
+      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 disabled:opacity-50 active:scale-95 touch-manipulation"
+      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
       {isPending ? 'Connecting...' : 'Connect Wallet'}
     </button>

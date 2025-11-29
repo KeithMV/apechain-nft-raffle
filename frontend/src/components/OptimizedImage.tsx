@@ -137,13 +137,6 @@ export const NFTImage: React.FC<{
     lg: 'w-32 h-32'
   };
 
-  const fallbackSrc = `data:image/svg+xml;base64,${btoa(`
-    <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100" height="100" fill="#374151"/>
-      <text x="50" y="50" font-family="Arial" font-size="12" fill="#9CA3AF" text-anchor="middle" dy="4">NFT</text>
-    </svg>
-  `)}`;
-
   return (
     <OptimizedImage
       src={src}

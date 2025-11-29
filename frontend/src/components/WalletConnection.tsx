@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAccount, useDisconnect, useChainId, useSwitchChain, useConnect } from 'wagmi';
-import { apeChain, metaMaskConnector } from '../config/wagmi';
+import { apeChain, walletConnectConnector } from '../config/wagmi';
 
 export default function WalletConnection() {
   const { address, isConnected } = useAccount();
@@ -21,7 +21,7 @@ export default function WalletConnection() {
 
   const handleConnect = async () => {
     try {
-      await connect({ connector: metaMaskConnector });
+      await connect({ connector: walletConnectConnector });
     } catch (err) {
       console.error('Wallet connection failed:', err);
     }
