@@ -128,7 +128,7 @@ export default function CreateRafflePage() {
     }
   }, [createError]);
 
-  const handleApproval = () => {
+  const handleApproval = async () => {
     if (!formData.nftContract) {
       toast.error('Please enter NFT contract address first');
       return;
@@ -139,11 +139,28 @@ export default function CreateRafflePage() {
       return;
     }
 
+    // Validate contract address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(formData.nftContract)) {
+      toast.error('Invalid contract address format');
+      return;
+    }
+
     setApprovalLoading(true);
     console.log('🔄 Approving NFT contract for raffle:', formData.nftContract);
     
-    // Use professional wagmi hook
-    approveNFT(formData.nftContract);
+    try {
+      // Use professional wagmi hook
+      await approveNFT(formData.nftContract);
+    } catch (error) {
+      console.error('Approval initiation failed:', error);
+      setApprovalLoading(false);
+      
+      if (error.message?.includes('User rejected')) {
+        toast.error('Approval cancelled by user');
+      } else {
+        toast.error('Failed to initiate approval');
+      }
+    }
   };
 
   const handleCreateRaffle = async () => {

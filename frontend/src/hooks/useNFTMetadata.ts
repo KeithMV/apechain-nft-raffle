@@ -59,19 +59,49 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
           throw new Error('No token URI found');
         }
 
-        // Handle IPFS URLs
+        // Handle IPFS URLs with fallback gateways
         let metadataUrl = tokenURI;
+        const ipfsGateways = [
+          'https://gateway.pinata.cloud/ipfs/',
+          'https://cloudflare-ipfs.com/ipfs/',
+          'https://dweb.link/ipfs/',
+          'https://ipfs.io/ipfs/'
+        ];
+        
+        let data;
         if (tokenURI.startsWith('ipfs://')) {
-          metadataUrl = `https://ipfs.io/ipfs/${tokenURI.slice(7)}`;
+          const ipfsHash = tokenURI.slice(7);
+          
+          // Try multiple IPFS gateways
+          for (const gateway of ipfsGateways) {
+            try {
+              metadataUrl = `${gateway}${ipfsHash}`;
+              const response = await fetch(metadataUrl, { 
+                signal: AbortSignal.timeout(10000) // 10s timeout
+              });
+              if (response.ok) {
+                data = await response.json();
+                break;
+              }
+            } catch (err) {
+              console.log(`Failed to fetch from ${gateway}:`, err);
+              continue;
+            }
+          }
+          
+          if (!data) {
+            throw new Error('All IPFS gateways failed');
+          }
+        } else {
+          // Regular HTTP URL
+          const response = await fetch(metadataUrl, {
+            signal: AbortSignal.timeout(10000)
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          data = await response.json();
         }
-
-        // Fetch metadata
-        const response = await fetch(metadataUrl);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
         
         // Process image URL
         let imageUrl = data.image;

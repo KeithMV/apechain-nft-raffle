@@ -11,7 +11,10 @@ export const suppressWalletConnectErrors = () => {
         message.includes('No matching key') ||
         message.includes('session topic doesn\'t exist') ||
         message.includes('Pending session not found') ||
-        message.includes('WalletConnect Core is already initialized')
+        message.includes('WalletConnect Core is already initialized') ||
+        message.includes('Ue: Unexpected error') ||
+        message.includes('evmAsk.js') ||
+        message.includes('selectExtension')
       ) {
         return; // Suppress these errors
       }

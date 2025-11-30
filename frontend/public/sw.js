@@ -26,9 +26,7 @@ const CACHE_STRATEGIES = {
   // API responses - Network first with fallback
   api: [
     /\/api\//,
-    /apechain\.calderachain\.xyz/,
-    /ipfs\.io/,
-    /dweb\.link/
+    /apechain\.calderachain\.xyz/
   ],
   
   // Images - Cache first with network fallback
@@ -36,6 +34,14 @@ const CACHE_STRATEGIES = {
     /\.(?:png|jpg|jpeg|gif|svg|webp)$/,
     /cdn\.other\.page/,
     /nftstorage\.link/
+  ],
+  
+  // IPFS - Special handling with timeout
+  ipfs: [
+    /ipfs\.io/,
+    /dweb\.link/,
+    /gateway\.pinata\.cloud/,
+    /cloudflare-ipfs\.com/
   ]
 };
 
@@ -118,6 +124,11 @@ async function handleRequest(request) {
       return await cacheFirst(request, DYNAMIC_CACHE);
     }
     
+    // IPFS - Special handling with timeout
+    if (isIPFS(url)) {
+      return await ipfsFirst(request, DYNAMIC_CACHE);
+    }
+    
     // API calls - Network first with cache fallback
     if (isApiCall(url)) {
       return await networkFirst(request, DYNAMIC_CACHE);
@@ -138,6 +149,11 @@ async function handleRequest(request) {
     // Return offline page for navigation requests
     if (request.mode === 'navigate') {
       return caches.match('/');
+    }
+    
+    // Return placeholder for failed IPFS requests
+    if (isIPFS(url)) {
+      return new Response('IPFS content unavailable', { status: 404 });
     }
     
     throw error;
@@ -174,6 +190,37 @@ async function networkFirst(request, cacheName) {
     if (cachedResponse) {
       return cachedResponse;
     }
+    throw error;
+  }
+}
+
+// IPFS-specific strategy with timeout
+async function ipfsFirst(request, cacheName) {
+  // Check cache first
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+  
+  // Try network with timeout
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+    
+    const response = await fetch(request, { 
+      signal: controller.signal 
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (response.ok) {
+      await cacheResponse(request, response.clone(), cacheName);
+      return response;
+    }
+    
+    throw new Error(`IPFS fetch failed: ${response.status}`);
+  } catch (error) {
+    console.log('[SW] IPFS fetch timeout or failed:', error.message);
     throw error;
   }
 }
@@ -220,6 +267,12 @@ function isImage(url) {
 function isApiCall(url) {
   return CACHE_STRATEGIES.api.some(pattern => 
     pattern.test(url.pathname) || pattern.test(url.hostname)
+  );
+}
+
+function isIPFS(url) {
+  return CACHE_STRATEGIES.ipfs.some(pattern => 
+    pattern.test(url.hostname)
   );
 }
 
