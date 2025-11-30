@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
 import { useEmergencySelectWinner } from '../hooks/useWinnerSelection';
-import { useAutoRefresh } from '../hooks/useAutoRefresh';
 
 interface UserRafflePosition {
   raffleId: number;
@@ -50,11 +49,7 @@ export default function RaffleDashboard() {
   const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
   const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
 
-  // Auto-refresh every 45 seconds (slightly offset from browse page)
-  useAutoRefresh(() => {
-    refetchPositions();
-    refetchCreatedRaffles();
-  }, { interval: 45000, enabled: !!address });
+
 
   // Refresh when raffle is cancelled
   React.useEffect(() => {
