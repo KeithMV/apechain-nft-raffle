@@ -14,7 +14,10 @@ export const suppressWalletConnectErrors = () => {
         message.includes('WalletConnect Core is already initialized') ||
         message.includes('Ue: Unexpected error') ||
         message.includes('evmAsk.js') ||
-        message.includes('selectExtension')
+        message.includes('selectExtension') ||
+        message.includes('Unhandled Promise Rejection') ||
+        message.includes('WebSocket connection') ||
+        message.includes('relay.walletconnect.org')
       ) {
         return; // Suppress these errors
       }
@@ -27,7 +30,9 @@ export const suppressWalletConnectErrors = () => {
       if (
         message.includes('Ethereum provider not available') ||
         message.includes('WalletConnect Core is already initialized') ||
-        message.includes('sourcesContent')
+        message.includes('sourcesContent') ||
+        message.includes('Source Map') ||
+        message.includes('has invalid')
       ) {
         return; // Suppress these warnings
       }

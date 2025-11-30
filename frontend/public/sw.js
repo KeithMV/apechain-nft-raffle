@@ -153,7 +153,7 @@ async function handleRequest(request) {
     
     // Return placeholder for failed IPFS requests
     if (isIPFS(url)) {
-      return new Response('IPFS content unavailable', { status: 404 });
+      return new Response('', { status: 404 });
     }
     
     throw error;
@@ -220,8 +220,8 @@ async function ipfsFirst(request, cacheName) {
     
     throw new Error(`IPFS fetch failed: ${response.status}`);
   } catch (error) {
-    console.log('[SW] IPFS fetch timeout or failed:', error.message);
-    throw error;
+    // Silently handle IPFS errors to avoid console spam
+    throw new Error('IPFS_UNAVAILABLE');
   }
 }
 
