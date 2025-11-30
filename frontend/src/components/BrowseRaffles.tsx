@@ -5,7 +5,6 @@ import NFTImage from './NFTImage';
 import toast from 'react-hot-toast';
 import { useAllRaffles, useClearRaffleCache } from '../hooks/useRafflePositions';
 import { useBuyTickets } from '../hooks/useRaffleContract';
-import { useAutoRefresh } from '../hooks/useAutoRefresh';
 
 interface CreatedRaffle {
   raffleId: number;
@@ -34,10 +33,7 @@ export default function BrowseRaffles() {
   const clearCache = useClearRaffleCache();
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
-  // Auto-refresh every 30 seconds
-  useAutoRefresh(() => {
-    refetch();
-  }, { interval: 30000, enabled: true });
+
 
   useEffect(() => {
     if (raffles.length < 20) {
