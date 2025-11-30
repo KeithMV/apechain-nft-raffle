@@ -1,4 +1,5 @@
 import { Connector } from 'wagmi';
+import { metaMaskConnector, walletConnectConnector } from '../config/wagmi';
 
 export enum ConnectionState {
   DISCONNECTED = 'disconnected',
@@ -28,6 +29,10 @@ class WalletConnectionService {
     if (process.env.NODE_ENV === 'development') {
       console.log(`Connection activating: ${connectorName}`);
     }
+  }
+
+  isMetaMaskAvailable(): boolean {
+    return typeof window !== 'undefined' && window.ethereum?.isMetaMask;
   }
 
   logConnectionSuccess(connectorName: string): void {

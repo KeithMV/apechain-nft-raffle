@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { walletConnectConnector } from '../config/wagmi';
+import { metaMaskConnector, walletConnectConnector } from '../config/wagmi';
 import { walletConnectionService, ConnectionState, ConnectionError } from '../services/walletConnectionService';
 
 const APECHAIN_ID = 33139;
@@ -23,15 +23,20 @@ export function useWalletConnection() {
   const handleConnect = useCallback(async () => {
     try {
       setConnectionError(null);
-      walletConnectionService.logConnectionAttempt('WalletConnect');
       
-      await connect({ connector: walletConnectConnector });
-      
-      walletConnectionService.logConnectionSuccess('WalletConnect');
+      if (walletConnectionService.isMetaMaskAvailable()) {
+        walletConnectionService.logConnectionAttempt('MetaMask');
+        await connect({ connector: metaMaskConnector });
+        walletConnectionService.logConnectionSuccess('MetaMask');
+      } else {
+        walletConnectionService.logConnectionAttempt('WalletConnect');
+        await connect({ connector: walletConnectConnector });
+        walletConnectionService.logConnectionSuccess('WalletConnect');
+      }
     } catch (error) {
       const connectionError = walletConnectionService.formatConnectionError(error as Error);
       setConnectionError(connectionError);
-      walletConnectionService.logConnectionError(error as Error, 'WalletConnect');
+      walletConnectionService.logConnectionError(error as Error, 'Wallet');
     }
   }, [connect]);
 

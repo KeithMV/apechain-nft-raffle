@@ -1,6 +1,6 @@
 import { createConfig, http } from 'wagmi';
 import { defineChain } from 'viem';
-import { walletConnect } from 'wagmi/connectors';
+import { walletConnect, injected } from 'wagmi/connectors';
 
 // ApeChain configuration
 export const apeChain = defineChain({
@@ -25,7 +25,22 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Professional WalletConnect configuration
+// Clear old WalletConnect sessions on load
+if (typeof window !== 'undefined') {
+  // Clear localStorage WalletConnect data
+  Object.keys(localStorage).forEach(key => {
+    if (key.startsWith('wc@2') || key.startsWith('@walletconnect')) {
+      localStorage.removeItem(key);
+    }
+  });
+}
+
+// MetaMask injected connector for desktop
+export const metaMaskConnector = injected({
+  target: 'metaMask'
+});
+
+// WalletConnect for mobile
 export const walletConnectConnector = walletConnect({
   projectId: 'b848c907908cee0c1bcf0ab0493da6c4',
   metadata: {
@@ -42,10 +57,10 @@ export const walletConnectConnector = walletConnect({
   }
 });
 
-// Optimized config for ApeChain only
+// Optimized config for ApeChain with both desktop and mobile support
 export const config = createConfig({
   chains: [apeChain],
-  connectors: [walletConnectConnector],
+  connectors: [metaMaskConnector, walletConnectConnector],
   transports: {
     [apeChain.id]: http(),
   },

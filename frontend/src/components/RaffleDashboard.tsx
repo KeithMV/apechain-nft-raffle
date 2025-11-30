@@ -4,6 +4,7 @@ import NFTImage from './NFTImage';
 import toast from 'react-hot-toast';
 import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
+import { useEmergencySelectWinner } from '../hooks/useWinnerSelection';
 
 interface UserRafflePosition {
   raffleId: number;
@@ -73,15 +74,28 @@ export default function RaffleDashboard() {
     return `${minutes}m`;
   };
 
+  const { selectWinner, isPending: isSelectingWinner, isConfirming: isConfirmingWinner, isSuccess: winnerSelected } = useEmergencySelectWinner();
+  const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
+
   const handleSelectWinner = async (raffleContract: string) => {
     try {
-      // TODO: Implement emergency select winner hook
-      toast.error('Winner selection functionality needs to be implemented with hooks');
+      setSelectingWinnerFor(raffleContract);
+      await selectWinner(raffleContract);
+      toast.success('Winner selection initiated! Please wait for confirmation.');
     } catch (error: any) {
       console.error('Failed to select winner:', error);
       toast.error('Failed to select winner: ' + error.message);
+      setSelectingWinnerFor(null);
     }
   };
+
+  // Reset selecting state when transaction completes
+  React.useEffect(() => {
+    if (winnerSelected && selectingWinnerFor) {
+      toast.success('Winner selected successfully!');
+      setSelectingWinnerFor(null);
+    }
+  }, [winnerSelected, selectingWinnerFor]);
 
   const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
   const { cancelRaffle, isPending: isCancelling } = useCancelRaffle();
@@ -325,10 +339,20 @@ export default function RaffleDashboard() {
                               {raffle.ticketsSold > 0 ? (
                                 <button
                                   onClick={() => handleSelectWinner(raffle.raffleContract)}
-                                  className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
+                                  disabled={isSelectingWinner && selectingWinnerFor === raffle.raffleContract}
+                                  className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 disabled:from-gray-600 disabled:to-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
                                 >
                                   <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                  <span className="relative">Select Winner</span>
+                                  <span className="relative">
+                                    {isSelectingWinner && selectingWinnerFor === raffle.raffleContract ? (
+                                      <span className="flex items-center space-x-2">
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <span>Selecting...</span>
+                                      </span>
+                                    ) : (
+                                      'Select Winner'
+                                    )}
+                                  </span>
                                 </button>
                               ) : (
                                 <button
