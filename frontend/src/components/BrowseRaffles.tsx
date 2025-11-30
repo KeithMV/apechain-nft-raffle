@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import ApeTokenBalance from './ApeTokenBalance';
 import NFTImage from './NFTImage';
@@ -46,20 +46,7 @@ export default function BrowseRaffles() {
     setCurrentPage(prev => prev + 1);
   };
 
-  const formatTimeRemaining = (endTime: number) => {
-    const now = Date.now() / 1000;
-    const remaining = endTime - now;
-    
-    if (remaining <= 0) return 'Ended';
-    
-    const days = Math.floor(remaining / 86400);
-    const hours = Math.floor((remaining % 86400) / 3600);
-    const minutes = Math.floor((remaining % 3600) / 60);
-    
-    if (days > 0) return `${days}d ${hours}h`;
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
-  };
+
 
   const { buyTickets, isPending: buyingPending, isSuccess: buySuccess, error: buyError } = useBuyTickets();
 
@@ -113,12 +100,27 @@ export default function BrowseRaffles() {
     }
   }, [buyError]);
 
-  const setTicketQuantity = (raffleContract: string, quantity: number, maxAvailable: number) => {
+  const setTicketQuantity = useCallback((raffleContract: string, quantity: number, maxAvailable: number) => {
     setTicketQuantities(prev => ({
       ...prev,
       [raffleContract]: Math.max(1, Math.min(Math.min(50, maxAvailable), quantity))
     }));
-  };
+  }, []);
+  
+  const formatTimeRemaining = useCallback((endTime: number) => {
+    const now = Date.now() / 1000;
+    const remaining = endTime - now;
+    
+    if (remaining <= 0) return 'Ended';
+    
+    const days = Math.floor(remaining / 86400);
+    const hours = Math.floor((remaining % 86400) / 3600);
+    const minutes = Math.floor((remaining % 3600) / 60);
+    
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  }, []);
 
   if (loading) {
     return (
@@ -176,9 +178,12 @@ export default function BrowseRaffles() {
 
       <div className="p-4 sm:p-8">
         {(() => {
-          const filteredRaffles = showExpired ? raffles : raffles.filter(r => r.isActive);
-          const activeCount = raffles.filter(r => r.isActive).length;
-          const expiredCount = raffles.filter(r => !r.isActive).length;
+          const { filteredRaffles, activeCount, expiredCount } = useMemo(() => {
+            const filtered = showExpired ? raffles : raffles.filter(r => r.isActive);
+            const active = raffles.filter(r => r.isActive).length;
+            const expired = raffles.filter(r => !r.isActive).length;
+            return { filteredRaffles: filtered, activeCount: active, expiredCount: expired };
+          }, [raffles, showExpired]);
           
           return (
             <>

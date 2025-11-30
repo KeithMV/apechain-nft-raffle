@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { useNFTMetadata } from '../hooks/useNFTMetadata';
 
 interface NFTImageProps {
@@ -8,7 +8,7 @@ interface NFTImageProps {
   showName?: boolean;
 }
 
-export default function NFTImage({ contractAddress, tokenId, className = '', showName = false }: NFTImageProps) {
+function NFTImage({ contractAddress, tokenId, className = '', showName = false }: NFTImageProps) {
   const { metadata, loading, error } = useNFTMetadata(contractAddress, tokenId);
   const [imageError, setImageError] = useState(false);
 
@@ -58,3 +58,5 @@ export default function NFTImage({ contractAddress, tokenId, className = '', sho
     </div>
   );
 }
+
+export default memo(NFTImage);
