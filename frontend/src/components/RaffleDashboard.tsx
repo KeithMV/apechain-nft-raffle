@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
 import { useEmergencySelectWinner } from '../hooks/useWinnerSelection';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 
 interface UserRafflePosition {
   raffleId: number;
@@ -43,8 +44,14 @@ export default function RaffleDashboard() {
   const [showExpired, setShowExpired] = useState(true);
   const [page, setPage] = useState(0);
   
-  const { positions: userPositions, loading: positionsLoading } = useUserRafflePositions(address);
-  const { raffles: createdRaffles, loading: rafflesLoading } = useCreatedRaffles(address, page);
+  const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositions(address);
+  const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRaffles(address, page);
+
+  // Auto-refresh every 45 seconds (slightly offset from browse page)
+  useAutoRefresh(() => {
+    refetchPositions();
+    refetchCreatedRaffles();
+  }, { interval: 45000, enabled: !!address });
   
   const loading = positionsLoading || rafflesLoading;
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
@@ -89,13 +96,24 @@ export default function RaffleDashboard() {
     }
   };
 
-  // Reset selecting state when transaction completes
+  // Reset selecting state and refresh data when transaction completes
   React.useEffect(() => {
     if (winnerSelected && selectingWinnerFor) {
       toast.success('Winner selected successfully!');
       setSelectingWinnerFor(null);
+      // Refresh both user positions and created raffles
+      refetchPositions();
+      refetchCreatedRaffles();
     }
-  }, [winnerSelected, selectingWinnerFor]);
+  }, [winnerSelected, selectingWinnerFor, refetchPositions, refetchCreatedRaffles]);
+
+  // Also refresh when raffle is cancelled
+  React.useEffect(() => {
+    if (cancelRaffle && !isCancelling) {
+      refetchPositions();
+      refetchCreatedRaffles();
+    }
+  }, [cancelRaffle, isCancelling, refetchPositions, refetchCreatedRaffles]);
 
   const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
   const { cancelRaffle, isPending: isCancelling } = useCancelRaffle();
