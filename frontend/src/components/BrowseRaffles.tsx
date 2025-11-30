@@ -122,6 +122,14 @@ export default function BrowseRaffles() {
     return `${minutes}m`;
   }, []);
 
+  // Memoize filtered raffles at component level
+  const { filteredRaffles, activeCount, expiredCount } = useMemo(() => {
+    const filtered = showExpired ? raffles : raffles.filter(r => r.isActive);
+    const active = raffles.filter(r => r.isActive).length;
+    const expired = raffles.filter(r => !r.isActive).length;
+    return { filteredRaffles: filtered, activeCount: active, expiredCount: expired };
+  }, [raffles, showExpired]);
+
   if (loading) {
     return (
       <div className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border border-emerald-400/30 rounded-3xl shadow-2xl shadow-emerald-500/20 p-8">
@@ -177,26 +185,19 @@ export default function BrowseRaffles() {
         </div>
 
       <div className="p-4 sm:p-8">
-        {useMemo(() => {
-          const filteredRaffles = showExpired ? raffles : raffles.filter(r => r.isActive);
-          const activeCount = raffles.filter(r => r.isActive).length;
-          const expiredCount = raffles.filter(r => !r.isActive).length;
-          
-          return (
-            <>
-              {raffles.length > 0 && (
-                <div className="mb-6 flex flex-wrap gap-4 text-sm">
-                  <div className="bg-emerald-500/10 border border-emerald-400/30 rounded-xl px-4 py-2">
-                    <span className="text-emerald-300 font-medium">{activeCount} Active</span>
-                  </div>
-                  <button
-                    onClick={() => setShowExpired(!showExpired)}
-                    className="bg-slate-700/50 border border-slate-600/30 hover:bg-slate-600/50 hover:border-slate-500/50 rounded-xl px-4 py-2 transition-all cursor-pointer"
-                  >
-                    <span className="text-slate-400 hover:text-slate-300 font-medium">{expiredCount} Expired</span>
-                  </button>
-                </div>
-              )}
+        {raffles.length > 0 && (
+          <div className="mb-6 flex flex-wrap gap-4 text-sm">
+            <div className="bg-emerald-500/10 border border-emerald-400/30 rounded-xl px-4 py-2">
+              <span className="text-emerald-300 font-medium">{activeCount} Active</span>
+            </div>
+            <button
+              onClick={() => setShowExpired(!showExpired)}
+              className="bg-slate-700/50 border border-slate-600/30 hover:bg-slate-600/50 hover:border-slate-500/50 rounded-xl px-4 py-2 transition-all cursor-pointer"
+            >
+              <span className="text-slate-400 hover:text-slate-300 font-medium">{expiredCount} Expired</span>
+            </button>
+          </div>
+        )}
               
               {filteredRaffles.length === 0 ? (
                 <div className="text-center py-12">
@@ -404,9 +405,6 @@ export default function BrowseRaffles() {
                   </button>
                 </div>
               )}
-            </>
-          );
-        }, [raffles, showExpired])}
       </div>
       </div>
     </div>
