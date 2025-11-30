@@ -155,7 +155,7 @@ export default function CreateRafflePage() {
       console.error('Approval initiation failed:', error);
       setApprovalLoading(false);
       
-      if (error.message?.includes('User rejected')) {
+      if (error instanceof Error && error.message?.includes('User rejected')) {
         toast.error('Approval cancelled by user');
       } else {
         toast.error('Failed to initiate approval');
