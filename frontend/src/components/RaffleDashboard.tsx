@@ -52,6 +52,14 @@ export default function RaffleDashboard() {
     refetchPositions();
     refetchCreatedRaffles();
   }, { interval: 45000, enabled: !!address });
+
+  // Refresh when raffle is cancelled
+  React.useEffect(() => {
+    if (cancelSuccess) {
+      refetchPositions();
+      refetchCreatedRaffles();
+    }
+  }, [cancelSuccess, refetchPositions, refetchCreatedRaffles]);
   
   const loading = positionsLoading || rafflesLoading;
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
@@ -107,16 +115,10 @@ export default function RaffleDashboard() {
     }
   }, [winnerSelected, selectingWinnerFor, refetchPositions, refetchCreatedRaffles]);
 
-  // Also refresh when raffle is cancelled
-  React.useEffect(() => {
-    if (cancelRaffle && !isCancelling) {
-      refetchPositions();
-      refetchCreatedRaffles();
-    }
-  }, [cancelRaffle, isCancelling, refetchPositions, refetchCreatedRaffles]);
+
 
   const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
-  const { cancelRaffle, isPending: isCancelling } = useCancelRaffle();
+  const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
 
   const handleCancelRaffle = async (raffleContract: string) => {
     setCancellingRaffle(raffleContract);
