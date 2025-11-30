@@ -183,12 +183,6 @@ export default function BrowseRaffles() {
           const expiredCount = raffles.filter(r => !r.isActive).length;
           
           return (
-        {(() => {
-          const filteredRaffles = showExpired ? raffles : raffles.filter(r => r.isActive);
-          const activeCount = raffles.filter(r => r.isActive).length;
-          const expiredCount = raffles.filter(r => !r.isActive).length;
-          
-          return (
             <>
               {raffles.length > 0 && (
                 <div className="mb-6 flex flex-wrap gap-4 text-sm">
