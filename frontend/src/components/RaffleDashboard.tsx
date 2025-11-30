@@ -46,6 +46,9 @@ export default function RaffleDashboard() {
   
   const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositions(address);
   const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRaffles(address, page);
+  
+  const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
+  const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
 
   // Auto-refresh every 45 seconds (slightly offset from browse page)
   useAutoRefresh(() => {
@@ -116,9 +119,6 @@ export default function RaffleDashboard() {
   }, [winnerSelected, selectingWinnerFor, refetchPositions, refetchCreatedRaffles]);
 
 
-
-  const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
-  const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
 
   const handleCancelRaffle = async (raffleContract: string) => {
     setCancellingRaffle(raffleContract);
