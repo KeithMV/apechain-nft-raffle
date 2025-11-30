@@ -177,13 +177,16 @@ export default function BrowseRaffles() {
         </div>
 
       <div className="p-4 sm:p-8">
+        {useMemo(() => {
+          const filteredRaffles = showExpired ? raffles : raffles.filter(r => r.isActive);
+          const activeCount = raffles.filter(r => r.isActive).length;
+          const expiredCount = raffles.filter(r => !r.isActive).length;
+          
+          return (
         {(() => {
-          const { filteredRaffles, activeCount, expiredCount } = useMemo(() => {
-            const filtered = showExpired ? raffles : raffles.filter(r => r.isActive);
-            const active = raffles.filter(r => r.isActive).length;
-            const expired = raffles.filter(r => !r.isActive).length;
-            return { filteredRaffles: filtered, activeCount: active, expiredCount: expired };
-          }, [raffles, showExpired]);
+          const filteredRaffles = showExpired ? raffles : raffles.filter(r => r.isActive);
+          const activeCount = raffles.filter(r => r.isActive).length;
+          const expiredCount = raffles.filter(r => !r.isActive).length;
           
           return (
             <>
@@ -409,7 +412,7 @@ export default function BrowseRaffles() {
               )}
             </>
           );
-        })()}
+        }, [raffles, showExpired])}
       </div>
       </div>
     </div>
