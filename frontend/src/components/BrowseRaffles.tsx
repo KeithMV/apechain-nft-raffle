@@ -106,7 +106,6 @@ export default function BrowseRaffles() {
       console.error('❌ Buy tickets error:', buyError);
       console.error('Error details:', {
         message: buyError.message,
-        cause: buyError.cause,
         code: (buyError as any).code,
         data: (buyError as any).data,
         stack: buyError.stack
