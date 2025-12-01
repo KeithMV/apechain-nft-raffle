@@ -54,6 +54,14 @@ export default function BrowseRaffles() {
     const quantity = ticketQuantities[raffle.raffleContract] || 1;
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
     
+    console.log('🎫 Attempting to buy tickets:', {
+      raffleContract: raffle.raffleContract,
+      quantity,
+      ticketPrice: raffle.ticketPrice,
+      availableTickets,
+      totalCost: (parseFloat(raffle.ticketPrice) * quantity).toString()
+    });
+    
     if (quantity < 1 || quantity > 100) {
       toast.error('Please enter a valid quantity (1-100)');
       return;
@@ -66,9 +74,16 @@ export default function BrowseRaffles() {
 
     setBuyingTickets(raffle.raffleContract);
     try {
+      console.log('🚀 Calling buyTickets function...');
       buyTickets(raffle.raffleContract, quantity, raffle.ticketPrice);
+      console.log('✅ buyTickets function called successfully');
     } catch (error: any) {
-      console.error('Failed to buy tickets:', error);
+      console.error('❌ Failed to buy tickets:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
       toast.error('Failed to buy tickets: ' + (error.message || 'Unknown error'));
       setBuyingTickets(null);
     }
@@ -88,7 +103,15 @@ export default function BrowseRaffles() {
   // Handle buy error
   useEffect(() => {
     if (buyError) {
-      console.error('Buy tickets error:', buyError);
+      console.error('❌ Buy tickets error:', buyError);
+      console.error('Error details:', {
+        message: buyError.message,
+        cause: buyError.cause,
+        code: (buyError as any).code,
+        data: (buyError as any).data,
+        stack: buyError.stack
+      });
+      
       if (buyError.message?.includes('User rejected')) {
         toast.error('Transaction cancelled by user');
       } else if (buyError.message?.includes('insufficient funds')) {

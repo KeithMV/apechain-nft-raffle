@@ -191,22 +191,37 @@ export function useBuyTickets() {
   });
 
   const buyTickets = (raffleContract: string, quantity: number, ticketPrice: string) => {
-    const totalCost = parseEther((parseFloat(ticketPrice) * quantity).toString());
-    
-    writeContract({
-      address: raffleContract as `0x${string}`,
-      abi: [{
-        inputs: [{ name: 'quantity', type: 'uint256' }],
-        name: 'buyTickets',
-        outputs: [],
-        stateMutability: 'payable',
-        type: 'function',
-      }],
-      functionName: 'buyTickets',
-      args: [BigInt(quantity)],
-      value: totalCost,
-      chainId: 33139,
-    });
+    try {
+      const totalCost = parseEther((parseFloat(ticketPrice) * quantity).toString());
+      
+      console.log('💰 Buy tickets parameters:', {
+        raffleContract,
+        quantity,
+        ticketPrice,
+        totalCost: totalCost.toString(),
+        quantityBigInt: BigInt(quantity).toString()
+      });
+      
+      writeContract({
+        address: raffleContract as `0x${string}`,
+        abi: [{
+          inputs: [{ name: 'quantity', type: 'uint256' }],
+          name: 'buyTickets',
+          outputs: [],
+          stateMutability: 'payable',
+          type: 'function',
+        }],
+        functionName: 'buyTickets',
+        args: [BigInt(quantity)],
+        value: totalCost,
+        chainId: 33139,
+      });
+      
+      console.log('✅ writeContract called successfully');
+    } catch (error) {
+      console.error('❌ Error in buyTickets function:', error);
+      throw error;
+    }
   };
 
   return {
