@@ -58,12 +58,19 @@ class NFTMetadataService {
         const imageGateways = [
           `https://ipfs.io/ipfs/${ipfsHash}`,
           `https://dweb.link/ipfs/${ipfsHash}`,
-          `https://nftstorage.link/ipfs/${ipfsHash}`,
-          `https://4everland.io/ipfs/${ipfsHash}`
+          `https://cloudflare-ipfs.com/ipfs/${ipfsHash}`
         ];
         
         metadata.image = imageGateways[0];
         (metadata as any).imageAlternatives = imageGateways.slice(1);
+      }
+      
+      // Fix problematic IPFS gateways
+      if (metadata.image?.includes('.ipfs.w3s.link/')) {
+        const ipfsHash = metadata.image.match(/([a-zA-Z0-9]+)\.ipfs\.w3s\.link\/(.+)/);
+        if (ipfsHash) {
+          metadata.image = `https://ipfs.io/ipfs/${ipfsHash[1]}/${ipfsHash[2]}`;
+        }
       }
 
       this.metadataCache.set(cacheKey, metadata);

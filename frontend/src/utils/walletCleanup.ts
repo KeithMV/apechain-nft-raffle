@@ -15,6 +15,9 @@ export const suppressWalletConnectErrors = () => {
         message.includes('Ue: Unexpected error') ||
         message.includes('evmAsk.js') ||
         message.includes('selectExtension') ||
+        message.includes('r.request') ||
+        message.includes('r.selectExtension') ||
+        message.includes('Unexpected error at r.request') ||
         message.includes('Unhandled Promise Rejection') ||
         message.includes('WebSocket connection') ||
         message.includes('relay.walletconnect.org')
