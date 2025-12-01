@@ -166,59 +166,82 @@ export function useUserRafflePositions(userAddress?: string) {
       const totalRaffles = Number(raffleCount);
       const userPositions: UserRafflePosition[] = [];
 
-      // Check last 100 raffles for user participation
-      const startIndex = Math.max(0, totalRaffles - 100);
+      // Check last 50 raffles for user participation (reduced from 100)
+      const startIndex = Math.max(0, totalRaffles - 50);
       
-      for (let i = startIndex; i < totalRaffles; i++) {
-        try {
-          const raffleContract = await publicClient.readContract({
-            address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
-            abi: RAFFLE_FACTORY_ABI,
-            functionName: 'getRaffleContract',
-            args: [BigInt(i)],
-          });
-          
-          const raffle = await publicClient.readContract({
-            address: raffleContract as `0x${string}`,
-            abi: [{
-              inputs: [],
-              name: 'getRaffleInfo',
-              outputs: [{
-                components: [
-                  { name: 'nftContract', type: 'address' },
-                  { name: 'tokenId', type: 'uint256' },
-                  { name: 'creator', type: 'address' },
-                  { name: 'ticketPrice', type: 'uint256' },
-                  { name: 'maxTickets', type: 'uint256' },
-                  { name: 'ticketsSold', type: 'uint256' },
-                  { name: 'endTime', type: 'uint256' },
-                  { name: 'winner', type: 'address' },
-                  { name: 'completed', type: 'bool' },
-                  { name: 'platformFee', type: 'uint256' }
-                ],
-                type: 'tuple'
-              }],
-              stateMutability: 'view',
-              type: 'function'
-            }],
-            functionName: 'getRaffleInfo',
-          });
-
-          // Check if user has tickets in this raffle
-          const userTickets = await publicClient.readContract({
-            address: raffleContract as `0x${string}`,
-            abi: [
-              {
-                inputs: [{ name: 'user', type: 'address' }],
-                name: 'ticketsPurchased',
-                outputs: [{ name: '', type: 'uint256' }],
-                stateMutability: 'view',
-                type: 'function',
-              },
-            ],
-            functionName: 'ticketsPurchased',
-            args: [userAddress as `0x${string}`],
-          });
+      // Batch process raffles in parallel (10 at a time)
+      const batchSize = 10;
+      for (let batchStart = startIndex; batchStart < totalRaffles; batchStart += batchSize) {
+        const batchEnd = Math.min(batchStart + batchSize, totalRaffles);
+        const batchPromises = [];
+        
+        for (let i = batchStart; i < batchEnd; i++) {
+          batchPromises.push(
+            (async () => {
+              try {
+                const raffleContract = await publicClient.readContract({
+                  address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+                  abi: RAFFLE_FACTORY_ABI,
+                  functionName: 'getRaffleContract',
+                  args: [BigInt(i)],
+                });
+                
+                // Parallel calls for raffle info and user tickets
+                const [raffle, userTickets] = await Promise.all([
+                  publicClient.readContract({
+                    address: raffleContract as `0x${string}`,
+                    abi: [{
+                      inputs: [],
+                      name: 'getRaffleInfo',
+                      outputs: [{
+                        components: [
+                          { name: 'nftContract', type: 'address' },
+                          { name: 'tokenId', type: 'uint256' },
+                          { name: 'creator', type: 'address' },
+                          { name: 'ticketPrice', type: 'uint256' },
+                          { name: 'maxTickets', type: 'uint256' },
+                          { name: 'ticketsSold', type: 'uint256' },
+                          { name: 'endTime', type: 'uint256' },
+                          { name: 'winner', type: 'address' },
+                          { name: 'completed', type: 'bool' },
+                          { name: 'platformFee', type: 'uint256' }
+                        ],
+                        type: 'tuple'
+                      }],
+                      stateMutability: 'view',
+                      type: 'function'
+                    }],
+                    functionName: 'getRaffleInfo',
+                  }),
+                  publicClient.readContract({
+                    address: raffleContract as `0x${string}`,
+                    abi: [
+                      {
+                        inputs: [{ name: 'user', type: 'address' }],
+                        name: 'ticketsPurchased',
+                        outputs: [{ name: '', type: 'uint256' }],
+                        stateMutability: 'view',
+                        type: 'function',
+                      },
+                    ],
+                    functionName: 'ticketsPurchased',
+                    args: [userAddress as `0x${string}`],
+                  })
+                ]);
+                
+                return { i, raffleContract, raffle, userTickets };
+              } catch (err) {
+                return null;
+              }
+            })()
+          );
+        }
+        
+        const batchResults = await Promise.all(batchPromises);
+        
+        for (const result of batchResults) {
+          if (!result) continue;
+          const { i, raffleContract, raffle, userTickets } = result;
 
           if (Number(userTickets) > 0) {
             const now = Date.now() / 1000;
@@ -242,9 +265,6 @@ export function useUserRafflePositions(userAddress?: string) {
               winProbability,
             });
           }
-        } catch (err) {
-          // Skip failed raffle reads
-          continue;
         }
       }
 
@@ -287,8 +307,9 @@ export function useCreatedRaffles(userAddress?: string, page: number = 0) {
       const totalRaffles = Number(raffleCount);
       const createdRaffles: CreatedRaffle[] = [];
       
-      // Check all raffles for user creation
-      for (let i = 0; i < totalRaffles; i++) {
+      // Check last 200 raffles for user creation (optimized from all raffles)
+      const startIndex = Math.max(0, totalRaffles - 200);
+      for (let i = startIndex; i < totalRaffles; i++) {
         try {
           const raffleContract = await publicClient.readContract({
             address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
