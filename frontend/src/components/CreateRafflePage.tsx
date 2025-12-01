@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useChainId } from 'wagmi';
 import { usePlatformFee, useNFTApprovalStatus, useNFTApproval, useCreateRaffle } from '../hooks/useRaffleContract';
 import { NETWORK_CONFIG } from '../config/addresses';
+import { useApeChainSwitching } from '../utils/chainSwitching';
 import ApeTokenBalance from './ApeTokenBalance';
 import MobileBanner from './MobileBanner';
 import FeeDisplay from './FeeDisplay';
@@ -25,6 +26,8 @@ interface FormData {
 
 export default function CreateRafflePage() {
   const { address } = useAccount();
+  const chainId = useChainId();
+  const { switchToApeChain, isSwitching } = useApeChainSwitching();
   const [formData, setFormData] = useState<FormData>({
     nftContract: '',
     tokenId: '',
@@ -36,6 +39,8 @@ export default function CreateRafflePage() {
   const [loading, setLoading] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<boolean | null>(null);
   const [approvalLoading, setApprovalLoading] = useState(false);
+  
+  const isWrongNetwork = chainId !== 33139;
   // Professional wagmi hooks
   const { data: platformFeeData } = usePlatformFee();
   const { data: approvalData, refetch: refetchApproval } = useNFTApprovalStatus(
@@ -164,6 +169,18 @@ export default function CreateRafflePage() {
   };
 
   const handleCreateRaffle = async () => {
+    // Check network first
+    if (isWrongNetwork) {
+      toast.error('Please switch to ApeChain network');
+      try {
+        await switchToApeChain();
+        return;
+      } catch (error) {
+        toast.error('Failed to switch network');
+        return;
+      }
+    }
+
     // Rate limiting check
     if (!rateLimiter.isAllowed('createRaffle', 5, 300000)) { // 5 attempts per 5 minutes
       toast.error('Too many attempts. Please wait before creating another raffle.');
@@ -305,6 +322,19 @@ export default function CreateRafflePage() {
             <FeeDisplay className="text-emerald-300 text-sm" />
           </div>
         </div>
+
+        {/* Network Warning */}
+        {isWrongNetwork && (
+          <div className="relative bg-red-900/20 border border-red-500/30 rounded-xl p-4 mb-6 backdrop-blur-sm">
+            <div className="flex items-center text-red-300">
+              <span className="mr-2">⚠️</span>
+              <div>
+                <p className="font-semibold">Wrong Network Detected</p>
+                <p className="text-sm text-red-400">Please switch to ApeChain (Chain ID: 33139) to create raffles</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Mobile Wallet Guidance */}
         <MobileBanner />
@@ -466,15 +496,22 @@ export default function CreateRafflePage() {
         <div className="relative flex flex-col sm:flex-row gap-3 mt-8">
           <button
             onClick={handleCreateRaffle}
-            disabled={createPending || createConfirming || !formData.nftContract || !formData.tokenId || approvalStatus !== true}
+            disabled={createPending || createConfirming || isSwitching || (!isWrongNetwork && (!formData.nftContract || !formData.tokenId || approvalStatus !== true))}
             className="relative flex-1 bg-gradient-to-r from-pink-600 via-fuchsia-600 to-purple-600 hover:from-pink-500 hover:via-fuchsia-500 hover:to-purple-500 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-            {createPending || createConfirming ? (
+            {isSwitching ? (
+              <span className="relative flex items-center justify-center">
+                <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                <span className="text-sm sm:text-base">Switching Network...</span>
+              </span>
+            ) : createPending || createConfirming ? (
               <span className="relative flex items-center justify-center">
                 <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                 <span className="text-sm sm:text-base">{createConfirming ? 'Confirming...' : 'Creating raffle...'}</span>
               </span>
+            ) : isWrongNetwork ? (
+              <span className="relative">Switch to ApeChain</span>
             ) : approvalStatus !== true ? (
               <span className="relative">NFT Approval Required</span>
             ) : (
