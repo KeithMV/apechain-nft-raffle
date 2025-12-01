@@ -4,7 +4,7 @@
  */
 
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
-import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, ERC721_ABI } from '../config/contracts';
+import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
 
 export interface CreateRaffleParams {
@@ -192,25 +192,27 @@ export function useBuyTickets() {
 
   const buyTickets = (raffleContract: string, quantity: number, ticketPrice: string) => {
     try {
-      const totalCost = parseEther((parseFloat(ticketPrice) * quantity).toString());
+      // Validate inputs
+      if (!raffleContract || quantity <= 0 || !ticketPrice) {
+        throw new Error('Invalid parameters for buyTickets');
+      }
+      
+      // Calculate total cost with precision handling
+      const ticketPriceWei = parseEther(ticketPrice);
+      const totalCost = ticketPriceWei * BigInt(quantity);
       
       console.log('💰 Buy tickets parameters:', {
         raffleContract,
         quantity,
         ticketPrice,
+        ticketPriceWei: ticketPriceWei.toString(),
         totalCost: totalCost.toString(),
         quantityBigInt: BigInt(quantity).toString()
       });
       
       writeContract({
         address: raffleContract as `0x${string}`,
-        abi: [{
-          inputs: [{ name: 'quantity', type: 'uint256' }],
-          name: 'buyTickets',
-          outputs: [],
-          stateMutability: 'payable',
-          type: 'function',
-        }],
+        abi: RAFFLE_CONTRACT_ABI,
         functionName: 'buyTickets',
         args: [BigInt(quantity)],
         value: totalCost,
