@@ -94,22 +94,17 @@ export default function BrowseRaffles() {
     if (buySuccess) {
       const quantity = Object.values(ticketQuantities)[0] || 1;
       toast.success(`Successfully bought ${quantity} ticket${quantity > 1 ? 's' : ''}!`);
-      refetch(); // Refresh raffles
       setBuyingTickets(null);
       setTicketQuantities({});
+      // Trigger refresh after state cleanup
+      setTimeout(() => refetch(), 100);
     }
-  }, [buySuccess, ticketQuantities, refetch]);
+  }, [buySuccess]);
 
   // Handle buy error
   useEffect(() => {
     if (buyError) {
       console.error('❌ Buy tickets error:', buyError);
-      console.error('Error details:', {
-        message: buyError.message,
-        code: (buyError as any).code,
-        data: (buyError as any).data,
-        stack: buyError.stack
-      });
       
       if (buyError.message?.includes('User rejected')) {
         toast.error('Transaction cancelled by user');
