@@ -35,10 +35,12 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// MetaMask via injected connector (avoids SDK issues)
-export const metaMaskConnector = injected({ target: 'metaMask' });
+// MetaMask injected connector for desktop
+export const metaMaskConnector = injected({
+  target: 'metaMask'
+});
 
-// WalletConnect for mobile wallets
+// WalletConnect for mobile
 export const walletConnectConnector = walletConnect({
   projectId: 'b848c907908cee0c1bcf0ab0493da6c4',
   metadata: {
@@ -51,7 +53,7 @@ export const walletConnectConnector = walletConnect({
   },
   showQrModal: true,
   qrModalOptions: {
-    themeMode: 'dark'
+    themeMode: 'light'
   }
 });
 
