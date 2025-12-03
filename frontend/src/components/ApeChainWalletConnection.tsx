@@ -103,19 +103,43 @@ export default function ApeChainWalletConnection() {
               disabled={isPending}
               className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
             >
-              <span className="text-2xl">🔗</span>
+              <span className="text-2xl">🛡️</span>
               <div className="text-left">
-                <div className="text-white font-medium">WalletConnect</div>
-                <div className="text-slate-400 text-sm">Mobile Wallets</div>
+                <div className="text-white font-medium">Trust Wallet</div>
+                <div className="text-slate-400 text-sm">Mobile App</div>
+              </div>
+            </button>
+
+            <button
+              onClick={handleConnectWalletConnect}
+              disabled={isPending}
+              className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <span className="text-2xl">🌈</span>
+              <div className="text-left">
+                <div className="text-white font-medium">Rainbow</div>
+                <div className="text-slate-400 text-sm">Mobile App</div>
+              </div>
+            </button>
+
+            <button
+              onClick={handleConnectWalletConnect}
+              disabled={isPending}
+              className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <span className="text-2xl">💙</span>
+              <div className="text-left">
+                <div className="text-white font-medium">Coinbase Wallet</div>
+                <div className="text-slate-400 text-sm">Mobile App</div>
               </div>
             </button>
           </div>
 
-          <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-            <div className="text-amber-300 text-sm font-medium mb-1">⚠️ ApeChain Only</div>
-            <div className="text-amber-200 text-xs">
-              Only wallets that support custom networks are shown. 
-              Other wallets may not work with ApeChain.
+          <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+            <div className="text-emerald-300 text-sm font-medium mb-1">✅ ApeChain Compatible</div>
+            <div className="text-emerald-200 text-xs">
+              These 4 wallets have been tested and verified to work with ApeChain. 
+              Choose the wallet app you have installed.
             </div>
           </div>
         </div>
