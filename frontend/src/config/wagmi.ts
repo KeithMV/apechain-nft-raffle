@@ -54,18 +54,21 @@ export const walletConnectConnector = walletConnect({
   showQrModal: true,
   qrModalOptions: {
     themeMode: 'dark',
-    // Only show these 4 ApeChain-compatible wallets
-    includeWalletIds: [
+    // Show only recommended wallets
+    explorerRecommendedWalletIds: [
       'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
       '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0', // Trust Wallet
       '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
-      'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa'  // Coinbase Wallet (mobile)
+      'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa'  // Coinbase Wallet
     ],
-    // Alternative: exclude known incompatible wallets
-    excludeWalletIds: [
+    // Hide incompatible wallets
+    explorerExcludedWalletIds: [
       'bc949c5d968ae81310268bf9193f9c9fb7bb4e1283e1284af8f2bd4992535fd6', // Phantom
       '225affb176778569276e484e1b92637ad061b01e13a048b35a9d280c3b58970f', // Safe
-      '19177a98252e07ddfc9af2083ba8e07ef627cb6103467ffebb3f8f4205fd7927'  // Ledger
+      '19177a98252e07ddfc9af2083ba8e07ef627cb6103467ffebb3f8f4205fd7927', // Ledger
+      'ecc4036f814562b41a5268adc86270ffc6a2c746963db0c106e0c6b6b8b24bed', // 1inch
+      '971e689d0a5be527bac79629b4ee9b925e82208e5168b733496a09c0faed0709', // OKX
+      'a797aa35c0fadbcc1a53e40f400c163f252c665b695814e17a0ff02ebaf92f05'  // Argent
     ]
   }
 });
