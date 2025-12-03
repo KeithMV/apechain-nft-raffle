@@ -1,18 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useWalletConnection } from '../hooks/useWalletConnection';
 import { ConnectionState } from '../services/walletConnectionService';
 import { WalletErrorBoundary } from './WalletErrorBoundary';
+import CustomWalletModal from './CustomWalletModal';
 
 function WalletConnectionContent() {
   const {
     address,
     connectionState,
     connectionError,
-    connect,
     disconnect,
     switchNetwork,
     isWrongNetwork
   } = useWalletConnection();
+  
+  const [showCustomModal, setShowCustomModal] = useState(false);
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -59,24 +61,31 @@ function WalletConnectionContent() {
   }
 
   return (
-    <div className="flex flex-col items-end space-y-2">
-      <button
-        onClick={connect}
-        disabled={connectionState === ConnectionState.CONNECTING}
-        className={`px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 disabled:opacity-50 active:scale-95 touch-manipulation ${
-          connectionState === ConnectionState.ERROR ? 'from-red-500 to-red-600 border-red-400' : ''
-        }`}
-        style={{ WebkitTapHighlightColor: 'transparent' }}
-      >
-        {getButtonText()}
-      </button>
+    <>
+      <div className="flex flex-col items-end space-y-2">
+        <button
+          onClick={() => setShowCustomModal(true)}
+          disabled={connectionState === ConnectionState.CONNECTING}
+          className={`px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 disabled:opacity-50 active:scale-95 touch-manipulation ${
+            connectionState === ConnectionState.ERROR ? 'from-red-500 to-red-600 border-red-400' : ''
+          }`}
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+        >
+          {getButtonText()}
+        </button>
+        
+        {connectionError && (
+          <div className="text-xs text-red-400 max-w-[200px] text-right">
+            {connectionError.userMessage}
+          </div>
+        )}
+      </div>
       
-      {connectionError && (
-        <div className="text-xs text-red-400 max-w-[200px] text-right">
-          {connectionError.userMessage}
-        </div>
-      )}
-    </div>
+      <CustomWalletModal 
+        isOpen={showCustomModal} 
+        onClose={() => setShowCustomModal(false)} 
+      />
+    </>
   );
 }
 
