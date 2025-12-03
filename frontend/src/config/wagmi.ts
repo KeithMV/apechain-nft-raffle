@@ -1,7 +1,6 @@
 import { createConfig, http } from 'wagmi';
 import { defineChain } from 'viem';
-import { walletConnect, injected } from 'wagmi/connectors';
-import { INCOMPATIBLE_WALLETS } from './apechain-wallets';
+import { walletConnect, metaMask } from 'wagmi/connectors';
 
 // ApeChain configuration
 export const apeChain = defineChain({
@@ -36,27 +35,15 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// MetaMask injected connector for desktop
-export const metaMaskConnector = injected({
-  target: 'metaMask'
-});
+// Clean MetaMask connector - only MetaMask
+export const metaMaskConnector = metaMask();
 
-// Filter function to hide incompatible wallets
-export const filterIncompatibleWallets = (wallets: any[]) => {
-  return wallets.filter(wallet => {
-    const walletId = wallet.id || wallet.name?.toLowerCase();
-    return !INCOMPATIBLE_WALLETS.some(incompatible => 
-      walletId?.includes(incompatible.toLowerCase())
-    );
-  });
-};
-
-// WalletConnect for mobile
+// WalletConnect with ApeChain-compatible wallets only
 export const walletConnectConnector = walletConnect({
   projectId: 'b848c907908cee0c1bcf0ab0493da6c4',
   metadata: {
     name: 'ApeChain NFT Raffle',
-    description: 'Win exclusive NFTs on ApeChain',
+    description: 'ApeChain Compatible Wallets Only',
     url: typeof window !== 'undefined' && process.env.NODE_ENV === 'development' 
       ? window.location.origin 
       : 'https://apechainraffles.io',
@@ -64,7 +51,14 @@ export const walletConnectConnector = walletConnect({
   },
   showQrModal: true,
   qrModalOptions: {
-    themeMode: 'light'
+    themeMode: 'dark',
+    // Only show ApeChain-compatible wallets
+    explorerRecommendedWalletIds: [
+      'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
+      '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0', // Trust Wallet
+      '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
+      'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa'  // Coinbase (mobile only)
+    ]
   }
 });
 
