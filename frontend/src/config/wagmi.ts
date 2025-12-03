@@ -1,6 +1,7 @@
 import { createConfig, http } from 'wagmi';
 import { defineChain } from 'viem';
 import { walletConnect, injected } from 'wagmi/connectors';
+import { INCOMPATIBLE_WALLETS } from './apechain-wallets';
 
 // ApeChain configuration
 export const apeChain = defineChain({
@@ -39,6 +40,16 @@ if (typeof window !== 'undefined') {
 export const metaMaskConnector = injected({
   target: 'metaMask'
 });
+
+// Filter function to hide incompatible wallets
+export const filterIncompatibleWallets = (wallets: any[]) => {
+  return wallets.filter(wallet => {
+    const walletId = wallet.id || wallet.name?.toLowerCase();
+    return !INCOMPATIBLE_WALLETS.some(incompatible => 
+      walletId?.includes(incompatible.toLowerCase())
+    );
+  });
+};
 
 // WalletConnect for mobile
 export const walletConnectConnector = walletConnect({
