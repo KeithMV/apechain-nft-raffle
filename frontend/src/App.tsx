@@ -6,7 +6,7 @@ import { config } from './config/wagmi';
 import { addApeChainToMetaMask } from './utils/addApeChain';
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
-import ProfessionalWalletConnection from './components/ProfessionalWalletConnection';
+import ApeChainWalletConnection from './components/ApeChainWalletConnection';
 import NetworkStatus from './components/NetworkStatus';
 import { PageLoadingFallback, ComponentLoadingFallback } from './components/LoadingFallback';
 import { suppressWalletConnectErrors, cleanWalletConnectStorage } from './utils/walletCleanup';
@@ -106,7 +106,7 @@ function Header({ currentPage, setCurrentPage }: {
               </div>
             )}
             <div className="shrink-0">
-              <ProfessionalWalletConnection />
+              <ApeChainWalletConnection />
             </div>
           </div>
         </div>
@@ -201,7 +201,7 @@ function RaffleApp() {
               <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4 font-sans tracking-tight">Connect Your Wallet</h3>
               <p className="text-slate-300 mb-6 sm:mb-8 text-base sm:text-lg px-2">Connect your wallet to start creating and participating in NFT raffles</p>
               <div className="flex justify-center">
-                <ProfessionalWalletConnection />
+                <ApeChainWalletConnection />
               </div>
             </div>
           </div>
