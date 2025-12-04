@@ -20,13 +20,21 @@ function WalletConnectionContent() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
   const [hasShownSuccess, setHasShownSuccess] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // Keep MetaMask session active
   useMetaMaskSession();
 
-  // Show success toast only when connection is stable
+  // Show success toast only when connection is stable (not on page refresh)
   useEffect(() => {
-    if (connectionState === ConnectionState.CONNECTED && address && !hasShownSuccess && !isConnecting) {
+    // Skip success toast on initial page load if wallet is already connected
+    if (isInitialLoad && connectionState === ConnectionState.CONNECTED) {
+      setIsInitialLoad(false);
+      setHasShownSuccess(true);
+      return;
+    }
+    
+    if (connectionState === ConnectionState.CONNECTED && address && !hasShownSuccess && !isConnecting && !isInitialLoad) {
       const timer = setTimeout(() => {
         if (connectionState === ConnectionState.CONNECTED && address) {
           toast.success('Wallet connected successfully!');
@@ -37,8 +45,9 @@ function WalletConnectionContent() {
       return () => clearTimeout(timer);
     } else if (connectionState !== ConnectionState.CONNECTED) {
       setHasShownSuccess(false);
+      setIsInitialLoad(false);
     }
-  }, [connectionState, address, hasShownSuccess, isConnecting]);
+  }, [connectionState, address, hasShownSuccess, isConnecting, isInitialLoad]);
 
   const handleConnect = useCallback(async () => {
     if (isConnecting) return;

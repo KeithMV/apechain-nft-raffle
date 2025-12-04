@@ -14,10 +14,17 @@ export default function ApeChainWalletConnection() {
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
   const [hasShownSuccess, setHasShownSuccess] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
-    if (isConnected && address && !hasShownSuccess && !isPending) {
-      // Add small delay to ensure connection is stable
+    // Skip success toast on initial page load if wallet is already connected
+    if (isInitialLoad && isConnected) {
+      setIsInitialLoad(false);
+      setHasShownSuccess(true);
+      return;
+    }
+    
+    if (isConnected && address && !hasShownSuccess && !isPending && !isInitialLoad) {
       const timer = setTimeout(() => {
         if (isConnected && address) {
           toast.success('Wallet connected successfully!');
@@ -28,8 +35,9 @@ export default function ApeChainWalletConnection() {
       return () => clearTimeout(timer);
     } else if (!isConnected) {
       setHasShownSuccess(false);
+      setIsInitialLoad(false);
     }
-  }, [isConnected, address, hasShownSuccess, isPending]);
+  }, [isConnected, address, hasShownSuccess, isPending, isInitialLoad]);
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
