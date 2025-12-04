@@ -1,5 +1,6 @@
 import React from 'react';
 import { useWalletConnection } from '../hooks/useWalletConnection';
+import { useMetaMaskSession } from '../hooks/useMetaMaskSession';
 import { ConnectionState } from '../services/walletConnectionService';
 import { WalletErrorBoundary } from './WalletErrorBoundary';
 
@@ -13,6 +14,9 @@ function WalletConnectionContent() {
     switchNetwork,
     isWrongNetwork
   } = useWalletConnection();
+  
+  // Keep MetaMask session active
+  useMetaMaskSession();
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;

@@ -35,9 +35,10 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// MetaMask injected connector for desktop
+// MetaMask injected connector for desktop with session persistence
 export const metaMaskConnector = injected({
-  target: 'metaMask'
+  target: 'metaMask',
+  shimDisconnect: false // Prevent automatic disconnection
 });
 
 // WalletConnect for mobile with filtered wallet list
