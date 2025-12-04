@@ -52,8 +52,6 @@ export function useCancelRaffle() {
         functionName: 'cancelRaffle',
         chainId: apeChain.id,
       });
-
-      toast.success('Cancel transaction submitted!');
     } catch (error) {
       console.error('Cancel raffle failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Cancel failed';
