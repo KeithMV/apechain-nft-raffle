@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { clearWalletStorage } from '../utils/walletUtils';
 
 // Enhanced connection persistence with session management
 export function useConnectionPersistence() {
@@ -10,64 +11,69 @@ export function useConnectionPersistence() {
   // Store connection state
   useEffect(() => {
     if (isConnected && address && connector) {
-      const connectionData = {
-        connectorId: connector.id,
-        address,
-        timestamp: Date.now(),
-        sessionActive: true
-      };
-      localStorage.setItem('walletConnection', JSON.stringify(connectionData));
-      localStorage.setItem('lastWalletConnector', connector.id);
-      localStorage.setItem('userHasConnected', 'true'); // Track user intent
-      
-      // Set session timeout (24 hours)
-      const sessionTimeout = setTimeout(() => {
-        localStorage.removeItem('walletConnection');
-      }, 24 * 60 * 60 * 1000);
-      
-      return () => clearTimeout(sessionTimeout);
+      try {
+        const connectionData = {
+          connectorId: connector.id,
+          address,
+          timestamp: Date.now(),
+          sessionActive: true
+        };
+        localStorage.setItem('walletConnection', JSON.stringify(connectionData));
+        localStorage.setItem('lastWalletConnector', connector.id);
+        localStorage.setItem('userHasConnected', 'true');
+      } catch (error) {
+        console.warn('Failed to store connection data:', error);
+      }
     }
   }, [isConnected, address, connector]);
   
-  // Auto-reconnect on page load if session is valid (less aggressive)
+  // Auto-reconnect on page load if session is valid
   useEffect(() => {
-    // Only try to reconnect if user explicitly connected before
-    const connectionData = localStorage.getItem('walletConnection');
-    const hasUserConnected = localStorage.getItem('userHasConnected');
+    if (isConnected) return; // Already connected
     
-    if (connectionData && !isConnected && hasUserConnected) {
+    const attemptReconnect = async () => {
       try {
-        const { connectorId, timestamp, sessionActive } = JSON.parse(connectionData);
-        const isSessionValid = Date.now() - timestamp < 24 * 60 * 60 * 1000; // 24 hours
+        const connectionData = localStorage.getItem('walletConnection');
+        const hasUserConnected = localStorage.getItem('userHasConnected');
         
-        if (sessionActive && isSessionValid) {
-          const targetConnector = connectors.find(c => c.id === connectorId);
-          if (targetConnector && targetConnector.id === 'injected') {
-            // Only auto-reconnect for injected (MetaMask) if it's available
-            connect({ connector: targetConnector });
+        if (connectionData && hasUserConnected) {
+          const { connectorId, timestamp, sessionActive } = JSON.parse(connectionData);
+          const isSessionValid = Date.now() - timestamp < 24 * 60 * 60 * 1000; // 24 hours
+          
+          if (sessionActive && isSessionValid) {
+            const targetConnector = connectors.find(c => c.id === connectorId);
+            if (targetConnector && targetConnector.id === 'injected') {
+              // Only auto-reconnect for injected (MetaMask) if it's available
+              try {
+                await connect({ connector: targetConnector });
+              } catch (error: any) {
+                console.warn('Auto-reconnect failed:', error);
+                clearWalletStorage();
+              }
+            }
+          } else {
+            clearWalletStorage();
           }
-        } else {
-          localStorage.removeItem('walletConnection');
         }
       } catch (error) {
         console.warn('Invalid connection data:', error);
-        localStorage.removeItem('walletConnection');
+        clearWalletStorage();
       }
-    }
+    };
+    
+    attemptReconnect();
   }, [connect, connectors, isConnected]);
   
   // Clean up on disconnect
   useEffect(() => {
     if (!isConnected) {
-      localStorage.removeItem('walletConnection');
+      clearWalletStorage();
     }
   }, [isConnected]);
   
   // Enhanced disconnect with cleanup
   const enhancedDisconnect = useCallback(() => {
-    localStorage.removeItem('walletConnection');
-    localStorage.removeItem('lastWalletConnector');
-    localStorage.removeItem('userHasConnected');
+    clearWalletStorage();
     disconnect();
   }, [disconnect]);
   

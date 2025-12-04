@@ -1,56 +1,110 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useAccount, useDisconnect, useChainId, useSwitchChain, useConnect } from 'wagmi';
 import { apeChain, metaMaskConnector, walletConnectConnector } from '../config/wagmi';
+import { formatAddress, clearWalletStorage, getConnectionErrorMessage, isMetaMaskAvailable, isConnectionError } from '../utils/walletUtils';
+import toast from 'react-hot-toast';
 
 export default function ApeChainWalletConnection() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const { connect, isPending } = useConnect();
+  const { connect, isPending, error } = useConnect();
   const [showWallets, setShowWallets] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [hasShownSuccess, setHasShownSuccess] = useState(false);
+
+  useEffect(() => {
+    if (isConnected && address && !hasShownSuccess && !isPending) {
+      // Add small delay to ensure connection is stable
+      const timer = setTimeout(() => {
+        if (isConnected && address) {
+          toast.success('Wallet connected successfully!');
+          setHasShownSuccess(true);
+        }
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    } else if (!isConnected) {
+      setHasShownSuccess(false);
+    }
+  }, [isConnected, address, hasShownSuccess, isPending]);
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
-  const handleSwitchNetwork = async () => {
+  const handleSwitchNetwork = useCallback(async () => {
     try {
       await switchChain({ chainId: apeChain.id });
+      toast.success('Switched to ApeChain');
     } catch (err) {
-      console.error('Network switch failed:', err);
+      const errorMessage = getConnectionErrorMessage(err);
+      toast.error(`Network switch failed: ${errorMessage}`);
     }
-  };
+  }, [switchChain]);
 
-  const handleConnectMetaMask = async () => {
+  const handleConnectMetaMask = useCallback(async () => {
+    if (!isMetaMaskAvailable()) {
+      toast.error('MetaMask not detected. Please install MetaMask.');
+      return;
+    }
+    
     try {
       await connect({ connector: metaMaskConnector });
       setShowWallets(false);
-    } catch (err) {
-      console.error('MetaMask connection failed:', err);
+    } catch (err: any) {
+      const errorMessage = getConnectionErrorMessage(err);
+      if (err?.code === 4001) {
+        toast.error('Connection cancelled by user');
+      } else {
+        toast.error(`MetaMask connection failed: ${errorMessage}`);
+      }
     }
-  };
+  }, [connect]);
 
-  const handleSoftDisconnect = () => {
-    // Soft disconnect - only disconnect from site, don't lock MetaMask
-    if (typeof window !== 'undefined' && window.ethereum) {
-      // Clear site connection without locking wallet
-      localStorage.removeItem('walletConnection');
-      localStorage.removeItem('lastWalletConnector');
-    }
+  const handleSoftDisconnect = useCallback(() => {
+    clearWalletStorage();
     disconnect();
-  };
+    toast.success('Wallet disconnected');
+  }, [disconnect]);
 
-  const handleConnectWalletConnect = async () => {
-    try {
-      await connect({ connector: walletConnectConnector });
-      setShowWallets(false);
-    } catch (err) {
-      console.error('WalletConnect failed:', err);
-    }
-  };
-
-  const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
+  const handleConnectWalletConnect = useCallback(async () => {
+    const maxRetries = 3;
+    
+    const attemptConnection = async (attempt: number): Promise<void> => {
+      try {
+        setIsRetrying(attempt > 1);
+        await connect({ connector: walletConnectConnector });
+        setShowWallets(false);
+        setRetryCount(0);
+        setIsRetrying(false);
+      } catch (err: any) {
+        const errorMessage = getConnectionErrorMessage(err);
+        
+        // Check if it's a network/relay error that we can retry
+        const isRetryableError = errorMessage.includes('network') || 
+                                errorMessage.includes('relay') || 
+                                errorMessage.includes('WebSocket') ||
+                                err?.code === 4001; // User rejection is not retryable
+        
+        if (isRetryableError && attempt < maxRetries && err?.code !== 4001) {
+          setRetryCount(attempt);
+          toast.loading(`Connection failed, retrying... (${attempt}/${maxRetries})`, { duration: 2000 });
+          setTimeout(() => attemptConnection(attempt + 1), 2000);
+        } else {
+          setIsRetrying(false);
+          setRetryCount(0);
+          if (err?.code === 4001) {
+            toast.error('Connection cancelled by user');
+          } else {
+            toast.error(`Connection failed: ${errorMessage}`);
+          }
+        }
+      }
+    };
+    
+    await attemptConnection(1);
+  }, [connect]);
 
   if (isConnected) {
     return (
@@ -102,22 +156,42 @@ export default function ApeChainWalletConnection() {
               className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
             >
               <span className="text-2xl">🦊</span>
-              <div className="text-left">
-                <div className="text-white font-medium">MetaMask</div>
+              <div className="text-left flex-1">
+                <div className="text-white font-medium flex items-center space-x-2">
+                  <span>MetaMask</span>
+                  {!isMetaMaskAvailable() && (
+                    <span className="text-xs bg-red-500/20 text-red-300 px-2 py-1 rounded">Not Installed</span>
+                  )}
+                </div>
                 <div className="text-slate-400 text-sm">Desktop & Mobile Browser</div>
               </div>
+              {isPending && (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              )}
             </button>
 
             <button
               onClick={handleConnectWalletConnect}
-              disabled={isPending}
+              disabled={isPending || isRetrying}
               className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
             >
               <span className="text-2xl">📱</span>
-              <div className="text-left">
-                <div className="text-white font-medium">Mobile Wallets</div>
-                <div className="text-slate-400 text-sm">Trust, Rainbow, Coinbase & more</div>
+              <div className="text-left flex-1">
+                <div className="text-white font-medium flex items-center space-x-2">
+                  <span>Mobile Wallets</span>
+                  {isRetrying && retryCount > 0 && (
+                    <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded">
+                      Retry {retryCount}/3
+                    </span>
+                  )}
+                </div>
+                <div className="text-slate-400 text-sm">
+                  {isRetrying ? 'Retrying connection...' : 'Trust, Rainbow, Coinbase & more'}
+                </div>
               </div>
+              {(isPending || isRetrying) && (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              )}
             </button>
           </div>
 
@@ -144,7 +218,12 @@ export default function ApeChainWalletConnection() {
       disabled={isPending}
       className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 disabled:opacity-50"
     >
-      {isPending ? 'Connecting...' : 'Connect Wallet'}
+      <span className="flex items-center justify-center space-x-2">
+        {isPending && (
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        )}
+        <span>{isPending ? 'Connecting...' : 'Connect Wallet'}</span>
+      </span>
     </button>
   );
 }

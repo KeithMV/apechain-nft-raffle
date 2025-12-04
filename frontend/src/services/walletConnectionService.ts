@@ -26,9 +26,7 @@ class WalletConnectionService {
   }
 
   logConnectionAttempt(connectorName: string): void {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`Connection activating: ${connectorName}`);
-    }
+    // Connection logging disabled in production
   }
 
   isMetaMaskAvailable(): boolean {
@@ -36,15 +34,11 @@ class WalletConnectionService {
   }
 
   logConnectionSuccess(connectorName: string): void {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`Connection activated: ${connectorName}`);
-    }
+    // Success logging disabled in production
   }
 
   logConnectionError(error: Error, connectorName: string): void {
-    if (process.env.NODE_ENV === 'development') {
-      console.error(`Connection failed: ${connectorName}`, error);
-    }
+    // Error logging disabled in production
   }
 
   formatConnectionError(error: Error): ConnectionError {
