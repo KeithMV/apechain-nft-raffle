@@ -38,7 +38,7 @@ if (typeof window !== 'undefined') {
 // MetaMask injected connector for desktop with session persistence
 export const metaMaskConnector = injected({
   target: 'metaMask',
-  shimDisconnect: false // Prevent automatic disconnection
+  shimDisconnect: true // Use shim to prevent MetaMask from locking
 });
 
 // WalletConnect for mobile with filtered wallet list

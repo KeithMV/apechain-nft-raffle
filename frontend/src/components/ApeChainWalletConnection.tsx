@@ -29,6 +29,16 @@ export default function ApeChainWalletConnection() {
     }
   };
 
+  const handleSoftDisconnect = () => {
+    // Soft disconnect - only disconnect from site, don't lock MetaMask
+    if (typeof window !== 'undefined' && window.ethereum) {
+      // Clear site connection without locking wallet
+      localStorage.removeItem('walletConnection');
+      localStorage.removeItem('lastWalletConnector');
+    }
+    disconnect();
+  };
+
   const handleConnectWalletConnect = async () => {
     try {
       await connect({ connector: walletConnectConnector });
@@ -62,7 +72,7 @@ export default function ApeChainWalletConnection() {
         </div>
         
         <button
-          onClick={() => disconnect()}
+          onClick={handleSoftDisconnect}
           className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 transition-colors min-h-[44px] whitespace-nowrap"
         >
           Disconnect

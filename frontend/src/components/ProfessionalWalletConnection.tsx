@@ -53,7 +53,12 @@ function WalletConnectionContent() {
         </div>
         
         <button
-          onClick={disconnect}
+          onClick={() => {
+            // Soft disconnect - clear site connection without locking MetaMask
+            localStorage.removeItem('walletConnection');
+            localStorage.removeItem('lastWalletConnector');
+            disconnect();
+          }}
           className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 transition-colors min-h-[44px] whitespace-nowrap"
         >
           Disconnect
