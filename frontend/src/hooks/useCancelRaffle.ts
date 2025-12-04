@@ -1,6 +1,7 @@
 import { useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
 import { parseAbi } from 'viem';
 import toast from 'react-hot-toast';
+import { useEffect } from 'react';
 import { apeChain } from '../config/wagmi';
 
 const RAFFLE_ABI = parseAbi([
@@ -34,10 +35,16 @@ export function useCancelRaffle() {
     }
 
     try {
-      console.log('Canceling raffle:', raffleAddress);
+      console.log('Canceling raffle:', raffleAddress.slice(0, 10) + '...');
       
-      // Switch to ApeChain first
-      await switchChain({ chainId: apeChain.id });
+      // Switch to ApeChain first with error handling
+      try {
+        await switchChain({ chainId: apeChain.id });
+      } catch (chainError) {
+        console.error('Chain switch failed:', chainError);
+        toast.error('Failed to switch to ApeChain');
+        return;
+      }
       
       await writeContract({
         address: raffleAddress as `0x${string}`,
@@ -54,16 +61,20 @@ export function useCancelRaffle() {
     }
   };
 
-  // Handle transaction confirmation
-  if (isConfirmed) {
-    toast.success('Raffle canceled successfully!');
-  }
+  // Handle transaction confirmation with useEffect to prevent duplicate toasts
+  useEffect(() => {
+    if (isConfirmed) {
+      toast.success('Raffle canceled successfully!');
+    }
+  }, [isConfirmed]);
 
-  if (writeError || receiptError) {
-    const error = writeError || receiptError;
-    const errorMessage = error instanceof Error ? error.message : 'Transaction failed';
-    toast.error(`Transaction failed: ${errorMessage}`);
-  }
+  useEffect(() => {
+    if (writeError || receiptError) {
+      const error = writeError || receiptError;
+      const errorMessage = error instanceof Error ? error.message : 'Transaction failed';
+      toast.error(`Transaction failed: ${errorMessage}`);
+    }
+  }, [writeError, receiptError]);
 
   return {
     cancelRaffle,

@@ -117,8 +117,15 @@ export default function RaffleDashboard() {
 
   const handleCancelRaffle = async (raffleContract: string) => {
     setCancellingRaffle(raffleContract);
-    await cancelRaffle(raffleContract);
-    setCancellingRaffle(null);
+    try {
+      await cancelRaffle(raffleContract);
+      toast.success('Cancel transaction initiated!');
+    } catch (error: any) {
+      console.error('Failed to cancel raffle:', error);
+      toast.error('Failed to cancel raffle: ' + error.message);
+    } finally {
+      setCancellingRaffle(null);
+    }
   };
 
   if (loading) {
