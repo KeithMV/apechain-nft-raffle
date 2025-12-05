@@ -50,7 +50,12 @@ export default function BrowseRaffles() {
 
   const { buyTickets, isPending: buyingPending, isSuccess: buySuccess, error: buyError } = useBuyTickets();
 
-  const handleBuyTickets = async (raffle: CreatedRaffle) => {
+  const handleBuyTickets = useCallback(async (raffle: CreatedRaffle) => {
+    // Prevent multiple rapid clicks
+    if (buyingTickets === raffle.raffleContract || buyingPending) {
+      return;
+    }
+    
     const quantity = ticketQuantities[raffle.raffleContract] || 1;
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
     
@@ -87,7 +92,7 @@ export default function BrowseRaffles() {
       toast.error('Failed to buy tickets: ' + (error.message || 'Unknown error'));
       setBuyingTickets(null);
     }
-  };
+  }, [buyingTickets, buyingPending, ticketQuantities, buyTickets]);
 
   // Handle buy success
   useEffect(() => {
@@ -371,11 +376,11 @@ export default function BrowseRaffles() {
                                 
                                 <button
                                   onClick={() => handleBuyTickets(raffle)}
-                                  disabled={buyingTickets === raffle.raffleContract || availableTickets === 0}
+                                  disabled={buyingTickets === raffle.raffleContract || buyingPending || availableTickets === 0}
                                   className="relative w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 overflow-hidden group shadow-lg hover:shadow-emerald-500/25"
                                 >
                                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                  {buyingTickets === raffle.raffleContract ? (
+                                  {(buyingTickets === raffle.raffleContract || buyingPending) ? (
                                     <>
                                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                       <span className="relative">PROCESSING...</span>
