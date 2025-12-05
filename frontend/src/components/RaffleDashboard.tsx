@@ -90,7 +90,12 @@ export default function RaffleDashboard() {
   const { selectWinner, isPending: isSelectingWinner, isConfirming: isConfirmingWinner, isSuccess: winnerSelected } = useEmergencySelectWinner();
   const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
 
-  const handleSelectWinner = async (raffleContract: string) => {
+  const handleSelectWinner = React.useCallback(async (raffleContract: string) => {
+    // Prevent multiple rapid clicks
+    if (selectingWinnerFor === raffleContract || isSelectingWinner || isConfirmingWinner) {
+      return;
+    }
+    
     try {
       setSelectingWinnerFor(raffleContract);
       await selectWinner(raffleContract);
@@ -100,7 +105,7 @@ export default function RaffleDashboard() {
       toast.error('Failed to select winner: ' + error.message);
       setSelectingWinnerFor(null);
     }
-  };
+  }, [selectingWinnerFor, isSelectingWinner, isConfirmingWinner, selectWinner]);
 
   // Reset selecting state and refresh data when transaction completes
   React.useEffect(() => {
@@ -361,15 +366,15 @@ export default function RaffleDashboard() {
                               {raffle.ticketsSold > 0 ? (
                                 <button
                                   onClick={() => handleSelectWinner(raffle.raffleContract)}
-                                  disabled={isSelectingWinner && selectingWinnerFor === raffle.raffleContract}
+                                  disabled={selectingWinnerFor === raffle.raffleContract || isSelectingWinner || isConfirmingWinner}
                                   className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 disabled:from-gray-600 disabled:to-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
                                 >
                                   <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                                   <span className="relative">
-                                    {isSelectingWinner && selectingWinnerFor === raffle.raffleContract ? (
+                                    {(selectingWinnerFor === raffle.raffleContract || isSelectingWinner || isConfirmingWinner) ? (
                                       <span className="flex items-center space-x-2">
                                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        <span>Selecting...</span>
+                                        <span>{isConfirmingWinner ? 'Confirming...' : 'Selecting...'}</span>
                                       </span>
                                     ) : (
                                       'Select Winner'
