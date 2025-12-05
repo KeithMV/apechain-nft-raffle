@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAccount, useChainId } from 'wagmi';
 import { usePlatformFee, useNFTApprovalStatus, useNFTApproval, useCreateRaffle } from '../hooks/useRaffleContract';
 import { NETWORK_CONFIG } from '../config/addresses';
@@ -40,6 +40,7 @@ export default function CreateRafflePage() {
   const [approvalStatus, setApprovalStatus] = useState<boolean | null>(null);
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const createRaffleInProgress = useRef(false);
   
   const isWrongNetwork = chainId !== 33139;
   // Professional wagmi hooks
@@ -102,6 +103,7 @@ export default function CreateRafflePage() {
   useEffect(() => {
     if (createSuccess) {
       setLoading(false);
+      createRaffleInProgress.current = false;
       toast.success('Raffle created successfully!');
       
       // Reset form
@@ -120,6 +122,7 @@ export default function CreateRafflePage() {
   useEffect(() => {
     if (createError) {
       setLoading(false);
+      createRaffleInProgress.current = false;
       console.error('Create raffle failed:', createError);
       
       if (createError.message?.includes('User rejected')) {
@@ -170,13 +173,20 @@ export default function CreateRafflePage() {
   };
 
   const handleCreateRaffle = React.useCallback(async () => {
-    // Prevent multiple rapid clicks
-    if (loading || createPending || createConfirming) {
+    // Prevent multiple rapid clicks - check and set loading immediately
+    if (loading || createPending || createConfirming || createRaffleInProgress.current) {
+      console.log('🚫 Create raffle blocked - already in progress:', { loading, createPending, createConfirming, inProgress: createRaffleInProgress.current });
       return;
     }
     
+    // Set both loading state and ref flag immediately
+    setLoading(true);
+    createRaffleInProgress.current = true;
+    
     // Check network first
     if (isWrongNetwork) {
+      setLoading(false);
+      createRaffleInProgress.current = false;
       toast.error('Please switch to ApeChain network');
       try {
         await switchToApeChain();
@@ -189,6 +199,8 @@ export default function CreateRafflePage() {
 
     // Rate limiting check
     if (!rateLimiter.isAllowed('createRaffle', 5, 300000)) { // 5 attempts per 5 minutes
+      setLoading(false);
+      createRaffleInProgress.current = false;
       toast.error('Too many attempts. Please wait before creating another raffle.');
       return;
     }
@@ -222,11 +234,15 @@ export default function CreateRafflePage() {
     }
 
     if (validationErrors.length > 0) {
+      setLoading(false);
+      createRaffleInProgress.current = false;
       toast.error(`Validation errors: ${validationErrors.join(', ')}`);
       return;
     }
 
     if (approvalStatus !== true) {
+      setLoading(false);
+      createRaffleInProgress.current = false;
       toast.error('Please approve the NFT contract first');
       return;
     }
@@ -236,7 +252,7 @@ export default function CreateRafflePage() {
     const ticketPrice = parseFloat(formData.ticketPrice);
     const duration = parseInt(formData.duration);
 
-    setLoading(true);
+    console.log('🎯 Creating raffle with params:', { nftContract: formData.nftContract, tokenId: formData.tokenId, ticketPrice, maxTickets, duration });
     try {
       // Convert hours to seconds (contract expects duration in seconds)
       const durationInSeconds = duration * 3600; // Convert hours to seconds
@@ -260,6 +276,7 @@ export default function CreateRafflePage() {
       console.error('Create raffle validation failed:', error);
       toast.error('Validation failed: ' + error.message);
       setLoading(false);
+      createRaffleInProgress.current = false;
     }
   }, [loading, createPending, createConfirming, isWrongNetwork, switchToApeChain, formData, approvalStatus, createRaffle]);
 
