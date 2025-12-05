@@ -41,6 +41,8 @@ export default function CreateRafflePage() {
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const createRaffleInProgress = useRef(false);
+  const [buttonDisabled, setButtonDisabled] = useState(false);
+  const lastCreateAttempt = useRef(0);
   
   const isWrongNetwork = chainId !== 33139;
   // Professional wagmi hooks
@@ -104,6 +106,8 @@ export default function CreateRafflePage() {
     if (createSuccess) {
       setLoading(false);
       createRaffleInProgress.current = false;
+      // Keep button disabled for 2 seconds after success
+      setTimeout(() => setButtonDisabled(false), 2000);
       toast.success('Raffle created successfully!');
       
       // Reset form
@@ -122,6 +126,7 @@ export default function CreateRafflePage() {
   useEffect(() => {
     if (createError) {
       setLoading(false);
+      setButtonDisabled(false);
       createRaffleInProgress.current = false;
       console.error('Create raffle failed:', createError);
       
@@ -173,19 +178,30 @@ export default function CreateRafflePage() {
   };
 
   const handleCreateRaffle = React.useCallback(async () => {
-    // Prevent multiple rapid clicks - check and set loading immediately
-    if (loading || createPending || createConfirming || createRaffleInProgress.current) {
-      console.log('🚫 Create raffle blocked - already in progress:', { loading, createPending, createConfirming, inProgress: createRaffleInProgress.current });
+    const now = Date.now();
+    
+    // Aggressive cooldown - prevent calls within 3 seconds
+    if (now - lastCreateAttempt.current < 3000) {
+      console.log('🚫 Create raffle blocked - cooldown period');
       return;
     }
     
-    // Set both loading state and ref flag immediately
+    // Prevent multiple rapid clicks - check and set loading immediately
+    if (loading || createPending || createConfirming || createRaffleInProgress.current || buttonDisabled) {
+      console.log('🚫 Create raffle blocked - already in progress:', { loading, createPending, createConfirming, inProgress: createRaffleInProgress.current, buttonDisabled });
+      return;
+    }
+    
+    // Set all protection flags immediately
+    lastCreateAttempt.current = now;
     setLoading(true);
+    setButtonDisabled(true);
     createRaffleInProgress.current = true;
     
     // Check network first
     if (isWrongNetwork) {
       setLoading(false);
+      setButtonDisabled(false);
       createRaffleInProgress.current = false;
       toast.error('Please switch to ApeChain network');
       try {
@@ -200,6 +216,7 @@ export default function CreateRafflePage() {
     // Rate limiting check
     if (!rateLimiter.isAllowed('createRaffle', 5, 300000)) { // 5 attempts per 5 minutes
       setLoading(false);
+      setButtonDisabled(false);
       createRaffleInProgress.current = false;
       toast.error('Too many attempts. Please wait before creating another raffle.');
       return;
@@ -235,6 +252,7 @@ export default function CreateRafflePage() {
 
     if (validationErrors.length > 0) {
       setLoading(false);
+      setButtonDisabled(false);
       createRaffleInProgress.current = false;
       toast.error(`Validation errors: ${validationErrors.join(', ')}`);
       return;
@@ -242,6 +260,7 @@ export default function CreateRafflePage() {
 
     if (approvalStatus !== true) {
       setLoading(false);
+      setButtonDisabled(false);
       createRaffleInProgress.current = false;
       toast.error('Please approve the NFT contract first');
       return;
@@ -276,6 +295,7 @@ export default function CreateRafflePage() {
       console.error('Create raffle validation failed:', error);
       toast.error('Validation failed: ' + error.message);
       setLoading(false);
+      setButtonDisabled(false);
       createRaffleInProgress.current = false;
     }
   }, [loading, createPending, createConfirming, isWrongNetwork, switchToApeChain, formData, approvalStatus, createRaffle]);
@@ -528,7 +548,7 @@ export default function CreateRafflePage() {
         <div className="relative flex flex-col sm:flex-row gap-3 mt-8">
           <button
             onClick={handleCreateRaffle}
-            disabled={createPending || createConfirming || isSwitching || (!isWrongNetwork && (!formData.nftContract || !formData.tokenId || approvalStatus !== true))}
+            disabled={buttonDisabled || createPending || createConfirming || isSwitching || (!isWrongNetwork && (!formData.nftContract || !formData.tokenId || approvalStatus !== true))}
             className="relative flex-1 bg-gradient-to-r from-pink-600 via-fuchsia-600 to-purple-600 hover:from-pink-500 hover:via-fuchsia-500 hover:to-purple-500 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
