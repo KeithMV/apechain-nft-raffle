@@ -169,7 +169,12 @@ export default function CreateRafflePage() {
     }
   };
 
-  const handleCreateRaffle = async () => {
+  const handleCreateRaffle = React.useCallback(async () => {
+    // Prevent multiple rapid clicks
+    if (loading || createPending || createConfirming) {
+      return;
+    }
+    
     // Check network first
     if (isWrongNetwork) {
       toast.error('Please switch to ApeChain network');
@@ -256,7 +261,7 @@ export default function CreateRafflePage() {
       toast.error('Validation failed: ' + error.message);
       setLoading(false);
     }
-  };
+  }, [loading, createPending, createConfirming, isWrongNetwork, switchToApeChain, formData, approvalStatus, createRaffle]);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     let sanitizedValue = value;
