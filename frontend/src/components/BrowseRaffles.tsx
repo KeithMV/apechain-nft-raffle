@@ -99,8 +99,8 @@ export default function BrowseRaffles() {
     }
     try {
       console.log('🚀 Calling buyTickets function...');
-      buyTickets(raffle.raffleContract, quantity, raffle.ticketPrice);
-      console.log('✅ buyTickets function called successfully');
+      await buyTickets(raffle.raffleContract, quantity, raffle.ticketPrice);
+      console.log('✅ Buy tickets transaction initiated successfully');
     } catch (error: any) {
       console.error('❌ Failed to buy tickets:', error);
       console.error('Error details:', {
@@ -108,7 +108,16 @@ export default function BrowseRaffles() {
         code: error.code,
         stack: error.stack
       });
-      toast.error('Failed to buy tickets: ' + (error.message || 'Unknown error'));
+      
+      // Handle specific error types
+      if (error.message?.includes('User rejected')) {
+        toast.error('Transaction cancelled by user');
+      } else if (error.message?.includes('insufficient funds')) {
+        toast.error('Insufficient APE balance');
+      } else {
+        toast.error('Failed to buy tickets: ' + (error.message || 'Unknown error'));
+      }
+      
       setBuyingTickets(null);
       setButtonsDisabled(prev => ({ ...prev, [contractKey]: false }));
     }

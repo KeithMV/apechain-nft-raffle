@@ -56,13 +56,13 @@ export function useNFTApprovalStatus(nftContract: string, userAddress: string) {
  * Hook for NFT approval transaction
  */
 export function useNFTApproval() {
-  const { writeContract, data: hash, error, isPending } = useWriteContract();
+  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
-  const approveNFT = (nftContract: string) => {
-    writeContract({
+  const approveNFT = async (nftContract: string) => {
+    return await writeContractAsync({
       address: nftContract as `0x${string}`,
       abi: ERC721_ABI,
       functionName: 'setApprovalForAll',
@@ -85,7 +85,7 @@ export function useNFTApproval() {
  * Hook for creating raffle
  */
 export function useCreateRaffle() {
-  const { writeContract, data: hash, error, isPending } = useWriteContract();
+  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
@@ -94,7 +94,7 @@ export function useCreateRaffle() {
     // Convert APE to wei (18 decimals)
     const ticketPriceWei = parseEther(params.ticketPrice);
     
-    writeContract({
+    return await writeContractAsync({
       address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'createRaffle',
@@ -185,12 +185,12 @@ export function useFactoryPauseStatus() {
  * Hook for buying raffle tickets
  */
 export function useBuyTickets() {
-  const { writeContract, data: hash, error, isPending } = useWriteContract();
+  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
-  const buyTickets = (raffleContract: string, quantity: number, ticketPrice: string) => {
+  const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string) => {
     try {
       // Validate inputs
       if (!raffleContract || quantity <= 0 || !ticketPrice) {
@@ -210,7 +210,7 @@ export function useBuyTickets() {
         quantityBigInt: BigInt(quantity).toString()
       });
       
-      writeContract({
+      const result = await writeContractAsync({
         address: raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
         functionName: 'buyTickets',
@@ -219,7 +219,8 @@ export function useBuyTickets() {
         chainId: 33139,
       });
       
-      console.log('✅ writeContract called successfully');
+      console.log('✅ writeContractAsync completed successfully:', result);
+      return result;
     } catch (error) {
       console.error('❌ Error in buyTickets function:', error);
       throw error;

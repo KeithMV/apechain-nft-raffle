@@ -163,16 +163,19 @@ export default function CreateRafflePage() {
     console.log('🔄 Approving NFT contract for raffle:', formData.nftContract);
     
     try {
-      // Use professional wagmi hook
+      // Use professional wagmi hook with proper async handling
       await approveNFT(formData.nftContract);
-    } catch (error) {
-      console.error('Approval initiation failed:', error);
+      console.log('✅ NFT approval transaction initiated successfully');
+    } catch (error: any) {
+      console.error('Approval failed:', error);
       setApprovalLoading(false);
       
-      if (error instanceof Error && error.message?.includes('User rejected')) {
+      if (error.message?.includes('User rejected')) {
         toast.error('Approval cancelled by user');
+      } else if (error.message?.includes('insufficient funds')) {
+        toast.error('Insufficient funds for transaction fees');
       } else {
-        toast.error('Failed to initiate approval');
+        toast.error('Failed to approve NFT: ' + (error.message || 'Unknown error'));
       }
     }
   };
@@ -282,8 +285,8 @@ export default function CreateRafflePage() {
         expectedEndTime: 'current_time + ' + durationInSeconds
       });
       
-      // Use professional wagmi hook
-      createRaffle({
+      // Use professional wagmi hook with proper async handling
+      await createRaffle({
         nftContract: formData.nftContract,
         tokenId: formData.tokenId,
         ticketPrice: formData.ticketPrice,
@@ -291,9 +294,20 @@ export default function CreateRafflePage() {
         duration: durationInSeconds
       });
       
+      console.log('✅ Create raffle transaction initiated successfully');
+      
     } catch (error: any) {
-      console.error('Create raffle validation failed:', error);
-      toast.error('Validation failed: ' + error.message);
+      console.error('Create raffle failed:', error);
+      
+      // Handle specific error types
+      if (error.message?.includes('User rejected')) {
+        toast.error('Transaction cancelled by user');
+      } else if (error.message?.includes('insufficient funds')) {
+        toast.error('Insufficient funds for transaction');
+      } else {
+        toast.error('Failed to create raffle: ' + (error.message || 'Unknown error'));
+      }
+      
       setLoading(false);
       setButtonDisabled(false);
       createRaffleInProgress.current = false;
