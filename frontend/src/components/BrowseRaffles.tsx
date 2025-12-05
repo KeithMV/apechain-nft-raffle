@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import ApeTokenBalance from './ApeTokenBalance';
 import NFTImage from './NFTImage';
@@ -28,6 +28,8 @@ export default function BrowseRaffles() {
   const [ticketQuantities, setTicketQuantities] = useState<{[key: string]: number}>({});
   const [showExpired, setShowExpired] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [buttonsDisabled, setButtonsDisabled] = useState<{[key: string]: boolean}>({});
+  const lastBuyAttempt = useRef<{[key: string]: number}>({});
   
   const { raffles, loading, error, refetch } = useAllRaffles(30, currentPage * 20);
   const clearCache = useClearRaffleCache();
@@ -51,10 +53,25 @@ export default function BrowseRaffles() {
   const { buyTickets, isPending: buyingPending, isSuccess: buySuccess, error: buyError } = useBuyTickets();
 
   const handleBuyTickets = useCallback(async (raffle: CreatedRaffle) => {
-    // Prevent multiple rapid clicks
-    if (buyingTickets === raffle.raffleContract || buyingPending) {
+    const now = Date.now();
+    const contractKey = raffle.raffleContract;
+    
+    // Aggressive cooldown - prevent calls within 3 seconds per contract
+    if (now - (lastBuyAttempt.current[contractKey] || 0) < 3000) {
+      console.log('🚫 Buy tickets blocked - cooldown period for', contractKey);
       return;
     }
+    
+    // Prevent multiple rapid clicks
+    if (buyingTickets === contractKey || buyingPending || buttonsDisabled[contractKey]) {
+      console.log('🚫 Buy tickets blocked - already in progress:', { buyingTickets, buyingPending, disabled: buttonsDisabled[contractKey] });
+      return;
+    }
+    
+    // Set all protection flags immediately
+    lastBuyAttempt.current[contractKey] = now;
+    setBuyingTickets(contractKey);
+    setButtonsDisabled(prev => ({ ...prev, [contractKey]: true }));
     
     const quantity = ticketQuantities[raffle.raffleContract] || 1;
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
@@ -69,15 +86,17 @@ export default function BrowseRaffles() {
     
     if (quantity < 1 || quantity > 100) {
       toast.error('Please enter a valid quantity (1-100)');
+      setBuyingTickets(null);
+      setButtonsDisabled(prev => ({ ...prev, [contractKey]: false }));
       return;
     }
     
     if (quantity > availableTickets) {
       toast.error(`Only ${availableTickets} tickets available`);
+      setBuyingTickets(null);
+      setButtonsDisabled(prev => ({ ...prev, [contractKey]: false }));
       return;
     }
-
-    setBuyingTickets(raffle.raffleContract);
     try {
       console.log('🚀 Calling buyTickets function...');
       buyTickets(raffle.raffleContract, quantity, raffle.ticketPrice);
@@ -91,24 +110,32 @@ export default function BrowseRaffles() {
       });
       toast.error('Failed to buy tickets: ' + (error.message || 'Unknown error'));
       setBuyingTickets(null);
+      setButtonsDisabled(prev => ({ ...prev, [contractKey]: false }));
     }
   }, [buyingTickets, buyingPending, ticketQuantities, buyTickets]);
 
   // Handle buy success
   useEffect(() => {
-    if (buySuccess) {
-      const quantity = Object.values(ticketQuantities)[0] || 1;
+    if (buySuccess && buyingTickets) {
+      const quantity = ticketQuantities[buyingTickets] || 1;
       toast.success(`Successfully bought ${quantity} ticket${quantity > 1 ? 's' : ''}!`);
+      
+      // Keep button disabled for 2 seconds after success
+      const contractKey = buyingTickets;
       setBuyingTickets(null);
+      setTimeout(() => {
+        setButtonsDisabled(prev => ({ ...prev, [contractKey]: false }));
+      }, 2000);
+      
       setTicketQuantities({});
       // Trigger refresh after state cleanup
       setTimeout(() => refetch(), 100);
     }
-  }, [buySuccess]);
+  }, [buySuccess, buyingTickets, ticketQuantities, refetch]);
 
   // Handle buy error
   useEffect(() => {
-    if (buyError) {
+    if (buyError && buyingTickets) {
       console.error('❌ Buy tickets error:', buyError);
       
       if (buyError.message?.includes('User rejected')) {
@@ -118,9 +145,12 @@ export default function BrowseRaffles() {
       } else {
         toast.error('Failed to buy tickets: ' + buyError.message);
       }
+      
+      const contractKey = buyingTickets;
       setBuyingTickets(null);
+      setButtonsDisabled(prev => ({ ...prev, [contractKey]: false }));
     }
-  }, [buyError]);
+  }, [buyError, buyingTickets]);
 
   const setTicketQuantity = useCallback((raffleContract: string, quantity: number, maxAvailable: number) => {
     setTicketQuantities(prev => ({
@@ -376,11 +406,11 @@ export default function BrowseRaffles() {
                                 
                                 <button
                                   onClick={() => handleBuyTickets(raffle)}
-                                  disabled={buyingTickets === raffle.raffleContract || buyingPending || availableTickets === 0}
+                                  disabled={buttonsDisabled[raffle.raffleContract] || buyingTickets === raffle.raffleContract || buyingPending || availableTickets === 0}
                                   className="relative w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 overflow-hidden group shadow-lg hover:shadow-emerald-500/25"
                                 >
                                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                  {(buyingTickets === raffle.raffleContract || buyingPending) ? (
+                                  {(buttonsDisabled[raffle.raffleContract] || buyingTickets === raffle.raffleContract || buyingPending) ? (
                                     <>
                                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                       <span className="relative">PROCESSING...</span>
