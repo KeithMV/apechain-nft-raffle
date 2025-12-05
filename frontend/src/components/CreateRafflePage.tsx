@@ -39,6 +39,7 @@ export default function CreateRafflePage() {
   const [loading, setLoading] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<boolean | null>(null);
   const [approvalLoading, setApprovalLoading] = useState(false);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
   
   const isWrongNetwork = chainId !== 33139;
   // Professional wagmi hooks
@@ -472,21 +473,30 @@ export default function CreateRafflePage() {
                   <span className="mr-2">⚠️</span>
                   Approval Required • Please approve NFT contract
                 </div>
-                <button
-                  onClick={handleApproval}
-                  disabled={approvalPending || approvalConfirming}
-                  className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                  {approvalPending || approvalConfirming ? (
-                    <span className="relative flex items-center">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      {approvalConfirming ? 'Confirming...' : 'Approving contract...'}
-                    </span>
-                  ) : (
-                    <span className="relative">Approve NFT Contract</span>
-                  )}
-                </button>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setShowApprovalModal(true)}
+                    disabled={approvalPending || approvalConfirming}
+                    className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    {approvalPending || approvalConfirming ? (
+                      <span className="relative flex items-center">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        {approvalConfirming ? 'Confirming...' : 'Approving contract...'}
+                      </span>
+                    ) : (
+                      <span className="relative">Approve NFT Contract</span>
+                    )}
+                  </button>
+                  
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                    <div className="text-blue-300 text-xs font-medium mb-1">🛡️ Safe & Secure</div>
+                    <div className="text-blue-200 text-xs">
+                      This only allows the raffle system to transfer NFTs from this specific contract when you create a raffle. Your other assets remain protected.
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -519,6 +529,74 @@ export default function CreateRafflePage() {
             )}
           </button>
         </div>
+        
+        {/* Approval Education Modal */}
+        {showApprovalModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-slate-800 border border-emerald-400/30 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white flex items-center">
+                  <span className="mr-2">🛡️</span>
+                  NFT Approval Explained
+                </h3>
+                <button
+                  onClick={() => setShowApprovalModal(false)}
+                  className="text-slate-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-4 text-sm">
+                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                  <div className="text-green-300 font-medium mb-2">✅ What This Approval Does:</div>
+                  <ul className="text-green-200 text-xs space-y-1">
+                    <li>• Allows raffle system to transfer your NFT when you create a raffle</li>
+                    <li>• Only affects NFTs from this specific contract: <span className="font-mono break-all">{formData.nftContract.slice(0, 10)}...{formData.nftContract.slice(-8)}</span></li>
+                    <li>• Standard, secure NFT marketplace approval</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                  <div className="text-red-300 font-medium mb-2">❌ What This Approval Does NOT Do:</div>
+                  <ul className="text-red-200 text-xs space-y-1">
+                    <li>• Cannot access your APE tokens or other cryptocurrencies</li>
+                    <li>• Cannot access NFTs from other contracts</li>
+                    <li>• Cannot transfer anything without your explicit action</li>
+                    <li>• Cannot be used by anyone except the raffle system</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                  <div className="text-blue-300 font-medium mb-2">🔒 Your Control:</div>
+                  <ul className="text-blue-200 text-xs space-y-1">
+                    <li>• You can revoke this approval anytime</li>
+                    <li>• Only you can create raffles with your NFTs</li>
+                    <li>• Same approval system used by OpenSea, Blur, etc.</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="flex space-x-3 mt-6">
+                <button
+                  onClick={() => setShowApprovalModal(false)}
+                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 py-2 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowApprovalModal(false);
+                    handleApproval();
+                  }}
+                  className="flex-1 bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 text-white py-2 px-4 rounded-lg font-medium transition-all"
+                >
+                  I Understand - Approve
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
