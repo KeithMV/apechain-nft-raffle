@@ -63,8 +63,8 @@ export default function BrowseRaffles() {
     }
     
     // Prevent multiple rapid clicks
-    if (buyingTickets === contractKey || buyingPending || buttonsDisabled[contractKey]) {
-      console.log('🚫 Buy tickets blocked - already in progress:', { buyingTickets, buyingPending, disabled: buttonsDisabled[contractKey] });
+    if (buyingTickets === contractKey || buttonsDisabled[contractKey]) {
+      console.log('🚫 Buy tickets blocked - already in progress:', { buyingTickets, disabled: buttonsDisabled[contractKey] });
       return;
     }
     
@@ -415,11 +415,11 @@ export default function BrowseRaffles() {
                                 
                                 <button
                                   onClick={() => handleBuyTickets(raffle)}
-                                  disabled={buttonsDisabled[raffle.raffleContract] || buyingTickets === raffle.raffleContract || buyingPending || availableTickets === 0}
+                                  disabled={buttonsDisabled[raffle.raffleContract] || buyingTickets === raffle.raffleContract || availableTickets === 0}
                                   className="relative w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 overflow-hidden group shadow-lg hover:shadow-emerald-500/25"
                                 >
                                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                  {(buttonsDisabled[raffle.raffleContract] || buyingTickets === raffle.raffleContract || buyingPending) ? (
+                                  {(buttonsDisabled[raffle.raffleContract] || buyingTickets === raffle.raffleContract) ? (
                                     <>
                                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                       <span className="relative">PROCESSING...</span>
