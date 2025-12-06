@@ -185,7 +185,7 @@ function RaffleApp() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <>
         <Header currentPage={currentPage} setCurrentPage={setCurrentPage} />
         <Hero />
         <div className="max-w-4xl mx-auto px-4 py-12 sm:py-20 text-center">
@@ -206,15 +206,15 @@ function RaffleApp() {
             </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <>
       <Header currentPage={currentPage} setCurrentPage={setCurrentPage} />
       
-      <div className="min-h-full max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
         {currentPage === 'create' && (
           <LazyWrapper>
             <CreateRafflePage />
@@ -231,7 +231,7 @@ function RaffleApp() {
           </LazyWrapper>
         )}
       </div>
-    </div>
+    </>
   );
 }
 
