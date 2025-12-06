@@ -440,7 +440,7 @@ export default function CreateRafflePage() {
                 value={formData.ticketPrice}
                 onChange={(e) => handleInputChange('ticketPrice', e.target.value)}
                 placeholder="0.1"
-                className="w-full bg-gray-800/90 border border-pink-500/30 rounded-lg px-4 py-3 text-pink-100 placeholder-pink-400/50 focus:border-pink-400 focus:ring-1 focus:ring-pink-400 transition-colors font-mono backdrop-blur-sm"
+                className="w-full bg-gray-800/90 border border-pink-500/30 rounded-lg px-4 py-3 text-pink-100 placeholder-pink-400/50 focus:border-pink-400 focus:ring-1 focus:ring-pink-400 transition-colors font-mono backdrop-blur-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
             
