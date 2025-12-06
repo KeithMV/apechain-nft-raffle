@@ -85,14 +85,31 @@ export function useNFTApproval() {
  * Hook for creating raffle
  */
 export function useCreateRaffle() {
-  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
+  const { writeContractAsync, data: hash, error, isPending, reset } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
   const createRaffle = async (params: CreateRaffleParams) => {
+    // Reset wagmi state before new transaction to prevent state pollution
+    reset();
+    
+    // Small delay to ensure state is reset
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     // Convert APE to wei (18 decimals)
     const ticketPriceWei = parseEther(params.ticketPrice);
+    
+    console.log('🎯 Creating raffle with clean state:', {
+      isPending: false, // Should be false after reset
+      params: {
+        nftContract: params.nftContract,
+        tokenId: params.tokenId,
+        ticketPrice: params.ticketPrice,
+        maxTickets: params.maxTickets,
+        duration: params.duration
+      }
+    });
     
     return await writeContractAsync({
       address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
@@ -116,6 +133,7 @@ export function useCreateRaffle() {
     isPending,
     isConfirming,
     isSuccess,
+    reset,
   };
 }
 

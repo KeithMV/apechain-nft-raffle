@@ -62,7 +62,8 @@ export default function CreateRafflePage() {
     isPending: createPending,
     isConfirming: createConfirming,
     isSuccess: createSuccess,
-    error: createError
+    error: createError,
+    reset: resetCreateRaffle
   } = useCreateRaffle();
 
   const platformFee = platformFeeData ? (Number(platformFeeData) / 100).toString() : '5';
@@ -105,8 +106,7 @@ export default function CreateRafflePage() {
     if (createSuccess) {
       setLoading(false);
       createRaffleInProgress.current = false;
-      // Keep button disabled briefly after success to prevent double-click
-      setTimeout(() => setButtonDisabled(false), 500);
+      
       toast.success('Raffle created successfully!');
       
       // Reset form
@@ -118,8 +118,15 @@ export default function CreateRafflePage() {
         duration: '24'
       });
       setApprovalStatus(null);
+      
+      // Reset wagmi state and re-enable button after brief delay
+      setTimeout(() => {
+        resetCreateRaffle();
+        setButtonDisabled(false);
+        console.log('✅ Wagmi state reset, ready for next raffle');
+      }, 500);
     }
-  }, [createSuccess]);
+  }, [createSuccess, resetCreateRaffle]);
 
   // Handle create raffle errors
   useEffect(() => {
