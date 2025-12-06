@@ -117,7 +117,7 @@ function Header({ currentPage, setCurrentPage }: {
 
 function Hero() {
   return (
-    <div className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white py-12 sm:py-16 lg:py-24 overflow-hidden">
+    <div className="relative text-white py-12 sm:py-16 lg:py-24 overflow-hidden">
       {/* Animated background pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(16,185,129,0.1),transparent_50%)] animate-pulse"></div>
       <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(-45deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
