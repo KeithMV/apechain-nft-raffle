@@ -42,7 +42,6 @@ export default function CreateRafflePage() {
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const createRaffleInProgress = useRef(false);
   const [buttonDisabled, setButtonDisabled] = useState(false);
-  const lastCreateAttempt = useRef(0);
   
   const isWrongNetwork = chainId !== 33139;
   // Professional wagmi hooks
@@ -106,8 +105,8 @@ export default function CreateRafflePage() {
     if (createSuccess) {
       setLoading(false);
       createRaffleInProgress.current = false;
-      // Keep button disabled for 2 seconds after success
-      setTimeout(() => setButtonDisabled(false), 2000);
+      // Keep button disabled briefly after success to prevent double-click
+      setTimeout(() => setButtonDisabled(false), 500);
       toast.success('Raffle created successfully!');
       
       // Reset form
@@ -181,14 +180,6 @@ export default function CreateRafflePage() {
   };
 
   const handleCreateRaffle = React.useCallback(async () => {
-    const now = Date.now();
-    
-    // Aggressive cooldown - prevent calls within 3 seconds
-    if (now - lastCreateAttempt.current < 3000) {
-      console.log('🚫 Create raffle blocked - cooldown period');
-      return;
-    }
-    
     // Prevent multiple rapid clicks - check and set loading immediately
     if (loading || createPending || createConfirming || createRaffleInProgress.current || buttonDisabled) {
       console.log('🚫 Create raffle blocked - already in progress:', { loading, createPending, createConfirming, inProgress: createRaffleInProgress.current, buttonDisabled });
@@ -196,7 +187,6 @@ export default function CreateRafflePage() {
     }
     
     // Set all protection flags immediately
-    lastCreateAttempt.current = now;
     setLoading(true);
     setButtonDisabled(true);
     createRaffleInProgress.current = true;
