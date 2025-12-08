@@ -136,6 +136,8 @@ export function useCreateRaffle() {
           BigInt(params.duration)
         ],
         chainId: 33139,
+        gas: BigInt(300000), // Force reasonable gas limit to bypass MetaMask estimation bug
+        gasPrice: BigInt(1000000000), // 1 gwei - reasonable for ApeChain
       });
       
       console.log(`✅ RAFFLE ATTEMPT #${attemptCount + 1} - SUCCESS:`, hash);
