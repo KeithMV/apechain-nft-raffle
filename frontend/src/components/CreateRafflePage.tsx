@@ -119,14 +119,13 @@ export default function CreateRafflePage() {
       });
       setApprovalStatus(null);
       
-      // Reset wagmi state and re-enable button after brief delay
+      // Reset state and re-enable button after brief delay
       setTimeout(() => {
-        resetCreateRaffle();
         setButtonDisabled(false);
-        console.log('✅ Wagmi state reset, ready for next raffle');
+        console.log('✅ Ready for next raffle');
       }, 500);
     }
-  }, [createSuccess, resetCreateRaffle]);
+  }, [createSuccess]);
 
   // Handle create raffle errors
   useEffect(() => {
