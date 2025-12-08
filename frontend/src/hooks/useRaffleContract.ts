@@ -89,26 +89,46 @@ export function useCreateRaffle() {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
+  
+  // Log hook state for debugging
+  console.log('🔍 useCreateRaffle hook state:', {
+    isPending, isConfirming, isSuccess, 
+    hash: hash?.slice(0, 10) + '...', 
+    error: error?.message
+  });
 
   const createRaffle = async (params: CreateRaffleParams) => {
+    // Track attempt number globally
+    const attemptCount = (window as any).__raffleAttemptCount || 0;
+    (window as any).__raffleAttemptCount = attemptCount + 1;
+    
+    console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - BEFORE RESET:`, {
+      attemptNumber: attemptCount + 1,
+      wagmiState: { isPending, error: error?.message, hash },
+      params
+    });
+    
     // Reset wagmi state before new transaction to prevent state pollution
     reset();
     
     // Small delay to ensure state is reset
     await new Promise(resolve => setTimeout(resolve, 100));
     
+    console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - AFTER RESET:`, {
+      wagmiState: { isPending, error: error?.message, hash }
+    });
+    
     // Convert APE to wei (18 decimals)
     const ticketPriceWei = parseEther(params.ticketPrice);
     
-    console.log('🎯 Creating raffle with clean state:', {
-      isPending: false, // Should be false after reset
-      params: {
-        nftContract: params.nftContract,
-        tokenId: params.tokenId,
-        ticketPrice: params.ticketPrice,
-        maxTickets: params.maxTickets,
-        duration: params.duration
-      }
+    console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - TRANSACTION PARAMS:`, {
+      address: RAFFLE_FACTORY_ADDRESS,
+      nftContract: params.nftContract,
+      tokenId: params.tokenId,
+      ticketPriceWei: ticketPriceWei.toString(),
+      maxTickets: params.maxTickets,
+      duration: params.duration,
+      chainId: 33139
     });
     
     return await writeContractAsync({
@@ -122,7 +142,7 @@ export function useCreateRaffle() {
         BigInt(params.maxTickets),
         BigInt(params.duration)
       ],
-      chainId: 33139, // Force ApeChain
+      chainId: 33139,
     });
   };
 
