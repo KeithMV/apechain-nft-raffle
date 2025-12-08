@@ -3,6 +3,7 @@
  * Uses wagmi React hooks for proper mobile Safari compatibility
  */
 
+import React from 'react';
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
 import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
@@ -82,19 +83,15 @@ export function useNFTApproval() {
 }
 
 /**
- * Hook for creating raffle
+ * Hook for creating raffle with nuclear state isolation
  */
 export function useCreateRaffle() {
-  const { writeContractAsync, data: hash, error, isPending, reset } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
-  
-  // Log hook state for debugging
-  console.log('🔍 useCreateRaffle hook state:', {
-    isPending, isConfirming, isSuccess, 
-    hash: hash?.slice(0, 10) + '...', 
-    error: error?.message
+  const [localState, setLocalState] = React.useState({
+    hash: null as `0x${string}` | null,
+    error: null as Error | null,
+    isPending: false,
+    isConfirming: false,
+    isSuccess: false
   });
 
   const createRaffle = async (params: CreateRaffleParams) => {
@@ -102,57 +99,73 @@ export function useCreateRaffle() {
     const attemptCount = (window as any).__raffleAttemptCount || 0;
     (window as any).__raffleAttemptCount = attemptCount + 1;
     
-    console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - BEFORE RESET:`, {
+    console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - STARTING FRESH:`, {
       attemptNumber: attemptCount + 1,
-      wagmiState: { isPending, error: error?.message, hash },
       params
     });
     
-    // Reset wagmi state before new transaction to prevent state pollution
-    reset();
-    
-    // Small delay to ensure state is reset
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - AFTER RESET:`, {
-      wagmiState: { isPending, error: error?.message, hash }
-    });
-    
-    // Convert APE to wei (18 decimals)
-    const ticketPriceWei = parseEther(params.ticketPrice);
-    
-    console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - TRANSACTION PARAMS:`, {
-      address: RAFFLE_FACTORY_ADDRESS,
-      nftContract: params.nftContract,
-      tokenId: params.tokenId,
-      ticketPriceWei: ticketPriceWei.toString(),
-      maxTickets: params.maxTickets,
-      duration: params.duration,
-      chainId: 33139
-    });
-    
-    return await writeContractAsync({
-      address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
-      abi: RAFFLE_FACTORY_ABI,
-      functionName: 'createRaffle',
-      args: [
-        params.nftContract as `0x${string}`,
-        BigInt(params.tokenId),
-        ticketPriceWei,
-        BigInt(params.maxTickets),
-        BigInt(params.duration)
-      ],
-      chainId: 33139,
+    try {
+      setLocalState(prev => ({ ...prev, isPending: true, error: null }));
+      
+      // Convert APE to wei (18 decimals)
+      const ticketPriceWei = parseEther(params.ticketPrice);
+      
+      console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - TRANSACTION PARAMS:`, {
+        address: RAFFLE_FACTORY_ADDRESS,
+        nftContract: params.nftContract,
+        tokenId: params.tokenId,
+        ticketPriceWei: ticketPriceWei.toString(),
+        maxTickets: params.maxTickets,
+        duration: params.duration,
+        chainId: 33139
+      });
+      
+      // Use direct viem writeContract to bypass wagmi state pollution
+      const { writeContract } = await import('wagmi/actions');
+      const { config } = await import('../config/wagmi');
+      
+      const hash = await writeContract(config, {
+        address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+        abi: RAFFLE_FACTORY_ABI,
+        functionName: 'createRaffle',
+        args: [
+          params.nftContract as `0x${string}`,
+          BigInt(params.tokenId),
+          ticketPriceWei,
+          BigInt(params.maxTickets),
+          BigInt(params.duration)
+        ],
+        chainId: 33139,
+      });
+      
+      console.log(`✅ RAFFLE ATTEMPT #${attemptCount + 1} - SUCCESS:`, hash);
+      setLocalState(prev => ({ ...prev, hash, isPending: false, isSuccess: true }));
+      return hash;
+      
+    } catch (error: any) {
+      console.error(`❌ RAFFLE ATTEMPT #${attemptCount + 1} - FAILED:`, error);
+      setLocalState(prev => ({ ...prev, error, isPending: false }));
+      throw error;
+    }
+  };
+
+  const reset = () => {
+    setLocalState({
+      hash: null,
+      error: null,
+      isPending: false,
+      isConfirming: false,
+      isSuccess: false
     });
   };
 
   return {
     createRaffle,
-    hash,
-    error,
-    isPending,
-    isConfirming,
-    isSuccess,
+    hash: localState.hash,
+    error: localState.error,
+    isPending: localState.isPending,
+    isConfirming: localState.isConfirming,
+    isSuccess: localState.isSuccess,
     reset,
   };
 }
