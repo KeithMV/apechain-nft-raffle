@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import ApeTokenBalance from './ApeTokenBalance';
 import NFTImage from './NFTImage';
