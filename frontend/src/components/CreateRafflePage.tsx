@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAccount, useChainId } from 'wagmi';
 import { usePlatformFee, useNFTApprovalStatus, useNFTApproval, useCreateRaffle } from '../hooks/useRaffleContract';
 import { NETWORK_CONFIG } from '../config/addresses';
@@ -10,10 +10,7 @@ import toast from 'react-hot-toast';
 import { 
   sanitizeAddress, 
   sanitizeTokenId, 
-  sanitizeNumber, 
-  ValidationRules, 
-  validateInput,
-  rateLimiter 
+  sanitizeNumber
 } from '../utils/inputSanitizer';
 
 interface FormData {
@@ -36,12 +33,8 @@ export default function CreateRafflePage() {
     duration: '24'
   });
   
-  const [loading, setLoading] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<boolean | null>(null);
-  const [approvalLoading, setApprovalLoading] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
-  const createRaffleInProgress = useRef(false);
-  const [buttonDisabled, setButtonDisabled] = useState(false);
   
   const isWrongNetwork = chainId !== 33139;
   // Professional wagmi hooks
@@ -62,8 +55,7 @@ export default function CreateRafflePage() {
     isPending: createPending,
     isConfirming: createConfirming,
     isSuccess: createSuccess,
-    error: createError,
-    reset: resetCreateRaffle
+    error: createError
   } = useCreateRaffle();
 
   const platformFee = platformFeeData ? (Number(platformFeeData) / 100).toString() : '5';
@@ -78,7 +70,6 @@ export default function CreateRafflePage() {
   // Handle approval success
   useEffect(() => {
     if (approvalSuccess) {
-      setApprovalLoading(false);
       setApprovalStatus(true);
       toast.success('NFT contract approved successfully!');
       refetchApproval();
@@ -88,15 +79,10 @@ export default function CreateRafflePage() {
   // Handle approval errors
   useEffect(() => {
     if (approvalError) {
-      setApprovalLoading(false);
-      console.error('❌ Approval failed:', approvalError);
-      
       if (approvalError.message?.includes('User rejected')) {
         toast.error('Approval cancelled by user');
-      } else if (approvalError.message?.includes('insufficient funds')) {
-        toast.error('Insufficient funds for transaction fees');
       } else {
-        toast.error('Approval failed: ' + (approvalError.message || 'Unknown error'));
+        toast.error('Approval failed');
       }
     }
   }, [approvalError]);
@@ -104,9 +90,6 @@ export default function CreateRafflePage() {
   // Handle create raffle success
   useEffect(() => {
     if (createSuccess) {
-      setLoading(false);
-      createRaffleInProgress.current = false;
-      
       toast.success('Raffle created successfully!');
       
       // Reset form
@@ -118,206 +101,60 @@ export default function CreateRafflePage() {
         duration: '24'
       });
       setApprovalStatus(null);
-      
-      // Reset state and re-enable button after brief delay
-      setTimeout(() => {
-        setButtonDisabled(false);
-        console.log('✅ Ready for next raffle');
-      }, 500);
     }
   }, [createSuccess]);
 
   // Handle create raffle errors
   useEffect(() => {
     if (createError) {
-      setLoading(false);
-      setButtonDisabled(false);
-      createRaffleInProgress.current = false;
-      console.error('Create raffle failed:', createError);
-      
       if (createError.message?.includes('User rejected')) {
         toast.error('Transaction cancelled by user');
-      } else if (createError.message?.includes('Not NFT owner')) {
-        toast.error('You do not own this NFT');
-      } else if (createError.message?.includes('insufficient funds')) {
-        toast.error('Insufficient funds for transaction');
       } else {
-        toast.error('Failed to create raffle: ' + createError.message);
+        toast.error('Failed to create raffle');
       }
     }
   }, [createError]);
 
   const handleApproval = async () => {
-    if (!formData.nftContract) {
-      toast.error('Please enter NFT contract address first');
+    if (!formData.nftContract || !/^0x[a-fA-F0-9]{40}$/.test(formData.nftContract)) {
+      toast.error('Please enter a valid NFT contract address');
       return;
     }
 
-    if (!address) {
-      toast.error('Wallet not connected');
-      return;
-    }
-
-    // Validate contract address format
-    if (!/^0x[a-fA-F0-9]{40}$/.test(formData.nftContract)) {
-      toast.error('Invalid contract address format');
-      return;
-    }
-
-    setApprovalLoading(true);
-    console.log('🔄 Approving NFT contract for raffle:', formData.nftContract);
-    
     try {
-      // Use professional wagmi hook with proper async handling
       await approveNFT(formData.nftContract);
-      console.log('✅ NFT approval transaction initiated successfully');
-    } catch (error: any) {
-      console.error('Approval failed:', error);
-      setApprovalLoading(false);
-      
-      if (error.message?.includes('User rejected')) {
-        toast.error('Approval cancelled by user');
-      } else if (error.message?.includes('insufficient funds')) {
-        toast.error('Insufficient funds for transaction fees');
-      } else {
-        toast.error('Failed to approve NFT: ' + (error.message || 'Unknown error'));
-      }
+    } catch (error) {
+      // Error handling is done in useEffect
     }
   };
 
-  const handleCreateRaffle = React.useCallback(async () => {
-    // Aggressive debouncing - prevent any rapid clicks
-    if (loading || createPending || createConfirming || createRaffleInProgress.current || buttonDisabled) {
-      console.log('🚫 Create raffle blocked - already in progress:', { loading, createPending, createConfirming, inProgress: createRaffleInProgress.current, buttonDisabled });
-      return;
-    }
+  const handleCreateRaffle = async () => {
+    if (createPending || createConfirming) return;
     
-    // Light debounce check to prevent accidental double-clicks only
-    const now = Date.now();
-    const lastAttempt = (window as any).__lastRaffleAttempt || 0;
-    if (now - lastAttempt < 500) { // 0.5 second minimum - just prevent double-clicks
-      console.log('🚫 Create raffle blocked - preventing double-click');
-      return;
-    }
-    (window as any).__lastRaffleAttempt = now;
-    
-    // Set all protection flags immediately
-    setLoading(true);
-    setButtonDisabled(true);
-    createRaffleInProgress.current = true;
-    
-    // Check network first
     if (isWrongNetwork) {
-      setLoading(false);
-      setButtonDisabled(false);
-      createRaffleInProgress.current = false;
       toast.error('Please switch to ApeChain network');
-      try {
-        await switchToApeChain();
-        return;
-      } catch (error) {
-        toast.error('Failed to switch network');
-        return;
-      }
-    }
-
-    // Rate limiting check
-    if (!rateLimiter.isAllowed('createRaffle', 5, 300000)) { // 5 attempts per 5 minutes
-      setLoading(false);
-      setButtonDisabled(false);
-      createRaffleInProgress.current = false;
-      toast.error('Too many attempts. Please wait before creating another raffle.');
-      return;
-    }
-
-    // Comprehensive input validation
-    const validationErrors: string[] = [];
-    
-    const addressValidation = validateInput(formData.nftContract, ValidationRules.address);
-    if (!addressValidation.isValid) {
-      validationErrors.push(`NFT Contract: ${addressValidation.error}`);
-    }
-    
-    const tokenIdValidation = validateInput(formData.tokenId, ValidationRules.tokenId);
-    if (!tokenIdValidation.isValid) {
-      validationErrors.push(`Token ID: ${tokenIdValidation.error}`);
-    }
-    
-    const priceValidation = validateInput(formData.ticketPrice, ValidationRules.ticketPrice);
-    if (!priceValidation.isValid) {
-      validationErrors.push(`Ticket Price: ${priceValidation.error}`);
-    }
-    
-    const ticketsValidation = validateInput(formData.maxTickets, ValidationRules.maxTickets);
-    if (!ticketsValidation.isValid) {
-      validationErrors.push(`Max Tickets: ${ticketsValidation.error}`);
-    }
-    
-    const durationValidation = validateInput(formData.duration, ValidationRules.duration);
-    if (!durationValidation.isValid) {
-      validationErrors.push(`Duration: ${durationValidation.error}`);
-    }
-
-    if (validationErrors.length > 0) {
-      setLoading(false);
-      setButtonDisabled(false);
-      createRaffleInProgress.current = false;
-      toast.error(`Validation errors: ${validationErrors.join(', ')}`);
       return;
     }
 
     if (approvalStatus !== true) {
-      setLoading(false);
-      setButtonDisabled(false);
-      createRaffleInProgress.current = false;
       toast.error('Please approve the NFT contract first');
       return;
     }
 
-    // Parse validated inputs
-    const maxTickets = parseInt(formData.maxTickets);
-    const ticketPrice = parseFloat(formData.ticketPrice);
-    const duration = parseInt(formData.duration);
-
-    console.log('🎯 Creating raffle with params:', { nftContract: formData.nftContract, tokenId: formData.tokenId, ticketPrice, maxTickets, duration });
+    const durationInSeconds = parseInt(formData.duration) * 3600;
+    
     try {
-      // Convert hours to seconds (contract expects duration in seconds)
-      const durationInSeconds = duration * 3600; // Convert hours to seconds
-      
-      console.log('🔍 Duration conversion debug:', {
-        inputHours: duration,
-        calculatedSeconds: durationInSeconds,
-        expectedEndTime: 'current_time + ' + durationInSeconds
-      });
-      
-      // Use professional wagmi hook with proper async handling
       await createRaffle({
         nftContract: formData.nftContract,
         tokenId: formData.tokenId,
         ticketPrice: formData.ticketPrice,
-        maxTickets: maxTickets,
+        maxTickets: parseInt(formData.maxTickets),
         duration: durationInSeconds
       });
-      
-      console.log('✅ Create raffle transaction initiated successfully');
-      
-    } catch (error: any) {
-      console.error('Create raffle failed:', error);
-      
-      // Handle specific error types
-      if (error.message?.includes('User rejected')) {
-        toast.error('Transaction cancelled by user');
-      } else if (error.message?.includes('insufficient funds')) {
-        toast.error('Insufficient funds for transaction');
-      } else {
-        toast.error('Failed to create raffle: ' + (error.message || 'Unknown error'));
-      }
-      
-      setLoading(false);
-      setButtonDisabled(false);
-      createRaffleInProgress.current = false;
+    } catch (error) {
+      // Error handling is done in useEffect
     }
-  }, [loading, createPending, createConfirming, isWrongNetwork, switchToApeChain, formData, approvalStatus]); // Removed createRaffle to prevent callback recreation
+  };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     let sanitizedValue = value;
@@ -567,7 +404,7 @@ export default function CreateRafflePage() {
         <div className="relative flex flex-col sm:flex-row gap-3 mt-8">
           <button
             onClick={handleCreateRaffle}
-            disabled={buttonDisabled || createPending || createConfirming || isSwitching || loading || (!isWrongNetwork && (!formData.nftContract || !formData.tokenId || approvalStatus !== true))}
+            disabled={createPending || createConfirming || isSwitching || (!isWrongNetwork && (!formData.nftContract || !formData.tokenId || approvalStatus !== true))}
             className="relative flex-1 bg-gradient-to-r from-pink-600 via-fuchsia-600 to-purple-600 hover:from-pink-500 hover:via-fuchsia-500 hover:to-purple-500 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
@@ -576,7 +413,7 @@ export default function CreateRafflePage() {
                 <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                 <span className="text-sm sm:text-base">Switching Network...</span>
               </span>
-            ) : createPending || createConfirming || loading ? (
+            ) : createPending || createConfirming ? (
               <span className="relative flex items-center justify-center">
                 <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                 <span className="text-sm sm:text-base">{createConfirming ? 'Confirming...' : 'Creating raffle...'}</span>
