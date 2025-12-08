@@ -40,6 +40,9 @@ export default function ApeChainWalletConnection() {
   }, [isConnected, address, hasShownSuccess, isPending, isInitialLoad]);
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
+  
+  // Debug chain detection
+  console.log('🔍 Chain detection:', { isConnected, chainId, apeChainId: apeChain.id, isWrongNetwork });
 
   const handleSwitchNetwork = useCallback(async () => {
     try {
@@ -117,12 +120,12 @@ export default function ApeChainWalletConnection() {
   if (isConnected) {
     return (
       <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-        {isWrongNetwork && (
+        {(isWrongNetwork || chainId === 1) && (
           <button
             onClick={handleSwitchNetwork}
-            className="px-3 py-2 bg-red-500/20 border border-red-400/50 text-red-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-red-500/30 transition-colors min-h-[44px] whitespace-nowrap"
+            className="px-3 py-2 bg-red-500/20 border border-red-400/50 text-red-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-red-500/30 transition-colors min-h-[44px] whitespace-nowrap animate-pulse"
           >
-            Switch to ApeChain
+            ⚠️ Switch to ApeChain (Currently: {chainId === 1 ? 'Ethereum' : `Chain ${chainId}`})
           </button>
         )}
         
