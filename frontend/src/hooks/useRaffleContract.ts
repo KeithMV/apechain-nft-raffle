@@ -124,21 +124,40 @@ export function useCreateRaffle() {
       const { writeContract } = await import('wagmi/actions');
       const { config } = await import('../config/wagmi');
       
-      const hash = await writeContract(config, {
-        address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
-        abi: RAFFLE_FACTORY_ABI,
-        functionName: 'createRaffle',
-        args: [
-          params.nftContract as `0x${string}`,
-          BigInt(params.tokenId),
-          ticketPriceWei,
-          BigInt(params.maxTickets),
-          BigInt(params.duration)
-        ],
-        chainId: 33139,
-        gas: BigInt(300000), // Force reasonable gas limit to bypass MetaMask estimation bug
-        gasPrice: BigInt(1000000000), // 1 gwei - reasonable for ApeChain
-      });
+      // Try with automatic gas estimation first, fallback if needed
+      let hash;
+      try {
+        hash = await writeContract(config, {
+          address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+          abi: RAFFLE_FACTORY_ABI,
+          functionName: 'createRaffle',
+          args: [
+            params.nftContract as `0x${string}`,
+            BigInt(params.tokenId),
+            ticketPriceWei,
+            BigInt(params.maxTickets),
+            BigInt(params.duration)
+          ],
+          chainId: 33139,
+        });
+      } catch (gasError: any) {
+        console.log('🔄 Gas estimation failed, retrying with higher limit:', gasError.message);
+        // Fallback with higher gas limit if estimation fails
+        hash = await writeContract(config, {
+          address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+          abi: RAFFLE_FACTORY_ABI,
+          functionName: 'createRaffle',
+          args: [
+            params.nftContract as `0x${string}`,
+            BigInt(params.tokenId),
+            ticketPriceWei,
+            BigInt(params.maxTickets),
+            BigInt(params.duration)
+          ],
+          chainId: 33139,
+          gas: BigInt(500000), // Higher gas limit for retry
+        });
+      }
       
       console.log(`✅ RAFFLE ATTEMPT #${attemptCount + 1} - SUCCESS:`, hash);
       setLocalState(prev => ({ ...prev, hash, isPending: false, isSuccess: true }));
