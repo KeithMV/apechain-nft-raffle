@@ -124,21 +124,77 @@ export function useCreateRaffle() {
       const { writeContract } = await import('wagmi/actions');
       const { config } = await import('../config/wagmi');
       
+      // Capture MetaMask state before transaction
+      const ethereum = (window as any).ethereum;
+      const metamaskState = {
+        chainId: await ethereum?.request({ method: 'eth_chainId' }),
+        gasPrice: await ethereum?.request({ method: 'eth_gasPrice' }),
+        blockNumber: await ethereum?.request({ method: 'eth_blockNumber' }),
+        accounts: await ethereum?.request({ method: 'eth_accounts' })
+      };
+      
+      console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - METAMASK STATE:`, metamaskState);
+      
+      // Try MetaMask gas estimation directly
+      const args = [
+        params.nftContract as `0x${string}`,
+        BigInt(params.tokenId),
+        ticketPriceWei,
+        BigInt(params.maxTickets),
+        BigInt(params.duration)
+      ];
+      
+      try {
+        // Encode function call data manually
+        const { encodeFunctionData } = await import('viem');
+        const calldata = encodeFunctionData({
+          abi: RAFFLE_FACTORY_ABI,
+          functionName: 'createRaffle',
+          args: [
+            params.nftContract as `0x${string}`,
+            BigInt(params.tokenId),
+            ticketPriceWei,
+            BigInt(params.maxTickets),
+            BigInt(params.duration)
+          ]
+        });
+        
+        const gasEstimate = await ethereum?.request({
+          method: 'eth_estimateGas',
+          params: [{
+            from: metamaskState.accounts[0],
+            to: RAFFLE_FACTORY_ADDRESS,
+            data: calldata
+          }]
+        });
+        
+        const gasPriceDecimal = parseInt(metamaskState.gasPrice, 16);
+        const gasEstimateDecimal = parseInt(gasEstimate, 16);
+        const estimatedCostWei = gasEstimateDecimal * gasPriceDecimal;
+        const estimatedCostEth = estimatedCostWei / 1e18;
+        
+        console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - METAMASK GAS ESTIMATION:`, {
+          gasEstimate,
+          gasEstimateDecimal,
+          gasPrice: metamaskState.gasPrice,
+          gasPriceDecimal,
+          estimatedCostWei,
+          estimatedCostEth,
+          estimatedCostUSD: estimatedCostEth * 2000 // Rough APE price
+        });
+      } catch (gasError) {
+        console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - GAS ESTIMATION ERROR:`, gasError);
+      }
+      
       // Deep diagnostic logging for gas estimation issue
       console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - DEEP DIAGNOSTICS:`, {
         wagmiConfig: !!config,
         factoryAddress: RAFFLE_FACTORY_ADDRESS,
         abiLength: RAFFLE_FACTORY_ABI.length,
-        argsTypes: [
-          typeof params.nftContract,
-          typeof BigInt(params.tokenId),
-          typeof ticketPriceWei,
-          typeof BigInt(params.maxTickets),
-          typeof BigInt(params.duration)
-        ],
-        windowEthereum: !!(window as any).ethereum,
-        metamaskVersion: (window as any).ethereum?.version,
-        chainIdFromWindow: (window as any).ethereum?.chainId
+        argsTypes: args.map(arg => typeof arg),
+        windowEthereum: !!ethereum,
+        metamaskVersion: ethereum?.version,
+        chainIdFromWindow: ethereum?.chainId
       });
       
       // Try with automatic gas estimation first, fallback if needed
