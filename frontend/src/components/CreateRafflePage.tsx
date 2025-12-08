@@ -192,11 +192,11 @@ export default function CreateRafflePage() {
       return;
     }
     
-    // Additional debounce check with timestamp
+    // Light debounce check to prevent accidental double-clicks only
     const now = Date.now();
     const lastAttempt = (window as any).__lastRaffleAttempt || 0;
-    if (now - lastAttempt < 2000) { // 2 second minimum between attempts
-      console.log('🚫 Create raffle blocked - too soon after last attempt');
+    if (now - lastAttempt < 500) { // 0.5 second minimum - just prevent double-clicks
+      console.log('🚫 Create raffle blocked - preventing double-click');
       return;
     }
     (window as any).__lastRaffleAttempt = now;

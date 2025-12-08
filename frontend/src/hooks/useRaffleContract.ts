@@ -124,6 +124,23 @@ export function useCreateRaffle() {
       const { writeContract } = await import('wagmi/actions');
       const { config } = await import('../config/wagmi');
       
+      // Deep diagnostic logging for gas estimation issue
+      console.log(`🔍 RAFFLE ATTEMPT #${attemptCount + 1} - DEEP DIAGNOSTICS:`, {
+        wagmiConfig: !!config,
+        factoryAddress: RAFFLE_FACTORY_ADDRESS,
+        abiLength: RAFFLE_FACTORY_ABI.length,
+        argsTypes: [
+          typeof params.nftContract,
+          typeof BigInt(params.tokenId),
+          typeof ticketPriceWei,
+          typeof BigInt(params.maxTickets),
+          typeof BigInt(params.duration)
+        ],
+        windowEthereum: !!(window as any).ethereum,
+        metamaskVersion: (window as any).ethereum?.version,
+        chainIdFromWindow: (window as any).ethereum?.chainId
+      });
+      
       // Try with automatic gas estimation first, fallback if needed
       let hash;
       try {
