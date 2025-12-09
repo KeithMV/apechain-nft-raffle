@@ -14,13 +14,16 @@ export default function ApeChainWalletConnection() {
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
   const [hasShownSuccess, setHasShownSuccess] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
-    if (isConnected && address) {
+    if (isConnected && address && !hasShownSuccess) {
       toast.success('Wallet connected successfully!');
+      setHasShownSuccess(true);
     }
-  }, [isConnected, address]);
+    if (!isConnected) {
+      setHasShownSuccess(false);
+    }
+  }, [isConnected, address, hasShownSuccess]);
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
@@ -39,14 +42,26 @@ export default function ApeChainWalletConnection() {
       return;
     }
     
+    setIsRetrying(false);
+    setRetryCount(0);
+    
     try {
       await connect({ connector: metaMaskConnector });
       setShowWallets(false);
-    } catch (err: any) {
-      if (err?.code === 4001) {
+      setRetryCount(0);
+    } catch (err) {
+      const error = err as { code?: number; message?: string };
+      if (error?.code === 4001) {
         toast.error('Connection cancelled by user');
+      } else if (retryCount < 2) {
+        setIsRetrying(true);
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => handleConnectMetaMask(), 1500);
+        toast.error(`Connection failed, retrying... (${retryCount + 1}/3)`);
       } else {
-        toast.error('Connection failed');
+        toast.error('Connection failed after 3 attempts');
+        setIsRetrying(false);
+        setRetryCount(0);
       }
     }
   };
@@ -61,8 +76,9 @@ export default function ApeChainWalletConnection() {
     try {
       await connect({ connector: walletConnectConnector });
       setShowWallets(false);
-    } catch (err: any) {
-      if (err?.code === 4001) {
+    } catch (err) {
+      const error = err as { code?: number; message?: string };
+      if (error?.code === 4001) {
         toast.error('Connection cancelled by user');
       } else {
         toast.error('Connection failed');
@@ -116,7 +132,7 @@ export default function ApeChainWalletConnection() {
           <div className="space-y-2">
             <button
               onClick={handleConnectMetaMask}
-              disabled={isPending}
+              disabled={isPending || isRetrying}
               className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
             >
               <span className="text-2xl">🦊</span>
@@ -126,10 +142,15 @@ export default function ApeChainWalletConnection() {
                   {!isMetaMaskAvailable() && (
                     <span className="text-xs bg-red-500/20 text-red-300 px-2 py-1 rounded">Not Installed</span>
                   )}
+                  {isRetrying && (
+                    <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded">Retrying {retryCount}/3</span>
+                  )}
                 </div>
-                <div className="text-slate-400 text-sm">Desktop & Mobile Browser</div>
+                <div className="text-slate-400 text-sm">
+                  {isRetrying ? 'Attempting reconnection...' : 'Desktop & Mobile Browser'}
+                </div>
               </div>
-              {isPending && (
+              {(isPending || isRetrying) && (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               )}
             </button>

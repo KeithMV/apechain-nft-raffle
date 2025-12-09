@@ -1,5 +1,6 @@
 // Utility functions for wallet operations
 export const formatAddress = (addr: string): string => {
+  if (!addr || addr.length < 10) return addr || '';
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 };
 
@@ -19,11 +20,18 @@ export const isMetaMaskAvailable = (): boolean => {
          window.ethereum.isMetaMask;
 };
 
-export const getConnectionErrorMessage = (error: any): string => {
-  if (error?.code === 4001) return 'Connection rejected by user';
-  if (error?.code === -32002) return 'Connection request already pending';
+interface WalletError {
+  code?: number;
+  message?: string;
+  toString?: () => string;
+}
+
+export const getConnectionErrorMessage = (error: WalletError | unknown): string => {
+  const errorObj = error as WalletError;
+  if (errorObj?.code === 4001) return 'Connection rejected by user';
+  if (errorObj?.code === -32002) return 'Connection request already pending';
   
-  const message = error?.message || error?.toString() || '';
+  const message = errorObj?.message || (errorObj?.toString?.() ?? '') || '';
   
   if (message.includes('WebSocket') || message.includes('network connection was lost')) {
     return 'Network connection lost - check your internet';
@@ -46,10 +54,11 @@ export const getConnectionErrorMessage = (error: any): string => {
   return message || 'Connection failed';
 };
 
-export const isConnectionError = (error: any): boolean => {
+export const isConnectionError = (error: WalletError | unknown): boolean => {
   if (!error) return false;
   
-  const message = error.message || error.toString();
+  const errorObj = error as WalletError;
+  const message = errorObj?.message || (errorObj?.toString?.() ?? '') || '';
   return message.includes('WebSocket') ||
          message.includes('network') ||
          message.includes('relay') ||

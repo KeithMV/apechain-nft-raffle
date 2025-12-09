@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ApeChain RPC Gas Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+        button { padding: 10px 20px; margin: 10px; background: #333; color: #fff; border: 1px solid #555; cursor: pointer; }
+        .result { background: #222; padding: 15px; margin: 10px 0; border-left: 3px solid #0f0; }
+        .error { border-left-color: #f00; }
+    </style>
+</head>
+<body>
+    <h1>ApeChain RPC Direct Gas Estimation Test</h1>
+    <p>This tests ApeChain RPC directly without MetaMask to see if gas estimates are normal.</p>
+    
+    <button onclick="testSimpleTransfer()">Test Simple Transfer</button>
+    <button onclick="testFactoryCall()">Test Factory createRaffle Call</button>
+    <button onclick="testMultipleCalls()">Test Multiple Sequential Calls</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const APECHAIN_RPC = 'https://apechain.calderachain.xyz/http';
+        const FACTORY_ADDRESS = '0x1dC9F6Cc2e53558a940a7Cd87d6e5fbE2A8635ff';
+        
+        // createRaffle function signature and sample data
+        const CREATE_RAFFLE_DATA = '0x4b8bcb940000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000038d7ea4c68000000000000000000000000000000000000000000000000000000000000000012c00000000000000000000000000000000000000000000000000000000000000000a5465737420526166666c650000000000000000000000000000000000000000';
+
+        async function rpcCall(method, params) {
+            const response = await fetch(APECHAIN_RPC, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: method,
+                    params: params
+                })
+            });
+            return response.json();
+        }
+
+        function addResult(title, data, isError = false) {
+            const div = document.createElement('div');
+            div.className = isError ? 'result error' : 'result';
+            div.innerHTML = `<strong>${title}</strong><br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            document.getElementById('results').appendChild(div);
+        }
+
+        async function testSimpleTransfer() {
+            try {
+                const result = await rpcCall('eth_estimateGas', [{
+                    from: '0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5e',
+                    to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5e',
+                    value: '0x1'
+                }]);
+                
+                const gasHex = result.result;
+                const gasDecimal = parseInt(gasHex, 16);
+                const gasPrice = 25000000000; // 25 gwei
+                const costWei = gasDecimal * gasPrice;
+                const costEth = costWei / 1e18;
+                const costUSD = costEth * 3000; // Assume $3000 ETH
+                
+                addResult('Simple Transfer Gas Estimate', {
+                    gasHex,
+                    gasDecimal,
+                    costUSD: `$${costUSD.toFixed(6)}`
+                });
+            } catch (error) {
+                addResult('Simple Transfer Error', error, true);
+            }
+        }
+
+        async function testFactoryCall() {
+            try {
+                const result = await rpcCall('eth_estimateGas', [{
+                    from: '0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5e',
+                    to: FACTORY_ADDRESS,
+                    data: CREATE_RAFFLE_DATA
+                }]);
+                
+                const gasHex = result.result;
+                const gasDecimal = parseInt(gasHex, 16);
+                const gasPrice = 25000000000; // 25 gwei
+                const costWei = gasDecimal * gasPrice;
+                const costEth = costWei / 1e18;
+                const costUSD = costEth * 3000;
+                
+                addResult('Factory createRaffle Gas Estimate', {
+                    gasHex,
+                    gasDecimal,
+                    costUSD: `$${costUSD.toFixed(6)}`
+                });
+            } catch (error) {
+                addResult('Factory Call Error', error, true);
+            }
+        }
+
+        async function testMultipleCalls() {
+            addResult('Testing Multiple Sequential Calls...', 'Starting test...');
+            
+            for (let i = 1; i <= 3; i++) {
+                try {
+                    const result = await rpcCall('eth_estimateGas', [{
+                        from: '0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5e',
+                        to: FACTORY_ADDRESS,
+                        data: CREATE_RAFFLE_DATA
+                    }]);
+                    
+                    const gasHex = result.result;
+                    const gasDecimal = parseInt(gasHex, 16);
+                    const gasPrice = 25000000000;
+                    const costWei = gasDecimal * gasPrice;
+                    const costEth = costWei / 1e18;
+                    const costUSD = costEth * 3000;
+                    
+                    addResult(`Call ${i} Gas Estimate`, {
+                        gasHex,
+                        gasDecimal,
+                        costUSD: `$${costUSD.toFixed(6)}`
+                    });
+                    
+                    // Wait 1 second between calls
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                } catch (error) {
+                    addResult(`Call ${i} Error`, error, true);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { createConfig, http } from 'wagmi';
+import { createConfig, http, fallback } from 'wagmi';
 import { defineChain } from 'viem';
 import { walletConnect, injected } from 'wagmi/connectors';
 
@@ -14,8 +14,8 @@ export const apeChain = defineChain({
   rpcUrls: {
     default: { 
       http: [
-        process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
-        'https://rpc.apechain.com'
+        'https://rpc.apechain.com',
+        process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http'
       ] 
     },
   },
@@ -25,20 +25,24 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Clear old WalletConnect sessions on load
+// Clear old WalletConnect sessions on load with error handling
 if (typeof window !== 'undefined') {
-  // Clear localStorage WalletConnect data
-  Object.keys(localStorage).forEach(key => {
-    if (key.startsWith('wc@2') || key.startsWith('@walletconnect')) {
-      localStorage.removeItem(key);
-    }
-  });
+  try {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('wc@2') || key.startsWith('@walletconnect')) {
+        localStorage.removeItem(key);
+      }
+    });
+  } catch (error) {
+    console.warn('Failed to clear WalletConnect storage:', error);
+  }
 }
 
-// MetaMask injected connector for desktop with session persistence
+// MetaMask injected connector for desktop with enhanced options
 export const metaMaskConnector = injected({
   target: 'metaMask',
-  shimDisconnect: true // Use shim to prevent MetaMask from locking
+  shimDisconnect: true,
+  unstable_shimAsyncInject: 2000, // Wait for MetaMask injection
 });
 
 // WalletConnect for mobile with filtered wallet list
@@ -66,12 +70,23 @@ export const walletConnectConnector = walletConnect({
   }
 });
 
-// Optimized config for ApeChain with both desktop and mobile support
+// Optimized config for ApeChain with fallback RPC and retry logic
 export const config = createConfig({
   chains: [apeChain],
   connectors: [metaMaskConnector, walletConnectConnector],
   transports: {
-    [apeChain.id]: http(),
+    [apeChain.id]: fallback([
+      http('https://rpc.apechain.com', {
+        batch: true,
+        retryCount: 2,
+        retryDelay: 1000,
+      }),
+      http('https://apechain.calderachain.xyz/http', {
+        batch: true,
+        retryCount: 1,
+        retryDelay: 2000,
+      })
+    ])
   },
   ssr: false,
 });
