@@ -6,7 +6,7 @@ import { useApeChainSwitching } from '../utils/chainSwitching';
 import ApeTokenBalance from './ApeTokenBalance';
 import MobileBanner from './MobileBanner';
 import FeeDisplay from './FeeDisplay';
-import GasEstimationWarning from './GasEstimationWarning';
+
 import toast from 'react-hot-toast';
 import { 
   sanitizeAddress, 
@@ -239,8 +239,7 @@ export default function CreateRafflePage() {
         {/* Mobile Wallet Guidance */}
         <MobileBanner />
 
-        {/* Gas Estimation Warning */}
-        <GasEstimationWarning />
+
 
         {/* APE Token Balance */}
         <div className="mb-6">
