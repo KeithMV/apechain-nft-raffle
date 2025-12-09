@@ -1,4 +1,4 @@
-import { createConfig, http, fallback } from 'wagmi';
+import { createConfig, http } from 'wagmi';
 import { defineChain } from 'viem';
 import { walletConnect, injected } from 'wagmi/connectors';
 
@@ -14,8 +14,8 @@ export const apeChain = defineChain({
   rpcUrls: {
     default: { 
       http: [
-        'https://rpc.apechain.com',
-        process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http'
+        process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
+        'https://rpc.apechain.com'
       ] 
     },
   },
@@ -70,23 +70,12 @@ export const walletConnectConnector = walletConnect({
   }
 });
 
-// Optimized config for ApeChain with fallback RPC and retry logic
+// Optimized config for ApeChain with basic transport (gas estimation issue is ApeChain infrastructure)
 export const config = createConfig({
   chains: [apeChain],
   connectors: [metaMaskConnector, walletConnectConnector],
   transports: {
-    [apeChain.id]: fallback([
-      http('https://rpc.apechain.com', {
-        batch: true,
-        retryCount: 2,
-        retryDelay: 1000,
-      }),
-      http('https://apechain.calderachain.xyz/http', {
-        batch: true,
-        retryCount: 1,
-        retryDelay: 2000,
-      })
-    ])
+    [apeChain.id]: http(),
   },
   ssr: false,
 });
