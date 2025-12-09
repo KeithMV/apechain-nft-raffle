@@ -1,9 +1,17 @@
 const { ethers } = require("hardhat");
 
 async function main() {
-  const raffleContractAddress = "0x8e1776fd2acF8438a9405502ee3BBF06A4f6961A";
-  const nftContractAddress = "0x6f2A21A8B9CF699d7D3A713a9d7cFbB9E9760f97";
-  const tokenId = "52870";
+  // Get addresses from environment variables or command line arguments
+  const raffleContractAddress = process.env.RAFFLE_CONTRACT_ADDRESS || process.argv[2];
+  const nftContractAddress = process.env.NFT_CONTRACT_ADDRESS || process.argv[3];
+  const tokenId = process.env.TOKEN_ID || process.argv[4];
+  
+  if (!raffleContractAddress || !nftContractAddress || !tokenId) {
+    console.error('❌ Missing required parameters');
+    console.log('Usage: npx hardhat run scripts/emergency-recover-nft.js --network apechain <raffleAddress> <nftAddress> <tokenId>');
+    console.log('Or set environment variables: RAFFLE_CONTRACT_ADDRESS, NFT_CONTRACT_ADDRESS, TOKEN_ID');
+    process.exit(1);
+  }
   
   console.log('🔍 Checking NFT ownership and recovery options...');
   console.log('Raffle Contract:', raffleContractAddress);

@@ -38,11 +38,10 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// MetaMask injected connector for desktop with enhanced options
+// MetaMask injected connector for desktop - minimal config to prevent double confirmations
 export const metaMaskConnector = injected({
   target: 'metaMask',
-  shimDisconnect: true,
-  unstable_shimAsyncInject: 2000, // Wait for MetaMask injection
+  shimDisconnect: false, // Prevent double transaction prompts
 });
 
 // WalletConnect for mobile with filtered wallet list
