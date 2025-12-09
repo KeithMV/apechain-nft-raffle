@@ -4,6 +4,7 @@
   "description": "Frontend for ApeCoin NFT Raffle System",
   "private": true,
   "dependencies": {
+    "@base-org/account": "^2.5.0",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.0.18",
     "@stablelib/ed25519": "^2.0.2",
