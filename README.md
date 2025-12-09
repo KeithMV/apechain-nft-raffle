@@ -2,7 +2,7 @@
 
 Enterprise-grade decentralized raffle platform optimized for production deployment. NFT holders create raffles with professional UX and cross-platform mobile compatibility.
 
-**Live**: [apechain-raffles.com](https://apechain-raffles.com)
+**Live**: [apechainraffles.io](https://apechainraffles.io)
 
 ## Production Architecture
 
@@ -151,7 +151,7 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 ## Contact
 
 - Email: kmvose@gmail.com
-- Demo: https://apechain-raffles.com
+- Demo: https://apechainraffles.io
 - Portfolio: https://keithvose.com
 
 ## Development Log
