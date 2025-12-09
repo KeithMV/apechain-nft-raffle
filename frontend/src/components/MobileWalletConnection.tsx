@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAccount, useDisconnect, useConnect } from 'wagmi';
-import { injected } from 'wagmi/connectors';
+import { metaMaskConnector } from '../config/wagmi';
 
 export default function MobileWalletConnection() {
   const { address, isConnected } = useAccount();
@@ -11,7 +11,7 @@ export default function MobileWalletConnection() {
     try {
       // Direct MetaMask connection - triggers mobile app redirect
       await connect({ 
-        connector: injected({ target: 'metaMask' })
+        connector: metaMaskConnector
       });
     } catch (error) {
       console.error('MetaMask connection failed:', error);

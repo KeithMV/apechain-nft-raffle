@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { useConnect, useDisconnect, useAccount } from 'wagmi';
-import { injected } from 'wagmi/connectors';
+import { metaMaskConnector } from '../config/wagmi';
 
 export default function MinimalWalletConnection() {
   const { connect, isPending, error } = useConnect();
@@ -14,9 +14,7 @@ export default function MinimalWalletConnection() {
   const handleConnect = async () => {
     try {
       await connect({ 
-        connector: injected({
-          target: 'metaMask'
-        })
+        connector: metaMaskConnector
       });
     } catch (err) {
       console.error('Wallet connection failed:', err);
