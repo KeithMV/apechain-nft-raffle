@@ -27,6 +27,7 @@ export default function BrowseRaffles() {
   const [ticketQuantities, setTicketQuantities] = useState<{[key: string]: number}>({});
   const [showExpired, setShowExpired] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [processingRaffles, setProcessingRaffles] = useState<Set<string>>(new Set());
   
   const { raffles, loading, error, refetch } = useAllRaffles(30, currentPage * 20);
   const clearCache = useClearRaffleCache();
@@ -50,7 +51,7 @@ export default function BrowseRaffles() {
   const { buyTickets, isPending: buyingPending, isSuccess: buySuccess, error: buyError } = useBuyTickets();
 
   const handleBuyTickets = async (raffle: CreatedRaffle) => {
-    if (buyingPending) return;
+    if (processingRaffles.has(raffle.raffleContract)) return;
     
     const quantity = ticketQuantities[raffle.raffleContract] || 1;
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
@@ -60,10 +61,16 @@ export default function BrowseRaffles() {
       return;
     }
     
+    setProcessingRaffles(prev => new Set(prev).add(raffle.raffleContract));
+    
     try {
       await buyTickets(raffle.raffleContract, quantity, raffle.ticketPrice);
     } catch (error) {
-      // Error handling is done in useEffect
+      setProcessingRaffles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(raffle.raffleContract);
+        return newSet;
+      });
     }
   };
 
@@ -72,6 +79,7 @@ export default function BrowseRaffles() {
     if (buySuccess) {
       toast.success('Tickets purchased successfully!');
       setTicketQuantities({});
+      setProcessingRaffles(new Set());
       refetch();
     }
   }, [buySuccess, refetch]);
@@ -340,11 +348,11 @@ export default function BrowseRaffles() {
                                 
                                 <button
                                   onClick={() => handleBuyTickets(raffle)}
-                                  disabled={buyingPending || availableTickets === 0}
+                                  disabled={processingRaffles.has(raffle.raffleContract) || availableTickets === 0}
                                   className="relative w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 overflow-hidden group shadow-lg hover:shadow-emerald-500/25"
                                 >
                                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                  {buyingPending ? (
+                                  {processingRaffles.has(raffle.raffleContract) ? (
                                     <>
                                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                       <span className="relative">PROCESSING...</span>
