@@ -4,7 +4,6 @@
   "description": "Frontend for ApeCoin NFT Raffle System",
   "private": true,
   "dependencies": {
-    "@base-org/account": "^2.5.0",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.0.18",
     "@stablelib/ed25519": "^2.0.2",
@@ -19,8 +18,9 @@
     "@types/node": "^24.10.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@wagmi/connectors": "5.1.15",
+    "@wagmi/core": "2.13.5",
     "autoprefixer": "^10.4.16",
-    "porto": "^0.2.37",
     "postcss": "^8.4.31",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
@@ -29,7 +29,7 @@
     "tailwindcss": "^4.1.17",
     "typescript": "^5.0.4",
     "viem": "^2.41.2",
-    "wagmi": "^3.1.0",
+    "wagmi": "2.12.7",
     "web-vitals": "^5.1.0"
   },
   "scripts": {
