@@ -18,6 +18,8 @@ export const suppressWalletConnectErrors = () => {
         message.includes('r.request') ||
         message.includes('r.selectExtension') ||
         message.includes('Unexpected error at r.request') ||
+        message.includes('wallet_requestPermissions') ||
+        message.includes('MetaMask - RPC Error') ||
         message.includes('Unhandled Promise Rejection') ||
         message.includes('WebSocket connection') ||
         message.includes('relay.walletconnect.org')

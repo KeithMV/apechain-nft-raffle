@@ -33,21 +33,5 @@ export function useMetaMaskSession() {
     return () => clearInterval(keepAlive);
   }, [isConnected, address]);
 
-  // Request persistent connection permission
-  useEffect(() => {
-    if (!isConnected || typeof window === 'undefined' || !(window as any).ethereum?.isMetaMask) {
-      return;
-    }
 
-    // Request permission to stay connected
-    (window as any).ethereum.request({
-      method: 'wallet_requestPermissions',
-      params: [{ eth_accounts: {} }]
-    }).catch((error: any) => {
-      // Log permission errors in development only
-      if (process.env.NODE_ENV === 'development') {
-        console.debug('Permission request failed:', error);
-      }
-    });
-  }, [isConnected]);
 }
