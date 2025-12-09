@@ -242,9 +242,6 @@ function App() {
     
     // Clean stale WalletConnect storage on app load
     cleanWalletConnectStorage();
-    
-    // Auto-add ApeChain to MetaMask on load
-    addApeChainToMetaMask();
   }, []);
 
   return (

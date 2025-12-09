@@ -20,12 +20,10 @@ export const addApeChainToMetaMask = async (): Promise<void> => {
         blockExplorerUrls: ['https://apechain.calderaexplorer.xyz'],
       }],
     });
-    console.log('ApeChain network added successfully');
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error('Failed to add ApeChain to MetaMask:', error.message);
-    } else {
-      console.error('Failed to add ApeChain to MetaMask:', error);
+    // Silently handle MetaMask extension errors
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('ApeChain add failed:', error);
     }
   }
 };
