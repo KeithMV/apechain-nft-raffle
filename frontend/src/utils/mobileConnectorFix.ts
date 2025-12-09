@@ -1,5 +1,5 @@
 import { getAccount, getChainId } from '@wagmi/core';
-import { config } from '../config/wagmi-minimal';
+import { config } from '../config/wagmi';
 
 /**
  * Professional wallet connection validator
@@ -19,7 +19,7 @@ export class WalletConnectionValidator {
     error?: string;
   }> {
     try {
-      const account = getAccount(config);
+      const account = getAccount(config as any);
       
       // Mobile Safari compatibility: accept address even if isConnected is false
       if (!account.address) {
@@ -37,7 +37,7 @@ export class WalletConnectionValidator {
       // Validate chain ID with timeout for mobile networks
       let chainId: number;
       try {
-        const chainIdPromise = Promise.resolve(getChainId(config));
+        const chainIdPromise = Promise.resolve(getChainId(config as any));
         const timeoutPromise = new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error('Chain validation timeout')), this.CONNECTION_TIMEOUT)
         );
@@ -86,7 +86,7 @@ export class WalletConnectionValidator {
     
     if (!validation.isValid) {
       // Mobile Safari fallback: try direct account access
-      const directAccount = getAccount(config);
+      const directAccount = getAccount(config as any);
       if (directAccount.address) {
         console.log('Using mobile Safari fallback with direct account access');
         return await operation(directAccount.address as `0x${string}`);
@@ -108,7 +108,7 @@ export class WalletConnectionValidator {
    */
   static hasConnectedWallet(): boolean {
     try {
-      const account = getAccount(config);
+      const account = getAccount(config as any);
       return account.isConnected && !!account.address;
     } catch {
       return false;

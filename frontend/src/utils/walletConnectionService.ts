@@ -1,5 +1,5 @@
 import { getAccount } from '@wagmi/core';
-import { config } from '../config/wagmi-minimal';
+import { config } from '../config/wagmi';
 
 /**
  * Enterprise wallet connection service following Web3 industry standards
@@ -19,7 +19,7 @@ export class WalletConnectionService {
     error?: string;
   }> {
     try {
-      const accountState = getAccount(config);
+      const accountState = getAccount(config as any);
       
       if (!accountState.address) {
         return {
@@ -56,7 +56,7 @@ export class WalletConnectionService {
   static async executeWithWallet<T>(
     operation: (account: `0x${string}`) => Promise<T>
   ): Promise<T> {
-    const accountState = getAccount(config);
+    const accountState = getAccount(config as any);
     
     if (!accountState.address) {
       throw new Error('No wallet connected. Please connect your wallet.');
@@ -71,7 +71,7 @@ export class WalletConnectionService {
    */
   static isWalletAvailable(): boolean {
     try {
-      const account = getAccount(config);
+      const account = getAccount(config as any);
       return !!account.address;
     } catch {
       return false;
@@ -84,7 +84,7 @@ export class WalletConnectionService {
    */
   static getCurrentAddress(): `0x${string}` | null {
     try {
-      const account = getAccount(config);
+      const account = getAccount(config as any);
       return account.address as `0x${string}` || null;
     } catch {
       return null;

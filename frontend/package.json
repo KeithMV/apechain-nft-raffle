@@ -61,10 +61,10 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.49.0",
-    "@typescript-eslint/parser": "^8.49.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "babel-plugin-transform-imports": "^2.0.0",
-    "eslint": "^9.39.1",
+    "eslint": "^8.57.0",
     "prettier": "^3.7.4",
     "webpack-bundle-analyzer": "^5.0.1"
   },

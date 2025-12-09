@@ -4,12 +4,12 @@
  */
 
 import { getAccount, getChainId } from '@wagmi/core';
-import { config } from '../config/wagmi-minimal';
+import { config } from '../config/wagmi';
 
 // Mobile-safe chain ID getter using wagmi core
 export const getMobileChainId = () => {
   try {
-    return getChainId(config);
+    return getChainId(config as any);
   } catch (error) {
     console.warn('Wagmi chainId failed, trying fallback');
     
@@ -30,7 +30,7 @@ export const getMobileChainId = () => {
 // Mobile-safe account getter using wagmi core
 export const getMobileAccount = () => {
   try {
-    const account = getAccount(config);
+    const account = getAccount(config as any);
     return { address: account.address };
   } catch (error) {
     console.warn('Wagmi account failed, trying fallback');
