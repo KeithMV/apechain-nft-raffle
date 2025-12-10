@@ -1,5 +1,4 @@
-import { Connector } from 'wagmi';
-import { metaMaskConnector, walletConnectConnector } from '../config/wagmi';
+
 
 export enum ConnectionState {
   DISCONNECTED = 'disconnected',
