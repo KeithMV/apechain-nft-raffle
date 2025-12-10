@@ -74,8 +74,9 @@ function WalletConnectionContent() {
   }, [connect, isConnecting, connectionAttempts]);
 
   const handleDisconnect = useCallback(() => {
-    clearWalletStorage();
     disconnect();
+    // Clear storage after disconnect to avoid interference
+    setTimeout(() => clearWalletStorage(), 100);
     toast.success('Wallet disconnected');
   }, [disconnect]);
 
