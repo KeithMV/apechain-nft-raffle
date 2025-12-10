@@ -12,23 +12,18 @@ import toast from 'react-hot-toast';
  * Hook for emergency winner selection (when commit-reveal fails or times out)
  */
 export function useEmergencySelectWinner() {
-  const { writeContract, data: hash, error, isPending } = useWriteContract();
+  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
   const selectWinner = async (raffleContract: string) => {
-    try {
-      writeContract({
-        address: raffleContract as `0x${string}`,
-        abi: RAFFLE_CONTRACT_ABI,
-        functionName: 'emergencySelectWinner',
-        chainId: 33139,
-      });
-    } catch (error: any) {
-      console.error('Emergency winner selection failed:', error);
-      toast.error('Failed to select winner: ' + error.message);
-    }
+    return await writeContractAsync({
+      address: raffleContract as `0x${string}`,
+      abi: RAFFLE_CONTRACT_ABI,
+      functionName: 'emergencySelectWinner',
+      chainId: 33139,
+    });
   };
 
   return {

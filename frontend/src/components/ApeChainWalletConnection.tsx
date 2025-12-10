@@ -67,8 +67,9 @@ export default function ApeChainWalletConnection() {
   };
 
   const handleSoftDisconnect = () => {
-    clearWalletStorage();
     disconnect();
+    // Clear storage after disconnect to avoid interference
+    setTimeout(() => clearWalletStorage(), 100);
     toast.success('Wallet disconnected');
   };
 
