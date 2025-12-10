@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useWalletConnection } from '../hooks/useWalletConnection';
+import { useDisconnect } from 'wagmi';
 import { useMetaMaskSession } from '../hooks/useMetaMaskSession';
 import { ConnectionState } from '../services/walletConnectionService';
 import { WalletErrorBoundary } from './WalletErrorBoundary';
@@ -12,10 +13,11 @@ function WalletConnectionContent() {
     connectionState,
     connectionError,
     connect,
-    disconnect,
     switchNetwork,
     isWrongNetwork
   } = useWalletConnection();
+  
+  const { disconnect } = useDisconnect();
   
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
