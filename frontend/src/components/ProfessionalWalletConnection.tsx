@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useWalletConnection } from '../hooks/useWalletConnection';
 import { useDisconnect, useAccount } from 'wagmi';
 import { useMetaMaskSession } from '../hooks/useMetaMaskSession';
@@ -76,27 +76,30 @@ function WalletConnectionContent() {
   }, [connect, isConnecting, connectionAttempts]);
 
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const disconnectingRef = useRef(false);
 
   const handleDisconnect = useCallback(() => {
-    console.log('🔴 Disconnect clicked, isDisconnecting:', isDisconnecting, 'isConnected:', isConnected);
+    console.log('🔴 Disconnect clicked, ref:', disconnectingRef.current, 'state:', isDisconnecting);
     
-    if (isDisconnecting) {
-      console.log('🔴 Already disconnecting, ignoring click');
+    if (disconnectingRef.current) {
+      console.log('🔴 Already disconnecting (ref), ignoring click');
       return;
     }
     
     console.log('🔴 Starting disconnect process');
+    disconnectingRef.current = true;
     setIsDisconnecting(true);
     disconnect();
     clearWalletStorage();
     toast.success('Wallet disconnected');
     
-    // Reset state after disconnect
+    // Reset state after longer delay
     setTimeout(() => {
-      console.log('🔴 Resetting isDisconnecting state');
+      console.log('🔴 Resetting disconnect state');
+      disconnectingRef.current = false;
       setIsDisconnecting(false);
-    }, 500);
-  }, [disconnect, isDisconnecting, isConnected]);
+    }, 2000);
+  }, [disconnect]);
 
   const handleNetworkSwitch = useCallback(async () => {
     try {
