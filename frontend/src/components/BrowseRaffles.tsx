@@ -29,7 +29,7 @@ export default function BrowseRaffles() {
   const [currentPage, setCurrentPage] = useState(0);
   const [processingRaffles, setProcessingRaffles] = useState<Set<string>>(new Set());
   
-  const { raffles, loading, error, refetch } = useAllRaffles(30, currentPage * 20);
+  const { raffles, loading, refetch } = useAllRaffles(30, currentPage * 20);
   const clearCache = useClearRaffleCache();
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
@@ -48,7 +48,7 @@ export default function BrowseRaffles() {
 
 
 
-  const { buyTickets, isPending: buyingPending, isSuccess: buySuccess, error: buyError } = useBuyTickets();
+  const { buyTickets, isSuccess: buySuccess, error: buyError } = useBuyTickets();
 
   const handleBuyTickets = async (raffle: CreatedRaffle) => {
     if (processingRaffles.has(raffle.raffleContract)) return;

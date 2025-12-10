@@ -7,6 +7,7 @@ import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
 import ProfessionalWalletConnection from './components/ProfessionalWalletConnection';
 import { suppressWalletConnectErrors, cleanWalletConnectStorage } from './utils/walletCleanup';
+import { ErrorBoundary, Web3ErrorBoundary } from './components/ErrorBoundary';
 
 import './index.css';
 
@@ -225,19 +226,25 @@ function RaffleApp() {
       
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
         {currentPage === 'create' && (
-          <LazyWrapper>
-            <CreateRafflePage />
-          </LazyWrapper>
+          <Web3ErrorBoundary>
+            <LazyWrapper>
+              <CreateRafflePage />
+            </LazyWrapper>
+          </Web3ErrorBoundary>
         )}
         {currentPage === 'dashboard' && (
-          <LazyWrapper>
-            <RaffleDashboard />
-          </LazyWrapper>
+          <ErrorBoundary>
+            <LazyWrapper>
+              <RaffleDashboard />
+            </LazyWrapper>
+          </ErrorBoundary>
         )}
         {currentPage === 'browse' && (
-          <LazyWrapper>
-            <BrowseRaffles />
-          </LazyWrapper>
+          <ErrorBoundary>
+            <LazyWrapper>
+              <BrowseRaffles />
+            </LazyWrapper>
+          </ErrorBoundary>
         )}
       </div>
     </>

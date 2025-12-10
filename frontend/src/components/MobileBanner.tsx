@@ -4,8 +4,8 @@
 import React, { useState, useEffect } from 'react';
 
 export default function MobileBanner() {
-  const [isMobile, setIsMobile] = useState(false);
-  const [hasEthereum, setHasEthereum] = useState(false);
+  // const [isMobile, setIsMobile] = useState(false);
+  // const [hasEthereum, setHasEthereum] = useState(false);
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
@@ -17,8 +17,8 @@ export default function MobileBanner() {
     // Check if Ethereum provider is available
     const hasProvider = typeof window !== 'undefined' && !!window.ethereum;
     
-    setIsMobile(isMobileDevice);
-    setHasEthereum(hasProvider);
+    // setIsMobile(isMobileDevice);
+    // setHasEthereum(hasProvider);
     
     // Show banner if mobile without Ethereum provider
     setShowBanner(isMobileDevice && !hasProvider);

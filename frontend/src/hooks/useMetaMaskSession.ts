@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 import { useAccount } from 'wagmi';
 
 // TypeScript interface for MetaMask
-interface MetaMaskEthereum {
-  isMetaMask?: boolean;
-  request: (args: { method: string; params?: any[] }) => Promise<any>;
-}
+// interface MetaMaskEthereum {
+//   isMetaMask?: boolean;
+//   request: (args: { method: string; params?: any[] }) => Promise<any>;
+// }
 
 export function useMetaMaskSession() {
   const { isConnected, address } = useAccount();

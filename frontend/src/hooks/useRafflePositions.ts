@@ -61,7 +61,7 @@ export function useAllRaffles(limit: number = 30, offset: number = 0) {
       const startIndex = Math.max(0, totalRaffles - offset - limit);
       const endIndex = Math.max(0, totalRaffles - offset);
       
-      const rafflePromises = [];
+      const rafflePromises: Promise<any>[] = [];
       for (let i = startIndex; i < endIndex; i++) {
         rafflePromises.push(
           publicClient.readContract({
@@ -76,7 +76,7 @@ export function useAllRaffles(limit: number = 30, offset: number = 0) {
       const raffleContracts = await Promise.all(rafflePromises);
       
       // Get raffle info for each contract
-      const raffleInfoPromises = raffleContracts.map((contract: any) =>
+      const raffleInfoPromises: Promise<any>[] = raffleContracts.map((contract: any) =>
         publicClient.readContract({
           address: contract as `0x${string}`,
           abi: [{
@@ -187,7 +187,7 @@ export function useUserRafflePositions(userAddress?: string) {
       const batchSize = 10;
       for (let batchStart = startIndex; batchStart < totalRaffles; batchStart += batchSize) {
         const batchEnd = Math.min(batchStart + batchSize, totalRaffles);
-        const batchPromises = [];
+        const batchPromises: Promise<any>[] = [];
         
         for (let i = batchStart; i < batchEnd; i++) {
           batchPromises.push(
@@ -349,7 +349,7 @@ export function useCreatedRaffles(userAddress?: string, page: number = 0) {
       const batchSize = 5;
       for (let batchStart = startIndex; batchStart < totalRaffles; batchStart += batchSize) {
         const batchEnd = Math.min(batchStart + batchSize, totalRaffles);
-        const batchPromises = [];
+        const batchPromises: Promise<any>[] = [];
         
         for (let i = batchStart; i < batchEnd; i++) {
           batchPromises.push(
@@ -440,7 +440,7 @@ export function useCreatedRaffles(userAddress?: string, page: number = 0) {
     } finally {
       setLoading(false);
     }
-  }, [publicClient, userAddress, raffleCount, page]);
+  }, [publicClient, userAddress, raffleCount]);
 
   useEffect(() => {
     loadCreatedRaffles();

@@ -8,15 +8,6 @@ export default function WalletInfo() {
   const [apeBalance, setApeBalance] = useState<string>('0');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (address && publicClient) {
-      loadApeBalance();
-      // Refresh balance every 30 seconds
-      const interval = setInterval(loadApeBalance, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [address, publicClient]);
-
   const loadApeBalance = async () => {
     if (!address || !publicClient) return;
     
@@ -29,6 +20,17 @@ export default function WalletInfo() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (address && publicClient) {
+      loadApeBalance();
+      // Refresh balance every 30 seconds
+      const interval = setInterval(loadApeBalance, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [address, publicClient, loadApeBalance]);
+
+
 
   if (!address) return null;
 

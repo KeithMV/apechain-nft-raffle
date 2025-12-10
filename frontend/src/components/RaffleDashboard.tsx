@@ -6,35 +6,7 @@ import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePos
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
 import { useEmergencySelectWinner } from '../hooks/useWinnerSelection';
 
-interface UserRafflePosition {
-  raffleId: number;
-  raffleContract: string;
-  nftContract: string;
-  tokenId: string;
-  userTickets: number;
-  ticketsSold: number;
-  maxTickets: number;
-  endTime: number;
-  completed: boolean;
-  isActive: boolean;
-  isWinner: boolean;
-  winProbability: number;
-}
-
-interface CreatedRaffle {
-  raffleId: number;
-  raffleContract: string;
-  nftContract: string;
-  tokenId: string;
-  creator: string;
-  ticketPrice: string;
-  maxTickets: number;
-  ticketsSold: number;
-  endTime: number;
-  winner?: string;
-  completed: boolean;
-  isActive: boolean;
-}
+// Interfaces moved to hooks file to avoid duplication
 
 export default function RaffleDashboard() {
   const { address } = useAccount();
@@ -47,13 +19,13 @@ export default function RaffleDashboard() {
   const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRaffles(address, page);
   
   // Show cached data immediately, then refresh
-  const [showingCachedData, setShowingCachedData] = useState(false);
+  // const [showingCachedData, setShowingCachedData] = useState(false);
   
-  useEffect(() => {
-    if (!positionsLoading && !rafflesLoading && (userPositions.length > 0 || createdRaffles.length > 0)) {
-      setShowingCachedData(false);
-    }
-  }, [positionsLoading, rafflesLoading, userPositions.length, createdRaffles.length]);
+  // useEffect(() => {
+  //   if (!positionsLoading && !rafflesLoading && (userPositions.length > 0 || createdRaffles.length > 0)) {
+  //     setShowingCachedData(false);
+  //   }
+  // }, [positionsLoading, rafflesLoading, userPositions.length, createdRaffles.length]);
   
   const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
   const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
@@ -114,7 +86,7 @@ export default function RaffleDashboard() {
       toast.error('Failed to select winner: ' + error.message);
       setSelectingWinnerFor(null);
     }
-  }, [selectingWinnerFor, isSelectingWinner, isConfirmingWinner, selectWinner]);
+  }, [selectingWinnerFor, selectWinner]);
 
   // Reset selecting state and refresh data when transaction completes
   React.useEffect(() => {

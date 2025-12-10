@@ -88,7 +88,7 @@ class NFTMetadataService {
     }
     
     // Build reliable gateway list
-    const gateways = [];
+    const gateways: string[] = [];
     
     if (url.includes('ipfs')) {
       // IPFS gateways in order of reliability
