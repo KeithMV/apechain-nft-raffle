@@ -46,6 +46,15 @@ export default function RaffleDashboard() {
   const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositions(address);
   const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRaffles(address, page);
   
+  // Show cached data immediately, then refresh
+  const [showingCachedData, setShowingCachedData] = useState(false);
+  
+  useEffect(() => {
+    if (!positionsLoading && !rafflesLoading && (userPositions.length > 0 || createdRaffles.length > 0)) {
+      setShowingCachedData(false);
+    }
+  }, [positionsLoading, rafflesLoading, userPositions.length, createdRaffles.length]);
+  
   const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
   const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
 
@@ -133,7 +142,8 @@ export default function RaffleDashboard() {
     }
   };
 
-  if (loading) {
+  // Only show full loading screen if no cached data available
+  if (loading && userPositions.length === 0 && createdRaffles.length === 0) {
     return (
       <div className="relative bg-gray-900/95 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl shadow-emerald-500/10 p-8">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-2xl blur-sm animate-pulse"></div>
@@ -159,7 +169,12 @@ export default function RaffleDashboard() {
               <span className="relative text-white text-lg sm:text-xl">⚡</span>
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400 bg-clip-text text-transparent font-mono tracking-wider">My Raffle Dashboard</h2>
+              <div className="flex items-center space-x-3">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400 bg-clip-text text-transparent font-mono tracking-wider">My Raffle Dashboard</h2>
+                {loading && (
+                  <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+                )}
+              </div>
               <p className="text-emerald-200 mt-1 text-sm sm:text-base font-mono tracking-wide">View your raffle activity and created raffles</p>
             </div>
           </div>

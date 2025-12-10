@@ -159,6 +159,20 @@ export function useUserRafflePositions(userAddress?: string) {
   const loadPositions = useCallback(async () => {
     if (!publicClient || !userAddress || !raffleCount) return;
 
+    // Check cache first
+    const cacheKey = `user_positions_${userAddress}_${raffleCount}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const { data, timestamp } = JSON.parse(cached);
+        // Use cache if less than 30 seconds old
+        if (Date.now() - timestamp < 30000) {
+          setPositions(data);
+          return;
+        }
+      } catch {}
+    }
+
     setLoading(true);
     setError(null);
 
@@ -166,8 +180,8 @@ export function useUserRafflePositions(userAddress?: string) {
       const totalRaffles = Number(raffleCount);
       const userPositions: UserRafflePosition[] = [];
 
-      // Check last 50 raffles for user participation (reduced from 100)
-      const startIndex = Math.max(0, totalRaffles - 50);
+      // Reduced to last 30 raffles for faster loading
+      const startIndex = Math.max(0, totalRaffles - 30);
       
       // Batch process raffles in parallel (10 at a time)
       const batchSize = 10;
@@ -268,7 +282,14 @@ export function useUserRafflePositions(userAddress?: string) {
         }
       }
 
-      setPositions(userPositions.reverse()); // Show newest first
+      const sortedPositions = userPositions.reverse(); // Show newest first
+      setPositions(sortedPositions);
+      
+      // Cache results
+      localStorage.setItem(cacheKey, JSON.stringify({
+        data: sortedPositions,
+        timestamp: Date.now()
+      }));
     } catch (err) {
       console.error('Failed to load user positions:', err);
       setError('Failed to load user positions');
@@ -284,7 +305,7 @@ export function useUserRafflePositions(userAddress?: string) {
   return { positions, loading, error, refetch: loadPositions };
 }
 
-// Get user's created raffles
+// Get user's created raffles with performance optimizations
 export function useCreatedRaffles(userAddress?: string, page: number = 0) {
   const publicClient = usePublicClient();
   const [raffles, setRaffles] = useState<CreatedRaffle[]>([]);
@@ -300,6 +321,20 @@ export function useCreatedRaffles(userAddress?: string, page: number = 0) {
   const loadCreatedRaffles = useCallback(async () => {
     if (!publicClient || !userAddress || !raffleCount) return;
 
+    // Check cache first
+    const cacheKey = `created_raffles_${userAddress}_${raffleCount}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const { data, timestamp } = JSON.parse(cached);
+        // Use cache if less than 30 seconds old
+        if (Date.now() - timestamp < 30000) {
+          setRaffles(data);
+          return;
+        }
+      } catch {}
+    }
+
     setLoading(true);
     setError(null);
 
@@ -307,42 +342,65 @@ export function useCreatedRaffles(userAddress?: string, page: number = 0) {
       const totalRaffles = Number(raffleCount);
       const createdRaffles: CreatedRaffle[] = [];
       
-      // Check last 200 raffles for user creation (optimized from all raffles)
-      const startIndex = Math.max(0, totalRaffles - 200);
-      for (let i = startIndex; i < totalRaffles; i++) {
-        try {
-          const raffleContract = await publicClient.readContract({
-            address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
-            abi: RAFFLE_FACTORY_ABI,
-            functionName: 'getRaffleContract',
-            args: [BigInt(i)],
-          });
-          
-          const raffle = await publicClient.readContract({
-            address: raffleContract as `0x${string}`,
-            abi: [{
-              inputs: [],
-              name: 'getRaffleInfo',
-              outputs: [{
-                components: [
-                  { name: 'nftContract', type: 'address' },
-                  { name: 'tokenId', type: 'uint256' },
-                  { name: 'creator', type: 'address' },
-                  { name: 'ticketPrice', type: 'uint256' },
-                  { name: 'maxTickets', type: 'uint256' },
-                  { name: 'ticketsSold', type: 'uint256' },
-                  { name: 'endTime', type: 'uint256' },
-                  { name: 'winner', type: 'address' },
-                  { name: 'completed', type: 'bool' },
-                  { name: 'platformFee', type: 'uint256' }
-                ],
-                type: 'tuple'
-              }],
-              stateMutability: 'view',
-              type: 'function'
-            }],
-            functionName: 'getRaffleInfo',
-          });
+      // Reduced to last 50 raffles for faster loading
+      const startIndex = Math.max(0, totalRaffles - 50);
+      
+      // Parallel batch processing (5 at a time)
+      const batchSize = 5;
+      for (let batchStart = startIndex; batchStart < totalRaffles; batchStart += batchSize) {
+        const batchEnd = Math.min(batchStart + batchSize, totalRaffles);
+        const batchPromises = [];
+        
+        for (let i = batchStart; i < batchEnd; i++) {
+          batchPromises.push(
+            (async () => {
+              try {
+                const raffleContract = await publicClient.readContract({
+                  address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+                  abi: RAFFLE_FACTORY_ABI,
+                  functionName: 'getRaffleContract',
+                  args: [BigInt(i)],
+                });
+                
+                const raffle = await publicClient.readContract({
+                  address: raffleContract as `0x${string}`,
+                  abi: [{
+                    inputs: [],
+                    name: 'getRaffleInfo',
+                    outputs: [{
+                      components: [
+                        { name: 'nftContract', type: 'address' },
+                        { name: 'tokenId', type: 'uint256' },
+                        { name: 'creator', type: 'address' },
+                        { name: 'ticketPrice', type: 'uint256' },
+                        { name: 'maxTickets', type: 'uint256' },
+                        { name: 'ticketsSold', type: 'uint256' },
+                        { name: 'endTime', type: 'uint256' },
+                        { name: 'winner', type: 'address' },
+                        { name: 'completed', type: 'bool' },
+                        { name: 'platformFee', type: 'uint256' }
+                      ],
+                      type: 'tuple'
+                    }],
+                    stateMutability: 'view',
+                    type: 'function'
+                  }],
+                  functionName: 'getRaffleInfo',
+                });
+
+                return { i, raffleContract, raffle };
+              } catch {
+                return null;
+              }
+            })()
+          );
+        }
+        
+        const batchResults = await Promise.all(batchPromises);
+        
+        for (const result of batchResults) {
+          if (!result) continue;
+          const { i, raffleContract, raffle } = result;
 
           if (raffle.creator.toLowerCase() === userAddress.toLowerCase()) {
             const now = Date.now() / 1000;
@@ -364,13 +422,18 @@ export function useCreatedRaffles(userAddress?: string, page: number = 0) {
               isActive,
             });
           }
-        } catch (err) {
-          // Skip failed raffle reads
-          continue;
         }
       }
 
-      setRaffles(createdRaffles.reverse()); // Show newest first
+      const sortedRaffles = createdRaffles.reverse(); // Show newest first
+      setRaffles(sortedRaffles);
+      
+      // Cache results
+      localStorage.setItem(cacheKey, JSON.stringify({
+        data: sortedRaffles,
+        timestamp: Date.now()
+      }));
+      
     } catch (err) {
       console.error('Failed to load created raffles:', err);
       setError('Failed to load created raffles');
