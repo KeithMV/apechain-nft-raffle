@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useWalletConnection } from '../hooks/useWalletConnection';
-import { useDisconnect } from 'wagmi';
+import { useDisconnect, useAccount } from 'wagmi';
 import { useMetaMaskSession } from '../hooks/useMetaMaskSession';
 import { ConnectionState } from '../services/walletConnectionService';
 import { WalletErrorBoundary } from './WalletErrorBoundary';
@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 
 function WalletConnectionContent() {
   const {
-    address,
     connectionState,
     connectionError,
     connect,
@@ -18,6 +17,7 @@ function WalletConnectionContent() {
   } = useWalletConnection();
   
   const { disconnect } = useDisconnect();
+  const { address, isConnected } = useAccount();
   
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
@@ -78,16 +78,25 @@ function WalletConnectionContent() {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   const handleDisconnect = useCallback(() => {
-    if (isDisconnecting) return;
+    console.log('🔴 Disconnect clicked, isDisconnecting:', isDisconnecting, 'isConnected:', isConnected);
     
+    if (isDisconnecting) {
+      console.log('🔴 Already disconnecting, ignoring click');
+      return;
+    }
+    
+    console.log('🔴 Starting disconnect process');
     setIsDisconnecting(true);
     disconnect();
     clearWalletStorage();
     toast.success('Wallet disconnected');
     
     // Reset state after disconnect
-    setTimeout(() => setIsDisconnecting(false), 500);
-  }, [disconnect, isDisconnecting]);
+    setTimeout(() => {
+      console.log('🔴 Resetting isDisconnecting state');
+      setIsDisconnecting(false);
+    }, 500);
+  }, [disconnect, isDisconnecting, isConnected]);
 
   const handleNetworkSwitch = useCallback(async () => {
     try {
@@ -122,7 +131,7 @@ function WalletConnectionContent() {
     return `${baseClasses} bg-gradient-to-r from-pink-500 to-fuchsia-500 border-pink-400 shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105`;
   };
 
-  if (connectionState === ConnectionState.CONNECTED) {
+  if (isConnected && !isDisconnecting) {
     return (
       <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
         {isWrongNetwork && (
