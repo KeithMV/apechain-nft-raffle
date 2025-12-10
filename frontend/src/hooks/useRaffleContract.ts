@@ -3,7 +3,6 @@
  * Uses wagmi React hooks for proper mobile Safari compatibility
  */
 
-import React from 'react';
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
 import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
