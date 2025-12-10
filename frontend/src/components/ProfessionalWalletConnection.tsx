@@ -75,17 +75,16 @@ function WalletConnectionContent() {
 
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
-  const handleDisconnect = useCallback(async () => {
+  const handleDisconnect = useCallback(() => {
     if (isDisconnecting) return;
     
     setIsDisconnecting(true);
-    try {
-      await disconnect();
-      clearWalletStorage();
-      toast.success('Wallet disconnected');
-    } finally {
-      setTimeout(() => setIsDisconnecting(false), 1000);
-    }
+    disconnect();
+    clearWalletStorage();
+    toast.success('Wallet disconnected');
+    
+    // Reset state after disconnect
+    setTimeout(() => setIsDisconnecting(false), 500);
   }, [disconnect, isDisconnecting]);
 
   const handleNetworkSwitch = useCallback(async () => {
