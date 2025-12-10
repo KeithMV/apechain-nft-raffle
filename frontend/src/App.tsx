@@ -1,26 +1,35 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
 import { config } from './config/wagmi';
-import { addApeChainToMetaMask } from './utils/addApeChain';
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
 import ProfessionalWalletConnection from './components/ProfessionalWalletConnection';
-import NetworkStatus from './components/NetworkStatus';
-import { PageLoadingFallback, ComponentLoadingFallback } from './components/LoadingFallback';
 import { suppressWalletConnectErrors, cleanWalletConnectStorage } from './utils/walletCleanup';
 
 import './index.css';
 
-// Optimized lazy components
-import { 
-  CreateRafflePage, 
-  RaffleDashboard, 
-  BrowseRaffles, 
-  WalletInfo, 
-  LazyWrapper 
-} from './components/LazyComponents';
+// Lazy load all heavy components for optimal performance
+const CreateRafflePage = lazy(() => import('./components/CreateRafflePage'));
+const RaffleDashboard = lazy(() => import('./components/RaffleDashboard'));
+const BrowseRaffles = lazy(() => import('./components/BrowseRaffles'));
+const WalletInfo = lazy(() => import('./components/WalletInfo'));
+const NetworkStatus = lazy(() => import('./components/NetworkStatus'));
+
+// Optimized loading fallback
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center py-8">
+    <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
+
+// Lazy wrapper component
+const LazyWrapper = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<LoadingFallback />}>
+    {children}
+  </Suspense>
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {

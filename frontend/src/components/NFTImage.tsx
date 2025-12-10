@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import { useNFTMetadata } from '../hooks/useNFTMetadata';
 
 interface NFTImageProps {
@@ -11,6 +11,15 @@ interface NFTImageProps {
 function NFTImage({ contractAddress, tokenId, className = '', showName = false }: NFTImageProps) {
   const { metadata, loading, error } = useNFTMetadata(contractAddress, tokenId);
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  const handleImageLoad = useCallback(() => {
+    setImageLoaded(true);
+  }, []);
+  
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+  }, []);
 
   if (loading) {
     return (
@@ -47,9 +56,19 @@ function NFTImage({ contractAddress, tokenId, className = '', showName = false }
       <img
         src={metadata.image}
         alt={metadata.name || `NFT #${tokenId}`}
-        className="relative w-full h-full object-cover"
-        onError={() => setImageError(true)}
+        className={`relative w-full h-full object-cover transition-opacity duration-300 ${
+          imageLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        onLoad={handleImageLoad}
+        onError={handleImageError}
+        loading="lazy"
+        decoding="async"
       />
+      {!imageLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-800/50">
+          <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
       {showName && metadata.name && (
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900/90 to-transparent p-2">
           <p className="text-emerald-200 text-sm truncate">{String(metadata.name).replace(/<[^>]*>/g, '').substring(0, 50)}</p>

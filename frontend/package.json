@@ -34,12 +34,16 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
-    "build:optimized": "craco build",
+    "build": "craco build",
+    "build:analyze": "yarn build && node webpack-bundle-analyzer.js",
+    "build:production": "NODE_ENV=production craco build && yarn build:analyze",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "install:clean": "rm -rf node_modules yarn.lock && yarn install",
-    "analyze": "yarn build && npx webpack-bundle-analyzer build/static/js/*.js"
+    "analyze": "yarn build && npx webpack-bundle-analyzer build/static/js/*.js",
+    "performance:audit": "yarn build && npx lighthouse http://localhost:3000 --output=json --output-path=./performance-audit.json",
+    "performance:report": "node webpack-bundle-analyzer.js",
+    "optimize": "yarn build:production && yarn performance:report"
   },
   "eslintConfig": {
     "extends": [

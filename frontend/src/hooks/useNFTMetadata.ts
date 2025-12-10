@@ -120,14 +120,23 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
     queryKey: ['nft-metadata', contractAddress, tokenId],
     queryFn: () => fetchNFTMetadata(publicClient, contractAddress, tokenId),
     enabled: !!publicClient && !!contractAddress && !!tokenId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    retry: 2,
-    retryDelay: 1000,
+    staleTime: 15 * 60 * 1000, // 15 minutes - longer cache for NFT metadata
+    gcTime: 60 * 60 * 1000, // 1 hour - keep in memory longer
+    retry: (failureCount, error) => {
+      // Don't retry on 404s or invalid contracts
+      if (error?.message?.includes('404') || error?.message?.includes('invalid')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000),
     placeholderData: {
       name: `NFT #${tokenId}`,
       image: '/placeholder-nft.svg',
     },
+    // Use background refetch for better UX
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
   });
 
   return { 

@@ -1,6 +1,6 @@
 /**
- * CRACO configuration for optimizing Web3Modal bundle size
- * Minimal configuration to avoid conflicts
+ * CRACO Performance Optimization Configuration
+ * Phase C: Simplified but effective performance optimizations
  */
 const webpack = require('webpack');
 
@@ -13,31 +13,41 @@ module.exports = {
         webpackConfig.optimization.splitChunks = {
           chunks: 'all',
           cacheGroups: {
-            // Separate Web3Modal into its own chunk for better caching
-            web3modal: {
-              test: /[\\/]node_modules[\\/]@web3modal[\\/]/,
-              name: 'web3modal',
+            // React ecosystem
+            react: {
+              test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+              name: 'react',
               chunks: 'all',
-              priority: 10,
+              priority: 20,
             },
-            // Separate wagmi/viem into their own chunk
+            // Web3 libraries (largest bundle)
             web3: {
-              test: /[\\/]node_modules[\\/](wagmi|viem)[\\/]/,
+              test: /[\\/]node_modules[\\/](wagmi|viem|@wagmi)[\\/]/,
               name: 'web3',
               chunks: 'all',
-              priority: 9,
+              priority: 15,
+            },
+            // UI libraries
+            ui: {
+              test: /[\\/]node_modules[\\/](@headlessui|@heroicons)[\\/]/,
+              name: 'ui',
+              chunks: 'all',
+              priority: 10,
             },
             // Default vendor chunk
             vendor: {
               test: /[\\/]node_modules[\\/]/,
               name: 'vendors',
               chunks: 'all',
-              priority: 1,
+              priority: 5,
             },
           },
         };
 
-        // Disable features we don't need
+        // Performance optimizations
+        webpackConfig.optimization.usedExports = true;
+        
+        // Disable unnecessary features
         webpackConfig.plugins.push(
           new webpack.DefinePlugin({
             'process.env.WC_DISABLE_ANALYTICS': JSON.stringify('true'),
