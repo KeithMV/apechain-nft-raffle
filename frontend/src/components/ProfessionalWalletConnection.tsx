@@ -73,11 +73,20 @@ function WalletConnectionContent() {
     }
   }, [connect, isConnecting, connectionAttempts]);
 
-  const handleDisconnect = useCallback(() => {
-    disconnect();
-    clearWalletStorage();
-    toast.success('Wallet disconnected');
-  }, [disconnect]);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+
+  const handleDisconnect = useCallback(async () => {
+    if (isDisconnecting) return;
+    
+    setIsDisconnecting(true);
+    try {
+      await disconnect();
+      clearWalletStorage();
+      toast.success('Wallet disconnected');
+    } finally {
+      setTimeout(() => setIsDisconnecting(false), 1000);
+    }
+  }, [disconnect, isDisconnecting]);
 
   const handleNetworkSwitch = useCallback(async () => {
     try {
@@ -133,9 +142,10 @@ function WalletConnectionContent() {
         
         <button
           onClick={handleDisconnect}
-          className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 transition-colors min-h-[44px] whitespace-nowrap"
+          disabled={isDisconnecting}
+          className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 transition-colors min-h-[44px] whitespace-nowrap disabled:opacity-50"
         >
-          Disconnect
+          {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
         </button>
       </div>
     );
