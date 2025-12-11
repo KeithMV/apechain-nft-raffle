@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import UnifiedNFTImage from './UnifiedNFTImage';
 import toast from 'react-hot-toast';
@@ -18,14 +18,7 @@ export default function RaffleDashboard() {
   const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositions(address);
   const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRaffles(address, page);
   
-  // Show cached data immediately, then refresh
-  // const [showingCachedData, setShowingCachedData] = useState(false);
-  
-  // useEffect(() => {
-  //   if (!positionsLoading && !rafflesLoading && (userPositions.length > 0 || createdRaffles.length > 0)) {
-  //     setShowingCachedData(false);
-  //   }
-  // }, [positionsLoading, rafflesLoading, userPositions.length, createdRaffles.length]);
+
   
   const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
   const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
@@ -43,6 +36,15 @@ export default function RaffleDashboard() {
   const loading = positionsLoading || rafflesLoading;
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
+  // Memoized filtered data for performance
+  const filteredPositions = useMemo(() => {
+    return showExpired ? userPositions : userPositions.filter(p => p.isActive || p.completed);
+  }, [showExpired, userPositions]);
+
+  const filteredRaffles = useMemo(() => {
+    return showExpired ? createdRaffles : createdRaffles.filter(r => r.isActive || (Date.now() / 1000 - r.endTime < 86400));
+  }, [showExpired, createdRaffles]);
+
   useEffect(() => {
     if (createdRaffles.length === 0) {
       setHasMoreRaffles(false);
@@ -53,7 +55,7 @@ export default function RaffleDashboard() {
     setPage(prev => prev + 1);
   };
 
-  const formatTimeRemaining = (endTime: number) => {
+  const formatTimeRemaining = useCallback((endTime: number) => {
     const now = Date.now() / 1000;
     const remaining = endTime - now;
     
@@ -66,12 +68,12 @@ export default function RaffleDashboard() {
     if (days > 0) return `${days}d ${hours}h`;
     if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
-  };
+  }, []);
 
   const { selectWinner, isPending: isSelectingWinner, isConfirming: isConfirmingWinner, isSuccess: winnerSelected } = useEmergencySelectWinner();
   const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
 
-  const handleSelectWinner = React.useCallback(async (raffleContract: string) => {
+  const handleSelectWinner = useCallback(async (raffleContract: string) => {
     // Prevent multiple rapid clicks
     if (selectingWinnerFor === raffleContract) {
       return;
@@ -81,9 +83,10 @@ export default function RaffleDashboard() {
       setSelectingWinnerFor(raffleContract);
       await selectWinner(raffleContract);
       toast.success('Winner selection initiated! Please wait for confirmation.');
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Failed to select winner:', error);
-      toast.error('Failed to select winner: ' + error.message);
+      toast.error('Failed to select winner: ' + errorMessage);
       setSelectingWinnerFor(null);
     }
   }, [selectingWinnerFor, selectWinner]);
@@ -101,18 +104,19 @@ export default function RaffleDashboard() {
 
 
 
-  const handleCancelRaffle = async (raffleContract: string) => {
+  const handleCancelRaffle = useCallback(async (raffleContract: string) => {
     setCancellingRaffle(raffleContract);
     try {
       await cancelRaffle(raffleContract);
       toast.success('Cancel transaction initiated!');
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Failed to cancel raffle:', error);
-      toast.error('Failed to cancel raffle: ' + error.message);
+      toast.error('Failed to cancel raffle: ' + errorMessage);
     } finally {
       setCancellingRaffle(null);
     }
-  };
+  }, [cancelRaffle]);
 
   // Only show full loading screen if no cached data available
   if (loading && userPositions.length === 0 && createdRaffles.length === 0) {
@@ -196,86 +200,81 @@ export default function RaffleDashboard() {
         <div className="relative p-4 sm:p-8 z-10">
           {activeTab === 'participated' ? (
             <div className="space-y-4">
-              {(() => {
-                const filteredPositions = showExpired ? userPositions : userPositions.filter(p => p.isActive || p.completed);
-                return filteredPositions.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
-                      <span className="relative text-cyan-400 text-2xl">⚡</span>
-                    </div>
-                    <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffle Participation</h3>
-                    <p className="text-cyan-400/70 font-mono">{showExpired ? "You haven't participated in any raffles yet" : "No active or completed raffles to show"}</p>
+              {filteredPositions.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
+                    <span className="relative text-cyan-400 text-2xl">⚡</span>
                   </div>
-                ) : (
-                  filteredPositions.map((position) => (
-                  <div key={`${position.raffleContract}-${position.raffleId}`} className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
-                    <div className="flex flex-col sm:flex-row">
-                      <div className="w-full sm:w-64 h-64 sm:h-auto">
-                        <UnifiedNFTImage 
-                          contractAddress={position.nftContract}
-                          tokenId={position.tokenId.toString()}
-                          className="w-full h-full"
-                        />
+                  <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffle Participation</h3>
+                  <p className="text-cyan-400/70 font-mono">{showExpired ? "You haven't participated in any raffles yet" : "No active or completed raffles to show"}</p>
+                </div>
+              ) : (
+                filteredPositions.map((position) => (
+                <div key={`${position.raffleContract}-${position.raffleId}`} className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
+                  <div className="flex flex-col sm:flex-row">
+                    <div className="w-full sm:w-64 h-64 sm:h-auto">
+                      <UnifiedNFTImage 
+                        contractAddress={position.nftContract}
+                        tokenId={position.tokenId.toString()}
+                        className="w-full h-full"
+                      />
+                    </div>
+                    <div className="relative flex-1 p-6 z-10">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h4 className="text-lg font-semibold text-pink-300 font-mono tracking-wider">
+                          NFT #{position.tokenId}
+                        </h4>
                       </div>
-                      <div className="relative flex-1 p-6 z-10">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h4 className="text-lg font-semibold text-pink-300 font-mono tracking-wider">
-                            NFT #{position.tokenId}
-                          </h4>
+                      <p className="text-pink-400/70 text-sm font-mono mb-3 tracking-wide">
+                        {position.nftContract.slice(0, 6)}...{position.nftContract.slice(-4)}
+                      </p>
+                      <div className="flex items-center space-x-3 mb-2">
+                        {position.isWinner && (
+                          <span className="px-2 py-1 bg-pink-500/20 border border-pink-400/30 rounded-full text-pink-300 text-xs font-medium font-mono tracking-wider">
+                            ⚡ Winner
+                          </span>
+                        )}
+                        {position.completed && !position.isWinner && (
+                          <span className="px-2 py-1 bg-red-500/20 border border-red-400/30 rounded-full text-red-300 text-xs font-medium font-mono tracking-wider">
+                            Lost
+                          </span>
+                        )}
+                        {position.isActive && (
+                          <span className="px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-medium font-mono tracking-wider">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <p className="text-pink-400/70 font-mono tracking-wide">Your Tickets</p>
+                          <p className="text-pink-300 font-mono tracking-wider">{position.userTickets}</p>
                         </div>
-                        <p className="text-pink-400/70 text-sm font-mono mb-3 tracking-wide">
-                          {position.nftContract.slice(0, 6)}...{position.nftContract.slice(-4)}
-                        </p>
-                        <div className="flex items-center space-x-3 mb-2">
-                          {position.isWinner && (
-                            <span className="px-2 py-1 bg-pink-500/20 border border-pink-400/30 rounded-full text-pink-300 text-xs font-medium font-mono tracking-wider">
-                              ⚡ Winner
-                            </span>
-                          )}
-                          {position.completed && !position.isWinner && (
-                            <span className="px-2 py-1 bg-red-500/20 border border-red-400/30 rounded-full text-red-300 text-xs font-medium font-mono tracking-wider">
-                              Lost
-                            </span>
-                          )}
-                          {position.isActive && (
-                            <span className="px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-medium font-mono tracking-wider">
-                              Active
-                            </span>
-                          )}
+                        <div>
+                          <p className="text-pink-400/70 font-mono tracking-wide">Win Probability</p>
+                          <p className="text-pink-300 font-mono tracking-wider">{position.winProbability.toFixed(1)}%</p>
                         </div>
-                        
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <p className="text-pink-400/70 font-mono tracking-wide">Your Tickets</p>
-                            <p className="text-pink-300 font-mono tracking-wider">{position.userTickets}</p>
-                          </div>
-                          <div>
-                            <p className="text-pink-400/70 font-mono tracking-wide">Win Probability</p>
-                            <p className="text-pink-300 font-mono tracking-wider">{position.winProbability.toFixed(1)}%</p>
-                          </div>
-                          <div>
-                            <p className="text-pink-400/70 font-mono tracking-wide">Tickets Sold</p>
-                            <p className="text-pink-300 font-mono tracking-wider">{position.ticketsSold}/{position.maxTickets}</p>
-                          </div>
-                          <div>
-                            <p className="text-pink-400/70 font-mono tracking-wide">Time Remaining</p>
-                            <p className="text-pink-300 font-mono tracking-wider">{formatTimeRemaining(position.endTime)}</p>
-                          </div>
+                        <div>
+                          <p className="text-pink-400/70 font-mono tracking-wide">Tickets Sold</p>
+                          <p className="text-pink-300 font-mono tracking-wider">{position.ticketsSold}/{position.maxTickets}</p>
+                        </div>
+                        <div>
+                          <p className="text-pink-400/70 font-mono tracking-wide">Time Remaining</p>
+                          <p className="text-pink-300 font-mono tracking-wider">{formatTimeRemaining(position.endTime)}</p>
                         </div>
                       </div>
                     </div>
                   </div>
-                  ))
-                );
-              })()}
+                </div>
+                ))
+              )}
             </div>
           ) : (
             <div className="space-y-4">
-              {(() => {
-                const filteredRaffles = showExpired ? createdRaffles : createdRaffles.filter(r => r.isActive || (Date.now() / 1000 - r.endTime < 86400));
-                return filteredRaffles.length === 0 ? (
+              {filteredRaffles.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
                       <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
@@ -394,8 +393,7 @@ export default function RaffleDashboard() {
                     </div>
                   </div>
                   ))
-                );
-              })()}
+                )}
               
               {/* Load More Button for Created Raffles */}
               {activeTab === 'created' && hasMoreRaffles && createdRaffles.length > 0 && (
