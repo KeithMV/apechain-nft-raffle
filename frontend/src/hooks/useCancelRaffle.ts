@@ -2,6 +2,7 @@ import { useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from '
 import { parseAbi } from 'viem';
 import toast from 'react-hot-toast';
 import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { apeChain } from '../config/wagmi';
 
 const RAFFLE_ABI = parseAbi([
@@ -11,6 +12,7 @@ const RAFFLE_ABI = parseAbi([
 ]);
 
 export function useCancelRaffle() {
+  const queryClient = useQueryClient();
   const { 
     writeContract, 
     data: hash, 
@@ -63,8 +65,12 @@ export function useCancelRaffle() {
   useEffect(() => {
     if (isConfirmed) {
       toast.success('Raffle canceled successfully!');
+      // Invalidate all raffle-related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['raffles'] });
+      queryClient.invalidateQueries({ queryKey: ['user-positions'] });
+      queryClient.invalidateQueries({ queryKey: ['created-raffles'] });
     }
-  }, [isConfirmed]);
+  }, [isConfirmed, queryClient]);
 
   useEffect(() => {
     if (writeError || receiptError) {

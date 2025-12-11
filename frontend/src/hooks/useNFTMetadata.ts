@@ -205,10 +205,10 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
   const publicClient = usePublicClient();
   
   const { data: metadata, isLoading: loading, error } = useQuery({
-    queryKey: ['nft-metadata', contractAddress, tokenId],
+    queryKey: ['nft-metadata', contractAddress?.toLowerCase(), tokenId],
     queryFn: async () => {
       // Check optimized cache first
-      const cacheKey = `${contractAddress}_${tokenId}`;
+      const cacheKey = `${contractAddress?.toLowerCase()}_${tokenId}`;
       const cached = metadataCache.get(cacheKey);
       if (cached) {
         return cached;
@@ -219,24 +219,29 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
       return result;
     },
     enabled: !!publicClient && !!contractAddress && !!tokenId,
-    staleTime: 30 * 60 * 1000, // 30 minutes - longer cache for NFT metadata
-    gcTime: 2 * 60 * 60 * 1000, // 2 hours - keep in memory longer
+    staleTime: 60 * 60 * 1000, // 1 hour - NFT metadata rarely changes
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours - keep in memory much longer
     retry: (failureCount, error) => {
-      // Don't retry on 404s or invalid contracts
-      if (error?.message?.includes('404') || error?.message?.includes('invalid')) {
+      // Don't retry CORS errors or 404s
+      if (error?.message?.includes('CORS') || 
+          error?.message?.includes('404') || 
+          error?.message?.includes('invalid') ||
+          error?.message?.includes('ERR_FAILED')) {
         return false;
       }
-      return failureCount < 2;
+      return failureCount < 1; // Reduce retries
     },
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 3000),
+    retryDelay: 2000, // Fixed delay
     placeholderData: {
       name: `NFT #${tokenId}`,
       image: '/placeholder-nft.svg',
     },
-    // Optimize for performance
+    // Prevent excessive requests
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
+    refetchInterval: false,
+    networkMode: 'online',
   });
 
   return { 

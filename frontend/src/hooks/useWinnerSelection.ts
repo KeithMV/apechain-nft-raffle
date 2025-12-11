@@ -4,18 +4,30 @@
  */
 
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useQueryClient } from '@tanstack/react-query';
 import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { WinnerSelectionService } from '../services/winnerSelectionService';
 import toast from 'react-hot-toast';
+import { useEffect } from 'react';
 
 /**
  * Hook for emergency winner selection (when commit-reveal fails or times out)
  */
 export function useEmergencySelectWinner() {
+  const queryClient = useQueryClient();
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
+
+  useEffect(() => {
+    if (isSuccess) {
+      // Invalidate raffle queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['raffles'] });
+      queryClient.invalidateQueries({ queryKey: ['user-positions'] });
+      queryClient.invalidateQueries({ queryKey: ['created-raffles'] });
+    }
+  }, [isSuccess, queryClient]);
 
   const selectWinner = async (raffleContract: string) => {
     return await writeContractAsync({
