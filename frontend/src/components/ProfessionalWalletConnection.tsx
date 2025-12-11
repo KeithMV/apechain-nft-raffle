@@ -87,6 +87,7 @@ function WalletConnectionContent() {
   useEffect(() => {
     if (!isConnected) {
       clearWalletStorage();
+      toast.success('Wallet disconnected');
     }
   }, [isConnected]);
 
