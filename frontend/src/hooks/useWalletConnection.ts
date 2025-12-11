@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { metaMaskConnector, walletConnectConnector } from '../config/wagmi';
+import { metaMaskConnector, coinbaseConnector, injectedConnector, walletConnectConnector } from '../config/wagmi';
 import { walletConnectionService, ConnectionState, ConnectionError } from '../services/walletConnectionService';
 
 const APECHAIN_ID = 33139;
@@ -20,14 +20,29 @@ export function useWalletConnection() {
     APECHAIN_ID
   );
 
-  const handleConnect = useCallback(async () => {
+  const handleConnect = useCallback(async (preferredConnector?: any) => {
     try {
       setConnectionError(null);
       
+      // Use preferred connector if provided
+      if (preferredConnector) {
+        await connect({ connector: preferredConnector });
+        return;
+      }
+      
+      // Auto-detect best desktop wallet
       if (walletConnectionService.isMetaMaskAvailable()) {
         walletConnectionService.logConnectionAttempt('MetaMask');
         await connect({ connector: metaMaskConnector });
         walletConnectionService.logConnectionSuccess('MetaMask');
+      } else if (window.ethereum?.isCoinbaseWallet) {
+        walletConnectionService.logConnectionAttempt('Coinbase');
+        await connect({ connector: coinbaseConnector });
+        walletConnectionService.logConnectionSuccess('Coinbase');
+      } else if (window.ethereum) {
+        walletConnectionService.logConnectionAttempt('Injected');
+        await connect({ connector: injectedConnector });
+        walletConnectionService.logConnectionSuccess('Injected');
       } else {
         walletConnectionService.logConnectionAttempt('WalletConnect');
         await connect({ connector: walletConnectConnector });
@@ -68,6 +83,8 @@ export function useWalletConnection() {
     connectionState,
     connectionError,
     connect: handleConnect,
+    connectWith: (connector: any) => handleConnect(connector),
+    availableConnectors: { metaMaskConnector, coinbaseConnector, injectedConnector, walletConnectConnector },
     disconnect: handleDisconnect,
     switchNetwork: handleSwitchNetwork,
     isWrongNetwork: connectionState === ConnectionState.WRONG_NETWORK,

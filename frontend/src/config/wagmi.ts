@@ -1,6 +1,6 @@
 import { createConfig, http } from 'wagmi';
 import { defineChain } from 'viem';
-import { walletConnect, injected } from 'wagmi/connectors';
+import { walletConnect, injected, coinbaseWallet } from 'wagmi/connectors';
 
 // ApeChain configuration
 export const apeChain = defineChain({
@@ -48,10 +48,21 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// MetaMask injected connector for desktop - minimal config to prevent double confirmations
+// MetaMask injected connector for desktop
 export const metaMaskConnector = injected({
   target: 'metaMask',
-  shimDisconnect: false, // Prevent double transaction prompts
+  shimDisconnect: false,
+});
+
+// Coinbase Wallet for desktop
+export const coinbaseConnector = coinbaseWallet({
+  appName: 'ApeChain NFT Raffle',
+  appLogoUrl: 'https://apechainraffles.io/favicon.ico',
+});
+
+// Generic injected for other desktop wallets (Brave, etc.)
+export const injectedConnector = injected({
+  shimDisconnect: false,
 });
 
 // WalletConnect for mobile with filtered wallet list
@@ -82,7 +93,7 @@ export const walletConnectConnector = walletConnect({
 // Optimized config for ApeChain with basic transport (gas estimation issue is ApeChain infrastructure)
 export const config = createConfig({
   chains: [apeChain],
-  connectors: [metaMaskConnector, walletConnectConnector],
+  connectors: [metaMaskConnector, coinbaseConnector, injectedConnector, walletConnectConnector],
   transports: {
     [apeChain.id]: http(),
   },
