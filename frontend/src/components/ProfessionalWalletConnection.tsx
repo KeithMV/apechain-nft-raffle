@@ -91,9 +91,16 @@ function WalletConnectionContent() {
     
     console.log('Calling disconnect()');
     disconnect();
-    clearWalletStorage();
-    toast.success('Wallet disconnected');
   }, [disconnect, isDisconnectPending, isConnected]);
+  
+  // Handle cleanup after disconnect completes
+  useEffect(() => {
+    if (!isConnected && !isDisconnectPending) {
+      console.log('Disconnect completed, clearing storage');
+      clearWalletStorage();
+      toast.success('Wallet disconnected');
+    }
+  }, [isConnected, isDisconnectPending]);
 
   const handleNetworkSwitch = useCallback(async () => {
     try {
