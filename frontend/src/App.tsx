@@ -1,4 +1,5 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
@@ -44,11 +45,10 @@ const queryClient = new QueryClient({
   },
 });
 
-const Header = React.memo(function Header({ currentPage, setCurrentPage }: { 
-  currentPage: string, 
-  setCurrentPage: (page: 'create' | 'dashboard' | 'browse') => void 
-}) {
+const Header = React.memo(function Header() {
   const { isConnected } = useAccount();
+  const location = useLocation();
+  const currentPage = location.pathname.slice(1) || 'browse';
   
   return (
     <header className="relative bg-slate-900/95 backdrop-blur-xl border-b border-emerald-400/30 shadow-2xl overflow-hidden">
@@ -74,8 +74,8 @@ const Header = React.memo(function Header({ currentPage, setCurrentPage }: {
               </div>
             </div>
             <nav className="flex space-x-1 sm:space-x-2">
-              <button
-                onClick={() => setCurrentPage('create')}
+              <Link
+                to="/create"
                 className={`relative px-3 py-2 sm:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
                   currentPage === 'create' 
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
@@ -84,9 +84,9 @@ const Header = React.memo(function Header({ currentPage, setCurrentPage }: {
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 <span className="relative">CREATE</span>
-              </button>
-              <button
-                onClick={() => setCurrentPage('dashboard')}
+              </Link>
+              <Link
+                to="/dashboard"
                 className={`relative px-3 py-2 sm:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
                   currentPage === 'dashboard' 
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
@@ -95,9 +95,9 @@ const Header = React.memo(function Header({ currentPage, setCurrentPage }: {
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 <span className="relative">DASHBOARD</span>
-              </button>
-              <button
-                onClick={() => setCurrentPage('browse')}
+              </Link>
+              <Link
+                to="/browse"
                 className={`relative px-3 py-2 sm:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
                   currentPage === 'browse' 
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
@@ -106,7 +106,7 @@ const Header = React.memo(function Header({ currentPage, setCurrentPage }: {
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 <span className="relative">BROWSE</span>
-              </button>
+              </Link>
             </nav>
           </div>
           <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 min-w-0">
@@ -190,66 +190,73 @@ const Hero = React.memo(function Hero() {
   );
 });
 
-const RaffleApp = React.memo(function RaffleApp() {
-  const { isConnected } = useAccount();
-  const [currentPage, setCurrentPage] = useState<'create' | 'dashboard' | 'browse'>('browse');
-  
-
-
-  if (!isConnected) {
-    return (
-      <>
-        <Header currentPage={currentPage} setCurrentPage={setCurrentPage} />
-        <Hero />
-        <div className="max-w-4xl mx-auto px-4 py-12 sm:py-20 text-center">
-          <div className="relative bg-slate-800/80 backdrop-blur-xl border border-emerald-400/30 rounded-3xl shadow-2xl shadow-emerald-500/20 p-6 sm:p-10">
-            {/* Glowing border */}
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 rounded-3xl blur-sm animate-pulse"></div>
-            
-            <div className="relative z-10">
-              <div className="relative w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg shadow-emerald-500/30">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-2xl blur-sm animate-pulse"></div>
-                <span className="relative text-slate-900 text-xl sm:text-2xl font-bold">🔗</span>
-              </div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4 font-sans tracking-tight">Connect Your Wallet</h3>
-              <p className="text-slate-300 mb-6 sm:mb-8 text-base sm:text-lg px-2">Connect your wallet to start creating and participating in NFT raffles</p>
-              <p className="text-emerald-400 text-sm font-medium">Use the Connect Wallet button in the header above</p>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
+const ConnectWalletPage = React.memo(function ConnectWalletPage() {
   return (
     <>
-      <Header currentPage={currentPage} setCurrentPage={setCurrentPage} />
-      
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
-        {currentPage === 'create' && (
-          <Web3ErrorBoundary>
-            <LazyWrapper>
-              <CreateRafflePage />
-            </LazyWrapper>
-          </Web3ErrorBoundary>
-        )}
-        {currentPage === 'dashboard' && (
-          <ErrorBoundary>
-            <LazyWrapper>
-              <RaffleDashboard />
-            </LazyWrapper>
-          </ErrorBoundary>
-        )}
-        {currentPage === 'browse' && (
-          <ErrorBoundary>
-            <LazyWrapper>
-              <BrowseRaffles />
-            </LazyWrapper>
-          </ErrorBoundary>
-        )}
+      <Header />
+      <Hero />
+      <div className="max-w-4xl mx-auto px-4 py-12 sm:py-20 text-center">
+        <div className="relative bg-slate-800/80 backdrop-blur-xl border border-emerald-400/30 rounded-3xl shadow-2xl shadow-emerald-500/20 p-6 sm:p-10">
+          {/* Glowing border */}
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 rounded-3xl blur-sm animate-pulse"></div>
+          
+          <div className="relative z-10">
+            <div className="relative w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg shadow-emerald-500/30">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-2xl blur-sm animate-pulse"></div>
+              <span className="relative text-slate-900 text-xl sm:text-2xl font-bold">🔗</span>
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4 font-sans tracking-tight">Connect Your Wallet</h3>
+            <p className="text-slate-300 mb-6 sm:mb-8 text-base sm:text-lg px-2">Connect your wallet to start creating and participating in NFT raffles</p>
+            <p className="text-emerald-400 text-sm font-medium">Use the Connect Wallet button in the header above</p>
+          </div>
+        </div>
       </div>
     </>
   );
+});
+
+const AppLayout = React.memo(function AppLayout() {
+  return (
+    <>
+      <Header />
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
+        <Routes>
+          <Route path="/" element={<Navigate to="/browse" replace />} />
+          <Route path="/browse" element={
+            <ErrorBoundary>
+              <LazyWrapper>
+                <BrowseRaffles />
+              </LazyWrapper>
+            </ErrorBoundary>
+          } />
+          <Route path="/create" element={
+            <Web3ErrorBoundary>
+              <LazyWrapper>
+                <CreateRafflePage />
+              </LazyWrapper>
+            </Web3ErrorBoundary>
+          } />
+          <Route path="/dashboard" element={
+            <ErrorBoundary>
+              <LazyWrapper>
+                <RaffleDashboard />
+              </LazyWrapper>
+            </ErrorBoundary>
+          } />
+        </Routes>
+      </div>
+    </>
+  );
+});
+
+const RaffleApp = React.memo(function RaffleApp() {
+  const { isConnected } = useAccount();
+  
+  if (!isConnected) {
+    return <ConnectWalletPage />;
+  }
+
+  return <AppLayout />;
 });
 
 function App() {
@@ -265,8 +272,10 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={config}>
-          <RaffleApp />
-          <Toaster position="top-right" />
+          <BrowserRouter>
+            <RaffleApp />
+            <Toaster position="top-right" />
+          </BrowserRouter>
         </WagmiProvider>
       </QueryClientProvider>
     </div>
