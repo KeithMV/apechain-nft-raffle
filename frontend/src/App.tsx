@@ -210,9 +210,7 @@ function RaffleApp() {
               </div>
               <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4 font-sans tracking-tight">Connect Your Wallet</h3>
               <p className="text-slate-300 mb-6 sm:mb-8 text-base sm:text-lg px-2">Connect your wallet to start creating and participating in NFT raffles</p>
-              <div className="flex justify-center">
-                <ProfessionalWalletConnection />
-              </div>
+              <p className="text-emerald-400 text-sm font-medium">Use the Connect Wallet button in the header above</p>
             </div>
           </div>
         </div>
