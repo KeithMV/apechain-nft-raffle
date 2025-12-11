@@ -72,30 +72,20 @@ function WalletConnectionContent() {
   }, [connect, connectionState]);
 
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  const disconnectingRef = useRef(false);
 
-  const handleDisconnect = useCallback(() => {
-    console.log('🔴 Disconnect clicked, ref:', disconnectingRef.current, 'state:', isDisconnecting);
+  const handleDisconnect = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     
-    if (disconnectingRef.current) {
-      console.log('🔴 Already disconnecting (ref), ignoring click');
-      return;
-    }
+    if (isDisconnecting) return;
     
-    console.log('🔴 Starting disconnect process');
-    disconnectingRef.current = true;
     setIsDisconnecting(true);
     disconnect();
     clearWalletStorage();
     toast.success('Wallet disconnected');
     
-    // Reset state after longer delay
-    setTimeout(() => {
-      console.log('🔴 Resetting disconnect state');
-      disconnectingRef.current = false;
-      setIsDisconnecting(false);
-    }, 2000);
-  }, [disconnect]);
+    setTimeout(() => setIsDisconnecting(false), 1000);
+  }, [disconnect, isDisconnecting]);
 
   const handleNetworkSwitch = useCallback(async () => {
     try {
