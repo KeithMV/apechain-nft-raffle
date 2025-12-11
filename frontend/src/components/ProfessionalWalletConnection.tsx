@@ -5,6 +5,7 @@ import { useMetaMaskSession } from '../hooks/useMetaMaskSession';
 import { ConnectionState } from '../services/walletConnectionService';
 import { WalletErrorBoundary } from './WalletErrorBoundary';
 import { formatAddress, clearWalletStorage, getConnectionErrorMessage } from '../utils/walletUtils';
+import { SecurityUtils } from '../utils/security';
 import toast from 'react-hot-toast';
 
 function WalletConnectionContent() {
@@ -56,6 +57,12 @@ function WalletConnectionContent() {
 
   const handleConnect = useCallback(async () => {
     if (connectionState === ConnectionState.CONNECTING) return;
+    
+    // Rate limiting for connection attempts
+    if (!SecurityUtils.checkRateLimit('wallet_connect', 5, 60000)) {
+      toast.error('Too many connection attempts. Please wait.');
+      return;
+    }
     
     // Clear any existing retry timeout
     if (retryTimeoutRef.current) {
@@ -132,7 +139,7 @@ function WalletConnectionContent() {
         <div className="flex items-center space-x-2 bg-slate-800/50 border border-slate-700/50 rounded-lg px-2 sm:px-3 py-2 min-h-[44px]">
           <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shrink-0"></div>
           <span className="text-slate-300 text-xs sm:text-sm font-mono wallet-text">
-            {address ? formatAddress(address) : ''}
+            {address && SecurityUtils.validateAddress(address) ? formatAddress(address) : 'Invalid Address'}
           </span>
         </div>
         

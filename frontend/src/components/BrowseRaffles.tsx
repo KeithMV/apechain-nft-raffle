@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import ApeTokenBalance from './ApeTokenBalance';
-import NFTImage from './NFTImage';
+import UnifiedNFTImage from './UnifiedNFTImage';
 import toast from 'react-hot-toast';
 import { useAllRaffles, useClearRaffleCache } from '../hooks/useRafflePositions';
 import { useBuyTickets } from '../hooks/useRaffleContract';
+import { throttle, useVirtualScrolling } from '../utils/performance';
 
 interface CreatedRaffle {
   raffleId: number;
@@ -29,22 +30,26 @@ export default function BrowseRaffles() {
   const [currentPage, setCurrentPage] = useState(0);
   const [processingRaffles, setProcessingRaffles] = useState<Set<string>>(new Set());
   
-  const { raffles, loading, refetch } = useAllRaffles(30, currentPage * 20);
+  const { raffles, loading, refetch } = useAllRaffles(15, currentPage * 10); // Reduced batch size
   const clearCache = useClearRaffleCache();
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
 
 
   useEffect(() => {
-    if (raffles.length < 20) {
+    if (raffles.length < 10) { // Updated for smaller batch size
       setHasMoreRaffles(false);
     }
   }, [raffles]);
 
-  const loadMoreRaffles = () => {
-    if (!hasMoreRaffles) return;
-    setCurrentPage(prev => prev + 1);
-  };
+  // Throttled load more to prevent rapid calls
+  const loadMoreRaffles = useMemo(
+    () => throttle(() => {
+      if (!hasMoreRaffles || loading) return;
+      setCurrentPage(prev => prev + 1);
+    }, 1000),
+    [hasMoreRaffles, loading]
+  );
 
 
 
@@ -95,12 +100,16 @@ export default function BrowseRaffles() {
     }
   }, [buyError]);
 
-  const setTicketQuantity = (raffleContract: string, quantity: number, maxAvailable: number) => {
-    setTicketQuantities(prev => ({
-      ...prev,
-      [raffleContract]: Math.max(1, Math.min(Math.min(50, maxAvailable), quantity))
-    }));
-  };
+  // Optimized ticket quantity setter with debouncing
+  const setTicketQuantity = useCallback(
+    throttle((raffleContract: string, quantity: number, maxAvailable: number) => {
+      setTicketQuantities(prev => ({
+        ...prev,
+        [raffleContract]: Math.max(1, Math.min(Math.min(25, maxAvailable), quantity)) // Reduced max
+      }));
+    }, 100),
+    []
+  );
   
   const formatTimeRemaining = useCallback((endTime: number) => {
     const now = Date.now() / 1000;
@@ -117,11 +126,24 @@ export default function BrowseRaffles() {
     return `${minutes}m`;
   }, []);
 
-  // Memoize filtered raffles at component level
+  // Optimized filtered raffles with better memoization
   const { filteredRaffles, activeCount, expiredCount } = useMemo(() => {
-    const filtered = showExpired ? raffles : raffles.filter(r => r.isActive);
-    const active = raffles.filter(r => r.isActive).length;
-    const expired = raffles.filter(r => !r.isActive).length;
+    let active = 0;
+    let expired = 0;
+    const filtered: CreatedRaffle[] = [];
+    
+    for (const raffle of raffles) {
+      if (raffle.isActive) {
+        active++;
+        filtered.push(raffle);
+      } else {
+        expired++;
+        if (showExpired) {
+          filtered.push(raffle);
+        }
+      }
+    }
+    
     return { filteredRaffles: filtered, activeCount: active, expiredCount: expired };
   }, [raffles, showExpired]);
 
@@ -207,7 +229,7 @@ export default function BrowseRaffles() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {filteredRaffles.map((raffle) => {
+                  {filteredRaffles.map((raffle, index) => {
                     const quantity = ticketQuantities[raffle.raffleContract] || 1;
                     const totalCost = (parseFloat(raffle.ticketPrice) * quantity).toFixed(3);
                     const progress = (raffle.ticketsSold / raffle.maxTickets) * 100;
@@ -225,11 +247,13 @@ export default function BrowseRaffles() {
                         )}
                         {/* NFT Image */}
                         <div className="relative">
-                          <NFTImage 
+                          <UnifiedNFTImage 
                             contractAddress={raffle.nftContract}
                             tokenId={raffle.tokenId.toString()}
                             className="w-full h-80 sm:h-96"
                             showName={true}
+                            priority={index < 4} // Prioritize first 4 images
+                            size="lg"
                           />
                           <div className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm border border-emerald-400/30 rounded-xl px-3 py-2">
                             <p className="text-emerald-300 font-semibold text-sm">{raffle.ticketPrice} APE</p>

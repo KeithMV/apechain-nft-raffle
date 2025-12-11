@@ -28,9 +28,19 @@ export const apeChain = defineChain({
 // Clear old WalletConnect sessions on load with error handling
 if (typeof window !== 'undefined') {
   try {
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('wc@2') || key.startsWith('@walletconnect')) {
+    // Safely iterate over localStorage keys
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('wc@2') || key.startsWith('@walletconnect'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => {
+      try {
         localStorage.removeItem(key);
+      } catch (e) {
+        // Ignore individual removal errors
       }
     });
   } catch (error) {

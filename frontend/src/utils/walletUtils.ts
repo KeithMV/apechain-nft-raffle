@@ -1,17 +1,26 @@
+import { SecurityUtils } from './security';
+
 // Utility functions for wallet operations
 export const formatAddress = (addr: string): string => {
-  if (!addr || addr.length < 10) return addr || '';
+  if (!addr || typeof addr !== 'string' || !SecurityUtils.validateAddress(addr)) {
+    return 'Invalid Address';
+  }
+  if (addr.length < 10) return addr;
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 };
 
 export const clearWalletStorage = (): void => {
-  try {
-    localStorage.removeItem('walletConnection');
-    localStorage.removeItem('lastWalletConnector');
-    localStorage.removeItem('userHasConnected');
-  } catch (error) {
-    console.warn('Failed to clear wallet storage:', error);
-  }
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  
+  const keysToRemove = ['walletConnection', 'lastWalletConnector', 'userHasConnected'];
+  
+  keysToRemove.forEach(key => {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.warn(`Failed to remove ${key} from storage:`, error);
+    }
+  });
 };
 
 export const isMetaMaskAvailable = (): boolean => {

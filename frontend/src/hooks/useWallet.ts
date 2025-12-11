@@ -1,11 +1,16 @@
-import { useAccount, useChainId } from 'wagmi';
+/**
+ * @deprecated Use useWalletConnection hook instead for full wallet functionality
+ * This hook is kept for backward compatibility
+ */
+
+import { useWalletConnection } from './useWalletConnection';
+import { useChainId } from 'wagmi';
 import { apeChain } from '../config/wagmi';
 
 export function useWallet() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, isWrongNetwork } = useWalletConnection();
   const chainId = useChainId();
   
-  const isWrongNetwork = isConnected && chainId !== apeChain.id;
   const isReady = isConnected && !isWrongNetwork;
   
   return {

@@ -18,12 +18,12 @@ const BrowseRaffles = lazy(() => import('./components/BrowseRaffles'));
 const WalletInfo = lazy(() => import('./components/WalletInfo'));
 const NetworkStatus = lazy(() => import('./components/NetworkStatus'));
 
-// Optimized loading fallback
-const LoadingFallback = () => (
+// Optimized loading fallback with memoization
+const LoadingFallback = React.memo(() => (
   <div className="flex items-center justify-center py-8">
     <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
   </div>
-);
+));
 
 // Lazy wrapper component
 const LazyWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -37,11 +37,14 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
     },
   },
 });
 
-function Header({ currentPage, setCurrentPage }: { 
+const Header = React.memo(function Header({ currentPage, setCurrentPage }: { 
   currentPage: string, 
   setCurrentPage: (page: 'create' | 'dashboard' | 'browse') => void 
 }) {
@@ -123,9 +126,9 @@ function Header({ currentPage, setCurrentPage }: {
       </div>
     </header>
   );
-}
+});
 
-function Hero() {
+const Hero = React.memo(function Hero() {
   return (
     <div className="relative text-white py-12 sm:py-16 lg:py-24 overflow-hidden">
       {/* Animated background pattern */}
@@ -185,9 +188,9 @@ function Hero() {
       </div>
     </div>
   );
-}
+});
 
-function RaffleApp() {
+const RaffleApp = React.memo(function RaffleApp() {
   const { isConnected } = useAccount();
   const [currentPage, setCurrentPage] = useState<'create' | 'dashboard' | 'browse'>('browse');
   
@@ -247,7 +250,7 @@ function RaffleApp() {
       </div>
     </>
   );
-}
+});
 
 function App() {
   useEffect(() => {

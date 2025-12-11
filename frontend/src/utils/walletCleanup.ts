@@ -48,33 +48,59 @@ export const suppressWalletConnectErrors = () => {
 
 // Clean all WalletConnect storage
 export const cleanWalletConnectStorage = () => {
-  if (typeof window !== 'undefined') {
-    // Clear localStorage
-    if (window.localStorage) {
-      Object.keys(localStorage).forEach(key => {
-        if (
+  if (typeof window === 'undefined') return;
+  
+  // Clear localStorage safely
+  if (window.localStorage) {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (
           key.includes('walletconnect') || 
           key.includes('wc@2') || 
           key.includes('wc_') ||
           key.startsWith('@walletconnect')
-        ) {
+        )) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => {
+        try {
           localStorage.removeItem(key);
+        } catch (e) {
+          // Ignore individual removal errors
         }
       });
+    } catch (error) {
+      console.warn('Failed to clean localStorage:', error);
     }
-    
-    // Clear sessionStorage
-    if (window.sessionStorage) {
-      Object.keys(sessionStorage).forEach(key => {
-        if (
+  }
+  
+  // Clear sessionStorage safely
+  if (window.sessionStorage) {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && (
           key.includes('walletconnect') || 
           key.includes('wc@2') || 
           key.includes('wc_') ||
           key.startsWith('@walletconnect')
-        ) {
+        )) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => {
+        try {
           sessionStorage.removeItem(key);
+        } catch (e) {
+          // Ignore individual removal errors
         }
       });
+    } catch (error) {
+      console.warn('Failed to clean sessionStorage:', error);
     }
   }
 };
