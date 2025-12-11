@@ -14,13 +14,16 @@ export class ImageProxyService {
   private static readonly PROXY_ENDPOINTS = [
     'https://images.weserv.nl/?url=',
     'https://wsrv.nl/?url=',
+    'https://imagekit.io/url-endpoint/',
   ];
 
   private static readonly IPFS_GATEWAYS = [
     'https://cloudflare-ipfs.com/ipfs/',
     'https://gateway.pinata.cloud/ipfs/',
-    'https://dweb.link/ipfs/',
     'https://ipfs.io/ipfs/',
+    'https://dweb.link/ipfs/',
+    'https://gateway.ipfs.io/ipfs/',
+    'https://ipfs.infura.io/ipfs/',
   ];
 
   /**
@@ -29,13 +32,14 @@ export class ImageProxyService {
   private static resolveIPFS(ipfsUrl: string): string {
     if (!ipfsUrl.startsWith('ipfs://')) return ipfsUrl;
     
-    const hash = ipfsUrl.slice(7);
+    const hash = ipfsUrl.slice(7).split('/')[0]; // Handle paths in IPFS URLs
     if (!/^[a-zA-Z0-9]{46,59}$/.test(hash)) {
       throw new Error('Invalid IPFS hash');
     }
     
     // Use Cloudflare IPFS gateway (fastest and most reliable)
-    return `${this.IPFS_GATEWAYS[0]}${hash}`;
+    const path = ipfsUrl.slice(7);
+    return `${this.IPFS_GATEWAYS[0]}${path}`;
   }
 
   /**
@@ -93,6 +97,7 @@ export class ImageProxyService {
       // Add optimization defaults
       params.set('fit', 'cover');
       params.set('a', 'attention'); // Smart cropping
+      params.set('il', ''); // Interlace for progressive loading
       
       const queryString = params.toString();
       const proxyUrl = `${this.PROXY_ENDPOINTS[0]}${encodeURIComponent(resolvedUrl)}${queryString ? '&' + queryString : ''}`;
@@ -117,21 +122,24 @@ export class ImageProxyService {
       // Primary: Proxied image
       urls.push(this.getProxiedImageUrl(originalUrl, options));
       
-      // Fallback 1: Direct HTTPS URL (if valid)
+      // Fallback 1: Multiple IPFS gateways for IPFS URLs
       if (originalUrl.startsWith('ipfs://')) {
-        const directUrl = this.resolveIPFS(originalUrl);
-        if (this.validateImageUrl(directUrl)) {
-          urls.push(directUrl);
-        }
+        const path = originalUrl.slice(7);
+        this.IPFS_GATEWAYS.slice(0, 3).forEach(gateway => {
+          const directUrl = `${gateway}${path}`;
+          if (this.validateImageUrl(directUrl)) {
+            urls.push(directUrl);
+          }
+        });
       } else if (this.validateImageUrl(originalUrl)) {
         urls.push(originalUrl);
       }
       
-      // Fallback 2: Alternative proxy
-      if (this.PROXY_ENDPOINTS[1]) {
-        const altProxyUrl = `${this.PROXY_ENDPOINTS[1]}${encodeURIComponent(originalUrl)}`;
-        urls.push(altProxyUrl);
-      }
+      // Fallback 2: Alternative proxies
+      this.PROXY_ENDPOINTS.slice(1).forEach(proxy => {
+        const proxyUrl = `${proxy}${encodeURIComponent(originalUrl)}`;
+        urls.push(proxyUrl);
+      });
       
     } catch (error) {
       console.warn('Failed to generate image URLs:', error);

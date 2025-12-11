@@ -38,6 +38,7 @@ function UnifiedNFTImage({
   const [isInView, setIsInView] = useState(priority);
   const containerRef = useRef<HTMLDivElement>(null);
   const [preloadStarted, setPreloadStarted] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const sizeClasses = COMPONENT_SIZES;
 
@@ -103,12 +104,24 @@ function UnifiedNFTImage({
     if (currentImageIndex < imageUrls.length - 1) {
       setCurrentImageIndex(prev => prev + 1);
       setImageLoaded(false);
+      setRetryCount(0); // Reset retry count for new URL
+    } else if (retryCount < 2) {
+      // Retry current URL up to 2 times
+      setRetryCount(prev => prev + 1);
+      setImageLoaded(false);
+      // Force reload by adding timestamp
+      setTimeout(() => {
+        const img = document.querySelector(`img[alt="${displayName}"]`) as HTMLImageElement;
+        if (img) {
+          img.src = `${imageSrc}?retry=${retryCount + 1}`;
+        }
+      }, 1000);
     } else {
-      // All URLs failed
+      // All URLs and retries failed
       setImageError(true);
       setImageLoaded(false);
     }
-  }, [contractAddress, tokenId, currentImageIndex, imageUrls.length]);
+  }, [contractAddress, tokenId, currentImageIndex, imageUrls.length, retryCount, imageSrc, displayName]);
 
   if (loading) {
     return (

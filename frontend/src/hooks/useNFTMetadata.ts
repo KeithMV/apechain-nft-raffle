@@ -23,12 +23,23 @@ const metadataCache = new OptimizedCache<NFTMetadata>(5 * 1024 * 1024, 500, 9000
 
 function validateUrl(url: string): boolean {
   try {
+    // Handle data URLs
+    if (url.startsWith('data:image/')) {
+      return true;
+    }
+    
     const parsed = new URL(url);
-    // Only allow HTTPS and IPFS protocols
-    if (!['https:', 'ipfs:'].includes(parsed.protocol)) {
+    // Allow HTTPS, IPFS, and Arweave protocols
+    if (!['https:', 'ipfs:', 'ar:'].includes(parsed.protocol)) {
       return false;
     }
-    // Block private/local networks
+    
+    // Skip hostname checks for non-HTTP protocols
+    if (parsed.protocol !== 'https:') {
+      return true;
+    }
+    
+    // Block private/local networks for HTTPS
     if (parsed.hostname === 'localhost' || 
         parsed.hostname.startsWith('127.') ||
         parsed.hostname.startsWith('192.168.') ||
@@ -173,19 +184,25 @@ async function fetchNFTMetadata(
   const imageAlternatives: string[] = [];
   
   if (imageUrl?.startsWith('ipfs://')) {
-    const ipfsHash = imageUrl.slice(7);
-    // Validate IPFS hash format
-    if (!/^[a-zA-Z0-9]{46,59}$/.test(ipfsHash)) {
+    const ipfsPath = imageUrl.slice(7);
+    const ipfsHash = ipfsPath.split('/')[0];
+    // Validate IPFS hash format (support both v0 and v1)
+    if (!/^[a-zA-Z0-9]{46,59}$/.test(ipfsHash) && !/^[a-z2-7]{59}$/.test(ipfsHash)) {
+      console.warn('Invalid IPFS hash format:', ipfsHash);
       imageUrl = '/placeholder-nft.svg';
     } else {
-      imageUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
-      imageAlternatives.push(
-        `https://gateway.pinata.cloud/ipfs/${ipfsHash}`,
-        `https://cloudflare-ipfs.com/ipfs/${ipfsHash}`,
-        `https://dweb.link/ipfs/${ipfsHash}`
-      );
+      // Keep original URL for proxy service to handle
+      imageUrl = imageUrl;
     }
+  } else if (imageUrl?.startsWith('ar://')) {
+    // Arweave URLs
+    const arweaveId = imageUrl.slice(5);
+    imageUrl = `https://arweave.net/${arweaveId}`;
+  } else if (imageUrl?.startsWith('data:image/')) {
+    // Data URLs are valid
+    // Keep as is
   } else if (imageUrl && !validateUrl(imageUrl)) {
+    console.warn('Invalid image URL:', imageUrl);
     imageUrl = '/placeholder-nft.svg';
   }
 
