@@ -51,7 +51,6 @@ if (typeof window !== 'undefined') {
 // MetaMask injected connector for desktop
 export const metaMaskConnector = injected({
   target: 'metaMask',
-  shimDisconnect: false,
 });
 
 // Coinbase Wallet for desktop
@@ -61,9 +60,7 @@ export const coinbaseConnector = coinbaseWallet({
 });
 
 // Generic injected for other desktop wallets (Brave, etc.)
-export const injectedConnector = injected({
-  shimDisconnect: false,
-});
+export const injectedConnector = injected({});
 
 // WalletConnect for mobile with filtered wallet list
 export const walletConnectConnector = walletConnect({

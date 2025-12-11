@@ -22,7 +22,7 @@ function WalletConnectionContent() {
   
   const [hasShownSuccess, setHasShownSuccess] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [isLocalDisconnecting, setIsLocalDisconnecting] = useState(false);
+
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -79,31 +79,16 @@ function WalletConnectionContent() {
     }
   }, [connect, connectionState]);
 
-  const handleDisconnect = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    console.log('Disconnect clicked:', { isDisconnectPending, isConnected, isLocalDisconnecting });
-    
-    if (isDisconnectPending || isLocalDisconnecting) {
-      console.log('Already disconnecting, ignoring click');
-      return;
-    }
-    
-    console.log('Calling disconnect()');
-    setIsLocalDisconnecting(true);
+  const handleDisconnect = useCallback(() => {
     disconnect();
-  }, [disconnect, isDisconnectPending, isConnected, isLocalDisconnecting]);
+  }, [disconnect]);
   
   // Handle cleanup after disconnect completes
   useEffect(() => {
-    if (!isConnected && !isDisconnectPending && isLocalDisconnecting) {
-      console.log('Disconnect completed, clearing storage');
+    if (!isConnected) {
       clearWalletStorage();
-      toast.success('Wallet disconnected');
-      setIsLocalDisconnecting(false);
     }
-  }, [isConnected, isDisconnectPending, isLocalDisconnecting]);
+  }, [isConnected]);
 
   const handleNetworkSwitch = useCallback(async () => {
     try {
@@ -156,10 +141,10 @@ function WalletConnectionContent() {
         
         <button
           onClick={handleDisconnect}
-          disabled={isDisconnectPending || isLocalDisconnecting}
+          disabled={isDisconnectPending}
           className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 transition-colors min-h-[44px] whitespace-nowrap disabled:opacity-50"
         >
-          {(isDisconnectPending || isLocalDisconnecting) ? 'Disconnecting...' : 'Disconnect'}
+          {isDisconnectPending ? 'Disconnecting...' : 'Disconnect'}
         </button>
       </div>
     );
