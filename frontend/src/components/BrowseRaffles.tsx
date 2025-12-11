@@ -22,6 +22,185 @@ interface CreatedRaffle {
   isActive: boolean;
 }
 
+// Memoized raffle card component for performance
+const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuantity, handleBuyTickets, processingRaffles, formatTimeRemaining, address }: {
+  raffle: CreatedRaffle;
+  index: number;
+  ticketQuantities: {[key: string]: number};
+  setTicketQuantity: (contract: string, quantity: number, maxAvailable: number) => void;
+  handleBuyTickets: (raffle: CreatedRaffle) => void;
+  processingRaffles: Set<string>;
+  formatTimeRemaining: (endTime: number) => string;
+  address?: string;
+}) => {
+  const quantity = ticketQuantities[raffle.raffleContract] || 1;
+  const totalCost = (parseFloat(raffle.ticketPrice) * quantity).toFixed(3);
+  const progress = (raffle.ticketsSold / raffle.maxTickets) * 100;
+  const availableTickets = raffle.maxTickets - raffle.ticketsSold;
+  const isExpired = !raffle.isActive;
+
+  return (
+    <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className={`relative bg-slate-800/60 border rounded-2xl overflow-hidden transition-all duration-300 group ${
+      isExpired 
+        ? 'border-slate-600/30 opacity-75' 
+        : 'border-emerald-400/20 hover:border-emerald-400/50 hover:shadow-lg hover:shadow-emerald-500/20'
+    }`}>
+      {!isExpired && (
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      )}
+      {/* NFT Image */}
+      <div className="relative">
+        <UnifiedNFTImage 
+          contractAddress={raffle.nftContract}
+          tokenId={raffle.tokenId.toString()}
+          className="w-full h-80 sm:h-96"
+          showName={true}
+          priority={index < 4}
+          size="lg"
+        />
+        <div className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm border border-emerald-400/30 rounded-xl px-3 py-2">
+          <p className="text-emerald-300 font-semibold text-sm">{raffle.ticketPrice} APE</p>
+          <p className="text-slate-400 text-xs">per ticket</p>
+        </div>
+        {isExpired && (
+          <div className="absolute top-3 left-3 bg-red-900/90 backdrop-blur-sm border border-red-400/30 rounded-xl px-3 py-2">
+            <p className="text-red-300 font-semibold text-sm">EXPIRED</p>
+          </div>
+        )}
+      </div>
+      
+      <div className="relative z-10 p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h4 className="text-lg font-semibold text-white mb-1">
+              NFT #{raffle.tokenId}
+            </h4>
+            <p className="text-slate-400 text-xs font-mono break-all">
+              {raffle.nftContract}
+            </p>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-4">
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-slate-400">{isExpired ? 'Final Results' : 'Tickets Available'}</span>
+            <span className="text-white">{isExpired ? `${raffle.ticketsSold}/${raffle.maxTickets} sold` : `${availableTickets}/${raffle.maxTickets}`}</span>
+          </div>
+          <div className="w-full bg-slate-700/50 rounded-full h-3">
+            <div 
+              className={`h-3 rounded-full transition-all duration-300 shadow-sm ${
+                isExpired 
+                  ? 'bg-gradient-to-r from-slate-500 to-slate-600 shadow-slate-500/50' 
+                  : 'bg-gradient-to-r from-emerald-400 to-teal-400 shadow-emerald-400/50'
+              }`}
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+          <div>
+            <p className="text-slate-400">{isExpired ? 'Status' : 'Time Left'}</p>
+            <p className={`font-mono ${
+              isExpired ? 'text-red-300' : 'text-white'
+            }`}>
+              {isExpired ? 'Ended' : formatTimeRemaining(raffle.endTime)}
+            </p>
+          </div>
+          <div>
+            <p className="text-slate-400">{isExpired ? 'Winner' : 'Win Chance'}</p>
+            <p className="text-white font-mono">
+              {isExpired 
+                ? (raffle.winner && raffle.winner !== '0x0000000000000000000000000000000000000000' 
+                    ? `${raffle.winner.slice(0, 6)}...${raffle.winner.slice(-4)}` 
+                    : 'No winner')
+                : `${(quantity / raffle.maxTickets * 100).toFixed(1)}%`
+              }
+            </p>
+          </div>
+        </div>
+
+        {/* APE Token Balance */}
+        {!isExpired && (
+          <div className="mb-4">
+            <ApeTokenBalance 
+              requiredAmount={totalCost}
+            />
+          </div>
+        )}
+
+        {/* Buy Tickets Section */}
+        <div className="border-t border-slate-700/50 pt-4">
+          {isExpired ? (
+            <div className="text-center py-4">
+              <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <span className="text-red-400 text-xl">⏰</span>
+              </div>
+              <p className="text-red-400 font-mono font-semibold mb-1">RAFFLE ENDED</p>
+              <p className="text-slate-400 text-sm font-mono">
+                {raffle.winner && raffle.winner !== '0x0000000000000000000000000000000000000000' 
+                  ? `Winner: ${raffle.winner.slice(0, 6)}...${raffle.winner.slice(-4)}` 
+                  : 'No tickets were sold'}
+              </p>
+            </div>
+          ) : address && raffle.creator.toLowerCase() === address.toLowerCase() ? (
+            <div className="text-center py-4">
+              <div className="w-12 h-12 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <span className="text-yellow-400 text-xl">👑</span>
+              </div>
+              <p className="text-yellow-400 font-mono font-semibold mb-1">YOUR RAFFLE</p>
+              <p className="text-slate-400 text-sm font-mono">Creators cannot buy their own tickets</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="flex-1">
+                  <label className="block text-xs text-slate-400 mb-1">Quantity</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={Math.min(100, availableTickets)}
+                    value={quantity}
+                    onChange={(e) => setTicketQuantity(raffle.raffleContract, parseInt(e.target.value) || 1, availableTickets)}
+                    className="w-full bg-slate-800/80 border border-emerald-400/30 rounded-xl px-3 py-2 text-slate-100 text-sm font-mono focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 focus:outline-none transition-all"
+                  />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-slate-400 mb-1">Total Cost</p>
+                  <p className="text-white font-semibold">{totalCost} APE</p>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => handleBuyTickets(raffle)}
+                disabled={processingRaffles.has(raffle.raffleContract) || availableTickets === 0}
+                className="relative w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 overflow-hidden group shadow-lg hover:shadow-emerald-500/25"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                {processingRaffles.has(raffle.raffleContract) ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span className="relative">PROCESSING...</span>
+                  </>
+                ) : availableTickets === 0 ? (
+                  <span className="relative">PROTOCOL.FULL</span>
+                ) : (
+                  <>
+                    <span className="relative">⚡</span>
+                    <span className="relative">ACQUIRE {quantity} TICKET{quantity > 1 ? 'S' : ''}</span>
+                  </>
+                )}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export default function BrowseRaffles() {
   const { address } = useAccount();
   
@@ -30,14 +209,13 @@ export default function BrowseRaffles() {
   const [currentPage, setCurrentPage] = useState(0);
   const [processingRaffles, setProcessingRaffles] = useState<Set<string>>(new Set());
   
-  const { raffles, loading, refetch } = useAllRaffles(15, currentPage * 10); // Reduced batch size
+  const BATCH_SIZE = 10;
+  const { raffles, loading, refetch } = useAllRaffles(BATCH_SIZE, currentPage * BATCH_SIZE);
   const clearCache = useClearRaffleCache();
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
-
-
   useEffect(() => {
-    if (raffles.length < 10) { // Updated for smaller batch size
+    if (raffles.length < BATCH_SIZE) {
       setHasMoreRaffles(false);
     }
   }, [raffles]);
@@ -100,12 +278,12 @@ export default function BrowseRaffles() {
     }
   }, [buyError]);
 
-  // Optimized ticket quantity setter with debouncing
+  // Optimized ticket quantity setter with throttling
   const setTicketQuantity = useCallback(
     throttle((raffleContract: string, quantity: number, maxAvailable: number) => {
       setTicketQuantities(prev => ({
         ...prev,
-        [raffleContract]: Math.max(1, Math.min(Math.min(25, maxAvailable), quantity)) // Reduced max
+        [raffleContract]: Math.max(1, Math.min(25, maxAvailable, quantity))
       }));
     }, 100),
     []
@@ -229,174 +407,19 @@ export default function BrowseRaffles() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {filteredRaffles.map((raffle, index) => {
-                    const quantity = ticketQuantities[raffle.raffleContract] || 1;
-                    const totalCost = (parseFloat(raffle.ticketPrice) * quantity).toFixed(3);
-                    const progress = (raffle.ticketsSold / raffle.maxTickets) * 100;
-                    const availableTickets = raffle.maxTickets - raffle.ticketsSold;
-                    const isExpired = !raffle.isActive;
-              
-                    return (
-                      <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className={`relative bg-slate-800/60 border rounded-2xl overflow-hidden transition-all duration-300 group ${
-                        isExpired 
-                          ? 'border-slate-600/30 opacity-75' 
-                          : 'border-emerald-400/20 hover:border-emerald-400/50 hover:shadow-lg hover:shadow-emerald-500/20'
-                      }`}>
-                        {!isExpired && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        )}
-                        {/* NFT Image */}
-                        <div className="relative">
-                          <UnifiedNFTImage 
-                            contractAddress={raffle.nftContract}
-                            tokenId={raffle.tokenId.toString()}
-                            className="w-full h-80 sm:h-96"
-                            showName={true}
-                            priority={index < 4} // Prioritize first 4 images
-                            size="lg"
-                          />
-                          <div className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm border border-emerald-400/30 rounded-xl px-3 py-2">
-                            <p className="text-emerald-300 font-semibold text-sm">{raffle.ticketPrice} APE</p>
-                            <p className="text-slate-400 text-xs">per ticket</p>
-                          </div>
-                          {isExpired && (
-                            <div className="absolute top-3 left-3 bg-red-900/90 backdrop-blur-sm border border-red-400/30 rounded-xl px-3 py-2">
-                              <p className="text-red-300 font-semibold text-sm">EXPIRED</p>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="relative z-10 p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <h4 className="text-lg font-semibold text-white mb-1">
-                                NFT #{raffle.tokenId}
-                              </h4>
-                              <p className="text-slate-400 text-xs font-mono break-all">
-                                {raffle.nftContract}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Progress Bar */}
-                          <div className="mb-4">
-                            <div className="flex justify-between text-sm mb-2">
-                              <span className="text-slate-400">{isExpired ? 'Final Results' : 'Tickets Available'}</span>
-                              <span className="text-white">{isExpired ? `${raffle.ticketsSold}/${raffle.maxTickets} sold` : `${availableTickets}/${raffle.maxTickets}`}</span>
-                            </div>
-                            <div className="w-full bg-slate-700/50 rounded-full h-3">
-                              <div 
-                                className={`h-3 rounded-full transition-all duration-300 shadow-sm ${
-                                  isExpired 
-                                    ? 'bg-gradient-to-r from-slate-500 to-slate-600 shadow-slate-500/50' 
-                                    : 'bg-gradient-to-r from-emerald-400 to-teal-400 shadow-emerald-400/50'
-                                }`}
-                                style={{ width: `${progress}%` }}
-                              ></div>
-                            </div>
-                          </div>
-
-                          {/* Stats Grid */}
-                          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                            <div>
-                              <p className="text-slate-400">{isExpired ? 'Status' : 'Time Left'}</p>
-                              <p className={`font-mono ${
-                                isExpired ? 'text-red-300' : 'text-white'
-                              }`}>
-                                {isExpired ? 'Ended' : formatTimeRemaining(raffle.endTime)}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-slate-400">{isExpired ? 'Winner' : 'Win Chance'}</p>
-                              <p className="text-white font-mono">
-                                {isExpired 
-                                  ? (raffle.winner && raffle.winner !== '0x0000000000000000000000000000000000000000' 
-                                      ? `${raffle.winner.slice(0, 6)}...${raffle.winner.slice(-4)}` 
-                                      : 'No winner')
-                                  : `${(quantity / raffle.maxTickets * 100).toFixed(1)}%`
-                                }
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* APE Token Balance */}
-                          {!isExpired && (
-                            <div className="mb-4">
-                              <ApeTokenBalance 
-                                requiredAmount={totalCost}
-                              />
-                            </div>
-                          )}
-
-                          {/* Buy Tickets Section */}
-                          <div className="border-t border-slate-700/50 pt-4">
-                            {isExpired ? (
-                              <div className="text-center py-4">
-                                <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-                                  <span className="text-red-400 text-xl">⏰</span>
-                                </div>
-                                <p className="text-red-400 font-mono font-semibold mb-1">RAFFLE ENDED</p>
-                                <p className="text-slate-400 text-sm font-mono">
-                                  {raffle.winner && raffle.winner !== '0x0000000000000000000000000000000000000000' 
-                                    ? `Winner: ${raffle.winner.slice(0, 6)}...${raffle.winner.slice(-4)}` 
-                                    : 'No tickets were sold'}
-                                </p>
-                              </div>
-                            ) : address && raffle.creator.toLowerCase() === address.toLowerCase() ? (
-                              <div className="text-center py-4">
-                                <div className="w-12 h-12 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-                                  <span className="text-yellow-400 text-xl">👑</span>
-                                </div>
-                                <p className="text-yellow-400 font-mono font-semibold mb-1">YOUR RAFFLE</p>
-                                <p className="text-slate-400 text-sm font-mono">Creators cannot buy their own tickets</p>
-                              </div>
-                            ) : (
-                              <>
-                                <div className="flex items-center space-x-3 mb-3">
-                                  <div className="flex-1">
-                                    <label className="block text-xs text-slate-400 mb-1">Quantity</label>
-                                    <input
-                                      type="number"
-                                      min="1"
-                                      max={Math.min(100, availableTickets)}
-                                      value={quantity}
-                                      onChange={(e) => setTicketQuantity(raffle.raffleContract, parseInt(e.target.value) || 1, availableTickets)}
-                                      className="w-full bg-slate-800/80 border border-emerald-400/30 rounded-xl px-3 py-2 text-slate-100 text-sm font-mono focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 focus:outline-none transition-all"
-                                    />
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="text-xs text-slate-400 mb-1">Total Cost</p>
-                                    <p className="text-white font-semibold">{totalCost} APE</p>
-                                  </div>
-                                </div>
-                                
-                                <button
-                                  onClick={() => handleBuyTickets(raffle)}
-                                  disabled={processingRaffles.has(raffle.raffleContract) || availableTickets === 0}
-                                  className="relative w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 overflow-hidden group shadow-lg hover:shadow-emerald-500/25"
-                                >
-                                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                  {processingRaffles.has(raffle.raffleContract) ? (
-                                    <>
-                                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                      <span className="relative">PROCESSING...</span>
-                                    </>
-                                  ) : availableTickets === 0 ? (
-                                    <span className="relative">PROTOCOL.FULL</span>
-                                  ) : (
-                                    <>
-                                      <span className="relative">⚡</span>
-                                      <span className="relative">ACQUIRE {quantity} TICKET{quantity > 1 ? 'S' : ''}</span>
-                                    </>
-                                  )}
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {filteredRaffles.map((raffle, index) => (
+                    <RaffleCard
+                      key={`${raffle.raffleContract}-${raffle.raffleId}`}
+                      raffle={raffle}
+                      index={index}
+                      ticketQuantities={ticketQuantities}
+                      setTicketQuantity={setTicketQuantity}
+                      handleBuyTickets={handleBuyTickets}
+                      processingRaffles={processingRaffles}
+                      formatTimeRemaining={formatTimeRemaining}
+                      address={address}
+                    />
+                  ))}
                 </div>
               )}
               
