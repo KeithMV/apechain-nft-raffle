@@ -82,12 +82,18 @@ function WalletConnectionContent() {
     event.preventDefault();
     event.stopPropagation();
     
-    if (isDisconnectPending) return;
+    console.log('Disconnect clicked:', { isDisconnectPending, isConnected });
     
+    if (isDisconnectPending) {
+      console.log('Already disconnecting, ignoring click');
+      return;
+    }
+    
+    console.log('Calling disconnect()');
     disconnect();
     clearWalletStorage();
     toast.success('Wallet disconnected');
-  }, [disconnect, isDisconnectPending]);
+  }, [disconnect, isDisconnectPending, isConnected]);
 
   const handleNetworkSwitch = useCallback(async () => {
     try {
@@ -119,7 +125,7 @@ function WalletConnectionContent() {
     return `${baseClasses} bg-gradient-to-r from-pink-500 to-fuchsia-500 border-pink-400 shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105`;
   };
 
-  if (isConnected && !isDisconnectPending) {
+  if (isConnected) {
     return (
       <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
         {isWrongNetwork && (
