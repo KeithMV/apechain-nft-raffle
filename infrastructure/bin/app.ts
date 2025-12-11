@@ -17,8 +17,8 @@ if (!process.env.CDK_DEFAULT_ACCOUNT || !process.env.CDK_DEFAULT_REGION) {
 
 try {
   new RaffleInfrastructureStack(app, 'RaffleInfrastructureStack', {
-    domainName,
-    hostedZoneId,
+    domainName: 'apechainraffles.io',
+    hostedZoneId: 'Z02864901E4MLJMH828IC',
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
   });
 } catch (error) {
