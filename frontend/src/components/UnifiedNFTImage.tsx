@@ -77,6 +77,20 @@ function UnifiedNFTImage({
     }
   }, [isInView, metadata?.image, metadata?.imageAlternatives, priority, preloadStarted, imageError]);
 
+  const displayName = metadata?.name ? String(metadata.name).replace(/<[^>]*>/g, '').substring(0, 50) : `NFT #${tokenId}`;
+  
+  // Get optimized image URLs with fallbacks
+  const imageUrls = metadata?.image && !imageError 
+    ? ImageProxyService.getImageWithFallbacks(metadata.image, {
+        width: size === 'lg' ? 800 : size === 'md' ? 400 : 200,
+        quality: 85,
+        format: 'webp'
+      })
+    : [fallbackSrc];
+  
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const imageSrc = imageUrls[currentImageIndex] || fallbackSrc;
+
   const handleImageLoad = useCallback(() => {
     setImageLoaded(true);
     setImageError(false);
@@ -95,20 +109,6 @@ function UnifiedNFTImage({
       setImageLoaded(false);
     }
   }, [contractAddress, tokenId, currentImageIndex, imageUrls.length]);
-
-  const displayName = metadata?.name ? String(metadata.name).replace(/<[^>]*>/g, '').substring(0, 50) : `NFT #${tokenId}`;
-  
-  // Get optimized image URLs with fallbacks
-  const imageUrls = metadata?.image && !imageError 
-    ? ImageProxyService.getImageWithFallbacks(metadata.image, {
-        width: size === 'lg' ? 800 : size === 'md' ? 400 : 200,
-        quality: 85,
-        format: 'webp'
-      })
-    : [fallbackSrc];
-  
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const imageSrc = imageUrls[currentImageIndex] || fallbackSrc;
 
   if (loading) {
     return (
