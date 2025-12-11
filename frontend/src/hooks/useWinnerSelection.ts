@@ -5,7 +5,7 @@
 
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
-import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
+import { RAFFLE_CONTRACT_ABI, RAFFLE_FACTORY_ADDRESS } from '../config/contracts';
 import { WinnerSelectionService } from '../services/winnerSelectionService';
 import toast from 'react-hot-toast';
 import { useEffect } from 'react';
@@ -23,9 +23,14 @@ export function useEmergencySelectWinner() {
   useEffect(() => {
     if (isSuccess) {
       // Invalidate raffle queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['raffles'] });
-      queryClient.invalidateQueries({ queryKey: ['user-positions'] });
-      queryClient.invalidateQueries({ queryKey: ['created-raffles'] });
+      queryClient.invalidateQueries({ predicate: (query) => 
+        query.queryKey[0] === 'readContract' || 
+        query.queryKey.some(key => typeof key === 'string' && key.includes('raffle'))
+      });
+      // Force refetch of raffle counter to trigger useAllRaffles refresh
+      queryClient.invalidateQueries({ 
+        queryKey: ['readContract', { address: RAFFLE_FACTORY_ADDRESS, functionName: 'raffleCounter' }] 
+      });
     }
   }, [isSuccess, queryClient]);
 

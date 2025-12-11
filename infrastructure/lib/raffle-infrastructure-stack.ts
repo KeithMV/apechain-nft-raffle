@@ -79,26 +79,7 @@ export class RaffleInfrastructureStack extends cdk.Stack {
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
     });
 
-    // Route53 DNS Records (if hosted zone provided)
-    if (props?.domainName && props?.hostedZoneId) {
-      const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-        hostedZoneId: props.hostedZoneId,
-        zoneName: props.domainName,
-      });
-
-      // A record for root domain
-      new route53.ARecord(this, 'RaffleARecord', {
-        zone: hostedZone,
-        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
-      });
-
-      // A record for www subdomain
-      new route53.ARecord(this, 'RaffleWwwARecord', {
-        zone: hostedZone,
-        recordName: 'www',
-        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
-      });
-    }
+    // Route53 DNS Records already exist - managed externally
 
     this.cloudFrontDistributionId = distribution.distributionId;
 

@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { apeChain } from '../config/wagmi';
+import { RAFFLE_FACTORY_ADDRESS } from '../config/contracts';
 
 const RAFFLE_ABI = parseAbi([
   'function cancelRaffle() external',
@@ -66,9 +67,14 @@ export function useCancelRaffle() {
     if (isConfirmed) {
       toast.success('Raffle canceled successfully!');
       // Invalidate all raffle-related queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['raffles'] });
-      queryClient.invalidateQueries({ queryKey: ['user-positions'] });
-      queryClient.invalidateQueries({ queryKey: ['created-raffles'] });
+      queryClient.invalidateQueries({ predicate: (query) => 
+        query.queryKey[0] === 'readContract' || 
+        query.queryKey.some(key => typeof key === 'string' && key.includes('raffle'))
+      });
+      // Force refetch of raffle counter to trigger useAllRaffles refresh
+      queryClient.invalidateQueries({ 
+        queryKey: ['readContract', { address: RAFFLE_FACTORY_ADDRESS, functionName: 'raffleCounter' }] 
+      });
     }
   }, [isConfirmed, queryClient]);
 
