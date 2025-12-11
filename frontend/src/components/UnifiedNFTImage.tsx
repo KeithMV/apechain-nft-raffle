@@ -7,6 +7,7 @@ import React, { useState, useCallback, useRef, useEffect, memo } from 'react';
 import { useNFTMetadata } from '../hooks/useNFTMetadata';
 import { COMPONENT_SIZES, COMPONENT_NAMES } from '../constants/architecture';
 import { ImagePreloader } from '../utils/performance';
+import { ImageProxyService } from '../services/imageProxyService';
 import type { ComponentSize } from '../constants/architecture';
 
 interface UnifiedNFTImageProps {
@@ -82,13 +83,32 @@ function UnifiedNFTImage({
   }, []);
 
   const handleImageError = useCallback(() => {
-    console.warn(`Image load failed for NFT ${contractAddress}#${tokenId}`);
-    setImageError(true);
-    setImageLoaded(false);
-  }, [contractAddress, tokenId]);
+    console.warn(`Image load failed for NFT ${contractAddress}#${tokenId}, trying fallback ${currentImageIndex + 1}`);
+    
+    // Try next fallback URL
+    if (currentImageIndex < imageUrls.length - 1) {
+      setCurrentImageIndex(prev => prev + 1);
+      setImageLoaded(false);
+    } else {
+      // All URLs failed
+      setImageError(true);
+      setImageLoaded(false);
+    }
+  }, [contractAddress, tokenId, currentImageIndex, imageUrls.length]);
 
   const displayName = metadata?.name ? String(metadata.name).replace(/<[^>]*>/g, '').substring(0, 50) : `NFT #${tokenId}`;
-  const imageSrc = metadata?.image && !imageError ? metadata.image : fallbackSrc;
+  
+  // Get optimized image URLs with fallbacks
+  const imageUrls = metadata?.image && !imageError 
+    ? ImageProxyService.getImageWithFallbacks(metadata.image, {
+        width: size === 'lg' ? 800 : size === 'md' ? 400 : 200,
+        quality: 85,
+        format: 'webp'
+      })
+    : [fallbackSrc];
+  
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const imageSrc = imageUrls[currentImageIndex] || fallbackSrc;
 
   if (loading) {
     return (
