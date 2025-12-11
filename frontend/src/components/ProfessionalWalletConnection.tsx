@@ -19,61 +19,57 @@ function WalletConnectionContent() {
   const { disconnect } = useDisconnect();
   const { address, isConnected } = useAccount();
   
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionAttempts, setConnectionAttempts] = useState(0);
   const [hasShownSuccess, setHasShownSuccess] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Keep MetaMask session active
   useMetaMaskSession();
 
-  // Show success toast only when connection is stable (not on page refresh)
+  // Show success toast only when connection is stable
   useEffect(() => {
-    // Skip success toast on initial page load if wallet is already connected
     if (isInitialLoad && connectionState === ConnectionState.CONNECTED) {
       setIsInitialLoad(false);
       setHasShownSuccess(true);
       return;
     }
     
-    if (connectionState === ConnectionState.CONNECTED && address && !hasShownSuccess && !isConnecting && !isInitialLoad) {
-      const timer = setTimeout(() => {
+    if (connectionState === ConnectionState.CONNECTED && address && !hasShownSuccess && !isInitialLoad) {
+      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+      
+      successTimeoutRef.current = setTimeout(() => {
         if (connectionState === ConnectionState.CONNECTED && address) {
           toast.success('Wallet connected successfully!');
           setHasShownSuccess(true);
         }
       }, 500);
-      
-      return () => clearTimeout(timer);
     } else if (connectionState !== ConnectionState.CONNECTED) {
       setHasShownSuccess(false);
       setIsInitialLoad(false);
     }
-  }, [connectionState, address, hasShownSuccess, isConnecting, isInitialLoad]);
+    
+    return () => {
+      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+    };
+  }, [connectionState, address, hasShownSuccess, isInitialLoad]);
 
   const handleConnect = useCallback(async () => {
-    if (isConnecting) return;
+    if (connectionState === ConnectionState.CONNECTING) return;
     
-    setIsConnecting(true);
+    // Clear any existing retry timeout
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    
     try {
       await connect();
-      setConnectionAttempts(0);
-      // Success toast will be shown by useEffect when connection is stable
     } catch (error: any) {
-      const attempts = connectionAttempts + 1;
-      setConnectionAttempts(attempts);
-      
       const errorMessage = getConnectionErrorMessage(error);
       toast.error(errorMessage);
-      
-      // Auto-retry up to 2 times for network errors
-      if (attempts < 3 && error?.message?.includes('network')) {
-        setTimeout(() => handleConnect(), 2000 * attempts);
-      }
-    } finally {
-      setIsConnecting(false);
     }
-  }, [connect, isConnecting, connectionAttempts]);
+  }, [connect, connectionState]);
 
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const disconnectingRef = useRef(false);
@@ -111,9 +107,6 @@ function WalletConnectionContent() {
   }, [switchNetwork]);
 
   const getButtonText = () => {
-    if (isConnecting) return 'Connecting...';
-    if (connectionAttempts > 0) return `Retry (${connectionAttempts}/3)`;
-    
     switch (connectionState) {
       case ConnectionState.CONNECTING:
         return 'Connecting...';
@@ -127,7 +120,7 @@ function WalletConnectionContent() {
   const getButtonClassName = () => {
     const baseClasses = 'px-3 sm:px-4 py-2 border text-white rounded-lg text-xs sm:text-sm font-bold transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 active:scale-95 touch-manipulation';
     
-    if (connectionState === ConnectionState.ERROR || connectionAttempts > 0) {
+    if (connectionState === ConnectionState.ERROR) {
       return `${baseClasses} bg-gradient-to-r from-orange-500 to-red-500 border-orange-400 shadow-orange-500/30 hover:shadow-orange-500/40`;
     }
     
@@ -168,21 +161,21 @@ function WalletConnectionContent() {
     <div className="flex flex-col items-end space-y-2">
       <button
         onClick={handleConnect}
-        disabled={isConnecting || connectionState === ConnectionState.CONNECTING}
+        disabled={connectionState === ConnectionState.CONNECTING}
         className={getButtonClassName()}
         style={{ WebkitTapHighlightColor: 'transparent' }}
       >
         <span className="flex items-center justify-center space-x-2">
-          {(isConnecting || connectionState === ConnectionState.CONNECTING) && (
+          {connectionState === ConnectionState.CONNECTING && (
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           )}
           <span>{getButtonText()}</span>
         </span>
       </button>
       
-      {(connectionError || connectionAttempts > 0) && (
+      {connectionError && (
         <div className="text-xs text-red-400 max-w-[200px] text-right">
-          {connectionError?.userMessage || (connectionAttempts > 0 ? 'Retrying connection...' : '')}
+          {connectionError.userMessage}
         </div>
       )}
     </div>
