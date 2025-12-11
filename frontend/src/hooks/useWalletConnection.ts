@@ -55,10 +55,7 @@ export function useWalletConnection() {
     }
   }, [connect]);
 
-  const handleDisconnect = useCallback(() => {
-    setConnectionError(null);
-    disconnect();
-  }, [disconnect]);
+
 
   const handleSwitchNetwork = useCallback(async () => {
     try {
@@ -85,7 +82,7 @@ export function useWalletConnection() {
     connect: handleConnect,
     connectWith: (connector: any) => handleConnect(connector),
     availableConnectors: { metaMaskConnector, coinbaseConnector, injectedConnector, walletConnectConnector },
-    disconnect: handleDisconnect,
+
     switchNetwork: handleSwitchNetwork,
     isWrongNetwork: connectionState === ConnectionState.WRONG_NETWORK,
     isConnecting: connectionState === ConnectionState.CONNECTING

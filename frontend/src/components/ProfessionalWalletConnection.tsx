@@ -17,7 +17,7 @@ function WalletConnectionContent() {
     isWrongNetwork
   } = useWalletConnection();
   
-  const { disconnect } = useDisconnect();
+  const { disconnect, isPending: isDisconnectPending } = useDisconnect();
   const { address, isConnected } = useAccount();
   
   const [hasShownSuccess, setHasShownSuccess] = useState(false);
@@ -78,21 +78,16 @@ function WalletConnectionContent() {
     }
   }, [connect, connectionState]);
 
-  const [isDisconnecting, setIsDisconnecting] = useState(false);
-
   const handleDisconnect = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
     
-    if (isDisconnecting) return;
+    if (isDisconnectPending) return;
     
-    setIsDisconnecting(true);
     disconnect();
     clearWalletStorage();
     toast.success('Wallet disconnected');
-    
-    setTimeout(() => setIsDisconnecting(false), 1000);
-  }, [disconnect, isDisconnecting]);
+  }, [disconnect, isDisconnectPending]);
 
   const handleNetworkSwitch = useCallback(async () => {
     try {
@@ -124,7 +119,7 @@ function WalletConnectionContent() {
     return `${baseClasses} bg-gradient-to-r from-pink-500 to-fuchsia-500 border-pink-400 shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105`;
   };
 
-  if (isConnected && !isDisconnecting) {
+  if (isConnected && !isDisconnectPending) {
     return (
       <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
         {isWrongNetwork && (
@@ -145,10 +140,10 @@ function WalletConnectionContent() {
         
         <button
           onClick={handleDisconnect}
-          disabled={isDisconnecting}
+          disabled={isDisconnectPending}
           className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 transition-colors min-h-[44px] whitespace-nowrap disabled:opacity-50"
         >
-          {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+          {isDisconnectPending ? 'Disconnecting...' : 'Disconnect'}
         </button>
       </div>
     );
