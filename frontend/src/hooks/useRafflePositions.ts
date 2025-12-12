@@ -449,10 +449,11 @@ export function useCreatedRaffles(userAddress?: string, page: number = 0) {
   return { raffles, loading, error, refetch: loadCreatedRaffles };
 }
 
-// Clear cache utility (no-op for hooks)
+// Clear cache utility
 export function useClearRaffleCache() {
   return useCallback(() => {
-    // Hooks don't need cache clearing - they auto-refresh
-    console.log('Cache cleared (hooks auto-refresh)');
+    raffleCache.clear();
+    positionCache.clear();
+    console.log('Raffle caches cleared');
   }, []);
 }

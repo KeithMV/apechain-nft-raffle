@@ -28,8 +28,11 @@ export default function RaffleDashboard() {
   // Refresh when raffle is cancelled
   React.useEffect(() => {
     if (cancelSuccess) {
-      refetchPositions();
-      refetchCreatedRaffles();
+      // Force immediate refresh by clearing cache first
+      setTimeout(() => {
+        refetchPositions();
+        refetchCreatedRaffles();
+      }, 1000); // Wait 1 second for blockchain state to update
     }
   }, [cancelSuccess, refetchPositions, refetchCreatedRaffles]);
   

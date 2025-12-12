@@ -66,15 +66,20 @@ export function useCancelRaffle() {
   useEffect(() => {
     if (isConfirmed) {
       toast.success('Raffle canceled successfully!');
-      // Invalidate all raffle-related queries to refresh data
+      // Clear all raffle-related caches
       queryClient.invalidateQueries({ predicate: (query) => 
         query.queryKey[0] === 'readContract' || 
         query.queryKey.some(key => typeof key === 'string' && key.includes('raffle'))
       });
-      // Force refetch of raffle counter to trigger useAllRaffles refresh
+      // Force refetch of raffle counter to trigger all raffle hooks refresh
       queryClient.invalidateQueries({ 
         queryKey: ['readContract', { address: RAFFLE_FACTORY_ADDRESS, functionName: 'raffleCounter' }] 
       });
+      // Force immediate refetch by incrementing raffle counter cache
+      queryClient.setQueryData(
+        ['readContract', { address: RAFFLE_FACTORY_ADDRESS, functionName: 'raffleCounter' }],
+        (old: any) => old ? old + 1n : 1n
+      );
     }
   }, [isConfirmed, queryClient]);
 
