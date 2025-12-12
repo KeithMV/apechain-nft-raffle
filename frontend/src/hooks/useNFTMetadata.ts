@@ -112,72 +112,76 @@ async function fetchNFTMetadata(
     throw new Error('Invalid or unsafe token URI');
   }
 
-  // Handle IPFS URLs with optimized fallback gateways (fastest first)
-  let metadataUrl = tokenURI;
-  const ipfsGateways = [
-    'https://cloudflare-ipfs.com/ipfs/', // Usually fastest
-    'https://gateway.pinata.cloud/ipfs/',
-    'https://dweb.link/ipfs/',
-    'https://ipfs.io/ipfs/' // Fallback
-  ];
+  // Use proxy for all metadata requests to avoid CORS
+  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(tokenURI)}`;
+  
+  console.log(`🌐 Fetching metadata via proxy: ${proxyUrl}`);
   
   let data;
-  if (tokenURI.startsWith('ipfs://')) {
-    const ipfsHash = tokenURI.slice(7);
+  try {
+    const response = await fetch(proxyUrl, {
+      signal: AbortSignal.timeout(10000),
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'NFT-Raffle-App/1.0'
+      }
+    });
     
-    // Validate IPFS hash format
-    if (!/^[a-zA-Z0-9]{46,59}$/.test(ipfsHash)) {
-      throw new Error('Invalid IPFS hash format');
+    if (!response.ok) {
+      throw new Error(`Proxy request failed: ${response.status}`);
     }
     
-    // Try multiple IPFS gateways with timeout optimization
-    for (const gateway of ipfsGateways) {
-      try {
-        metadataUrl = `${gateway}${ipfsHash}`;
-        const response = await fetch(metadataUrl, { 
-          signal: AbortSignal.timeout(8000), // Reduced timeout
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'NFT-Raffle-App/1.0',
-            'Cache-Control': 'public, max-age=3600' // Enable caching
+    const proxyData = await response.json();
+    
+    if (!proxyData.contents) {
+      throw new Error('No content in proxy response');
+    }
+    
+    // Parse the actual metadata
+    data = JSON.parse(proxyData.contents);
+    console.log(`✅ Metadata fetched successfully via proxy`);
+    
+  } catch (proxyError) {
+    console.warn(`⚠️ Proxy failed, trying direct fetch:`, proxyError);
+    
+    // Fallback to direct fetch for IPFS URLs
+    if (tokenURI.startsWith('ipfs://')) {
+      const ipfsPath = tokenURI.slice(7);
+      const ipfsGateways = [
+        'https://cloudflare-ipfs.com/ipfs/',
+        'https://gateway.pinata.cloud/ipfs/',
+        'https://ipfs.io/ipfs/'
+      ];
+      
+      for (const gateway of ipfsGateways) {
+        try {
+          const directUrl = `${gateway}${ipfsPath}`;
+          console.log(`🔄 Trying IPFS gateway: ${directUrl}`);
+          
+          const response = await fetch(directUrl, {
+            signal: AbortSignal.timeout(8000),
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'public, max-age=3600'
+            }
+          });
+          
+          if (response.ok) {
+            const text = await response.text();
+            data = JSON.parse(text);
+            console.log(`✅ IPFS gateway success: ${gateway}`);
+            break;
           }
-        });
-        if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
-          const text = await response.text();
-          if (text.length > 50000) { // Reduced size limit for faster parsing
-            throw new Error('Response too large');
-          }
-          data = JSON.parse(text);
-          break;
+        } catch (err) {
+          console.warn(`❌ IPFS gateway failed: ${gateway}`, err);
+          continue;
         }
-      } catch (err) {
-        continue;
       }
     }
     
     if (!data) {
-      throw new Error('All IPFS gateways failed');
+      throw new Error('All metadata fetch attempts failed');
     }
-  } else {
-    const response = await fetch(metadataUrl, {
-      signal: AbortSignal.timeout(8000), // Reduced timeout
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'NFT-Raffle-App/1.0',
-        'Cache-Control': 'public, max-age=3600' // Enable caching
-      }
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    if (!response.headers.get('content-type')?.includes('application/json')) {
-      throw new Error('Invalid content type');
-    }
-    const text = await response.text();
-    if (text.length > 50000) { // Reduced size limit
-      throw new Error('Response too large');
-    }
-    data = JSON.parse(text);
   }
   
   // Sanitize and validate metadata
