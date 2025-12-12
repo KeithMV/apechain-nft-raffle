@@ -112,37 +112,57 @@ async function fetchNFTMetadata(
     throw new Error('Invalid or unsafe token URI');
   }
 
-  // Use proxy for all metadata requests to avoid CORS
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(tokenURI)}`;
-  
-  console.log(`🌐 Fetching metadata via proxy: ${proxyUrl}`);
+  // Try multiple proxy services for better reliability
+  const proxyServices = [
+    `https://api.allorigins.win/get?url=${encodeURIComponent(tokenURI)}`,
+    `https://corsproxy.io/?${encodeURIComponent(tokenURI)}`,
+    `https://cors-anywhere.herokuapp.com/${tokenURI}`
+  ];
   
   let data;
-  try {
-    const response = await fetch(proxyUrl, {
-      signal: AbortSignal.timeout(10000),
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'NFT-Raffle-App/1.0'
+  let proxyError;
+  
+  // Try each proxy service
+  for (const proxyUrl of proxyServices) {
+    try {
+      console.log(`🌐 Fetching metadata via proxy: ${proxyUrl}`);
+      
+      const response = await fetch(proxyUrl, {
+        signal: AbortSignal.timeout(8000),
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'NFT-Raffle-App/1.0'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Proxy request failed: ${response.status}`);
       }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Proxy request failed: ${response.status}`);
+      
+      if (proxyUrl.includes('allorigins.win')) {
+        const proxyData = await response.json();
+        if (!proxyData.contents) {
+          throw new Error('No content in proxy response');
+        }
+        data = JSON.parse(proxyData.contents);
+      } else {
+        // Direct response from other proxies
+        const text = await response.text();
+        data = JSON.parse(text);
+      }
+      
+      console.log(`✅ Metadata fetched successfully via proxy`);
+      break;
+      
+    } catch (error) {
+      console.warn(`⚠️ Proxy failed:`, error);
+      proxyError = error;
+      continue;
     }
-    
-    const proxyData = await response.json();
-    
-    if (!proxyData.contents) {
-      throw new Error('No content in proxy response');
-    }
-    
-    // Parse the actual metadata
-    data = JSON.parse(proxyData.contents);
-    console.log(`✅ Metadata fetched successfully via proxy`);
-    
-  } catch (proxyError) {
-    console.warn(`⚠️ Proxy failed, trying direct fetch:`, proxyError);
+  }
+  
+  if (!data) {
+    console.warn(`⚠️ All proxies failed, trying direct fetch:`, proxyError);
     
     // Fallback to direct fetch for IPFS URLs
     if (tokenURI.startsWith('ipfs://')) {

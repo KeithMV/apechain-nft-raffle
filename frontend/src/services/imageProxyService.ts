@@ -77,10 +77,13 @@ export class ImageProxyService {
   ): string {
     console.log(`🖼️ Processing image URL: ${originalUrl}`);
     try {
+      // Decode HTML entities first
+      let cleanUrl = originalUrl.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+      
       // Handle IPFS URLs
-      let resolvedUrl = originalUrl;
-      if (originalUrl.startsWith('ipfs://')) {
-        resolvedUrl = this.resolveIPFS(originalUrl);
+      let resolvedUrl = cleanUrl;
+      if (cleanUrl.startsWith('ipfs://')) {
+        resolvedUrl = this.resolveIPFS(cleanUrl);
         console.log(`📋 IPFS resolved to: ${resolvedUrl}`);
       }
 
