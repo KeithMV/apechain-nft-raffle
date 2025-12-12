@@ -85,11 +85,11 @@ function WalletConnectionContent() {
   
   // Handle cleanup after disconnect completes
   useEffect(() => {
-    if (!isConnected) {
+    if (!isConnected && !isInitialLoad) {
       clearWalletStorage();
       toast.success('Wallet disconnected');
     }
-  }, [isConnected]);
+  }, [isConnected, isInitialLoad]);
 
   const handleNetworkSwitch = useCallback(async () => {
     try {
