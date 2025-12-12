@@ -93,20 +93,28 @@ function UnifiedNFTImage({
   const imageSrc = imageUrls[currentImageIndex] || fallbackSrc;
 
   const handleImageLoad = useCallback(() => {
+    console.log(`✅ Image loaded successfully for NFT ${contractAddress}#${tokenId}`);
     setImageLoaded(true);
     setImageError(false);
-  }, []);
+  }, [contractAddress, tokenId]);
 
   const handleImageError = useCallback(() => {
-    console.warn(`Image load failed for NFT ${contractAddress}#${tokenId}, trying fallback ${currentImageIndex + 1}`);
+    console.error(`❌ Image load failed for NFT ${contractAddress}#${tokenId}:`, {
+      currentUrl: imageSrc,
+      fallbackIndex: currentImageIndex,
+      totalFallbacks: imageUrls.length,
+      retryCount
+    });
     
     // Try next fallback URL
     if (currentImageIndex < imageUrls.length - 1) {
+      console.log(`🔄 Trying fallback ${currentImageIndex + 1}/${imageUrls.length - 1}`);
       setCurrentImageIndex(prev => prev + 1);
       setImageLoaded(false);
       setRetryCount(0); // Reset retry count for new URL
     } else if (retryCount < 2) {
       // Retry current URL up to 2 times
+      console.log(`🔄 Retrying current URL (attempt ${retryCount + 1}/2)`);
       setRetryCount(prev => prev + 1);
       setImageLoaded(false);
       // Force reload by adding timestamp
@@ -118,6 +126,7 @@ function UnifiedNFTImage({
       }, 1000);
     } else {
       // All URLs and retries failed
+      console.error(`❌ All image loading attempts failed for NFT ${contractAddress}#${tokenId}`);
       setImageError(true);
       setImageLoaded(false);
     }

@@ -75,11 +75,13 @@ export class ImageProxyService {
     originalUrl: string, 
     options: ImageProxyOptions = {}
   ): string {
+    console.log(`🖼️ Processing image URL: ${originalUrl}`);
     try {
       // Handle IPFS URLs
       let resolvedUrl = originalUrl;
       if (originalUrl.startsWith('ipfs://')) {
         resolvedUrl = this.resolveIPFS(originalUrl);
+        console.log(`📋 IPFS resolved to: ${resolvedUrl}`);
       }
 
       // Validate URL
@@ -102,9 +104,10 @@ export class ImageProxyService {
       const queryString = params.toString();
       const proxyUrl = `${this.PROXY_ENDPOINTS[0]}${encodeURIComponent(resolvedUrl)}${queryString ? '&' + queryString : ''}`;
       
+      console.log(`🔗 Final proxy URL: ${proxyUrl}`);
       return proxyUrl;
     } catch (error) {
-      console.warn('Image proxy failed:', error);
+      console.error(`❌ Image proxy failed for ${originalUrl}:`, error);
       return '/placeholder-nft.svg';
     }
   }

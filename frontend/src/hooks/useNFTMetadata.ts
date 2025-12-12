@@ -81,7 +81,7 @@ async function fetchNFTMetadata(
     throw new Error('Invalid contract address or token ID');
   }
   
-  console.log(`Loading NFT metadata for ${contractAddress} #${tokenId}`);
+  console.log(`🔍 Loading NFT metadata for ${contractAddress} #${tokenId}`);
   
   // Get tokenURI from contract
   const tokenURI = await publicClient.readContract({
@@ -100,11 +100,15 @@ async function fetchNFTMetadata(
   });
 
   if (!tokenURI || typeof tokenURI !== 'string') {
+    console.error(`❌ No token URI found for ${contractAddress} #${tokenId}`);
     throw new Error('No token URI found');
   }
+  
+  console.log(`📋 Token URI: ${tokenURI}`);
 
   // Validate tokenURI
   if (!validateUrl(tokenURI)) {
+    console.error(`❌ Invalid token URI: ${tokenURI}`);
     throw new Error('Invalid or unsafe token URI');
   }
 
@@ -214,7 +218,11 @@ async function fetchNFTMetadata(
     attributes: sanitizedData.attributes,
   };
 
-  console.log('NFT metadata loaded:', processedMetadata);
+  console.log(`✅ NFT metadata loaded for ${contractAddress} #${tokenId}:`, {
+    name: processedMetadata.name,
+    image: processedMetadata.image,
+    hasAlternatives: imageAlternatives.length > 0
+  });
   return processedMetadata;
 }
 
