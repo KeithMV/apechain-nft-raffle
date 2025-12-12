@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
-import UnifiedNFTImage from './UnifiedNFTImage';
+import BasicNFTImage from './BasicNFTImage';
 import toast from 'react-hot-toast';
 import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
@@ -218,7 +218,7 @@ export default function RaffleDashboard() {
                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
                   <div className="flex flex-col sm:flex-row">
                     <div className="w-full sm:w-64 h-64 sm:h-auto">
-                      <UnifiedNFTImage 
+                      <BasicNFTImage 
                         contractAddress={position.nftContract}
                         tokenId={position.tokenId.toString()}
                         className="w-full h-full"
@@ -292,7 +292,7 @@ export default function RaffleDashboard() {
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
                     <div className="flex flex-col sm:flex-row">
                       <div className="w-full sm:w-64 h-64 sm:h-auto">
-                        <UnifiedNFTImage 
+                        <BasicNFTImage 
                           contractAddress={raffle.nftContract}
                           tokenId={raffle.tokenId.toString()}
                           className="w-full h-full"

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import ApeTokenBalance from './ApeTokenBalance';
-import UnifiedNFTImage from './UnifiedNFTImage';
+import BasicNFTImage from './BasicNFTImage';
 import toast from 'react-hot-toast';
 import { useAllRaffles, useClearRaffleCache } from '../hooks/useRafflePositions';
 import { useBuyTickets } from '../hooks/useRaffleContract';
@@ -50,12 +50,11 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
       )}
       {/* NFT Image */}
       <div className="relative">
-        <UnifiedNFTImage 
+        <BasicNFTImage 
           contractAddress={raffle.nftContract}
           tokenId={raffle.tokenId.toString()}
           className="w-full h-80 sm:h-96"
           showName={true}
-          priority={index < 4}
           size="lg"
         />
         <div className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm border border-emerald-400/30 rounded-xl px-3 py-2">
