@@ -118,6 +118,11 @@ export class OptimizedCache<T> {
     }
   }
 
+  clear(): void {
+    this.cache.clear();
+    this.currentSize = 0;
+  }
+
   private estimateSize(data: T): number {
     try {
       return JSON.stringify(data).length * 2; // Rough estimate
