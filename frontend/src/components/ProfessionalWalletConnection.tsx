@@ -81,13 +81,13 @@ function WalletConnectionContent() {
 
   const handleDisconnect = useCallback(() => {
     disconnect();
+    toast.success('Wallet disconnected');
   }, [disconnect]);
   
   // Handle cleanup after disconnect completes
   useEffect(() => {
     if (!isConnected && !isInitialLoad) {
       clearWalletStorage();
-      toast.success('Wallet disconnected');
     }
   }, [isConnected, isInitialLoad]);
 
