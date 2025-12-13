@@ -170,7 +170,7 @@ async function fetchNFTMetadata(
       const ipfsGateways = [
         'https://cloudflare-ipfs.com/ipfs/',
         'https://gateway.pinata.cloud/ipfs/',
-        'https://ipfs.io/ipfs/'
+        'https://dweb.link/ipfs/'
       ];
       
       for (const gateway of ipfsGateways) {

@@ -22,6 +22,7 @@ export function useEmergencySelectWinner() {
 
   useEffect(() => {
     if (isSuccess) {
+      toast.success('🎉 Winner selected successfully! NFT transferred and payments distributed.');
       // Invalidate raffle queries to refresh data
       queryClient.invalidateQueries({ predicate: (query) => 
         query.queryKey[0] === 'readContract' || 
@@ -33,6 +34,13 @@ export function useEmergencySelectWinner() {
       });
     }
   }, [isSuccess, queryClient]);
+  
+  useEffect(() => {
+    if (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Transaction failed';
+      toast.error(`Winner selection failed: ${errorMessage}`);
+    }
+  }, [error]);
 
   const selectWinner = async (raffleContract: string) => {
     return await writeContractAsync({

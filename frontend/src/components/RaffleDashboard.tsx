@@ -82,14 +82,26 @@ export default function RaffleDashboard() {
       return;
     }
     
+    // Add confirmation dialog with explanation
+    const confirmed = window.confirm(
+      'Ready to select a winner? This will:\n\n' +
+      '• Randomly select a winner from all ticket holders\n' +
+      '• Transfer the NFT to the winner\n' +
+      '• Send APE tokens to you (minus 10% platform fee)\n\n' +
+      'This action cannot be undone. Continue?'
+    );
+    
+    if (!confirmed) return;
+    
     try {
       setSelectingWinnerFor(raffleContract);
+      toast.loading('Selecting winner...', { id: raffleContract });
       await selectWinner(raffleContract);
-      toast.success('Winner selection initiated! Please wait for confirmation.');
+      toast.success('Winner selection initiated! Please wait for blockchain confirmation.', { id: raffleContract });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Failed to select winner:', error);
-      toast.error('Failed to select winner: ' + errorMessage);
+      toast.error(`Winner selection failed: ${errorMessage}`, { id: raffleContract });
       setSelectingWinnerFor(null);
     }
   }, [selectingWinnerFor, selectWinner]);
@@ -108,14 +120,21 @@ export default function RaffleDashboard() {
 
 
   const handleCancelRaffle = useCallback(async (raffleContract: string) => {
+    // Add confirmation dialog
+    const confirmed = window.confirm(
+      'Are you sure you want to cancel this raffle? This action cannot be undone and will return the NFT to you.'
+    );
+    
+    if (!confirmed) return;
+    
     setCancellingRaffle(raffleContract);
     try {
       await cancelRaffle(raffleContract);
-      toast.success('Cancel transaction initiated!');
+      // Don't show success toast here - it's handled in the hook
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Failed to cancel raffle:', error);
-      toast.error('Failed to cancel raffle: ' + errorMessage);
+      toast.error(`Cancel failed: ${errorMessage}`);
     } finally {
       setCancellingRaffle(null);
     }
@@ -355,18 +374,21 @@ export default function RaffleDashboard() {
                               {raffle.ticketsSold > 0 ? (
                                 <button
                                   onClick={() => handleSelectWinner(raffle.raffleContract)}
-                                  disabled={selectingWinnerFor === raffle.raffleContract}
-                                  className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 disabled:from-gray-600 disabled:to-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
+                                  disabled={selectingWinnerFor === raffle.raffleContract || isSelectingWinner}
+                                  className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 disabled:transform-none font-mono tracking-wider overflow-hidden group"
                                 >
                                   <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                                   <span className="relative">
                                     {selectingWinnerFor === raffle.raffleContract ? (
                                       <span className="flex items-center space-x-2">
                                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        <span>Selecting...</span>
+                                        <span>Selecting Winner...</span>
                                       </span>
                                     ) : (
-                                      'Select Winner'
+                                      <span className="flex items-center space-x-2">
+                                        <span>🎯</span>
+                                        <span>Select Winner</span>
+                                      </span>
                                     )}
                                   </span>
                                 </button>
@@ -374,7 +396,7 @@ export default function RaffleDashboard() {
                                 <button
                                   onClick={() => handleCancelRaffle(raffle.raffleContract)}
                                   disabled={isCancelling && cancellingRaffle === raffle.raffleContract}
-                                  className="relative bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 disabled:from-gray-600 disabled:to-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-red-500/25 hover:shadow-xl hover:shadow-red-500/40 transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group"
+                                  className="relative bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-red-500/25 hover:shadow-xl hover:shadow-red-500/40 transform hover:-translate-y-0.5 disabled:transform-none font-mono tracking-wider overflow-hidden group"
                                 >
                                   <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/20 to-red-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                                   <span className="relative">
@@ -384,7 +406,10 @@ export default function RaffleDashboard() {
                                         <span>Cancelling...</span>
                                       </span>
                                     ) : (
-                                      'Cancel Raffle'
+                                      <span className="flex items-center space-x-2">
+                                        <span>❌</span>
+                                        <span>Cancel Raffle</span>
+                                      </span>
                                     )}
                                   </span>
                                 </button>

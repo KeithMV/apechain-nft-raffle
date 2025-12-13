@@ -65,7 +65,7 @@ export function useCancelRaffle() {
   // Handle transaction confirmation with useEffect to prevent duplicate toasts
   useEffect(() => {
     if (isConfirmed) {
-      toast.success('Raffle canceled successfully!');
+      toast.success('✅ Raffle canceled successfully! Your NFT has been returned.');
       // Clear all raffle-related caches
       queryClient.invalidateQueries({ predicate: (query) => 
         query.queryKey[0] === 'readContract' || 
