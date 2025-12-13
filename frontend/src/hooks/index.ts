@@ -10,7 +10,7 @@ export { useRaffleContract } from './useRaffleContract';
 export { useAllRaffles, useUserRafflePositions, useCreatedRaffles, useClearRaffleCache } from './useRafflePositions';
 
 // Specialized Hooks
-export { useEmergencySelectWinner, useCommitRandomness, useRevealAndSelectWinner } from './useWinnerSelection';
+export { useEmergencySelectWinner } from './useWinnerSelection';
 export { useCancelRaffle } from './useCancelRaffle';
 export { useApeBalance, useApeDecimals, useApeSymbol, apeTokenUtils } from './useApeToken';
 
