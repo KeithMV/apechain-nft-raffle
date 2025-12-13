@@ -96,16 +96,14 @@ jobs:
             npx hardhat compile
             echo "✅ Contract compilation successful"
       - run:
-          name: Validate infrastructure templates
+          name: Validate CDK infrastructure
           command: |
-            echo "Validating CloudFormation templates..."
-            for template in infrastructure/cloudformation/*.yaml; do
-              if [ -f "$template" ]; then
-                echo "✓ Template $template exists"
-                grep -q "AWSTemplateFormatVersion\|Description\|Resources" "$template" && echo "✓ Valid CloudFormation structure"
-              fi
-            done
-            echo "Infrastructure validation complete!"
+            echo "Validating CDK infrastructure..."
+            cd infrastructure
+            yarn install
+            yarn build
+            yarn cdk synth > /dev/null
+            echo "✅ CDK infrastructure validation complete!"
 
   deploy:
     docker:
@@ -115,15 +113,22 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Deploy to AWS S3
+          name: Deploy to AWS S3 via CDK
           command: |
+            # Get CDK stack outputs
+            BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name RaffleInfrastructureStack --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)
+            DISTRIBUTION_ID=$(aws cloudformation describe-stacks --stack-name RaffleInfrastructureStack --query 'Stacks[0].Outputs[?OutputKey==`DistributionId`].OutputValue' --output text)
+            
+            echo "📦 Deploying to bucket: $BUCKET_NAME"
+            echo "🌐 Invalidating CloudFront: $DISTRIBUTION_ID"
+            
             # Sync frontend build to S3 bucket
-            aws s3 sync frontend/build/ s3://apechain-nft-raffle-856872546342-us-east-1 --delete
+            aws s3 sync frontend/build/ s3://$BUCKET_NAME --delete
             
             # Invalidate CloudFront cache
-            aws cloudfront create-invalidation --distribution-id EH7R5RBQF66DL --paths "/*"
+            aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
             
-            echo "✅ Deployment complete!"
+            echo "✅ CDK-managed deployment complete!"
 
 workflows:
   version: 2
