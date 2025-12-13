@@ -20,21 +20,7 @@ export default function RaffleDashboard() {
   
 
   
-  const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
-  const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
-
-
-
-  // Refresh when raffle is cancelled
-  React.useEffect(() => {
-    if (cancelSuccess) {
-      // Force immediate refresh by clearing cache first
-      setTimeout(() => {
-        refetchPositions();
-        refetchCreatedRaffles();
-      }, 1000); // Wait 1 second for blockchain state to update
-    }
-  }, [cancelSuccess, refetchPositions, refetchCreatedRaffles]);
+  const { cancelRaffle, isPending: isCancelling } = useCancelRaffle();
   
   const loading = positionsLoading || rafflesLoading;
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
@@ -73,70 +59,23 @@ export default function RaffleDashboard() {
     return `${minutes}m`;
   }, []);
 
-  const { selectWinner, isPending: isSelectingWinner, isConfirming: isConfirmingWinner, isSuccess: winnerSelected } = useEmergencySelectWinner();
-  const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
+  const { selectWinner, isPending: isSelectingWinner } = useEmergencySelectWinner();
 
   const handleSelectWinner = useCallback(async (raffleContract: string) => {
-    // Prevent multiple rapid clicks
-    if (selectingWinnerFor === raffleContract) {
-      return;
-    }
-    
-    // Add confirmation dialog with explanation
-    const confirmed = window.confirm(
-      'Ready to select a winner? This will:\n\n' +
-      '• Randomly select a winner from all ticket holders\n' +
-      '• Transfer the NFT to the winner\n' +
-      '• Send APE tokens to you (minus 10% platform fee)\n\n' +
-      'This action cannot be undone. Continue?'
-    );
-    
-    if (!confirmed) return;
-    
     try {
-      setSelectingWinnerFor(raffleContract);
-      toast.loading('Selecting winner...', { id: raffleContract });
       await selectWinner(raffleContract);
-      toast.success('Winner selection initiated! Please wait for blockchain confirmation.', { id: raffleContract });
+      toast.success('Winner selected!');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to select winner:', error);
-      toast.error(`Winner selection failed: ${errorMessage}`, { id: raffleContract });
-      setSelectingWinnerFor(null);
+      // Error already handled in hook
     }
-  }, [selectingWinnerFor, selectWinner]);
-
-  // Reset selecting state and refresh data when transaction completes
-  React.useEffect(() => {
-    if (winnerSelected && selectingWinnerFor) {
-      toast.success('Winner selected successfully!');
-      setSelectingWinnerFor(null);
-      // Refresh both user positions and created raffles
-      refetchPositions();
-      refetchCreatedRaffles();
-    }
-  }, [winnerSelected, selectingWinnerFor, refetchPositions, refetchCreatedRaffles]);
-
-
+  }, [selectWinner]);
 
   const handleCancelRaffle = useCallback(async (raffleContract: string) => {
-    // Add confirmation dialog
-    const confirmed = window.confirm(
-      'Are you sure you want to cancel this raffle? This action cannot be undone and will return the NFT to you.'
-    );
-    
-    if (!confirmed) return;
-    
-    setCancellingRaffle(raffleContract);
     try {
       await cancelRaffle(raffleContract);
-      // Don't show success toast here - it's handled in the hook
+      toast.success('Raffle cancelled!');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to cancel raffle:', error);
-      toast.error(`Cancel failed: ${errorMessage}`);
-    } finally {
-      setCancellingRaffle(null);
+      // Error already handled in hook
     }
   }, [cancelRaffle]);
 
@@ -374,44 +313,18 @@ export default function RaffleDashboard() {
                               {raffle.ticketsSold > 0 ? (
                                 <button
                                   onClick={() => handleSelectWinner(raffle.raffleContract)}
-                                  disabled={selectingWinnerFor === raffle.raffleContract || isSelectingWinner}
-                                  className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 disabled:transform-none font-mono tracking-wider overflow-hidden group"
+                                  disabled={isSelectingWinner}
+                                  className="bg-pink-600 hover:bg-pink-500 disabled:bg-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm"
                                 >
-                                  <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                  <span className="relative">
-                                    {selectingWinnerFor === raffle.raffleContract ? (
-                                      <span className="flex items-center space-x-2">
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        <span>Selecting Winner...</span>
-                                      </span>
-                                    ) : (
-                                      <span className="flex items-center space-x-2">
-                                        <span>🎯</span>
-                                        <span>Select Winner</span>
-                                      </span>
-                                    )}
-                                  </span>
+                                  {isSelectingWinner ? 'Selecting...' : 'Select Winner'}
                                 </button>
                               ) : (
                                 <button
                                   onClick={() => handleCancelRaffle(raffle.raffleContract)}
-                                  disabled={isCancelling && cancellingRaffle === raffle.raffleContract}
-                                  className="relative bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg shadow-red-500/25 hover:shadow-xl hover:shadow-red-500/40 transform hover:-translate-y-0.5 disabled:transform-none font-mono tracking-wider overflow-hidden group"
+                                  disabled={isCancelling}
+                                  className="bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm"
                                 >
-                                  <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/20 to-red-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                  <span className="relative">
-                                    {isCancelling && cancellingRaffle === raffle.raffleContract ? (
-                                      <span className="flex items-center space-x-2">
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        <span>Cancelling...</span>
-                                      </span>
-                                    ) : (
-                                      <span className="flex items-center space-x-2">
-                                        <span>❌</span>
-                                        <span>Cancel Raffle</span>
-                                      </span>
-                                    )}
-                                  </span>
+                                  {isCancelling ? 'Cancelling...' : 'Cancel Raffle'}
                                 </button>
                               )}
                             </div>

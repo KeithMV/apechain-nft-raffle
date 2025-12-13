@@ -1,101 +1,45 @@
-import { useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseAbi } from 'viem';
 import toast from 'react-hot-toast';
-import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { apeChain } from '../config/wagmi';
-import { RAFFLE_FACTORY_ADDRESS } from '../config/contracts';
+import { useEffect } from 'react';
 
 const RAFFLE_ABI = parseAbi([
   'function cancelRaffle() external',
-  'function owner() external view returns (address)',
-  'function isActive() external view returns (bool)'
 ]);
 
 export function useCancelRaffle() {
   const queryClient = useQueryClient();
-  const { 
-    writeContract, 
-    data: hash, 
-    isPending: isWritePending, 
-    error: writeError 
-  } = useWriteContract();
-
-  const { switchChain } = useSwitchChain();
-
-  const { 
-    isLoading: isConfirming, 
-    isSuccess: isConfirmed,
-    error: receiptError 
-  } = useWaitForTransactionReceipt({
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
-  const cancelRaffle = async (raffleAddress: string) => {
-    if (!raffleAddress || !raffleAddress.startsWith('0x') || raffleAddress.length !== 42) {
-      toast.error('Invalid raffle address format');
-      return;
+  useEffect(() => {
+    if (isSuccess) {
+      queryClient.invalidateQueries({ queryKey: ['readContract'] });
     }
+  }, [isSuccess, queryClient]);
 
+  const cancelRaffle = async (raffleAddress: string) => {
     try {
-      console.log('Canceling raffle:', raffleAddress.slice(0, 10) + '...');
-      
-      // Switch to ApeChain first with error handling
-      try {
-        await switchChain({ chainId: apeChain.id });
-      } catch (chainError) {
-        console.error('Chain switch failed:', chainError);
-        toast.error('Failed to switch to ApeChain');
-        return;
-      }
-      
       await writeContract({
         address: raffleAddress as `0x${string}`,
         abi: RAFFLE_ABI,
         functionName: 'cancelRaffle',
-        chainId: apeChain.id,
+        chainId: 33139,
       });
     } catch (error) {
       console.error('Cancel raffle failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Cancel failed';
-      toast.error(`Cancel failed: ${errorMessage}`);
+      toast.error('Cancel failed');
     }
   };
 
-  // Handle transaction confirmation with useEffect to prevent duplicate toasts
-  useEffect(() => {
-    if (isConfirmed) {
-      toast.success('✅ Raffle canceled successfully! Your NFT has been returned.');
-      // Clear all raffle-related caches
-      queryClient.invalidateQueries({ predicate: (query) => 
-        query.queryKey[0] === 'readContract' || 
-        query.queryKey.some(key => typeof key === 'string' && key.includes('raffle'))
-      });
-      // Force refetch of raffle counter to trigger all raffle hooks refresh
-      queryClient.invalidateQueries({ 
-        queryKey: ['readContract', { address: RAFFLE_FACTORY_ADDRESS, functionName: 'raffleCounter' }] 
-      });
-      // Force immediate refetch by incrementing raffle counter cache
-      queryClient.setQueryData(
-        ['readContract', { address: RAFFLE_FACTORY_ADDRESS, functionName: 'raffleCounter' }],
-        (old: any) => old ? old + 1n : 1n
-      );
-    }
-  }, [isConfirmed, queryClient]);
-
-  useEffect(() => {
-    if (writeError || receiptError) {
-      const error = writeError || receiptError;
-      const errorMessage = error instanceof Error ? error.message : 'Transaction failed';
-      toast.error(`Transaction failed: ${errorMessage}`);
-    }
-  }, [writeError, receiptError]);
-
   return {
     cancelRaffle,
-    isPending: isWritePending || isConfirming,
-    isSuccess: isConfirmed,
-    error: writeError || receiptError,
+    isPending: isPending || isConfirming,
+    isSuccess,
+    error,
     hash
   };
 }
