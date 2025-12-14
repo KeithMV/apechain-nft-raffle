@@ -59,14 +59,16 @@ export default function RaffleDashboard() {
     return `${minutes}m`;
   }, []);
 
-  const { selectWinner, isPending: isSelectingWinner } = useEmergencySelectWinner();
+  const { selectWinner, isPending: isSelectingWinner, isSuccess: winnerSelected } = useEmergencySelectWinner();
+  const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
 
   const handleSelectWinner = useCallback(async (raffleContract: string) => {
+    setSelectingWinnerFor(raffleContract);
     try {
       await selectWinner(raffleContract);
       toast.success('Winner selected!');
     } catch (error) {
-      // Error already handled in hook
+      setSelectingWinnerFor(null);
     }
   }, [selectWinner]);
 
@@ -78,6 +80,18 @@ export default function RaffleDashboard() {
       // Error already handled in hook
     }
   }, [cancelRaffle]);
+
+  // Reset selecting state when winner is selected
+  useEffect(() => {
+    if (winnerSelected) {
+      setSelectingWinnerFor(null);
+      // Force refresh after a short delay
+      setTimeout(() => {
+        refetchPositions();
+        refetchCreatedRaffles();
+      }, 2000);
+    }
+  }, [winnerSelected, refetchPositions, refetchCreatedRaffles]);
 
   // Only show full loading screen if no cached data available
   if (loading && userPositions.length === 0 && createdRaffles.length === 0) {
@@ -313,10 +327,10 @@ export default function RaffleDashboard() {
                               {raffle.ticketsSold > 0 ? (
                                 <button
                                   onClick={() => handleSelectWinner(raffle.raffleContract)}
-                                  disabled={isSelectingWinner}
+                                  disabled={selectingWinnerFor === raffle.raffleContract}
                                   className="bg-pink-600 hover:bg-pink-500 disabled:bg-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm"
                                 >
-                                  {isSelectingWinner ? 'Selecting...' : 'Select Winner'}
+                                  {selectingWinnerFor === raffle.raffleContract ? 'Selecting...' : 'Select Winner'}
                                 </button>
                               ) : (
                                 <button
