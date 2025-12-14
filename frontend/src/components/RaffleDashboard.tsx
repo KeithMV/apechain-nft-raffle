@@ -63,6 +63,7 @@ export default function RaffleDashboard() {
   const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
 
   const handleSelectWinner = useCallback(async (raffleContract: string) => {
+    console.log('Starting winner selection for:', raffleContract);
     setSelectingWinnerFor(raffleContract);
     try {
       await selectWinner(raffleContract);
@@ -70,9 +71,8 @@ export default function RaffleDashboard() {
     } catch (error) {
       console.error('Winner selection error:', error);
       toast.error('Winner selection failed');
-    } finally {
-      // Always reset the selecting state
-      setTimeout(() => setSelectingWinnerFor(null), 1000);
+      // Reset on error
+      setSelectingWinnerFor(null);
     }
   }, [selectWinner]);
 
@@ -113,11 +113,11 @@ export default function RaffleDashboard() {
     }
   }, [winnerSelected, refetchPositions, refetchCreatedRaffles]);
 
-  // Also reset on error
+  // Reset button state when transaction completes
   useEffect(() => {
-    if (isSelectingWinner === false && selectingWinnerFor) {
-      console.log('Winner selection completed, resetting button state');
-      setTimeout(() => setSelectingWinnerFor(null), 500);
+    if (!isSelectingWinner && selectingWinnerFor) {
+      console.log('Transaction completed, resetting button state');
+      setSelectingWinnerFor(null);
     }
   }, [isSelectingWinner, selectingWinnerFor]);
 
