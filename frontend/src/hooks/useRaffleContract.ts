@@ -6,6 +6,8 @@
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
 import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
+import { useEffect } from 'react';
+import { useCacheInvalidation } from './useCacheInvalidation';
 
 export interface CreateRaffleParams {
   nftContract: string;
@@ -89,6 +91,13 @@ export function useCreateRaffle() {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
+  const { invalidateAll } = useCacheInvalidation();
+
+  useEffect(() => {
+    if (isSuccess) {
+      invalidateAll();
+    }
+  }, [isSuccess, invalidateAll]);
 
   const createRaffle = async (params: CreateRaffleParams) => {
     const ticketPriceWei = parseEther(params.ticketPrice);
@@ -188,6 +197,13 @@ export function useBuyTickets() {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
+  const { invalidateAll } = useCacheInvalidation();
+
+  useEffect(() => {
+    if (isSuccess) {
+      invalidateAll();
+    }
+  }, [isSuccess, invalidateAll]);
 
   const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string) => {
     const ticketPriceWei = parseEther(ticketPrice);

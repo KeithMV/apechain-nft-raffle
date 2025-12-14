@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import BasicNFTImage from './BasicNFTImage';
 import toast from 'react-hot-toast';
-import { useUserRafflePositions, useCreatedRaffles, useClearRaffleCache } from '../hooks/useRafflePositions';
+import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
 import { useEmergencySelectWinner } from '../hooks/useWinnerSelection';
 
@@ -61,7 +61,6 @@ export default function RaffleDashboard() {
 
   const { selectWinner, isPending: isSelectingWinner, isSuccess: winnerSelected } = useEmergencySelectWinner();
   const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
-  const clearRaffleCache = useClearRaffleCache();
 
   const handleSelectWinner = useCallback(async (raffleContract: string) => {
     setSelectingWinnerFor(raffleContract);
@@ -82,17 +81,16 @@ export default function RaffleDashboard() {
     }
   }, [cancelRaffle]);
 
-  // Clear cache and refresh when winner is selected
+  // Reset button state when winner is selected
   useEffect(() => {
     if (winnerSelected) {
       setSelectingWinnerFor(null);
-      clearRaffleCache();
       setTimeout(() => {
         refetchPositions();
         refetchCreatedRaffles();
       }, 2000);
     }
-  }, [winnerSelected, clearRaffleCache, refetchPositions, refetchCreatedRaffles]);
+  }, [winnerSelected, refetchPositions, refetchCreatedRaffles]);
 
   // Only show full loading screen if no cached data available
   if (loading && userPositions.length === 0 && createdRaffles.length === 0) {

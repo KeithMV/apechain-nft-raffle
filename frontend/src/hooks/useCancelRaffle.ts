@@ -1,25 +1,25 @@
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseAbi } from 'viem';
 import toast from 'react-hot-toast';
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { useCacheInvalidation } from './useCacheInvalidation';
 
 const RAFFLE_ABI = parseAbi([
   'function cancelRaffle() external',
 ]);
 
 export function useCancelRaffle() {
-  const queryClient = useQueryClient();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
+  const { invalidateAll } = useCacheInvalidation();
 
   useEffect(() => {
     if (isSuccess) {
-      queryClient.invalidateQueries({ queryKey: ['readContract'] });
+      invalidateAll();
     }
-  }, [isSuccess, queryClient]);
+  }, [isSuccess, invalidateAll]);
 
   const cancelRaffle = async (raffleAddress: string) => {
     try {

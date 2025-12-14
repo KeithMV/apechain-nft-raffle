@@ -1,21 +1,21 @@
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import toast from 'react-hot-toast';
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { useCacheInvalidation } from './useCacheInvalidation';
 
 export function useEmergencySelectWinner() {
-  const queryClient = useQueryClient();
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
+  const { invalidateAll } = useCacheInvalidation();
 
   useEffect(() => {
     if (isSuccess) {
-      queryClient.clear();
+      invalidateAll();
     }
-  }, [isSuccess, queryClient]);
+  }, [isSuccess, invalidateAll]);
 
   const selectWinner = async (raffleContract: string) => {
     try {
