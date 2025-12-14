@@ -85,11 +85,23 @@ export default function RaffleDashboard() {
   useEffect(() => {
     if (winnerSelected) {
       setSelectingWinnerFor(null);
+      // Clear cache and force refresh
+      const clearCache = () => {
+        // Clear localStorage cache if any
+        Object.keys(localStorage).forEach(key => {
+          if (key.includes('raffle') || key.includes('position')) {
+            localStorage.removeItem(key);
+          }
+        });
+      };
+      
+      clearCache();
       // Immediate refresh
       refetchPositions();
       refetchCreatedRaffles();
       // Additional refresh after blockchain confirmation
       setTimeout(() => {
+        clearCache();
         refetchPositions();
         refetchCreatedRaffles();
       }, 3000);
