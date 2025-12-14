@@ -68,7 +68,11 @@ export default function RaffleDashboard() {
       await selectWinner(raffleContract);
       toast.success('Winner selected!');
     } catch (error) {
-      setSelectingWinnerFor(null);
+      console.error('Winner selection error:', error);
+      toast.error('Winner selection failed');
+    } finally {
+      // Always reset the selecting state
+      setTimeout(() => setSelectingWinnerFor(null), 1000);
     }
   }, [selectWinner]);
 
@@ -84,6 +88,7 @@ export default function RaffleDashboard() {
   // Reset selecting state and force refresh when winner is selected
   useEffect(() => {
     if (winnerSelected) {
+      console.log('Winner selected, resetting state and refreshing...');
       setSelectingWinnerFor(null);
       // Clear cache and force refresh
       const clearCache = () => {
@@ -107,6 +112,14 @@ export default function RaffleDashboard() {
       }, 3000);
     }
   }, [winnerSelected, refetchPositions, refetchCreatedRaffles]);
+
+  // Also reset on error
+  useEffect(() => {
+    if (isSelectingWinner === false && selectingWinnerFor) {
+      console.log('Winner selection completed, resetting button state');
+      setTimeout(() => setSelectingWinnerFor(null), 500);
+    }
+  }, [isSelectingWinner, selectingWinnerFor]);
 
   // Only show full loading screen if no cached data available
   if (loading && userPositions.length === 0 && createdRaffles.length === 0) {
