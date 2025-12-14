@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import BasicNFTImage from './BasicNFTImage';
 import toast from 'react-hot-toast';
-import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
+import { useUserRafflePositions, useCreatedRaffles, useClearRaffleCache } from '../hooks/useRafflePositions';
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
 import { useEmergencySelectWinner } from '../hooks/useWinnerSelection';
 
@@ -61,17 +61,14 @@ export default function RaffleDashboard() {
 
   const { selectWinner, isPending: isSelectingWinner, isSuccess: winnerSelected } = useEmergencySelectWinner();
   const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
+  const clearRaffleCache = useClearRaffleCache();
 
   const handleSelectWinner = useCallback(async (raffleContract: string) => {
-    console.log('Starting winner selection for:', raffleContract);
     setSelectingWinnerFor(raffleContract);
     try {
       await selectWinner(raffleContract);
       toast.success('Winner selected!');
     } catch (error) {
-      console.error('Winner selection error:', error);
-      toast.error('Winner selection failed');
-      // Reset on error
       setSelectingWinnerFor(null);
     }
   }, [selectWinner]);
@@ -85,35 +82,17 @@ export default function RaffleDashboard() {
     }
   }, [cancelRaffle]);
 
-  // Reset selecting state and force refresh when winner is selected
+  // Clear cache and refresh when winner is selected
   useEffect(() => {
     if (winnerSelected) {
-      console.log('Winner selected, refreshing data...');
       setSelectingWinnerFor(null);
-      
-      // Force immediate refresh without page reload
-      const forceRefresh = async () => {
-        // Wait for blockchain state to update
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Force refetch with cache bypass
-        await Promise.all([
-          refetchPositions(),
-          refetchCreatedRaffles()
-        ]);
-      };
-      
-      forceRefresh();
+      clearRaffleCache();
+      setTimeout(() => {
+        refetchPositions();
+        refetchCreatedRaffles();
+      }, 2000);
     }
-  }, [winnerSelected, refetchPositions, refetchCreatedRaffles]);
-
-  // Reset button state when transaction completes
-  useEffect(() => {
-    if (!isSelectingWinner && selectingWinnerFor) {
-      console.log('Transaction completed, resetting button state');
-      setSelectingWinnerFor(null);
-    }
-  }, [isSelectingWinner, selectingWinnerFor]);
+  }, [winnerSelected, clearRaffleCache, refetchPositions, refetchCreatedRaffles]);
 
   // Only show full loading screen if no cached data available
   if (loading && userPositions.length === 0 && createdRaffles.length === 0) {

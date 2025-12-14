@@ -12,63 +12,22 @@ export function useEmergencySelectWinner() {
   });
 
   useEffect(() => {
-    if (hash) {
-      console.log('🔄 Transaction hash received:', hash);
-    }
-  }, [hash]);
-
-  useEffect(() => {
-    if (isConfirming) {
-      console.log('⏳ Transaction confirming...');
-    }
-  }, [isConfirming]);
-
-  useEffect(() => {
     if (isSuccess) {
-      console.log('✅ Winner selection confirmed, clearing all caches');
       queryClient.clear();
-      queryClient.removeQueries();
     }
   }, [isSuccess, queryClient]);
 
-  useEffect(() => {
-    if (error) {
-      console.error('❌ Transaction error:', error);
-    }
-  }, [error]);
-
   const selectWinner = async (raffleContract: string) => {
-    console.log('🎯 Starting winner selection transaction...');
-    console.log('Raffle contract:', raffleContract);
-    console.log('Chain ID:', 33139);
-    
     try {
-      const txHash = await writeContractAsync({
+      return await writeContractAsync({
         address: raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
         functionName: 'emergencySelectWinner',
         chainId: 33139,
       });
-      
-      console.log('✅ Transaction submitted:', txHash);
-      return txHash;
-    } catch (error: any) {
-      console.error('❌ Winner selection transaction failed:');
-      console.error('Error details:', error);
-      console.error('Error message:', error?.message);
-      console.error('Error code:', error?.code);
-      
-      // More specific error messages
-      if (error?.message?.includes('user rejected')) {
-        toast.error('Transaction rejected by user');
-      } else if (error?.message?.includes('insufficient funds')) {
-        toast.error('Insufficient funds for gas');
-      } else if (error?.message?.includes('execution reverted')) {
-        toast.error('Transaction reverted - check raffle conditions');
-      } else {
-        toast.error(`Winner selection failed: ${error?.message || 'Unknown error'}`);
-      }
-      
+    } catch (error) {
+      console.error('Winner selection failed:', error);
+      toast.error('Winner selection failed');
       throw error;
     }
   };
