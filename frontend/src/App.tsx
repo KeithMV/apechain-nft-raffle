@@ -56,27 +56,27 @@ const Header = React.memo(function Header() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.1),transparent_50%)]"></div>
       <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(-45deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:30px_30px]"></div>
       
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 relative z-10">
-        <div className="flex flex-wrap lg:flex-nowrap justify-between items-center py-2 sm:py-4 lg:py-6 gap-2 sm:gap-4">
-          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-4 min-w-0">
-            <div className="flex items-center space-x-2">
-              <div className="relative w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-center py-4 sm:py-6 space-y-4 md:space-y-0 gap-4">
+          <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 md:space-x-3 lg:space-x-6 flex-shrink min-w-0">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-xl blur-sm animate-pulse"></div>
-                <span className="relative text-slate-900 font-bold text-sm sm:text-lg lg:text-xl">🎯</span>
+                <span className="relative text-slate-900 font-bold text-lg sm:text-xl">🎯</span>
               </div>
-              <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight truncate">ApeChain Raffles</h1>
-                <span className="text-xs text-emerald-300 font-medium hidden lg:inline">Powered by ApeChain</span>
+              <div>
+                <h1 className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">ApeChain Raffles</h1>
+                <span className="text-xs text-emerald-300 font-medium hidden sm:inline">Powered by ApeChain</span>
               </div>
-              <div className="relative px-1 py-1 sm:px-2 lg:px-3 bg-emerald-500/10 border border-emerald-400/50 rounded-lg text-emerald-300 text-xs font-semibold">
-                <div className="absolute inset-0 bg-emerald-400/5 rounded-lg animate-pulse"></div>
+              <div className="relative px-2 py-1 sm:px-3 bg-emerald-500/10 border border-emerald-400/50 rounded-xl text-emerald-300 text-xs sm:text-sm font-semibold">
+                <div className="absolute inset-0 bg-emerald-400/5 rounded-xl animate-pulse"></div>
                 <span className="relative">LIVE</span>
               </div>
             </div>
-            <nav className="flex space-x-1">
+            <nav className="flex space-x-1 sm:space-x-2">
               <Link
                 to="/create"
-                className={`relative px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
+                className={`relative px-3 py-2 sm:px-4 md:px-3 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
                   currentPage === 'create' 
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
                     : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
@@ -87,7 +87,7 @@ const Header = React.memo(function Header() {
               </Link>
               <Link
                 to="/dashboard"
-                className={`relative px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
+                className={`relative px-3 py-2 sm:px-4 md:px-3 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
                   currentPage === 'dashboard' 
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
                     : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
@@ -98,7 +98,7 @@ const Header = React.memo(function Header() {
               </Link>
               <Link
                 to="/browse"
-                className={`relative px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
+                className={`relative px-3 py-2 sm:px-4 md:px-3 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
                   currentPage === 'browse' 
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
                     : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
@@ -109,9 +109,9 @@ const Header = React.memo(function Header() {
               </Link>
             </nav>
           </div>
-          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 flex-shrink-0">
             {isConnected && (
-              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3">
                 <NetworkStatus />
                 <LazyWrapper>
                   <WalletInfo />
