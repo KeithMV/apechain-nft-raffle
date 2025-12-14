@@ -57,15 +57,15 @@ const Header = React.memo(function Header() {
       <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(-45deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:30px_30px]"></div>
       
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 relative z-10">
-        <div className="flex flex-col sm:flex-row justify-between items-center py-4 sm:py-6 space-y-4 sm:space-y-0">
-          <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-6 lg:space-x-8">
+        <div className="flex flex-col lg:flex-row justify-between items-center py-4 sm:py-6 space-y-4 lg:space-y-0 gap-4">
+          <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 lg:space-x-6 flex-shrink-0">
             <div className="flex items-center space-x-2 sm:space-x-3">
               <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-xl blur-sm animate-pulse"></div>
                 <span className="relative text-slate-900 font-bold text-lg sm:text-xl">🎯</span>
               </div>
               <div>
-                <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">ApeChain Raffles</h1>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">ApeChain Raffles</h1>
                 <span className="text-xs text-emerald-300 font-medium hidden sm:inline">Powered by ApeChain</span>
               </div>
               <div className="relative px-2 py-1 sm:px-3 bg-emerald-500/10 border border-emerald-400/50 rounded-xl text-emerald-300 text-xs sm:text-sm font-semibold">
@@ -76,7 +76,7 @@ const Header = React.memo(function Header() {
             <nav className="flex space-x-1 sm:space-x-2">
               <Link
                 to="/create"
-                className={`relative px-3 py-2 sm:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
+                className={`relative px-2 py-2 sm:px-4 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
                   currentPage === 'create' 
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
                     : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
@@ -87,7 +87,7 @@ const Header = React.memo(function Header() {
               </Link>
               <Link
                 to="/dashboard"
-                className={`relative px-3 py-2 sm:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
+                className={`relative px-2 py-2 sm:px-4 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
                   currentPage === 'dashboard' 
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
                     : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
@@ -98,7 +98,7 @@ const Header = React.memo(function Header() {
               </Link>
               <Link
                 to="/browse"
-                className={`relative px-3 py-2 sm:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
+                className={`relative px-2 py-2 sm:px-4 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
                   currentPage === 'browse' 
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
                     : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
@@ -109,16 +109,16 @@ const Header = React.memo(function Header() {
               </Link>
             </nav>
           </div>
-          <div className="flex flex-col sm:flex-row items-center sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 min-w-0 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 flex-shrink-0">
             {isConnected && (
-              <div className="flex flex-col sm:flex-row items-center sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3">
                 <NetworkStatus />
                 <LazyWrapper>
                   <WalletInfo />
                 </LazyWrapper>
               </div>
             )}
-            <div className="shrink-0 w-full sm:w-auto flex justify-center sm:justify-end">
+            <div className="flex-shrink-0">
               <ProfessionalWalletConnection />
             </div>
           </div>
