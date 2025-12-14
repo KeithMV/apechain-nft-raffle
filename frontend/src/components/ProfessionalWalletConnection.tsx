@@ -123,19 +123,19 @@ function WalletConnectionContent() {
 
   if (isConnected) {
     return (
-      <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+      <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
         {isWrongNetwork && (
           <button
             onClick={handleNetworkSwitch}
-            className="px-3 py-2 bg-red-500/20 border border-red-400/50 text-red-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-red-500/30 transition-colors min-h-[44px] whitespace-nowrap"
+            className="px-3 py-2 bg-red-500/20 border border-red-400/50 text-red-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-red-500/30 transition-colors min-h-[44px] whitespace-nowrap w-full sm:w-auto"
           >
             Switch to ApeChain
           </button>
         )}
         
-        <div className="flex items-center space-x-2 bg-slate-800/50 border border-slate-700/50 rounded-lg px-2 sm:px-3 py-2 min-h-[44px]">
+        <div className="flex items-center space-x-2 bg-slate-800/50 border border-slate-700/50 rounded-lg px-2 sm:px-3 py-2 min-h-[44px] w-full sm:w-auto justify-center sm:justify-start">
           <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shrink-0"></div>
-          <span className="text-slate-300 text-xs sm:text-sm font-mono wallet-text">
+          <span className="text-slate-300 text-xs sm:text-sm font-mono wallet-text truncate">
             {address && SecurityUtils.validateAddress(address) ? formatAddress(address) : 'Invalid Address'}
           </span>
         </div>
@@ -143,7 +143,7 @@ function WalletConnectionContent() {
         <button
           onClick={handleDisconnect}
           disabled={isDisconnectPending}
-          className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 transition-colors min-h-[44px] whitespace-nowrap disabled:opacity-50"
+          className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 transition-colors min-h-[44px] whitespace-nowrap disabled:opacity-50 w-full sm:w-auto"
         >
           {isDisconnectPending ? 'Disconnecting...' : 'Disconnect'}
         </button>
