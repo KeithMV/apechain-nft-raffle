@@ -88,15 +88,24 @@ export default function RaffleDashboard() {
   // Reset selecting state and force refresh when winner is selected
   useEffect(() => {
     if (winnerSelected) {
-      console.log('Winner selected, forcing UI refresh...');
+      console.log('Winner selected, refreshing data...');
       setSelectingWinnerFor(null);
       
-      // Force page reload to ensure fresh data
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      // Force immediate refresh without page reload
+      const forceRefresh = async () => {
+        // Wait for blockchain state to update
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Force refetch with cache bypass
+        await Promise.all([
+          refetchPositions(),
+          refetchCreatedRaffles()
+        ]);
+      };
+      
+      forceRefresh();
     }
-  }, [winnerSelected]);
+  }, [winnerSelected, refetchPositions, refetchCreatedRaffles]);
 
   // Reset button state when transaction completes
   useEffect(() => {

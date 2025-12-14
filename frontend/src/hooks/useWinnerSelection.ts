@@ -25,16 +25,9 @@ export function useEmergencySelectWinner() {
 
   useEffect(() => {
     if (isSuccess) {
-      console.log('✅ Winner selection transaction confirmed!');
-      console.log('Clearing caches and refreshing data...');
-      // Clear all query cache
+      console.log('✅ Winner selection confirmed, clearing all caches');
       queryClient.clear();
-      // Invalidate all contract queries
-      queryClient.invalidateQueries({ queryKey: ['readContract'] });
-      // Force immediate refetch
-      setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ['readContract'] });
-      }, 1000);
+      queryClient.removeQueries();
     }
   }, [isSuccess, queryClient]);
 
