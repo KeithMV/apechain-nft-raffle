@@ -13,14 +13,12 @@ export function useEmergencySelectWinner() {
 
   useEffect(() => {
     if (isSuccess) {
-      // More aggressive cache invalidation
+      // Invalidate all contract queries
       queryClient.invalidateQueries({ queryKey: ['readContract'] });
-      queryClient.refetchQueries({ queryKey: ['readContract'] });
-      // Also invalidate any raffle-specific queries
-      queryClient.invalidateQueries({ 
-        predicate: (query) => 
-          query.queryKey.some(key => typeof key === 'string' && key.includes('raffle'))
-      });
+      // Force immediate refetch
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ['readContract'] });
+      }, 1000);
     }
   }, [isSuccess, queryClient]);
 

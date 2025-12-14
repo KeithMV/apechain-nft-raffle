@@ -81,15 +81,18 @@ export default function RaffleDashboard() {
     }
   }, [cancelRaffle]);
 
-  // Reset selecting state when winner is selected
+  // Reset selecting state and force refresh when winner is selected
   useEffect(() => {
     if (winnerSelected) {
       setSelectingWinnerFor(null);
-      // Force refresh after a short delay
+      // Immediate refresh
+      refetchPositions();
+      refetchCreatedRaffles();
+      // Additional refresh after blockchain confirmation
       setTimeout(() => {
         refetchPositions();
         refetchCreatedRaffles();
-      }, 2000);
+      }, 3000);
     }
   }, [winnerSelected, refetchPositions, refetchCreatedRaffles]);
 
