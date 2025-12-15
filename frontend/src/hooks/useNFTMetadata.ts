@@ -81,8 +81,6 @@ async function fetchNFTMetadata(
     throw new Error('Invalid contract address or token ID');
   }
   
-  console.log(`🔍 Loading NFT metadata for ${contractAddress} #${tokenId}`);
-  
   // Get tokenURI from contract
   const tokenURI = await publicClient.readContract({
     address: contractAddress as `0x${string}`,
@@ -104,8 +102,6 @@ async function fetchNFTMetadata(
     throw new Error('No token URI found');
   }
   
-  console.log(`📋 Token URI: ${tokenURI}`);
-
   // Validate tokenURI
   if (!validateUrl(tokenURI)) {
     console.error(`❌ Invalid token URI: ${tokenURI}`);
@@ -125,8 +121,6 @@ async function fetchNFTMetadata(
   // Try each proxy service
   for (const proxyUrl of proxyServices) {
     try {
-      console.log(`🌐 Fetching metadata via proxy: ${proxyUrl}`);
-      
       const response = await fetch(proxyUrl, {
         signal: AbortSignal.timeout(8000),
         headers: {
@@ -151,18 +145,16 @@ async function fetchNFTMetadata(
         data = JSON.parse(text);
       }
       
-      console.log(`✅ Metadata fetched successfully via proxy`);
       break;
       
     } catch (error) {
-      console.warn(`⚠️ Proxy failed:`, error);
       proxyError = error;
       continue;
     }
   }
   
   if (!data) {
-    console.warn(`⚠️ All proxies failed, trying direct fetch:`, proxyError);
+    // All proxies failed, trying direct fetch
     
     // Fallback to direct fetch for IPFS URLs
     if (tokenURI.startsWith('ipfs://')) {
@@ -176,8 +168,6 @@ async function fetchNFTMetadata(
       for (const gateway of ipfsGateways) {
         try {
           const directUrl = `${gateway}${ipfsPath}`;
-          console.log(`🔄 Trying IPFS gateway: ${directUrl}`);
-          
           const response = await fetch(directUrl, {
             signal: AbortSignal.timeout(8000),
             headers: {
@@ -189,11 +179,9 @@ async function fetchNFTMetadata(
           if (response.ok) {
             const text = await response.text();
             data = JSON.parse(text);
-            console.log(`✅ IPFS gateway success: ${gateway}`);
             break;
           }
         } catch (err) {
-          console.warn(`❌ IPFS gateway failed: ${gateway}`, err);
           continue;
         }
       }
@@ -242,11 +230,6 @@ async function fetchNFTMetadata(
     attributes: sanitizedData.attributes,
   };
 
-  console.log(`✅ NFT metadata loaded for ${contractAddress} #${tokenId}:`, {
-    name: processedMetadata.name,
-    image: processedMetadata.image,
-    hasAlternatives: imageAlternatives.length > 0
-  });
   return processedMetadata;
 }
 
