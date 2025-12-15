@@ -1,48 +1,75 @@
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
+import { useState, useCallback } from 'react';
+import { WinnerSelectionService } from '../services/winnerSelectionService';
+import { useCommitRandomness, useRevealWinner, useEmergencyWinner } from './useRaffleContract';
 import toast from 'react-hot-toast';
-import { useEffect } from 'react';
-import { useCacheInvalidation } from './useCacheInvalidation';
 
-export function useEmergencySelectWinner() {
-  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
-  const { invalidateAll } = useCacheInvalidation();
+export function useWinnerSelection() {
+  const [commitData, setCommitData] = useState<{ nonce: bigint; commitHash: string } | null>(null);
+  
+  const { commitRandomness, isPending: commitPending, isSuccess: commitSuccess } = useCommitRandomness();
+  const { revealAndSelectWinner, isPending: revealPending, isSuccess: revealSuccess } = useRevealWinner();
+  const { emergencySelectWinner, isPending: emergencyPending } = useEmergencyWinner();
 
-  useEffect(() => {
-    if (isSuccess) {
-      invalidateAll();
-    }
-  }, [isSuccess, invalidateAll]);
-
-  const selectWinner = async (raffleContract: string) => {
-    if (!/^0x[a-fA-F0-9]{40}$/.test(raffleContract)) {
-      toast.error('Invalid raffle address');
-      throw new Error('Invalid raffle address');
-    }
-    
+  const startWinnerSelection = useCallback(async (raffleContract: string) => {
     try {
-      return await writeContractAsync({
-        address: raffleContract as `0x${string}`,
-        abi: RAFFLE_CONTRACT_ABI,
-        functionName: 'emergencySelectWinner',
-        chainId: 33139,
-      });
+      // Generate secure commit-reveal data
+      const { nonce, commitHash } = WinnerSelectionService.generateCommitReveal();
+      
+      // Store locally and in state
+      WinnerSelectionService.storeCommitData(raffleContract, nonce);
+      setCommitData({ nonce, commitHash });
+      
+      // Commit to blockchain
+      await commitRandomness(raffleContract, commitHash);
+      
+      toast.success('Winner selection started! You can reveal in 1 hour.');
+      return { nonce, commitHash };
     } catch (error) {
-      console.error('Winner selection failed:', error);
-      toast.error('Winner selection failed');
+      toast.error('Failed to start winner selection');
       throw error;
     }
-  };
+  }, [commitRandomness]);
+
+  const revealWinner = useCallback(async (raffleContract: string) => {
+    try {
+      const storedNonce = WinnerSelectionService.getStoredNonce(raffleContract);
+      if (!storedNonce) {
+        throw new Error('No stored nonce found');
+      }
+
+      await revealAndSelectWinner(raffleContract, storedNonce);
+      
+      // Clean up stored data
+      WinnerSelectionService.clearCommitData(raffleContract);
+      setCommitData(null);
+      
+      return storedNonce;
+    } catch (error) {
+      toast.error('Failed to reveal winner');
+      throw error;
+    }
+  }, [revealAndSelectWinner]);
+
+  const emergencyReveal = useCallback(async (raffleContract: string) => {
+    try {
+      await emergencySelectWinner(raffleContract);
+      
+      // Clean up stored data
+      WinnerSelectionService.clearCommitData(raffleContract);
+      setCommitData(null);
+    } catch (error) {
+      toast.error('Emergency selection failed');
+      throw error;
+    }
+  }, [emergencySelectWinner]);
 
   return {
-    selectWinner,
-    hash,
-    error,
-    isPending,
-    isConfirming,
-    isSuccess,
+    startWinnerSelection,
+    revealWinner,
+    emergencyReveal,
+    commitData,
+    isPending: commitPending || revealPending || emergencyPending,
+    commitSuccess,
+    revealSuccess,
   };
 }

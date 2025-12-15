@@ -4,7 +4,7 @@ import BasicNFTImage from './BasicNFTImage';
 import toast from 'react-hot-toast';
 import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
-import { useEmergencySelectWinner } from '../hooks/useWinnerSelection';
+import { useWinnerSelection } from '../hooks/useWinnerSelection';
 
 // Interfaces moved to hooks file to avoid duplication
 
@@ -59,18 +59,18 @@ export default function RaffleDashboard() {
     return `${minutes}m`;
   }, []);
 
-  const { selectWinner, isPending: isSelectingWinner, isSuccess: winnerSelected } = useEmergencySelectWinner();
+  const { emergencyReveal, isPending: isSelectingWinner, revealSuccess: winnerSelected } = useWinnerSelection();
   const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
 
   const handleSelectWinner = useCallback(async (raffleContract: string) => {
     setSelectingWinnerFor(raffleContract);
     try {
-      await selectWinner(raffleContract);
+      await emergencyReveal(raffleContract);
       toast.success('Winner selected!');
     } catch (error) {
       setSelectingWinnerFor(null);
     }
-  }, [selectWinner]);
+  }, [emergencyReveal]);
 
   const handleCancelRaffle = useCallback(async (raffleContract: string) => {
     try {

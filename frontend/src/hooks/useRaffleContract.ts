@@ -239,3 +239,117 @@ export function useBuyTickets() {
     isSuccess,
   };
 }
+
+/**
+ * Hook for committing randomness (winner selection step 1)
+ */
+export function useCommitRandomness() {
+  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+  const lastSuccessHash = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (isSuccess && hash && hash !== lastSuccessHash.current) {
+      lastSuccessHash.current = hash;
+      toast.success('Randomness committed! Reveal in 1 hour.');
+    }
+  }, [isSuccess, hash]);
+
+  const commitRandomness = async (raffleContract: string, commitHash: string) => {
+    return await writeContractAsync({
+      address: raffleContract as `0x${string}`,
+      abi: RAFFLE_CONTRACT_ABI,
+      functionName: 'commitRandomness',
+      args: [commitHash as `0x${string}`],
+      chainId: 33139,
+    });
+  };
+
+  return {
+    commitRandomness,
+    hash,
+    error,
+    isPending,
+    isConfirming,
+    isSuccess,
+  };
+}
+
+/**
+ * Hook for revealing randomness and selecting winner (step 2)
+ */
+export function useRevealWinner() {
+  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+  const { invalidateAll } = useCacheInvalidation();
+  const lastSuccessHash = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (isSuccess && hash && hash !== lastSuccessHash.current) {
+      lastSuccessHash.current = hash;
+      toast.success('Winner selected successfully!');
+      invalidateAll();
+    }
+  }, [isSuccess, hash, invalidateAll]);
+
+  const revealAndSelectWinner = async (raffleContract: string, nonce: bigint) => {
+    return await writeContractAsync({
+      address: raffleContract as `0x${string}`,
+      abi: RAFFLE_CONTRACT_ABI,
+      functionName: 'revealAndSelectWinner',
+      args: [nonce],
+      chainId: 33139,
+    });
+  };
+
+  return {
+    revealAndSelectWinner,
+    hash,
+    error,
+    isPending,
+    isConfirming,
+    isSuccess,
+  };
+}
+
+/**
+ * Hook for emergency winner selection (if reveal deadline passes)
+ */
+export function useEmergencyWinner() {
+  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+  const { invalidateAll } = useCacheInvalidation();
+  const lastSuccessHash = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (isSuccess && hash && hash !== lastSuccessHash.current) {
+      lastSuccessHash.current = hash;
+      toast.success('Emergency winner selection complete!');
+      invalidateAll();
+    }
+  }, [isSuccess, hash, invalidateAll]);
+
+  const emergencySelectWinner = async (raffleContract: string) => {
+    return await writeContractAsync({
+      address: raffleContract as `0x${string}`,
+      abi: RAFFLE_CONTRACT_ABI,
+      functionName: 'emergencySelectWinner',
+      chainId: 33139,
+    });
+  };
+
+  return {
+    emergencySelectWinner,
+    hash,
+    error,
+    isPending,
+    isConfirming,
+    isSuccess,
+  };
+}

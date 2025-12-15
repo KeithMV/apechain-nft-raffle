@@ -5,6 +5,7 @@ import BasicNFTImage from './BasicNFTImage';
 import toast from 'react-hot-toast';
 import { useAllRaffles } from '../hooks/useRafflePositions';
 import { useBuyTickets } from '../hooks/useRaffleContract';
+import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { throttle, useVirtualScrolling } from '../utils/performance';
 
 interface CreatedRaffle {
@@ -23,12 +24,13 @@ interface CreatedRaffle {
 }
 
 // Memoized raffle card component for performance
-const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuantity, handleBuyTickets, processingRaffles, formatTimeRemaining, address }: {
+const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuantity, handleBuyTickets, handleWinnerSelection, processingRaffles, formatTimeRemaining, address }: {
   raffle: CreatedRaffle;
   index: number;
   ticketQuantities: {[key: string]: number};
   setTicketQuantity: (contract: string, quantity: number, maxAvailable: number) => void;
   handleBuyTickets: (raffle: CreatedRaffle) => void;
+  handleWinnerSelection: (raffle: CreatedRaffle) => void;
   processingRaffles: Set<string>;
   formatTimeRemaining: (endTime: number) => string;
   address?: string;
@@ -134,15 +136,39 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
         <div className="border-t border-slate-700/50 pt-4">
           {isExpired ? (
             <div className="text-center py-4">
-              <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <span className="text-red-400 text-xl">⏰</span>
-              </div>
-              <p className="text-red-400 font-mono font-semibold mb-1">RAFFLE ENDED</p>
-              <p className="text-slate-400 text-sm font-mono">
-                {raffle.winner && raffle.winner !== '0x0000000000000000000000000000000000000000' 
-                  ? `Winner: ${raffle.winner.slice(0, 6)}...${raffle.winner.slice(-4)}` 
-                  : 'No tickets were sold'}
-              </p>
+              {raffle.winner && raffle.winner !== '0x0000000000000000000000000000000000000000' ? (
+                <>
+                  <div className="w-12 h-12 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <span className="text-green-400 text-xl">🏆</span>
+                  </div>
+                  <p className="text-green-400 font-mono font-semibold mb-1">WINNER SELECTED</p>
+                  <p className="text-slate-400 text-sm font-mono">
+                    Winner: {raffle.winner.slice(0, 6)}...{raffle.winner.slice(-4)}
+                  </p>
+                </>
+              ) : raffle.ticketsSold > 0 && address && raffle.creator.toLowerCase() === address.toLowerCase() ? (
+                <>
+                  <div className="w-12 h-12 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <span className="text-yellow-400 text-xl">🎲</span>
+                  </div>
+                  <p className="text-yellow-400 font-mono font-semibold mb-2">SELECT WINNER</p>
+                  <button
+                    onClick={() => handleWinnerSelection(raffle)}
+                    disabled={processingRaffles.has(raffle.raffleContract)}
+                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed text-sm"
+                  >
+                    {processingRaffles.has(raffle.raffleContract) ? 'Processing...' : 'Start Winner Selection'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <span className="text-red-400 text-xl">⏰</span>
+                  </div>
+                  <p className="text-red-400 font-mono font-semibold mb-1">RAFFLE ENDED</p>
+                  <p className="text-slate-400 text-sm font-mono">No tickets were sold</p>
+                </>
+              )}
             </div>
           ) : address && raffle.creator.toLowerCase() === address.toLowerCase() ? (
             <div className="text-center py-4">
@@ -231,6 +257,7 @@ export default function BrowseRaffles() {
 
 
   const { buyTickets, isSuccess: buySuccess, error: buyError } = useBuyTickets();
+  const { startWinnerSelection, revealWinner, emergencyReveal, isPending: selectionPending } = useWinnerSelection();
 
   const handleBuyTickets = async (raffle: CreatedRaffle) => {
     if (processingRaffles.has(raffle.raffleContract)) return;
@@ -247,6 +274,23 @@ export default function BrowseRaffles() {
     
     try {
       await buyTickets(raffle.raffleContract, quantity, raffle.ticketPrice);
+    } catch (error) {
+      setProcessingRaffles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(raffle.raffleContract);
+        return newSet;
+      });
+    }
+  };
+
+  const handleWinnerSelection = async (raffle: CreatedRaffle) => {
+    if (processingRaffles.has(raffle.raffleContract)) return;
+    
+    setProcessingRaffles(prev => new Set(prev).add(raffle.raffleContract));
+    
+    try {
+      await startWinnerSelection(raffle.raffleContract);
+      setTimeout(() => refetch(), 2000);
     } catch (error) {
       setProcessingRaffles(prev => {
         const newSet = new Set(prev);
@@ -410,6 +454,7 @@ export default function BrowseRaffles() {
                       ticketQuantities={ticketQuantities}
                       setTicketQuantity={setTicketQuantity}
                       handleBuyTickets={handleBuyTickets}
+                      handleWinnerSelection={handleWinnerSelection}
                       processingRaffles={processingRaffles}
                       formatTimeRemaining={formatTimeRemaining}
                       address={address}
