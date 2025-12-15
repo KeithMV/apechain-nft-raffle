@@ -6,7 +6,7 @@
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
 import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useCacheInvalidation } from './useCacheInvalidation';
 import toast from 'react-hot-toast';
 
@@ -199,13 +199,15 @@ export function useBuyTickets() {
     hash,
   });
   const { invalidateAll } = useCacheInvalidation();
+  const lastSuccessHash = useRef<string | null>(null);
 
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && hash && hash !== lastSuccessHash.current) {
+      lastSuccessHash.current = hash;
       toast.success('Tickets purchased successfully!');
       invalidateAll();
     }
-  }, [isSuccess, invalidateAll]);
+  }, [isSuccess, hash, invalidateAll]);
 
   const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string) => {
     const ticketPriceWei = parseEther(ticketPrice);
