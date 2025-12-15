@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 import ApeTokenBalance from './ApeTokenBalance';
 import BasicNFTImage from './BasicNFTImage';
 import toast from 'react-hot-toast';
-import { useAllRaffles, useClearRaffleCache } from '../hooks/useRafflePositions';
+import { useAllRaffles } from '../hooks/useRafflePositions';
 import { useBuyTickets } from '../hooks/useRaffleContract';
 import { throttle, useVirtualScrolling } from '../utils/performance';
 
@@ -210,7 +210,7 @@ export default function BrowseRaffles() {
   
   const BATCH_SIZE = 10;
   const { raffles, loading, refetch } = useAllRaffles(BATCH_SIZE, currentPage * BATCH_SIZE);
-  const clearCache = useClearRaffleCache();
+
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
   useEffect(() => {
@@ -354,12 +354,9 @@ export default function BrowseRaffles() {
             </div>
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => {
-                  clearCache();
-                  refetch();
-                }}
+                onClick={() => refetch()}
                 className="px-4 py-2 rounded-xl text-sm font-medium transition-all bg-slate-700/50 text-slate-400 border border-slate-600/30 hover:bg-slate-600/50"
-                title="Refresh and clear cache"
+                title="Refresh"
               >
                 🔄 Refresh
               </button>

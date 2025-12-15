@@ -7,7 +7,7 @@
 export { useWalletConnection } from './useWalletConnection';
 export { useNFTMetadata } from './useNFTMetadata';
 export { useRaffleContract } from './useRaffleContract';
-export { useAllRaffles, useUserRafflePositions, useCreatedRaffles, useClearRaffleCache } from './useRafflePositions';
+export { useAllRaffles, useUserRafflePositions, useCreatedRaffles } from './useRafflePositions';
 
 // Specialized Hooks
 export { useEmergencySelectWinner } from './useWinnerSelection';
