@@ -8,6 +8,7 @@ import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721
 import { parseEther } from 'viem/utils';
 import { useEffect } from 'react';
 import { useCacheInvalidation } from './useCacheInvalidation';
+import toast from 'react-hot-toast';
 
 export interface CreateRaffleParams {
   nftContract: string;
@@ -201,6 +202,7 @@ export function useBuyTickets() {
 
   useEffect(() => {
     if (isSuccess) {
+      toast.success('Tickets purchased successfully!');
       invalidateAll();
     }
   }, [isSuccess, invalidateAll]);

@@ -259,10 +259,9 @@ export default function BrowseRaffles() {
   // Handle buy success
   useEffect(() => {
     if (buySuccess) {
-      toast.success('Tickets purchased successfully!');
       setTicketQuantities({});
       setProcessingRaffles(new Set());
-      refetch();
+      setTimeout(() => refetch(), 2000);
     }
   }, [buySuccess, refetch]);
 
