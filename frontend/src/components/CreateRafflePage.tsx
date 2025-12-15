@@ -453,7 +453,7 @@ export default function CreateRafflePage() {
                   <div className="text-green-300 font-medium mb-2">✅ What This Approval Does:</div>
                   <ul className="text-green-200 text-xs space-y-1">
                     <li>• Allows raffle system to transfer your NFT when you create a raffle</li>
-                    <li>• Only affects NFTs from this specific contract: <span className="font-mono break-all">{formData.nftContract.slice(0, 10)}...{formData.nftContract.slice(-8)}</span></li>
+                    <li>• Only affects NFTs from this specific contract: <span className="font-mono break-all">{formData.nftContract && formData.nftContract.length >= 18 ? formData.nftContract.slice(0, 10) + '...' + formData.nftContract.slice(-8) : formData.nftContract}</span></li>
                     <li>• Standard, secure NFT marketplace approval</li>
                   </ul>
                 </div>

@@ -12,7 +12,7 @@ export default function EmergencyControls() {
 
   useEffect(() => {
     if (isSuccess) {
-      toast.success(isPaused ? '✅ Operations resumed' : '🚨 Emergency pause activated');
+      toast.success(!isPaused ? '✅ Operations resumed' : '🚨 Emergency pause activated');
       refetch();
     }
   }, [isSuccess, isPaused, refetch]);

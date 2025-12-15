@@ -22,6 +22,11 @@ export function useCancelRaffle() {
   }, [isSuccess, invalidateAll]);
 
   const cancelRaffle = async (raffleAddress: string) => {
+    if (!/^0x[a-fA-F0-9]{40}$/.test(raffleAddress)) {
+      toast.error('Invalid raffle address');
+      return;
+    }
+    
     try {
       await writeContract({
         address: raffleAddress as `0x${string}`,

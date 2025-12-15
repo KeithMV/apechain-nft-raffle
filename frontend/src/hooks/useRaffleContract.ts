@@ -44,13 +44,15 @@ export function useRaffleCounter() {
  * Hook for checking NFT approval status
  */
 export function useNFTApprovalStatus(nftContract: string, userAddress: string) {
+  const isValidAddress = (addr: string) => /^0x[a-fA-F0-9]{40}$/.test(addr);
+  
   return useReadContract({
     address: nftContract as `0x${string}`,
     abi: ERC721_ABI,
     functionName: 'isApprovedForAll',
     args: [userAddress as `0x${string}`, RAFFLE_FACTORY_ADDRESS as `0x${string}`],
     query: {
-      enabled: !!(nftContract && userAddress),
+      enabled: !!(nftContract && userAddress && isValidAddress(nftContract) && isValidAddress(userAddress)),
     },
   });
 }
@@ -157,6 +159,7 @@ export function useEmergencyPause() {
       address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'emergencyPause',
+      chainId: 33139,
     });
   };
 
@@ -165,6 +168,7 @@ export function useEmergencyPause() {
       address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'emergencyUnpause',
+      chainId: 33139,
     });
   };
 

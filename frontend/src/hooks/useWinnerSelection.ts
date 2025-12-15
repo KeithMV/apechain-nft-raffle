@@ -18,6 +18,11 @@ export function useEmergencySelectWinner() {
   }, [isSuccess, invalidateAll]);
 
   const selectWinner = async (raffleContract: string) => {
+    if (!/^0x[a-fA-F0-9]{40}$/.test(raffleContract)) {
+      toast.error('Invalid raffle address');
+      throw new Error('Invalid raffle address');
+    }
+    
     try {
       return await writeContractAsync({
         address: raffleContract as `0x${string}`,
