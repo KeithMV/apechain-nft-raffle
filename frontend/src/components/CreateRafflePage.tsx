@@ -91,8 +91,6 @@ export default function CreateRafflePage() {
   // Handle create raffle success
   useEffect(() => {
     if (createSuccess) {
-      toast.success('Raffle created successfully!');
-      
       // Reset form
       setFormData({
         nftContract: '',

@@ -95,12 +95,15 @@ export function useCreateRaffle() {
     hash,
   });
   const { invalidateAll } = useCacheInvalidation();
+  const lastSuccessHash = useRef<string | null>(null);
 
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && hash && hash !== lastSuccessHash.current) {
+      lastSuccessHash.current = hash;
+      toast.success('Raffle created successfully!');
       invalidateAll();
     }
-  }, [isSuccess, invalidateAll]);
+  }, [isSuccess, hash, invalidateAll]);
 
   const createRaffle = async (params: CreateRaffleParams) => {
     const ticketPriceWei = parseEther(params.ticketPrice);
