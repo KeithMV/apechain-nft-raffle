@@ -266,9 +266,6 @@ function App() {
   useEffect(() => {
     // Suppress WalletConnect console errors
     suppressWalletConnectErrors();
-    
-    // Clean stale WalletConnect storage on app load
-    cleanWalletConnectStorage();
   }, []);
 
   return (
