@@ -16,7 +16,7 @@ export const DEPLOYMENT_INFO_SECURE = {
   network: 'apechain',
   deployer: '0xEd742234f5F28A01832fdc4d84e4E2b601De68Ee',
   deployedAt: '2025-11-15T05:30:00.000Z',
-  platformFee: '1000', // 10%
+  platformFee: 1000, // 10% (basis points)
   version: 'v3-secure',
   securityFixes: [
     'Fixed weak randomness vulnerability',
