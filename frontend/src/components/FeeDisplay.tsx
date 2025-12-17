@@ -53,8 +53,8 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
   };
   
   const breakdown = totalAmount > 0 ? {
-    feeAmount: totalAmount * currentFee.percentage / 100,
-    creatorAmount: totalAmount * (1 - currentFee.percentage / 100)
+    feeAmount: isNaN(totalAmount) ? 0 : totalAmount * currentFee.percentage / 100,
+    creatorAmount: isNaN(totalAmount) ? 0 : totalAmount * (1 - currentFee.percentage / 100)
   } : null;
 
   const getBadgeColor = (badge: string) => {
@@ -104,16 +104,16 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
         <div className="mt-2 text-sm text-gray-600 space-y-1">
           <div className="flex justify-between">
             <span>Total Sales:</span>
-            <span className="font-medium">{totalAmount.toFixed(2)} APE</span>
+            <span className="font-medium">{isNaN(totalAmount) ? '0.00' : totalAmount.toFixed(2)} APE</span>
           </div>
           <div className="flex justify-between">
             <span>Platform Fee ({feeDisplay.percentage}):</span>
-            <span className="font-medium">{breakdown.feeAmount.toFixed(2)} APE</span>
+            <span className="font-medium">{isNaN(breakdown.feeAmount) ? '0.00' : breakdown.feeAmount.toFixed(2)} APE</span>
           </div>
           <div className="flex justify-between border-t pt-1">
             <span>Creator Receives:</span>
             <span className="font-semibold text-green-600">
-              {breakdown.creatorAmount.toFixed(2)} APE
+              {isNaN(breakdown.creatorAmount) ? '0.00' : breakdown.creatorAmount.toFixed(2)} APE
             </span>
           </div>
         </div>
