@@ -27,6 +27,7 @@ export class RaffleInfrastructureStack extends cdk.Stack {
       enforceSSL: true,
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      objectLockEnabled: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
