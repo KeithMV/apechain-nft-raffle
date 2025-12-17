@@ -15,14 +15,14 @@ function isAllowedURL(url) {
     '127.0.0.1'
   ];
   
-  // Block private IP ranges
-  const privateIPs = /^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|127\.|169\.254\.|::1|fc00:|fe80:)/;
+  // Block private IP ranges (exclude localhost 127.0.0.1)
+  const privateIPs = /^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|127\.((?!0\.0\.1)[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})|169\.254\.|::1|fc00:|fe80:)/;
   if (privateIPs.test(url.hostname)) {
     return false;
   }
   
   // Allow only HTTPS in production, HTTP for localhost
-  if (url.protocol !== 'https:' && !url.hostname.includes('localhost') && url.hostname !== '127.0.0.1') {
+  if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
     return false;
   }
   
@@ -62,10 +62,25 @@ self.addEventListener('activate', event => {
 
 // Fetch event - serve from cache, fallback to network with security
 self.addEventListener('fetch', event => {
-  // Only cache GET requests - CSRF protection
+  // CSRF Protection: Block state-changing requests without proper validation
   if (event.request.method !== 'GET') {
-    // Block all non-GET requests for security
-    event.respondWith(new Response('Method not allowed', { status: 405 }));
+    const origin = event.request.headers.get('origin');
+    const referer = event.request.headers.get('referer');
+    
+    // Require origin or referer for state-changing requests
+    if (!origin && !referer) {
+      event.respondWith(new Response('CSRF: Missing origin/referer', { status: 403 }));
+      return;
+    }
+    
+    // Validate origin/referer
+    const sourceUrl = new URL(origin || referer);
+    if (!isAllowedURL(sourceUrl)) {
+      event.respondWith(new Response('CSRF: Invalid origin', { status: 403 }));
+      return;
+    }
+    
+    // Let validated requests pass through
     return;
   }
   
@@ -102,11 +117,7 @@ self.addEventListener('fetch', event => {
           return response;
         }
         
-        // Additional SSRF check before network request
-        if (!isAllowedURL(new URL(event.request.url))) {
-          throw new Error('URL not allowed');
-        }
-        
+        // URL already validated above, safe to fetch
         return fetch(event.request);
       })
       .catch(async () => {
