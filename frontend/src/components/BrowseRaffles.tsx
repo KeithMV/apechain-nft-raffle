@@ -123,14 +123,7 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
           </div>
         </div>
 
-        {/* APE Token Balance */}
-        {!isExpired && (
-          <div className="mb-4">
-            <ApeTokenBalance 
-              requiredAmount={totalCost}
-            />
-          </div>
-        )}
+
 
         {/* Buy Tickets Section */}
         <div className="border-t border-slate-700/50 pt-4">
