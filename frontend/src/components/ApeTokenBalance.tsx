@@ -18,9 +18,13 @@ export default function ApeTokenBalance({
     address.length === 42 && 
     /^0x[a-fA-F0-9]{40}$/.test(address);
 
-  // Professional wagmi hook for balance with error handling
+  // APE token contract address on ApeChain
+  const APE_TOKEN_ADDRESS = '0x4d224452801ACEd8B2F0aebE155379bb5D594381' as const;
+
+  // Professional wagmi hook for APE token balance with error handling
   const { data: balanceData, isLoading: loading, error } = useBalance({
     address: isValidAddress ? (address as `0x${string}`) : undefined,
+    token: APE_TOKEN_ADDRESS,
     query: {
       enabled: isValidAddress,
       retry: 3,
