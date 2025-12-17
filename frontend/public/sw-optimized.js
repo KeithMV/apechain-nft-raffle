@@ -54,6 +54,31 @@ self.addEventListener('activate', event => {
   );
 });
 
+// URL validation for SSRF protection
+function isAllowedURL(url) {
+  const allowedHosts = [
+    'apechainraffles.io',
+    'apechain.calderachain.xyz',
+    'localhost',
+    '127.0.0.1'
+  ];
+  
+  // Block private IP ranges
+  const privateIPs = /^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|169\.254\.|::1|fc00:|fe80:)/;
+  if (privateIPs.test(url.hostname)) {
+    return false;
+  }
+  
+  // Allow only HTTPS in production, HTTP for localhost
+  if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
+    return false;
+  }
+  
+  return allowedHosts.some(host => 
+    url.hostname === host || url.hostname.endsWith('.' + host)
+  );
+}
+
 // Fetch event - implement caching strategies
 self.addEventListener('fetch', event => {
   const { request } = event;
@@ -61,6 +86,12 @@ self.addEventListener('fetch', event => {
 
   // Skip non-GET requests
   if (request.method !== 'GET') return;
+  
+  // SSRF Protection: Validate URL
+  if (!isAllowedURL(url)) {
+    event.respondWith(new Response('Blocked', { status: 403 }));
+    return;
+  }
 
   // Handle different resource types
   if (isStaticAsset(url)) {
@@ -84,6 +115,7 @@ async function cacheFirst(request, cacheName) {
   }
   
   try {
+    // URL already validated in main fetch handler
     const response = await fetch(request);
     if (response.ok) {
       cache.put(request, response.clone());
@@ -99,6 +131,7 @@ async function networkFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   
   try {
+    // URL already validated in main fetch handler
     const response = await fetch(request);
     if (response.ok) {
       cache.put(request, response.clone());
@@ -114,6 +147,7 @@ async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
   
+  // URL already validated in main fetch handler
   const fetchPromise = fetch(request).then(response => {
     if (response.ok) {
       cache.put(request, response.clone());
