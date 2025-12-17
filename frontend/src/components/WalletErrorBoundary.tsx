@@ -21,9 +21,17 @@ export class WalletErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error in development only
+    // Log error in development only with sanitization
     if (process.env.NODE_ENV === 'development') {
-      console.error('Wallet Error Boundary caught an error:', error, errorInfo);
+      const sanitizedError = {
+        message: error.message?.replace(/[\r\n\t]/g, '').slice(0, 200),
+        name: error.name?.replace(/[\r\n\t]/g, '').slice(0, 50),
+        stack: error.stack?.replace(/[\r\n\t]/g, ' ').slice(0, 500)
+      };
+      const sanitizedInfo = {
+        componentStack: errorInfo.componentStack?.replace(/[\r\n\t]/g, ' ').slice(0, 300)
+      };
+      console.error('Wallet Error Boundary caught an error:', sanitizedError, sanitizedInfo);
     }
   }
 
