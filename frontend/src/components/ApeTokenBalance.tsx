@@ -11,11 +11,18 @@ export default function ApeTokenBalance({
 }: ApeTokenBalanceProps) {
   const { address } = useAccount();
   
+  // Validate address format before using
+  const isValidAddress = address && 
+    typeof address === 'string' && 
+    address.startsWith('0x') && 
+    address.length === 42 && 
+    /^0x[a-fA-F0-9]{40}$/.test(address);
+
   // Professional wagmi hook for balance with error handling
   const { data: balanceData, isLoading: loading, error } = useBalance({
-    address: address as `0x${string}`,
+    address: isValidAddress ? (address as `0x${string}`) : undefined,
     query: {
-      enabled: !!address && address.length === 42,
+      enabled: isValidAddress,
       retry: 3,
       retryDelay: 1000,
     },
