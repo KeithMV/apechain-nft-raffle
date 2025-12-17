@@ -180,8 +180,14 @@ export default function CreateRafflePage() {
     setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
   };
 
-  const totalRevenue = (parseFloat(formData.ticketPrice || '0') * parseInt(formData.maxTickets || '0')).toFixed(2);
-  const platformFeeAmount = (parseFloat(totalRevenue) * parseFloat(platformFee) / 100).toFixed(2);
+  // Safe number parsing with NaN validation
+  const ticketPrice = parseFloat(formData.ticketPrice || '0');
+  const maxTickets = parseInt(formData.maxTickets || '0');
+  const feePercentage = parseFloat(platformFee);
+  
+  const totalRevenue = (!isNaN(ticketPrice) && !isNaN(maxTickets) ? ticketPrice * maxTickets : 0).toFixed(2);
+  const platformFeeAmount = (!isNaN(feePercentage) && !isNaN(parseFloat(totalRevenue)) ? 
+    parseFloat(totalRevenue) * feePercentage / 100 : 0).toFixed(2);
   // const creatorRevenue = (parseFloat(totalRevenue) - parseFloat(platformFeeAmount)).toFixed(2);
 
   return (
@@ -267,7 +273,7 @@ export default function CreateRafflePage() {
               <input
                 type="text"
                 value={formData.tokenId}
-                onChange={(e) => handleInputChange('tokenId', e.target.value.replace(/[^0-9]/g, ''))}
+                onChange={(e) => handleInputChange('tokenId', e.target.value)}
                 placeholder="123"
                 className="w-full bg-slate-800/80 border border-emerald-400/30 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all font-mono backdrop-blur-sm shadow-lg"
               />

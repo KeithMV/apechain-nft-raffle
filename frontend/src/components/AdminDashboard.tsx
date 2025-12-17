@@ -9,8 +9,14 @@ const ADMIN_ADDRESSES: string[] = [
   // Add additional admin wallet addresses here
 ];
 
-// Validate admin addresses - use fallback for invalid configuration
-const validatedAdmins = ADMIN_ADDRESSES.filter(addr => addr && typeof addr === 'string');
+// Validate admin addresses with proper Ethereum address validation
+const isValidEthereumAddress = (addr: string): boolean => {
+  return /^0x[a-fA-F0-9]{40}$/.test(addr);
+};
+
+const validatedAdmins = ADMIN_ADDRESSES.filter(addr => 
+  addr && typeof addr === 'string' && isValidEthereumAddress(addr)
+);
 
 export default function AdminDashboard() {
   const { address } = useAccount();
