@@ -57,6 +57,7 @@ export function useWinnerSelection() {
       // Clean up stored data
       WinnerSelectionService.clearCommitData(raffleContract);
       setCommitData(null);
+      // Success toast is handled by useEmergencyWinner hook
     } catch (error) {
       toast.error('Emergency selection failed');
       throw error;

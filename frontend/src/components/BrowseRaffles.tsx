@@ -290,7 +290,12 @@ export default function BrowseRaffles() {
     
     try {
       await startWinnerSelection(raffle.raffleContract);
-      setTimeout(() => refetch(), 2000);
+      // Hook handles cache invalidation automatically
+      setProcessingRaffles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(raffle.raffleContract);
+        return newSet;
+      });
     } catch (error) {
       setProcessingRaffles(prev => {
         const newSet = new Set(prev);
@@ -305,9 +310,9 @@ export default function BrowseRaffles() {
     if (buySuccess) {
       setTicketQuantities({});
       setProcessingRaffles(new Set());
-      setTimeout(() => refetch(), 2000);
+      // Hook handles cache invalidation automatically
     }
-  }, [buySuccess, refetch]);
+  }, [buySuccess]);
 
   // Handle buy error
   useEffect(() => {

@@ -66,7 +66,7 @@ export default function RaffleDashboard() {
     setSelectingWinnerFor(raffleContract);
     try {
       await emergencyReveal(raffleContract);
-      toast.success('Winner selected!');
+      // Toast is handled by useEmergencyWinner hook
     } catch (error) {
       setSelectingWinnerFor(null);
     }
@@ -81,14 +81,13 @@ export default function RaffleDashboard() {
     }
   }, [cancelRaffle]);
 
-  // Reset button state when winner is selected
+  // Reset button state and refresh data when winner is selected
   useEffect(() => {
     if (winnerSelected) {
       setSelectingWinnerFor(null);
-      setTimeout(() => {
-        refetchPositions();
-        refetchCreatedRaffles();
-      }, 2000);
+      // Immediate refetch for better UX
+      refetchPositions();
+      refetchCreatedRaffles();
     }
   }, [winnerSelected, refetchPositions, refetchCreatedRaffles]);
 
