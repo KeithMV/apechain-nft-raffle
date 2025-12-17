@@ -11,16 +11,21 @@ export default function ApeTokenBalance({
 }: ApeTokenBalanceProps) {
   const { address } = useAccount();
   
-  // Professional wagmi hook for balance
-  const { data: balanceData, isLoading: loading } = useBalance({
+  // Professional wagmi hook for balance with error handling
+  const { data: balanceData, isLoading: loading, error } = useBalance({
     address: address as `0x${string}`,
     query: {
       enabled: !!address,
+      retry: 3,
+      retryDelay: 1000,
     },
   });
 
-  const balance = balanceData ? balanceData.formatted : '0';
-  const hasInsufficientBalance = requiredAmount && parseFloat(balance) < parseFloat(requiredAmount);
+  const balance = balanceData?.formatted || '0';
+  const hasInsufficientBalance = requiredAmount && 
+    !isNaN(parseFloat(balance)) && 
+    !isNaN(parseFloat(requiredAmount)) && 
+    parseFloat(balance) < parseFloat(requiredAmount);
 
   if (loading) {
     return (
@@ -28,6 +33,20 @@ export default function ApeTokenBalance({
         <div className="flex items-center space-x-3">
           <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
           <span className="text-slate-300">Loading APE balance...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-slate-800/50 border border-red-400/30 rounded-lg p-4">
+        <div className="flex items-center space-x-3">
+          <span className="text-red-400 text-sm">❌</span>
+          <div>
+            <p className="text-red-300 text-sm font-medium">Failed to load APE balance</p>
+            <p className="text-red-400/70 text-xs mt-1">Check your connection and try again</p>
+          </div>
         </div>
       </div>
     );

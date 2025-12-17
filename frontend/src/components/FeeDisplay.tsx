@@ -22,8 +22,8 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
   showBreakdown = false,
   className = ""
 }) => {
-  // Professional wagmi hook
-  const { data: platformFeeData, isLoading: loading } = usePlatformFee();
+  // Professional wagmi hook with error handling
+  const { data: platformFeeData, isLoading: loading, error } = usePlatformFee();
   
   // Determine current fee tier
   const getCurrentFeeTier = (basisPoints: number): FeeTier => {
@@ -71,6 +71,14 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
     return (
       <div className={`animate-pulse ${className}`}>
         <div className="h-6 bg-gray-200 rounded w-24"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`text-red-600 text-sm ${className}`}>
+        <span>⚠️ Unable to load fee information</span>
       </div>
     );
   }

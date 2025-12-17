@@ -203,10 +203,16 @@ export class ImagePreloader {
 
   private loadImage(src: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve();
-      img.onerror = reject;
-      img.src = src;
+      try {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = (error) => {
+          reject(new Error(`Failed to load image: ${src} - ${error}`));
+        };
+        img.src = src;
+      } catch (error) {
+        reject(new Error(`Image creation failed: ${error}`));
+      }
     });
   }
 }

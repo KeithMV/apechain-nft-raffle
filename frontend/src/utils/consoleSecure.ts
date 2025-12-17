@@ -28,9 +28,14 @@ export class ConsoleSecure {
       
       // Keep error logging for critical issues only
       console.error = (...args) => {
-        // Sanitize error messages to remove sensitive data
-        const sanitizedArgs = args.map(arg => this.sanitizeErrorData(arg));
-        this.originalConsole.log('ERROR:', ...sanitizedArgs);
+        try {
+          // Sanitize error messages to remove sensitive data
+          const sanitizedArgs = args.map(arg => this.sanitizeErrorData(arg));
+          this.originalConsole.log('ERROR:', ...sanitizedArgs);
+        } catch (sanitizeError) {
+          // Fallback if sanitization fails
+          this.originalConsole.log('ERROR: [Sanitization failed]', args.length, 'arguments');
+        }
       };
     }
   }
