@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import BasicNFTImage from './BasicNFTImage';
+import CopyAddress from './CopyAddress';
 import toast from 'react-hot-toast';
 import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
@@ -203,13 +204,9 @@ export default function RaffleDashboard() {
                       </div>
                       <div className="mb-3">
                         <p className="text-pink-400/70 text-xs font-mono tracking-wide mb-1">NFT Contract:</p>
-                        <p className="text-pink-400/70 text-xs font-mono tracking-wide break-all">
-                          {position.nftContract}
-                        </p>
-                        <p className="text-pink-400/70 text-xs font-mono tracking-wide mb-1 mt-2">Raffle Contract:</p>
-                        <p className="text-pink-300 text-xs font-mono tracking-wide break-all">
-                          {position.raffleContract}
-                        </p>
+                        <CopyAddress address={position.nftContract} label="NFT Contract" className="mb-2" />
+                        <p className="text-pink-400/70 text-xs font-mono tracking-wide mb-1">Raffle Contract:</p>
+                        <CopyAddress address={position.raffleContract} label="Raffle Contract" />
                       </div>
                       <div className="flex items-center space-x-3 mb-2">
                         {position.isWinner && (
@@ -287,13 +284,9 @@ export default function RaffleDashboard() {
                             </div>
                             <div className="mb-3">
                               <p className="text-pink-400/70 text-xs font-mono tracking-wide mb-1">NFT Contract:</p>
-                              <p className="text-pink-400/70 text-xs font-mono tracking-wide break-all">
-                                {raffle.nftContract}
-                              </p>
-                              <p className="text-pink-400/70 text-xs font-mono tracking-wide mb-1 mt-2">Raffle Contract:</p>
-                              <p className="text-pink-300 text-xs font-mono tracking-wide break-all">
-                                {raffle.raffleContract}
-                              </p>
+                              <CopyAddress address={raffle.nftContract} label="NFT Contract" className="mb-2" />
+                              <p className="text-pink-400/70 text-xs font-mono tracking-wide mb-1">Raffle Contract:</p>
+                              <CopyAddress address={raffle.raffleContract} label="Raffle Contract" />
                             </div>
                         <div className="flex items-center space-x-3 mb-2">
                           {raffle.completed && (
