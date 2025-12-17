@@ -154,10 +154,6 @@ function WalletConnectionContent() {
 
   return (
     <div className="flex flex-col items-end space-y-2">
-      {isMobileDevice() && connectionState === ConnectionState.DISCONNECTED && (
-        <MobileWalletSelector />
-      )}
-      
       <button
         onClick={handleConnect}
         disabled={connectionState === ConnectionState.CONNECTING}
