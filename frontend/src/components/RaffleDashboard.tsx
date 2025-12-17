@@ -201,9 +201,16 @@ export default function RaffleDashboard() {
                           NFT #{position.tokenId}
                         </h4>
                       </div>
-                      <p className="text-pink-400/70 text-sm font-mono mb-3 tracking-wide">
-                        {position.nftContract.slice(0, 6)}...{position.nftContract.slice(-4)}
-                      </p>
+                      <div className="mb-3">
+                        <p className="text-pink-400/70 text-xs font-mono tracking-wide mb-1">NFT Contract:</p>
+                        <p className="text-pink-400/70 text-xs font-mono tracking-wide break-all">
+                          {position.nftContract}
+                        </p>
+                        <p className="text-pink-400/70 text-xs font-mono tracking-wide mb-1 mt-2">Raffle Contract:</p>
+                        <p className="text-pink-300 text-xs font-mono tracking-wide break-all">
+                          {position.raffleContract}
+                        </p>
+                      </div>
                       <div className="flex items-center space-x-3 mb-2">
                         {position.isWinner && (
                           <span className="px-2 py-1 bg-pink-500/20 border border-pink-400/30 rounded-full text-pink-300 text-xs font-medium font-mono tracking-wider">
@@ -278,9 +285,16 @@ export default function RaffleDashboard() {
                                 NFT #{raffle.tokenId}
                               </h4>
                             </div>
-                            <p className="text-pink-400/70 text-sm font-mono mb-3 tracking-wide">
-                              {raffle.nftContract.slice(0, 6)}...{raffle.nftContract.slice(-4)}
-                            </p>
+                            <div className="mb-3">
+                              <p className="text-pink-400/70 text-xs font-mono tracking-wide mb-1">NFT Contract:</p>
+                              <p className="text-pink-400/70 text-xs font-mono tracking-wide break-all">
+                                {raffle.nftContract}
+                              </p>
+                              <p className="text-pink-400/70 text-xs font-mono tracking-wide mb-1 mt-2">Raffle Contract:</p>
+                              <p className="text-pink-300 text-xs font-mono tracking-wide break-all">
+                                {raffle.raffleContract}
+                              </p>
+                            </div>
                         <div className="flex items-center space-x-3 mb-2">
                           {raffle.completed && (
                             <span className="px-2 py-1 bg-pink-500/20 border border-pink-400/30 rounded-full text-pink-300 text-xs font-medium font-mono tracking-wider">
