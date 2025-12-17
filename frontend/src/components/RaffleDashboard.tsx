@@ -188,11 +188,12 @@ export default function RaffleDashboard() {
                 <div key={`${position.raffleContract}-${position.raffleId}`} className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
                   <div className="flex flex-col sm:flex-row">
-                    <div className="w-full sm:w-64 h-64 sm:h-auto">
+                    <div className="w-full sm:w-80 h-64 sm:h-80">
                       <BasicNFTImage 
                         contractAddress={position.nftContract}
                         tokenId={position.tokenId.toString()}
                         className="w-full h-full"
+                        size="lg"
                       />
                     </div>
                     <div className="relative flex-1 p-6 z-10">
@@ -262,11 +263,12 @@ export default function RaffleDashboard() {
                   <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
                     <div className="flex flex-col sm:flex-row">
-                      <div className="w-full sm:w-64 h-64 sm:h-auto">
+                      <div className="w-full sm:w-80 h-64 sm:h-80">
                         <BasicNFTImage 
                           contractAddress={raffle.nftContract}
                           tokenId={raffle.tokenId.toString()}
                           className="w-full h-full"
+                          size="lg"
                         />
                       </div>
                       <div className="relative flex-1 p-6 z-10">
