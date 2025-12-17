@@ -15,11 +15,23 @@ export default function ApeTokenBalance({
   const { data: balanceData, isLoading: loading, error } = useBalance({
     address: address as `0x${string}`,
     query: {
-      enabled: !!address,
+      enabled: !!address && address.length === 42,
       retry: 3,
       retryDelay: 1000,
     },
   });
+
+  // Handle case where address is invalid
+  if (!address) {
+    return (
+      <div className="bg-slate-800/50 border border-yellow-400/30 rounded-lg p-4">
+        <div className="flex items-center space-x-3">
+          <span className="text-yellow-400 text-sm">⚠️</span>
+          <span className="text-yellow-300 text-sm">Please connect your wallet</span>
+        </div>
+      </div>
+    );
+  }
 
   const balance = balanceData?.formatted || '0';
   const hasInsufficientBalance = requiredAmount && 
@@ -62,7 +74,13 @@ export default function ApeTokenBalance({
           <span className="text-white font-semibold">APE Balance</span>
         </div>
         <span className="text-orange-400 font-mono font-bold">
-          {apeTokenUtils.formatApe(balance)} APE
+          {(() => {
+            try {
+              return apeTokenUtils.formatApe(balance) + ' APE';
+            } catch {
+              return balance + ' APE';
+            }
+          })()}
         </span>
       </div>
 
@@ -78,7 +96,14 @@ export default function ApeTokenBalance({
               <div className="flex items-center space-x-2">
                 <span className="text-red-400 text-sm">❌</span>
                 <p className="text-red-300 text-sm">
-                  Insufficient APE balance. You need {(parseFloat(requiredAmount) - parseFloat(balance)).toFixed(3)} more APE.
+                  Insufficient APE balance. You need {(() => {
+                    try {
+                      const needed = parseFloat(requiredAmount) - parseFloat(balance);
+                      return isNaN(needed) ? '0.000' : needed.toFixed(3);
+                    } catch {
+                      return '0.000';
+                    }
+                  })()} more APE.
                 </p>
               </div>
             </div>
