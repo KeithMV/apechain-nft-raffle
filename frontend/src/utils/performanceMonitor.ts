@@ -75,7 +75,7 @@ class PerformanceMonitor {
       // Monitor memory every 30 seconds
       setInterval(() => {
         const currentMemory = (performance as any).memory.usedJSHeapSize;
-        if (currentMemory > this.metrics.memoryUsage! * 1.5) {
+        if (currentMemory > this.metrics.memoryUsage! * 1.5 && process.env.NODE_ENV === 'development') {
           console.warn('Memory usage increased significantly:', {
             previous: this.metrics.memoryUsage,
             current: currentMemory,
@@ -94,14 +94,25 @@ class PerformanceMonitor {
   }
 
   private logMetrics(event: string, data: any) {
+    // Only log in development and sanitize sensitive data
     if (process.env.NODE_ENV === 'development') {
+      const sanitizedData = this.sanitizeMetricsData(data);
       console.group(`🚀 Performance: ${event}`);
-      Object.entries(data).forEach(([key, value]) => {
+      Object.entries(sanitizedData).forEach(([key, value]) => {
         const formattedValue = typeof value === 'number' ? `${value.toFixed(2)}ms` : value;
         console.log(`${key}: ${formattedValue}`);
       });
       console.groupEnd();
     }
+  }
+
+  private sanitizeMetricsData(data: any): any {
+    const sanitized = { ...data };
+    // Remove potentially sensitive data
+    delete sanitized.userAgent;
+    delete sanitized.referrer;
+    delete sanitized.url;
+    return sanitized;
   }
 
   // Public methods for component-level tracking

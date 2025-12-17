@@ -1,8 +1,10 @@
 import { keccak256, encodePacked } from 'viem';
+import { CSRFProtection } from '../utils/csrfProtection';
 
 /**
  * Winner Selection Service - Proper commit-reveal implementation
  * Matches smart contract's keccak256 hash requirements
+ * CSRF-protected with origin validation
  */
 export class WinnerSelectionService {
   /**
@@ -22,16 +24,32 @@ export class WinnerSelectionService {
   }
 
   static storeCommitData(raffleContract: string, nonce: bigint): void {
-    localStorage.setItem(`commit_${raffleContract}`, nonce.toString());
+    CSRFProtection.validateOrigin();
+    const sanitizedContract = CSRFProtection.sanitizeContractAddress(raffleContract);
+    localStorage.setItem(`commit_${sanitizedContract}`, nonce.toString());
   }
 
   static getStoredNonce(raffleContract: string): bigint | null {
-    const stored = localStorage.getItem(`commit_${raffleContract}`);
-    return stored ? BigInt(stored) : null;
+    CSRFProtection.validateOrigin();
+    
+    try {
+      const sanitizedContract = CSRFProtection.sanitizeContractAddress(raffleContract);
+      const stored = localStorage.getItem(`commit_${sanitizedContract}`);
+      return stored ? BigInt(stored) : null;
+    } catch {
+      return null;
+    }
   }
 
   static clearCommitData(raffleContract: string): void {
-    localStorage.removeItem(`commit_${raffleContract}`);
+    CSRFProtection.validateOrigin();
+    
+    try {
+      const sanitizedContract = CSRFProtection.sanitizeContractAddress(raffleContract);
+      localStorage.removeItem(`commit_${sanitizedContract}`);
+    } catch {
+      // Silently fail for invalid addresses
+    }
   }
 
   /**

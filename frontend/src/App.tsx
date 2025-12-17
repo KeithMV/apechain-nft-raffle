@@ -9,6 +9,7 @@ import { Toaster } from 'react-hot-toast';
 import ProfessionalWalletConnection from './components/ProfessionalWalletConnection';
 import { suppressWalletConnectErrors, cleanWalletConnectStorage } from './utils/walletCleanup';
 import { ErrorBoundary, Web3ErrorBoundary } from './components/ErrorBoundary';
+import './utils/consoleSecure'; // Auto-enables production console security
 
 import './index.css';
 
