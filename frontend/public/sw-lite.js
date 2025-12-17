@@ -62,25 +62,52 @@ self.addEventListener('activate', event => {
 
 // Fetch event - serve from cache, fallback to network with security
 self.addEventListener('fetch', event => {
-  // Only cache GET requests
-  if (event.request.method !== 'GET') return;
+  // Only cache GET requests - CSRF protection
+  if (event.request.method !== 'GET') {
+    // Block all non-GET requests for security
+    event.respondWith(new Response('Method not allowed', { status: 405 }));
+    return;
+  }
   
   // Skip non-HTTP requests
   if (!event.request.url.startsWith('http')) return;
+  
+  // CSRF Protection: Validate request origin
+  const referer = event.request.headers.get('referer');
+  if (referer) {
+    const refererUrl = new URL(referer);
+    if (!isAllowedURL(refererUrl)) {
+      console.warn('[SW-Lite] Blocked request from unauthorized origin:', referer);
+      event.respondWith(new Response('Unauthorized origin', { status: 403 }));
+      return;
+    }
+  }
   
   // SSRF Protection: Validate URL
   const url = new URL(event.request.url);
   if (!isAllowedURL(url)) {
     console.warn('[SW-Lite] Blocked potentially malicious URL:', url.href);
-    event.respondWith(new Response('Blocked', { status: 403 }));
+    event.respondWith(new Response('Blocked', { 
+      status: 403,
+      headers: { 'Content-Security-Policy': "default-src 'none'" }
+    }));
     return;
   }
   
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
+        // Return cached version or fetch from network with validation
+        if (response) {
+          return response;
+        }
+        
+        // Additional SSRF check before network request
+        if (!isAllowedURL(new URL(event.request.url))) {
+          throw new Error('URL not allowed');
+        }
+        
+        return fetch(event.request);
       })
       .catch(async () => {
         // Enhanced offline fallback
