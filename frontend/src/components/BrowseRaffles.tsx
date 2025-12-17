@@ -275,6 +275,8 @@ export default function BrowseRaffles() {
     try {
       await buyTickets(raffle.raffleContract, quantity, raffle.ticketPrice);
     } catch (error) {
+      console.error('Failed to buy tickets:', error);
+      toast.error('Failed to purchase tickets. Please try again.');
       setProcessingRaffles(prev => {
         const newSet = new Set(prev);
         newSet.delete(raffle.raffleContract);
@@ -297,6 +299,8 @@ export default function BrowseRaffles() {
         return newSet;
       });
     } catch (error) {
+      console.error('Failed to start winner selection:', error);
+      toast.error('Failed to start winner selection. Please try again.');
       setProcessingRaffles(prev => {
         const newSet = new Set(prev);
         newSet.delete(raffle.raffleContract);

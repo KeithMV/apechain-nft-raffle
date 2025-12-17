@@ -18,7 +18,9 @@ export const clearWalletStorage = (): void => {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.warn(`Failed to remove ${key} from storage:`, error);
+      // Sanitize key for logging to prevent log injection
+      const sanitizedKey = key.replace(/[\r\n\t]/g, '').slice(0, 50);
+      console.warn(`Failed to remove ${sanitizedKey} from storage:`, error);
     }
   });
 };
