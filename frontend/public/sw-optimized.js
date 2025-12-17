@@ -30,7 +30,13 @@ const CACHE_STRATEGIES = {
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(STATIC_CACHE)
-      .then(cache => cache.addAll(STATIC_ASSETS))
+      .then(cache => {
+        // Only cache trusted static assets during install
+        const trustedAssets = STATIC_ASSETS.filter(asset => 
+          asset.startsWith('/') && !asset.includes('..')
+        );
+        return cache.addAll(trustedAssets);
+      })
       .then(() => self.skipWaiting())
   );
 });
@@ -40,14 +46,16 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
       .then(cacheNames => {
+        // Validate cache names before deletion to prevent CSRF
+        const validCacheNames = cacheNames.filter(cacheName => 
+          typeof cacheName === 'string' && 
+          cacheName.match(/^[a-zA-Z0-9\-_.]+$/) &&
+          cacheName !== STATIC_CACHE && 
+          cacheName !== DYNAMIC_CACHE && 
+          cacheName !== IMAGE_CACHE
+        );
         return Promise.all(
-          cacheNames
-            .filter(cacheName => 
-              cacheName !== STATIC_CACHE && 
-              cacheName !== DYNAMIC_CACHE && 
-              cacheName !== IMAGE_CACHE
-            )
-            .map(cacheName => caches.delete(cacheName))
+          validCacheNames.map(cacheName => caches.delete(cacheName))
         );
       })
       .then(() => self.clients.claim())
@@ -84,8 +92,26 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') return;
+  // CSRF Protection: Only handle GET requests and validate origin
+  if (request.method !== 'GET') {
+    const origin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
+    
+    if (!origin && !referer) {
+      event.respondWith(new Response('CSRF: Missing origin', { status: 403 }));
+      return;
+    }
+    
+    if (origin) {
+      const originUrl = new URL(origin);
+      if (!isAllowedURL(originUrl)) {
+        event.respondWith(new Response('CSRF: Invalid origin', { status: 403 }));
+        return;
+      }
+    }
+    
+    return;
+  }
   
   // SSRF Protection: Validate URL
   if (!isAllowedURL(url)) {
@@ -118,7 +144,11 @@ async function cacheFirst(request, cacheName) {
     // URL already validated in main fetch handler
     const response = await fetch(request);
     if (response.ok) {
-      cache.put(request, response.clone());
+      // CSRF Protection: Validate request before caching
+      const requestUrl = new URL(request.url);
+      if (isAllowedURL(requestUrl)) {
+        cache.put(request, response.clone());
+      }
     }
     return response;
   } catch (error) {
@@ -134,7 +164,11 @@ async function networkFirst(request, cacheName) {
     // URL already validated in main fetch handler
     const response = await fetch(request);
     if (response.ok) {
-      cache.put(request, response.clone());
+      // CSRF Protection: Validate request before caching
+      const requestUrl = new URL(request.url);
+      if (isAllowedURL(requestUrl)) {
+        cache.put(request, response.clone());
+      }
     }
     return response;
   } catch (error) {
@@ -150,7 +184,11 @@ async function staleWhileRevalidate(request, cacheName) {
   // URL already validated in main fetch handler
   const fetchPromise = fetch(request).then(response => {
     if (response.ok) {
-      cache.put(request, response.clone());
+      // CSRF Protection: Validate request before caching
+      const requestUrl = new URL(request.url);
+      if (isAllowedURL(requestUrl)) {
+        cache.put(request, response.clone());
+      }
     }
     return response;
   }).catch(() => null);
