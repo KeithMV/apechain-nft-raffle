@@ -106,6 +106,20 @@ export function useCreateRaffle() {
   }, [isSuccess, hash, invalidateAll]);
 
   const createRaffle = async (params: CreateRaffleParams) => {
+    // Validate inputs before processing
+    if (!params.ticketPrice || isNaN(parseFloat(params.ticketPrice))) {
+      throw new Error('Invalid ticket price');
+    }
+    if (!params.tokenId || isNaN(parseInt(params.tokenId))) {
+      throw new Error('Invalid token ID');
+    }
+    if (!params.maxTickets || params.maxTickets <= 0) {
+      throw new Error('Invalid max tickets');
+    }
+    if (!params.duration || params.duration <= 0) {
+      throw new Error('Invalid duration');
+    }
+    
     const ticketPriceWei = parseEther(params.ticketPrice);
     
     return await writeContractAsync({
@@ -217,6 +231,14 @@ export function useBuyTickets() {
   }, [isSuccess, hash, invalidateAll]);
 
   const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string) => {
+    // Validate inputs
+    if (!ticketPrice || isNaN(parseFloat(ticketPrice))) {
+      throw new Error('Invalid ticket price');
+    }
+    if (!quantity || quantity <= 0) {
+      throw new Error('Invalid quantity');
+    }
+    
     const ticketPriceWei = parseEther(ticketPrice);
     const totalCost = ticketPriceWei * BigInt(quantity);
     

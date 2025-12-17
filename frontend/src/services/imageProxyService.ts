@@ -14,7 +14,6 @@ export class ImageProxyService {
   private static readonly PROXY_ENDPOINTS = [
     'https://images.weserv.nl/?url=',
     'https://wsrv.nl/?url=',
-    'https://imagekit.io/url-endpoint/',
   ];
 
   private static readonly IPFS_GATEWAYS = [
@@ -32,8 +31,10 @@ export class ImageProxyService {
   private static resolveIPFS(ipfsUrl: string): string {
     if (!ipfsUrl.startsWith('ipfs://')) return ipfsUrl;
     
-    const hash = ipfsUrl.slice(7).split('/')[0]; // Handle paths in IPFS URLs
-    if (!/^[a-zA-Z0-9]{46,59}$/.test(hash)) {
+    const pathParts = ipfsUrl.slice(7).split('/');
+    const hash = pathParts[0];
+    // Support both CIDv0 (46 chars) and CIDv1 (variable length)
+    if (!/^[a-zA-Z0-9]{32,}$/.test(hash)) {
       throw new Error('Invalid IPFS hash');
     }
     
@@ -52,12 +53,13 @@ export class ImageProxyService {
       // Only allow HTTPS
       if (parsed.protocol !== 'https:') return false;
       
-      // Block private networks
+      // Block private networks and localhost
       const hostname = parsed.hostname.toLowerCase();
       if (hostname === 'localhost' || 
           hostname.startsWith('127.') ||
           hostname.startsWith('192.168.') ||
           hostname.startsWith('10.') ||
+          hostname.startsWith('172.1') || hostname.startsWith('172.2') || hostname.startsWith('172.3') ||
           hostname.includes('169.254.')) {
         return false;
       }
@@ -75,16 +77,21 @@ export class ImageProxyService {
     originalUrl: string, 
     options: ImageProxyOptions = {}
   ): string {
-    console.log(`🖼️ Processing image URL: ${originalUrl}`);
+    // Sanitize URL for logging to prevent log injection
+    const sanitizedUrl = originalUrl.replace(/[\r\n\t]/g, '').slice(0, 200);
+    console.log(`🖼️ Processing image URL: ${sanitizedUrl}`);
     try {
-      // Decode HTML entities first
-      let cleanUrl = originalUrl.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+      // Comprehensive HTML entity decoding
+      const textarea = document.createElement('textarea');
+      textarea.innerHTML = originalUrl;
+      let cleanUrl = textarea.value;
       
       // Handle IPFS URLs
       let resolvedUrl = cleanUrl;
       if (cleanUrl.startsWith('ipfs://')) {
         resolvedUrl = this.resolveIPFS(cleanUrl);
-        console.log(`📋 IPFS resolved to: ${resolvedUrl}`);
+        const sanitizedResolved = resolvedUrl.replace(/[\r\n\t]/g, '').slice(0, 200);
+        console.log(`📋 IPFS resolved to: ${sanitizedResolved}`);
       }
 
       // Validate URL
@@ -107,10 +114,12 @@ export class ImageProxyService {
       const queryString = params.toString();
       const proxyUrl = `${this.PROXY_ENDPOINTS[0]}${encodeURIComponent(resolvedUrl)}${queryString ? '&' + queryString : ''}`;
       
-      console.log(`🔗 Final proxy URL: ${proxyUrl}`);
+      const sanitizedProxyUrl = proxyUrl.replace(/[\r\n\t]/g, '').slice(0, 200);
+      console.log(`🔗 Final proxy URL: ${sanitizedProxyUrl}`);
       return proxyUrl;
     } catch (error) {
-      console.error(`❌ Image proxy failed for ${originalUrl}:`, error);
+      const sanitizedOriginal = originalUrl.replace(/[\r\n\t]/g, '').slice(0, 100);
+      console.error(`❌ Image proxy failed for ${sanitizedOriginal}:`, error);
       return '/placeholder-nft.svg';
     }
   }
@@ -141,11 +150,13 @@ export class ImageProxyService {
         urls.push(originalUrl);
       }
       
-      // Fallback 2: Alternative proxies
-      this.PROXY_ENDPOINTS.slice(1).forEach(proxy => {
-        const proxyUrl = `${proxy}${encodeURIComponent(originalUrl)}`;
-        urls.push(proxyUrl);
-      });
+      // Fallback 2: Alternative proxies with validation
+      if (this.validateImageUrl(originalUrl)) {
+        this.PROXY_ENDPOINTS.slice(1).forEach(proxy => {
+          const proxyUrl = `${proxy}${encodeURIComponent(originalUrl)}`;
+          urls.push(proxyUrl);
+        });
+      }
       
     } catch (error) {
       console.warn('Failed to generate image URLs:', error);
@@ -167,8 +178,18 @@ export class ImageProxyService {
       try {
         await new Promise<void>((resolve, reject) => {
           const img = new Image();
-          img.onload = () => resolve();
-          img.onerror = () => reject();
+          const cleanup = () => {
+            img.onload = null;
+            img.onerror = null;
+          };
+          img.onload = () => {
+            cleanup();
+            resolve();
+          };
+          img.onerror = (error) => {
+            cleanup();
+            reject(error);
+          };
           img.src = imageUrl;
         });
         return imageUrl; // Return first successful URL
