@@ -242,10 +242,7 @@ export default function CreateRafflePage() {
 
 
 
-        {/* APE Token Balance */}
-        <div className="mb-6">
-          <ApeTokenBalance />
-        </div>
+
 
         {/* NFT Details Form */}
         <div className="space-y-6">
