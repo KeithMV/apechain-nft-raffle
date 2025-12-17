@@ -9,12 +9,17 @@ export function sanitizeString(input: string): string {
     return '';
   }
   
-  return input
-    .replace(/[<>]/g, '') // Remove HTML tags
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+=/gi, '') // Remove event handlers
-    .trim()
-    .slice(0, 1000); // Limit length
+  try {
+    return input
+      .replace(/[<>]/g, '') // Remove HTML tags
+      .replace(/javascript:/gi, '') // Remove javascript: protocol
+      .replace(/on\w+=/gi, '') // Remove event handlers
+      .trim()
+      .slice(0, 1000); // Limit length
+  } catch (error) {
+    console.warn('String sanitization failed:', error);
+    return '';
+  }
 }
 
 // Sanitize and validate Ethereum addresses
