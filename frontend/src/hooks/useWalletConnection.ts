@@ -30,23 +30,47 @@ export function useWalletConnection() {
         return;
       }
       
-      // Auto-detect best desktop wallet
-      if (walletConnectionService.isMetaMaskAvailable()) {
-        walletConnectionService.logConnectionAttempt('MetaMask');
-        await connect({ connector: metaMaskConnector });
-        walletConnectionService.logConnectionSuccess('MetaMask');
-      } else if (window.ethereum?.isCoinbaseWallet) {
-        walletConnectionService.logConnectionAttempt('Coinbase');
-        await connect({ connector: coinbaseConnector });
-        walletConnectionService.logConnectionSuccess('Coinbase');
-      } else if (window.ethereum) {
-        walletConnectionService.logConnectionAttempt('Injected');
-        await connect({ connector: injectedConnector });
-        walletConnectionService.logConnectionSuccess('Injected');
+      // Detect mobile environment
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+      
+      if (isMobile) {
+        // Mobile: prioritize WalletConnect for better compatibility
+        if (window.ethereum?.isMetaMask) {
+          walletConnectionService.logConnectionAttempt('MetaMask Mobile');
+          await connect({ connector: metaMaskConnector });
+          walletConnectionService.logConnectionSuccess('MetaMask Mobile');
+        } else if (window.ethereum?.isCoinbaseWallet) {
+          walletConnectionService.logConnectionAttempt('Coinbase Mobile');
+          await connect({ connector: coinbaseConnector });
+          walletConnectionService.logConnectionSuccess('Coinbase Mobile');
+        } else if (window.ethereum) {
+          walletConnectionService.logConnectionAttempt('Mobile Injected');
+          await connect({ connector: injectedConnector });
+          walletConnectionService.logConnectionSuccess('Mobile Injected');
+        } else {
+          walletConnectionService.logConnectionAttempt('WalletConnect');
+          await connect({ connector: walletConnectConnector });
+          walletConnectionService.logConnectionSuccess('WalletConnect');
+        }
       } else {
-        walletConnectionService.logConnectionAttempt('WalletConnect');
-        await connect({ connector: walletConnectConnector });
-        walletConnectionService.logConnectionSuccess('WalletConnect');
+        // Desktop: prioritize MetaMask
+        if (walletConnectionService.isMetaMaskAvailable()) {
+          walletConnectionService.logConnectionAttempt('MetaMask');
+          await connect({ connector: metaMaskConnector });
+          walletConnectionService.logConnectionSuccess('MetaMask');
+        } else if (window.ethereum?.isCoinbaseWallet) {
+          walletConnectionService.logConnectionAttempt('Coinbase');
+          await connect({ connector: coinbaseConnector });
+          walletConnectionService.logConnectionSuccess('Coinbase');
+        } else if (window.ethereum) {
+          walletConnectionService.logConnectionAttempt('Injected');
+          await connect({ connector: injectedConnector });
+          walletConnectionService.logConnectionSuccess('Injected');
+        } else {
+          walletConnectionService.logConnectionAttempt('WalletConnect');
+          await connect({ connector: walletConnectConnector });
+          walletConnectionService.logConnectionSuccess('WalletConnect');
+        }
       }
     } catch (error) {
       const connectionError = walletConnectionService.formatConnectionError(error as Error);

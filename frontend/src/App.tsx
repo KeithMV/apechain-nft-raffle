@@ -7,6 +7,7 @@ import { config } from './config/wagmi';
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
 import ProfessionalWalletConnection from './components/ProfessionalWalletConnection';
+import MobileBanner from './components/MobileBanner';
 import { suppressWalletConnectErrors, cleanWalletConnectStorage } from './utils/walletCleanup';
 import { ErrorBoundary, Web3ErrorBoundary } from './components/ErrorBoundary';
 import './utils/consoleSecure'; // Auto-enables production console security
@@ -197,6 +198,7 @@ const ConnectWalletPage = React.memo(function ConnectWalletPage() {
       <Header />
       <Hero />
       <div className="max-w-4xl mx-auto px-4 py-12 sm:py-20 text-center">
+        <MobileBanner />
         <div className="relative bg-slate-800/80 backdrop-blur-xl border border-emerald-400/30 rounded-3xl shadow-2xl shadow-emerald-500/20 p-6 sm:p-10">
           {/* Glowing border */}
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 rounded-3xl blur-sm animate-pulse"></div>

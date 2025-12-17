@@ -76,6 +76,43 @@ export const walletConnectConnector = walletConnect({
   showQrModal: true,
   qrModalOptions: {
     themeMode: 'dark',
+    themeVariables: {
+      '--wcm-z-index': '9999'
+    },
+    mobileWallets: [
+      {
+        id: 'metamask',
+        name: 'MetaMask',
+        links: {
+          native: 'metamask://',
+          universal: 'https://metamask.app.link'
+        }
+      },
+      {
+        id: 'trust',
+        name: 'Trust Wallet', 
+        links: {
+          native: 'trust://',
+          universal: 'https://link.trustwallet.com'
+        }
+      },
+      {
+        id: 'rainbow',
+        name: 'Rainbow',
+        links: {
+          native: 'rainbow://',
+          universal: 'https://rnbwapp.com'
+        }
+      },
+      {
+        id: 'coinbase',
+        name: 'Coinbase Wallet',
+        links: {
+          native: 'cbwallet://',
+          universal: 'https://go.cb-w.com'
+        }
+      }
+    ],
     // Show only these 4 ApeChain-compatible wallets
     explorerRecommendedWalletIds: [
       'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask

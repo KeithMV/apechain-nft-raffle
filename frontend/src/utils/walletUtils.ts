@@ -31,6 +31,37 @@ export const isMetaMaskAvailable = (): boolean => {
          window.ethereum.isMetaMask;
 };
 
+export const isMobileDevice = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+};
+
+export const isMobileWalletApp = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const userAgent = navigator.userAgent;
+  return userAgent.includes('MetaMaskMobile') || 
+         userAgent.includes('Trust') ||
+         userAgent.includes('CoinbaseWallet') ||
+         userAgent.includes('Rainbow');
+};
+
+export const getMobileWalletDeepLink = (walletName: string): string => {
+  const currentUrl = encodeURIComponent(window.location.href);
+  
+  switch (walletName.toLowerCase()) {
+    case 'metamask':
+      return `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
+    case 'trust':
+      return `https://link.trustwallet.com/open_url?coin_id=60&url=${currentUrl}`;
+    case 'coinbase':
+      return `https://go.cb-w.com/dapp?cb_url=${currentUrl}`;
+    case 'rainbow':
+      return `https://rnbwapp.com/dapp?url=${currentUrl}`;
+    default:
+      return window.location.href;
+  }
+};
+
 interface WalletError {
   code?: number;
   message?: string;
