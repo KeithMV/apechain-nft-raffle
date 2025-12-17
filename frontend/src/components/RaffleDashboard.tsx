@@ -216,7 +216,7 @@ export default function RaffleDashboard() {
                           </span>
                         )}
                         {position.isActive && (
-                          <span className="px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-medium font-mono tracking-wider">
+                          <span className="px-2 py-1 bg-green-500/20 border border-green-400/30 rounded-full text-green-300 text-xs font-medium font-mono tracking-wider">
                             Active
                           </span>
                         )}
@@ -288,7 +288,7 @@ export default function RaffleDashboard() {
                             </span>
                           )}
                           {raffle.isActive && (
-                            <span className="px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-medium font-mono tracking-wider">
+                            <span className="px-2 py-1 bg-green-500/20 border border-green-400/30 rounded-full text-green-300 text-xs font-medium font-mono tracking-wider">
                               Active
                             </span>
                           )}
