@@ -62,6 +62,7 @@ export class RaffleInfrastructureStack extends cdk.Stack {
       },
       domainNames,
       certificate,
+      sslSupportMethod: cloudfront.SSLMethod.SNI,
       defaultRootObject: 'index.html',
       errorResponses: [
         {
