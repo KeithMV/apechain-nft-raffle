@@ -4,9 +4,8 @@ import { useDisconnect, useAccount } from 'wagmi';
 import { useMetaMaskSession } from '../hooks/useMetaMaskSession';
 import { ConnectionState } from '../services/walletConnectionService';
 import { WalletErrorBoundary } from './WalletErrorBoundary';
-import { formatAddress, clearWalletStorage, getConnectionErrorMessage, isMobileDevice } from '../utils/walletUtils';
+import { formatAddress, clearWalletStorage, getConnectionErrorMessage } from '../utils/walletUtils';
 import { SecurityUtils } from '../utils/security';
-import MobileWalletSelector from './MobileWalletSelector';
 import toast from 'react-hot-toast';
 
 function WalletConnectionContent() {

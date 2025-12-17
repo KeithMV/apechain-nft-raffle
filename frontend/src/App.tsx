@@ -8,7 +8,7 @@ import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
 import ProfessionalWalletConnection from './components/ProfessionalWalletConnection';
 import MobileBanner from './components/MobileBanner';
-import { suppressWalletConnectErrors, cleanWalletConnectStorage } from './utils/walletCleanup';
+import { suppressWalletConnectErrors } from './utils/walletCleanup';
 import { ErrorBoundary, Web3ErrorBoundary } from './components/ErrorBoundary';
 import './utils/consoleSecure'; // Auto-enables production console security
 
