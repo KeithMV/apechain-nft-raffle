@@ -61,6 +61,8 @@ self.addEventListener('install', event => {
       })
       .catch(error => {
         console.error('[SW] Failed to cache static assets:', error);
+        // Re-throw to prevent faulty service worker installation
+        throw error;
       })
   );
 });
@@ -113,6 +115,12 @@ self.addEventListener('fetch', event => {
 async function handleRequest(request) {
   const url = new URL(request.url);
   
+  // SSRF Protection: Validate URL
+  if (!isAllowedURL(url)) {
+    console.warn('[SW] Blocked potentially malicious URL:', url.href);
+    return new Response('Blocked', { status: 403 });
+  }
+  
   try {
     // Static assets - Cache first
     if (isStaticAsset(url)) {
@@ -148,7 +156,11 @@ async function handleRequest(request) {
     
     // Return offline page for navigation requests
     if (request.mode === 'navigate') {
-      return caches.match('/');
+      const offlinePage = await caches.match('/');
+      if (offlinePage) {
+        return offlinePage;
+      }
+      return new Response('Offline', { status: 503 });
     }
     
     // Return placeholder for failed IPFS requests
@@ -220,9 +232,45 @@ async function ipfsFirst(request, cacheName) {
     
     throw new Error(`IPFS fetch failed: ${response.status}`);
   } catch (error) {
-    // Silently handle IPFS errors to avoid console spam
+    // Log original error for debugging, then throw generic error
+    console.debug('[SW] IPFS error:', error.message);
     throw new Error('IPFS_UNAVAILABLE');
+  } finally {
+    // Ensure timeout is always cleared
+    if (typeof timeoutId !== 'undefined') {
+      clearTimeout(timeoutId);
+    }
   }
+}
+
+// SSRF Protection: URL validation
+function isAllowedURL(url) {
+  const allowedHosts = [
+    'apechainraffles.io',
+    'apechain.calderachain.xyz',
+    'localhost',
+    '127.0.0.1',
+    'ipfs.io',
+    'dweb.link',
+    'gateway.pinata.cloud',
+    'cloudflare-ipfs.com',
+    'nftstorage.link'
+  ];
+  
+  // Block private IP ranges
+  const privateIPs = /^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|127\.|169\.254\.|::1|fc00:|fe80:)/;
+  if (privateIPs.test(url.hostname)) {
+    return false;
+  }
+  
+  // Allow only HTTPS in production, HTTP for localhost
+  if (url.protocol !== 'https:' && !url.hostname.includes('localhost') && url.hostname !== '127.0.0.1') {
+    return false;
+  }
+  
+  return allowedHosts.some(host => 
+    url.hostname === host || url.hostname.endsWith('.' + host)
+  );
 }
 
 // Helper functions
@@ -276,19 +324,38 @@ function isIPFS(url) {
   );
 }
 
-// Message handling for cache management
+// Message handling for cache management with origin validation
 self.addEventListener('message', event => {
+  // Validate origin for security
+  const allowedOrigins = [
+    'https://apechainraffles.io',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000'
+  ];
+  
+  if (!allowedOrigins.includes(event.origin)) {
+    console.warn('[SW] Rejected message from unauthorized origin:', event.origin);
+    return;
+  }
+  
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
   
   if (event.data && event.data.type === 'CLEAR_CACHE') {
-    clearAllCaches();
+    clearAllCaches().catch(error => {
+      console.error('[SW] Failed to clear caches:', error);
+    });
   }
 });
 
 async function clearAllCaches() {
-  const cacheNames = await caches.keys();
-  await Promise.all(cacheNames.map(name => caches.delete(name)));
-  console.log('[SW] All caches cleared');
+  try {
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map(name => caches.delete(name)));
+    console.log('[SW] All caches cleared');
+  } catch (error) {
+    console.error('[SW] Failed to clear caches:', error);
+    throw error;
+  }
 }
