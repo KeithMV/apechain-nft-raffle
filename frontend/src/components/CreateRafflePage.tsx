@@ -13,6 +13,7 @@ import {
   sanitizeTokenId, 
   sanitizeNumber
 } from '../utils/inputSanitizer';
+import { ErrorHandler } from '../utils/errorHandler';
 
 interface FormData {
   nftContract: string;
@@ -80,11 +81,7 @@ export default function CreateRafflePage() {
   // Handle approval errors
   useEffect(() => {
     if (approvalError) {
-      if (approvalError.message?.includes('User rejected')) {
-        toast.error('Approval cancelled by user');
-      } else {
-        toast.error('Approval failed');
-      }
+      ErrorHandler.handleWalletError(approvalError);
     }
   }, [approvalError]);
 
@@ -106,53 +103,53 @@ export default function CreateRafflePage() {
   // Handle create raffle errors
   useEffect(() => {
     if (createError) {
-      if (createError.message?.includes('User rejected')) {
-        toast.error('Transaction cancelled by user');
-      } else {
-        toast.error('Failed to create raffle');
-      }
+      ErrorHandler.handleContractError(createError);
     }
   }, [createError]);
 
   const handleApproval = async () => {
     if (!formData.nftContract || !/^0x[a-fA-F0-9]{40}$/.test(formData.nftContract)) {
-      toast.error('Please enter a valid NFT contract address');
+      ErrorHandler.handleValidationError('NFT contract address', formData.nftContract);
       return;
     }
 
-    try {
-      await approveNFT(formData.nftContract);
-    } catch (error) {
-      // Error handling is done in useEffect
-    }
+    await ErrorHandler.withErrorHandling(
+      () => approveNFT(formData.nftContract),
+      ErrorHandler.handleWalletError
+    );
   };
 
   const handleCreateRaffle = async () => {
     if (createPending || createConfirming) return;
     
     if (isWrongNetwork) {
-      toast.error('Please switch to ApeChain network');
+      ErrorHandler.handleValidationError('network', 'Wrong network - please switch to ApeChain');
       return;
     }
 
     if (approvalStatus !== true) {
-      toast.error('Please approve the NFT contract first');
+      ErrorHandler.handleValidationError('NFT approval', 'Contract not approved');
+      return;
+    }
+
+    // Validate form data
+    if (!formData.nftContract || !formData.tokenId || !formData.ticketPrice || !formData.maxTickets) {
+      ErrorHandler.handleValidationError('form data', 'All fields are required');
       return;
     }
 
     const durationInSeconds = parseInt(formData.duration) * 3600;
     
-    try {
-      await createRaffle({
+    await ErrorHandler.withErrorHandling(
+      () => createRaffle({
         nftContract: formData.nftContract,
         tokenId: formData.tokenId,
         ticketPrice: formData.ticketPrice,
         maxTickets: parseInt(formData.maxTickets),
         duration: durationInSeconds
-      });
-    } catch (error) {
-      // Error handling is done in useEffect
-    }
+      }),
+      ErrorHandler.handleContractError
+    );
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
