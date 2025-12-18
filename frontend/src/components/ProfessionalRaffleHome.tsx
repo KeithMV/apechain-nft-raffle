@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import ProfessionalWalletConnection from './ProfessionalWalletConnection';
+import { WalletConnection } from './WalletConnection';
 import '../styles/professional-theme.css';
 
 interface RaffleCardProps {
@@ -144,7 +144,7 @@ const ProfessionalRaffleHome: React.FC = () => {
               </a>
             </div>
           </div>
-          <ProfessionalWalletConnection />
+          <WalletConnection />
         </div>
       </nav>
 
@@ -208,7 +208,7 @@ const ProfessionalRaffleHome: React.FC = () => {
             <p className="text-muted mb-6">
               Connect your wallet to view and participate in NFT raffles
             </p>
-            <ProfessionalWalletConnection />
+            <WalletConnection />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
