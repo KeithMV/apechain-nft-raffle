@@ -22,20 +22,6 @@ export function DesktopWalletSelector() {
       description: 'Browser extension'
     },
     {
-      name: 'Coinbase Wallet',
-      connector: availableConnectors.coinbaseConnector,
-      icon: '🔵',
-      available: !!(window as any).ethereum?.isCoinbaseWallet,
-      description: 'Browser extension'
-    },
-    {
-      name: 'Other Wallet',
-      connector: availableConnectors.injectedConnector,
-      icon: '💼',
-      available: !!(window as any).ethereum && !(window as any).ethereum?.isMetaMask && !(window as any).ethereum?.isCoinbaseWallet,
-      description: 'Brave, Opera, etc.'
-    },
-    {
       name: 'Mobile Wallets',
       connector: availableConnectors.walletConnectConnector,
       icon: '📱',
