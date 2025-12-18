@@ -17,10 +17,17 @@ export function MinimalWalletConnection() {
 
   const handleConnect = async () => {
     try {
+      console.log('Wallet detection:', {
+        hasEthereum: !!window.ethereum,
+        isMetaMask: window.ethereum?.isMetaMask,
+        isCoinbase: window.ethereum?.isCoinbaseWallet,
+        providers: window.ethereum?.providers?.length || 0
+      });
       await connect();
       toast.success('Wallet connected!');
-    } catch (error) {
-      toast.error('Connection failed');
+    } catch (error: any) {
+      console.error('Connection error:', error);
+      toast.error(error.message || 'Connection failed');
     }
   };
 
