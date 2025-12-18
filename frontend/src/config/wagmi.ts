@@ -1,6 +1,6 @@
 import { createConfig, http } from 'wagmi';
 import { defineChain } from 'viem';
-import { walletConnect, injected, coinbaseWallet } from 'wagmi/connectors';
+import { walletConnect, injected } from 'wagmi/connectors';
 
 // ApeChain configuration
 export const apeChain = defineChain({
@@ -25,23 +25,12 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-
-
 // MetaMask injected connector for desktop
 export const metaMaskConnector = injected({
-  target: 'metaMask',
+  target: 'metaMask'
 });
 
-// Coinbase Wallet for desktop
-export const coinbaseConnector = coinbaseWallet({
-  appName: 'ApeChain NFT Raffle',
-  appLogoUrl: 'https://apechainraffles.io/favicon.ico',
-});
-
-// Generic injected for other desktop wallets (Brave, etc.)
-export const injectedConnector = injected({});
-
-// WalletConnect for mobile
+// WalletConnect for mobile with filtered wallet list
 export const walletConnectConnector = walletConnect({
   projectId: 'b848c907908cee0c1bcf0ab0493da6c4',
   metadata: {
@@ -54,14 +43,22 @@ export const walletConnectConnector = walletConnect({
   },
   showQrModal: true,
   qrModalOptions: {
-    themeMode: 'dark'
+    themeMode: 'dark',
+    // Show only these 4 ApeChain-compatible wallets
+    explorerRecommendedWalletIds: [
+      'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
+      '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0', // Trust Wallet
+      '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
+      'c03dfee351b6fcc421b4494ea33b9d4b92a984f87aa76d1663bb28705e95034a'  // Coinbase Wallet
+    ],
+    explorerExcludedWalletIds: 'ALL' // Hide all others except recommended
   }
 });
 
-// Optimized config for ApeChain with basic transport (gas estimation issue is ApeChain infrastructure)
+// Optimized config for ApeChain with both desktop and mobile support
 export const config = createConfig({
   chains: [apeChain],
-  connectors: [metaMaskConnector, coinbaseConnector, injectedConnector, walletConnectConnector],
+  connectors: [metaMaskConnector, walletConnectConnector],
   transports: {
     [apeChain.id]: http(),
   },

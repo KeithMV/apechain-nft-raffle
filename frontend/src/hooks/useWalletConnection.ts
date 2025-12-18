@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { metaMaskConnector, coinbaseConnector, injectedConnector, walletConnectConnector } from '../config/wagmi';
+import { metaMaskConnector, walletConnectConnector } from '../config/wagmi';
 import { walletConnectionService, ConnectionState, ConnectionError } from '../services/walletConnectionService';
 
 const APECHAIN_ID = 33139;
@@ -30,19 +30,11 @@ export function useWalletConnection() {
         return;
       }
       
-      // Auto-detect best wallet (original working logic)
+      // Simple 2-connector logic (working version)
       if (walletConnectionService.isMetaMaskAvailable()) {
         walletConnectionService.logConnectionAttempt('MetaMask');
         await connect({ connector: metaMaskConnector });
         walletConnectionService.logConnectionSuccess('MetaMask');
-      } else if (window.ethereum?.isCoinbaseWallet) {
-        walletConnectionService.logConnectionAttempt('Coinbase');
-        await connect({ connector: coinbaseConnector });
-        walletConnectionService.logConnectionSuccess('Coinbase');
-      } else if (window.ethereum) {
-        walletConnectionService.logConnectionAttempt('Injected');
-        await connect({ connector: injectedConnector });
-        walletConnectionService.logConnectionSuccess('Injected');
       } else {
         walletConnectionService.logConnectionAttempt('WalletConnect');
         await connect({ connector: walletConnectConnector });
@@ -81,7 +73,7 @@ export function useWalletConnection() {
     connectionError,
     connect: handleConnect,
     connectWith: (connector: any) => handleConnect(connector),
-    availableConnectors: { metaMaskConnector, coinbaseConnector, injectedConnector, walletConnectConnector },
+    availableConnectors: { metaMaskConnector, walletConnectConnector },
 
     switchNetwork: handleSwitchNetwork,
     isWrongNetwork: connectionState === ConnectionState.WRONG_NETWORK,
