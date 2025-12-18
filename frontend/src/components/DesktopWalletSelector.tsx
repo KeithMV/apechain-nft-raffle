@@ -37,7 +37,7 @@ export function DesktopWalletSelector() {
     },
     {
       name: 'Mobile Wallets',
-      connector: availableConnectors.walletConnectConnector,
+      connector: null, // WalletConnect disabled
       icon: '📱',
       available: true,
       description: 'QR code connection'
