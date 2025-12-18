@@ -22,6 +22,7 @@
     "@types/react-router-dom": "^5.3.3",
     "@wagmi/connectors": "5.1.15",
     "@wagmi/core": "2.13.8",
+    "@walletconnect/modal": "^2.7.0",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.31",
     "react": "^19.2.1",

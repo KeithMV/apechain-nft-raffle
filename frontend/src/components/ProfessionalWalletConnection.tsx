@@ -6,7 +6,7 @@ import { ConnectionState } from '../services/walletConnectionService';
 import { WalletErrorBoundary } from './WalletErrorBoundary';
 import { formatAddress, clearWalletStorage, getConnectionErrorMessage } from '../utils/walletUtils';
 import { SecurityUtils } from '../utils/security';
-import { DesktopWalletSelector } from './DesktopWalletSelector';
+
 import toast from 'react-hot-toast';
 
 function WalletConnectionContent() {
@@ -154,7 +154,19 @@ function WalletConnectionContent() {
 
   return (
     <div className="flex flex-col items-end space-y-2">
-      <DesktopWalletSelector />
+      <button
+        onClick={handleConnect}
+        disabled={connectionState === ConnectionState.CONNECTING}
+        className={getButtonClassName()}
+        style={{ WebkitTapHighlightColor: 'transparent' }}
+      >
+        <span className="flex items-center justify-center space-x-2">
+          {connectionState === ConnectionState.CONNECTING && (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          )}
+          <span>{getButtonText()}</span>
+        </span>
+      </button>
       
       {connectionError && (
         <div className="text-xs text-red-400 max-w-[200px] text-right">
