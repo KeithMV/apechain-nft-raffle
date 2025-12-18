@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { metaMaskConnector, coinbaseConnector, injectedConnector, walletConnectConnector } from '../config/wagmi';
+import { metaMaskConnector, coinbaseConnector, injectedConnector } from '../config/wagmi';
 import { walletConnectionService, ConnectionState, ConnectionError } from '../services/walletConnectionService';
 
 const APECHAIN_ID = 33139;
@@ -45,7 +45,8 @@ export function useWalletConnection() {
         walletConnectionService.logConnectionSuccess('Injected');
       } else {
         walletConnectionService.logConnectionAttempt('WalletConnect');
-        await connect({ connector: walletConnectConnector });
+        // WalletConnect temporarily disabled
+        throw new Error('Mobile wallets temporarily unavailable');
         walletConnectionService.logConnectionSuccess('WalletConnect');
       }
     } catch (error) {
@@ -81,7 +82,7 @@ export function useWalletConnection() {
     connectionError,
     connect: handleConnect,
     connectWith: (connector: any) => handleConnect(connector),
-    availableConnectors: { metaMaskConnector, coinbaseConnector, injectedConnector, walletConnectConnector },
+    availableConnectors: { metaMaskConnector, coinbaseConnector, injectedConnector },
 
     switchNetwork: handleSwitchNetwork,
     isWrongNetwork: connectionState === ConnectionState.WRONG_NETWORK,

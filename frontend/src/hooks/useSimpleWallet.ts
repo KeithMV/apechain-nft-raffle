@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { metaMaskConnector, coinbaseConnector, injectedConnector, walletConnectConnector } from '../config/wagmi';
+import { metaMaskConnector, coinbaseConnector, injectedConnector } from '../config/wagmi';
 
 const APECHAIN_ID = 33139;
 
@@ -26,7 +26,8 @@ export function useSimpleWallet() {
       } else if (window.ethereum) {
         await connect({ connector: injectedConnector });
       } else {
-        await connect({ connector: walletConnectConnector });
+        // WalletConnect temporarily disabled
+        throw new Error('Mobile wallets temporarily unavailable');
       }
     } catch (error: any) {
       setError(error.message || 'Connection failed');

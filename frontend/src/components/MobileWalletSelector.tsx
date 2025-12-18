@@ -26,7 +26,7 @@ export default function MobileWalletSelector() {
     {
       name: 'WalletConnect',
       icon: '🔗',
-      connector: availableConnectors.walletConnectConnector
+      connector: null // WalletConnect disabled
     }
   ];
 
