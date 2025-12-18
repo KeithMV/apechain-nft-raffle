@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { metaMaskConnector, coinbaseConnector, injectedConnector } from '../config/wagmi';
+// Web3Modal handles all connectors automatically
 import { walletConnectionService, ConnectionState, ConnectionError } from '../services/walletConnectionService';
 
 const APECHAIN_ID = 33139;
@@ -30,25 +30,8 @@ export function useWalletConnection() {
         return;
       }
       
-      // Auto-detect best wallet (working 4-connector logic)
-      if (walletConnectionService.isMetaMaskAvailable()) {
-        walletConnectionService.logConnectionAttempt('MetaMask');
-        await connect({ connector: metaMaskConnector });
-        walletConnectionService.logConnectionSuccess('MetaMask');
-      } else if (window.ethereum?.isCoinbaseWallet) {
-        walletConnectionService.logConnectionAttempt('Coinbase');
-        await connect({ connector: coinbaseConnector });
-        walletConnectionService.logConnectionSuccess('Coinbase');
-      } else if (window.ethereum) {
-        walletConnectionService.logConnectionAttempt('Injected');
-        await connect({ connector: injectedConnector });
-        walletConnectionService.logConnectionSuccess('Injected');
-      } else {
-        walletConnectionService.logConnectionAttempt('WalletConnect');
-        // WalletConnect temporarily disabled
-        throw new Error('Mobile wallets temporarily unavailable');
-        walletConnectionService.logConnectionSuccess('WalletConnect');
-      }
+      // Web3Modal handles all wallet detection and connection
+      throw new Error('Use Web3Modal for wallet connections');
     } catch (error) {
       const connectionError = walletConnectionService.formatConnectionError(error as Error);
       setConnectionError(connectionError);
@@ -82,7 +65,7 @@ export function useWalletConnection() {
     connectionError,
     connect: handleConnect,
     connectWith: (connector: any) => handleConnect(connector),
-    availableConnectors: { metaMaskConnector, coinbaseConnector, injectedConnector },
+    // Web3Modal handles all connectors
 
     switchNetwork: handleSwitchNetwork,
     isWrongNetwork: connectionState === ConnectionState.WRONG_NETWORK,
