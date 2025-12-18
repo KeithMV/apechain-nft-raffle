@@ -74,7 +74,8 @@
     "babel-plugin-transform-imports": "^2.0.0",
     "eslint": "^8.57.0",
     "prettier": "^3.7.4",
-    "webpack-bundle-analyzer": "^5.0.1"
+    "webpack-bundle-analyzer": "^5.0.1",
+    "webpack-dev-server": "4.15.1"
   },
   "resolutions": {
     "viem": "^2.21.1",

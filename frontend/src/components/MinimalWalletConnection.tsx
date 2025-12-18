@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAccount, useDisconnect, useChainId, useSwitchChain, useConnect } from 'wagmi';
-import { apeChain, metaMaskConnector, walletConnectConnector } from '../config/wagmi';
+import { apeChain } from '../config/wagmi';
 
 export function MinimalWalletConnection() {
   const { address, isConnected } = useAccount();
@@ -20,23 +20,19 @@ export function MinimalWalletConnection() {
     }
   };
 
-  const handleConnectMetaMask = async () => {
+  const handleConnectWallet = async (connector: any) => {
     try {
-      await connect({ connector: metaMaskConnector });
+      await connect({ connector });
       setShowWallets(false);
     } catch (err) {
-      console.error('MetaMask connection failed:', err);
+      console.error('Wallet connection failed:', err);
     }
   };
 
-  const handleConnectWalletConnect = async () => {
-    try {
-      await connect({ connector: walletConnectConnector });
-      setShowWallets(false);
-    } catch (err) {
-      console.error('WalletConnect failed:', err);
-    }
-  };
+  // Get available connectors from wagmi
+  const { connectors } = useConnect();
+  const metaMaskConnector = connectors.find(c => c.name === 'MetaMask');
+  const walletConnectConnector = connectors.find(c => c.name === 'WalletConnect');
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -86,53 +82,59 @@ export function MinimalWalletConnection() {
           </div>
           
           <div className="space-y-2">
-            <button
-              onClick={handleConnectMetaMask}
-              disabled={isPending}
-              className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
-            >
-              <span className="text-2xl">🦊</span>
-              <div className="text-left">
-                <div className="text-white font-medium">MetaMask</div>
-                <div className="text-slate-400 text-sm">Desktop & Mobile</div>
-              </div>
-            </button>
+            {metaMaskConnector && (
+              <button
+                onClick={() => handleConnectWallet(metaMaskConnector)}
+                disabled={isPending}
+                className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <span className="text-2xl">🦊</span>
+                <div className="text-left">
+                  <div className="text-white font-medium">MetaMask</div>
+                  <div className="text-slate-400 text-sm">Desktop & Mobile</div>
+                </div>
+              </button>
+            )}
 
-            <button
-              onClick={handleConnectWalletConnect}
-              disabled={isPending}
-              className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
-            >
-              <span className="text-2xl">🛡️</span>
-              <div className="text-left">
-                <div className="text-white font-medium">Trust Wallet</div>
-                <div className="text-slate-400 text-sm">Mobile App</div>
-              </div>
-            </button>
+            {walletConnectConnector && (
+              <>
+                <button
+                  onClick={() => handleConnectWallet(walletConnectConnector)}
+                  disabled={isPending}
+                  className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <span className="text-2xl">🛡️</span>
+                  <div className="text-left">
+                    <div className="text-white font-medium">Trust Wallet</div>
+                    <div className="text-slate-400 text-sm">Mobile App</div>
+                  </div>
+                </button>
 
-            <button
-              onClick={handleConnectWalletConnect}
-              disabled={isPending}
-              className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
-            >
-              <span className="text-2xl">🌈</span>
-              <div className="text-left">
-                <div className="text-white font-medium">Rainbow</div>
-                <div className="text-slate-400 text-sm">Mobile App</div>
-              </div>
-            </button>
+                <button
+                  onClick={() => handleConnectWallet(walletConnectConnector)}
+                  disabled={isPending}
+                  className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <span className="text-2xl">🌈</span>
+                  <div className="text-left">
+                    <div className="text-white font-medium">Rainbow</div>
+                    <div className="text-slate-400 text-sm">Mobile App</div>
+                  </div>
+                </button>
 
-            <button
-              onClick={handleConnectWalletConnect}
-              disabled={isPending}
-              className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
-            >
-              <span className="text-2xl">💙</span>
-              <div className="text-left">
-                <div className="text-white font-medium">Coinbase Wallet</div>
-                <div className="text-slate-400 text-sm">Mobile App</div>
-              </div>
-            </button>
+                <button
+                  onClick={() => handleConnectWallet(walletConnectConnector)}
+                  disabled={isPending}
+                  className="w-full flex items-center space-x-3 p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <span className="text-2xl">💙</span>
+                  <div className="text-left">
+                    <div className="text-white font-medium">Coinbase Wallet</div>
+                    <div className="text-slate-400 text-sm">Mobile App</div>
+                  </div>
+                </button>
+              </>
+            )}
           </div>
 
           <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
