@@ -24,18 +24,6 @@ export default function MobileWalletSelector() {
       deepLink: getMobileWalletDeepLink('metamask')
     },
     {
-      name: 'Trust Wallet',
-      icon: '🛡️',
-      connector: availableConnectors.walletConnectConnector,
-      deepLink: getMobileWalletDeepLink('trust')
-    },
-    {
-      name: 'Coinbase Wallet',
-      icon: '🔵',
-      connector: availableConnectors.coinbaseConnector,
-      deepLink: getMobileWalletDeepLink('coinbase')
-    },
-    {
       name: 'WalletConnect',
       icon: '🔗',
       connector: availableConnectors.walletConnectConnector
