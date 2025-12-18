@@ -6,7 +6,7 @@ import { useAccount } from 'wagmi';
 import { config } from './config/wagmi';
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
-import ProfessionalWalletConnection from './components/ProfessionalWalletConnection';
+import { MinimalWalletConnection } from './components/MinimalWalletConnection';
 import MobileBanner from './components/MobileBanner';
 import { suppressWalletConnectErrors } from './utils/walletCleanup';
 import { ErrorBoundary, Web3ErrorBoundary } from './components/ErrorBoundary';
@@ -121,7 +121,7 @@ const Header = React.memo(function Header() {
               </div>
             )}
             <div className="flex-shrink-0">
-              <ProfessionalWalletConnection />
+              <MinimalWalletConnection />
             </div>
           </div>
         </div>
