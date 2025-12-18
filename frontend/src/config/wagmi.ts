@@ -1,6 +1,6 @@
-import { createConfig, http } from 'wagmi';
+import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
+import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defineChain } from 'viem';
-import { injected, coinbaseWallet, walletConnect } from 'wagmi/connectors';
 
 // ApeChain configuration
 export const apeChain = defineChain({
@@ -13,7 +13,10 @@ export const apeChain = defineChain({
   },
   rpcUrls: {
     default: { 
-      http: ['https://apechain.calderachain.xyz/http'] 
+      http: [
+        process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
+        'https://rpc.apechain.com'
+      ] 
     },
   },
   blockExplorers: {
@@ -22,25 +25,28 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Desktop and mobile connectors
-export const metaMaskConnector = injected({ target: 'metaMask' });
-export const coinbaseConnector = coinbaseWallet({ appName: 'ApeChain NFT Raffle' });
-export const injectedConnector = injected();
-export const walletConnectConnector = walletConnect({
-  projectId: 'b848c907908cee0c1bcf0ab0493da6c4',
-  metadata: {
-    name: 'ApeChain NFT Raffle',
-    description: 'Win exclusive NFTs on ApeChain',
-    url: 'https://apechainraffles.io',
-    icons: ['https://avatars.githubusercontent.com/u/37784886']
-  }
+// WalletConnect project ID - using the working golden build ID
+const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '7aca6566c4e099d07b70a3c27981ac9f';
+
+// Web3Modal metadata
+const metadata = {
+  name: 'ApeChain NFT Raffles',
+  description: 'Decentralized NFT raffle platform on ApeChain',
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://apechainraffles.io',
+  icons: [typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : 'https://apechainraffles.io/favicon.ico']
+};
+
+// Create wagmi config - exact golden build setup
+export const config = defaultWagmiConfig({
+  chains: [apeChain],
+  projectId,
+  metadata,
 });
 
-export const config = createConfig({
-  chains: [apeChain],
-  connectors: [metaMaskConnector, coinbaseConnector, injectedConnector, walletConnectConnector],
-  transports: {
-    [apeChain.id]: http(),
-  },
-  ssr: false,
+// Create Web3Modal - minimal golden build setup
+createWeb3Modal({
+  wagmiConfig: config,
+  projectId,
+  enableAnalytics: false,
+  themeMode: 'dark'
 });
