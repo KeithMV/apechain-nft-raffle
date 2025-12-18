@@ -73,7 +73,7 @@ export class ConsoleSecure {
   }
 }
 
-// Auto-enable in production
-if (typeof window !== 'undefined') {
-  ConsoleSecure.enableProductionMode();
-}
+// Auto-enable in production (disabled for WalletConnect compatibility)
+// if (typeof window !== 'undefined') {
+//   ConsoleSecure.enableProductionMode();
+// }

@@ -20,9 +20,16 @@ export class SecurityUtils {
     try {
       const parsed = new URL(url);
       // Only allow HTTPS and IPFS protocols
-      if (!['https:', 'ipfs:'].includes(parsed.protocol)) {
+      if (!['https:', 'ipfs:', 'wss:', 'ws:'].includes(parsed.protocol)) {
         return false;
       }
+      
+      // Allow WalletConnect domains
+      if (parsed.hostname.includes('walletconnect.org') || 
+          parsed.hostname.includes('walletconnect.com')) {
+        return true;
+      }
+      
       // Block private/local networks
       if (parsed.hostname === 'localhost' || 
           parsed.hostname.startsWith('127.') ||
