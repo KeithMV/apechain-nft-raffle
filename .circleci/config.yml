@@ -8,8 +8,8 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - yarn-cache-v1-{{ checksum "frontend/yarn.lock" }}
-            - yarn-cache-v1-
+            - yarn-cache-v2-{{ checksum "frontend/yarn.lock" }}
+            - yarn-cache-v2-
       - run:
           name: Install frontend dependencies
           command: |
@@ -20,7 +20,7 @@ jobs:
             yarn install --frozen-lockfile --registry https://registry.npmmirror.com/ --network-timeout 300000 || \
             yarn install --registry https://registry.npmjs.org/ --network-timeout 300000
       - save_cache:
-          key: yarn-cache-v1-{{ checksum "frontend/yarn.lock" }}
+          key: yarn-cache-v2-{{ checksum "frontend/yarn.lock" }}
           paths:
             - ~/.cache/yarn
       - run:
@@ -32,7 +32,16 @@ jobs:
           name: Build frontend
           command: |
             cd frontend
+            echo "🔍 Checking build configuration..."
+            echo "Node version: $(node --version)"
+            echo "Yarn version: $(yarn --version)"
+            echo "Package.json build script: $(grep '"build"' package.json)"
+            echo "Environment files:"
+            ls -la .env* || echo "No .env files found"
+            echo "🏗️ Starting build..."
             CI=false yarn build
+            echo "✅ Build complete - checking output..."
+            ls -la build/static/js/main.*.js
       - persist_to_workspace:
           root: .
           paths:
