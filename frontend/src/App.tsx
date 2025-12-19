@@ -270,14 +270,14 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={config}>
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
           <BrowserRouter>
             <RaffleApp />
             <Toaster position="top-right" />
           </BrowserRouter>
-        </WagmiProvider>
-      </QueryClientProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
     </div>
   );
 }

@@ -5,6 +5,11 @@
 const webpack = require('webpack');
 
 module.exports = {
+  devServer: {
+    setupMiddlewares: (middlewares, devServer) => {
+      return middlewares;
+    },
+  },
   webpack: {
     configure: (webpackConfig, { env, paths }) => {
       // Production optimizations
