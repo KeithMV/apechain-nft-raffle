@@ -32,7 +32,7 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
 
   if (!isOpen) return null;
 
-  const handleWalletConnect = (walletId: string) => {
+  const handleWalletConnect = async (walletId: string) => {
     let connector;
     
     if (walletId === 'metaMask') {
@@ -44,8 +44,14 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
     }
     
     if (connector) {
-      connect({ connector });
-      onClose();
+      try {
+        await connect({ connector });
+        // Only close modal after successful connection
+        onClose();
+      } catch (error) {
+        console.error('Connection failed:', error);
+        // Keep modal open on error so user can try again
+      }
     }
   };
 
@@ -79,7 +85,7 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
               key={wallet.id}
               onClick={() => handleWalletConnect(wallet.id)}
               disabled={isPending}
-              className="w-full flex items-center space-x-4 p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl hover:bg-slate-700/50 hover:border-slate-600/50 transition-all duration-200 disabled:opacity-50 group"
+              className="w-full flex items-center space-x-4 p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl hover:bg-slate-700/50 hover:border-slate-600/50 transition-all duration-200 disabled:opacity-50 group active:scale-95"
             >
               <div className="text-3xl">{wallet.icon}</div>
               <div className="flex-1 text-left">
@@ -91,9 +97,13 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                 </div>
               </div>
               <div className="text-slate-400 group-hover:text-pink-300 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                {isPending ? (
+                  <div className="w-5 h-5 border-2 border-pink-300 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                )}
               </div>
             </button>
           ))}
