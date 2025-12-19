@@ -1,6 +1,6 @@
-import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
-import { createWeb3Modal } from '@web3modal/wagmi/react';
+import { createConfig, http } from 'wagmi';
 import { defineChain } from 'viem';
+import { metaMask, walletConnect, coinbaseWallet } from 'wagmi/connectors';
 
 // ApeChain configuration
 export const apeChain = defineChain({
@@ -25,28 +25,29 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// WalletConnect project ID - using the working golden build ID
+// WalletConnect project ID
 const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '7aca6566c4e099d07b70a3c27981ac9f';
 
-// Web3Modal metadata
-const metadata = {
-  name: 'ApeChain NFT Raffles',
-  description: 'Decentralized NFT raffle platform on ApeChain',
-  url: typeof window !== 'undefined' ? window.location.origin : 'https://apechainraffles.io',
-  icons: [typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : 'https://apechainraffles.io/favicon.ico']
-};
-
-// Create wagmi config - exact golden build setup
-export const config = defaultWagmiConfig({
+// Create wagmi config with minimal connectors
+export const config = createConfig({
   chains: [apeChain],
-  projectId,
-  metadata,
-});
-
-// Create Web3Modal - minimal golden build setup
-createWeb3Modal({
-  wagmiConfig: config,
-  projectId,
-  enableAnalytics: false,
-  themeMode: 'dark'
+  connectors: [
+    metaMask(),
+    walletConnect({ 
+      projectId,
+      metadata: {
+        name: 'ApeChain NFT Raffles',
+        description: 'Decentralized NFT raffle platform on ApeChain',
+        url: typeof window !== 'undefined' ? window.location.origin : 'https://apechainraffles.io',
+        icons: [typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : 'https://apechainraffles.io/favicon.ico']
+      }
+    }),
+    coinbaseWallet({
+      appName: 'ApeChain NFT Raffles',
+      appLogoUrl: typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : 'https://apechainraffles.io/favicon.ico'
+    })
+  ],
+  transports: {
+    [apeChain.id]: http()
+  }
 });

@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAccount, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { apeChain } from '../config/wagmi';
+import { WalletModal } from './WalletModal';
 
 export function WalletConnection() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const { open } = useWeb3Modal();
+  const [showModal, setShowModal] = useState(false);
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
@@ -54,11 +54,18 @@ export function WalletConnection() {
   }
 
   return (
-    <button
-      onClick={() => open()}
-      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105"
-    >
-      Connect Wallet
-    </button>
+    <>
+      <button
+        onClick={() => setShowModal(true)}
+        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105"
+      >
+        Connect Wallet
+      </button>
+      
+      <WalletModal 
+        isOpen={showModal} 
+        onClose={() => setShowModal(false)} 
+      />
+    </>
   );
 }
