@@ -12,18 +12,24 @@ const wallets = [
     name: 'MetaMask',
     icon: '🦊',
     description: 'Most popular wallet',
+    deepLink: 'metamask://dapp/',
+    universalLink: 'https://metamask.app.link/dapp/',
   },
   {
     id: 'walletConnect',
     name: 'Trust Wallet',
     icon: '🛡️',
     description: 'Mobile-first wallet',
+    deepLink: 'trust://open_url?coin_id=60&url=',
+    universalLink: 'https://link.trustwallet.com/open_url?coin_id=60&url=',
   },
   {
     id: 'rainbow',
-    name: 'Coinbase Wallet',
-    icon: '🔵',
-    description: 'User-friendly wallet',
+    name: 'Rainbow',
+    icon: '🌈',
+    description: 'Ethereum wallet',
+    deepLink: 'rainbow://dapp?url=',
+    universalLink: 'https://rnbwapp.com/dapp?url=',
   },
 ];
 
@@ -32,7 +38,40 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
 
   if (!isOpen) return null;
 
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
+  const openMobileWallet = (wallet: typeof wallets[0]) => {
+    const currentUrl = encodeURIComponent(window.location.href);
+    const deepLink = wallet.deepLink + currentUrl;
+    const universalLink = wallet.universalLink + currentUrl;
+    
+    // Try deep link first
+    window.location.href = deepLink;
+    
+    // Fallback to universal link after short delay
+    setTimeout(() => {
+      window.location.href = universalLink;
+    }, 500);
+  };
+
   const handleWalletConnect = async (walletId: string) => {
+    const wallet = wallets.find(w => w.id === walletId);
+    
+    // On mobile, try deep links first for better UX
+    if (isMobile() && wallet) {
+      openMobileWallet(wallet);
+      // Small delay then try connector
+      setTimeout(() => {
+        connectWithConnector(walletId);
+      }, 1000);
+    } else {
+      connectWithConnector(walletId);
+    }
+  };
+
+  const connectWithConnector = async (walletId: string) => {
     let connector;
     
     if (walletId === 'metaMask') {
@@ -46,11 +85,9 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
     if (connector) {
       try {
         await connect({ connector });
-        // Only close modal after successful connection
         onClose();
       } catch (error) {
         console.error('Connection failed:', error);
-        // Keep modal open on error so user can try again
       }
     }
   };
@@ -94,6 +131,9 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                 </div>
                 <div className="text-sm text-slate-400">
                   {wallet.description}
+                  {isMobile() && (
+                    <span className="ml-2 text-xs text-emerald-400">• Mobile App</span>
+                  )}
                 </div>
               </div>
               <div className="text-slate-400 group-hover:text-pink-300 transition-colors">
