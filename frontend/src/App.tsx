@@ -3,10 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
-import { config } from './config/wagmi';
+import { config } from './config/wagmi-custom';
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
-import { WalletConnection } from './components/WalletConnection';
+import CustomWalletConnection from './components/CustomWalletConnection';
 import MobileBanner from './components/MobileBanner';
 import { suppressWalletConnectErrors } from './utils/walletCleanup';
 import { ErrorBoundary, Web3ErrorBoundary } from './components/ErrorBoundary';
@@ -121,7 +121,7 @@ const Header = React.memo(function Header() {
               </div>
             )}
             <div className="flex-shrink-0">
-              <WalletConnection />
+              <CustomWalletConnection />
             </div>
           </div>
         </div>

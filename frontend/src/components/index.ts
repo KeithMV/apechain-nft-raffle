@@ -26,3 +26,7 @@ export { default as EmergencyControls } from './EmergencyControls';
 export { default as WalletInfo } from './WalletInfo';
 export { default as ApeTokenBalance } from './ApeTokenBalance';
 export { default as MobileBanner } from './MobileBanner';
+
+// Custom Wallet Components
+export { default as CustomWalletModal } from './CustomWalletModal';
+export { default as CustomWalletConnection } from './CustomWalletConnection';
