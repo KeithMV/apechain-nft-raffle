@@ -26,7 +26,7 @@ export const apeChain = defineChain({
 });
 
 // WalletConnect project ID
-const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '7aca6566c4e099d07b70a3c27981ac9f';
+const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
 
 // Minimal Web3Modal metadata
 const metadata = {
