@@ -197,22 +197,8 @@ const ConnectWalletPage = React.memo(function ConnectWalletPage() {
     <>
       <Header />
       <Hero />
-      <div className="max-w-4xl mx-auto px-4 py-12 sm:py-20 text-center">
+      <div className="max-w-4xl mx-auto px-4 py-12">
         <MobileBanner />
-        <div className="relative bg-slate-800/80 backdrop-blur-xl border border-emerald-400/30 rounded-3xl shadow-2xl shadow-emerald-500/20 p-6 sm:p-10">
-          {/* Glowing border */}
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 rounded-3xl blur-sm animate-pulse"></div>
-          
-          <div className="relative z-10">
-            <div className="relative w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg shadow-emerald-500/30">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-2xl blur-sm animate-pulse"></div>
-              <span className="relative text-slate-900 text-xl sm:text-2xl font-bold">🔗</span>
-            </div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4 font-sans tracking-tight">Connect Your Wallet</h3>
-            <p className="text-slate-300 mb-6 sm:mb-8 text-base sm:text-lg px-2">Connect your wallet to start creating and participating in NFT raffles</p>
-            <p className="text-emerald-400 text-sm font-medium">Use the Connect Wallet button in the header above</p>
-          </div>
-        </div>
       </div>
     </>
   );
