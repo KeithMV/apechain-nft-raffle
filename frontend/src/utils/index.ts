@@ -7,7 +7,6 @@
 export { SecurityUtils } from './security';
 
 // Wallet
-export { formatAddress, clearWalletStorage, getConnectionErrorMessage, isConnectionError } from './walletUtils';
 export { cleanWalletConnectStorage, suppressWalletConnectErrors } from './walletCleanup';
 
 // Chain

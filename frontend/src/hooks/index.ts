@@ -15,6 +15,4 @@ export { useApeBalance, useApeDecimals, useApeSymbol, apeTokenUtils } from './us
 
 // Utility Hooks
 export { useAutoRefresh } from './useAutoRefresh';
-export { useMetaMaskSession } from './useMetaMaskSession';
-export { useConnectionPersistence } from './useConnectionPersistence';
-export { useApeChainConnectors } from './useApeChainConnectors';
+export { useCacheInvalidation } from './useCacheInvalidation';
