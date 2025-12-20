@@ -58,7 +58,7 @@ export class RaffleInfrastructureStack extends cdk.Stack {
           originAccessControl,
         }),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
       },
       domainNames,
       certificate,
