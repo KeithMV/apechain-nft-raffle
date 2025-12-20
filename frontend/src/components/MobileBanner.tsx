@@ -42,36 +42,37 @@ export default function MobileBanner() {
             Mobile Wallet Setup Required
           </h4>
           <p className="text-blue-300/80 text-xs mb-3 leading-relaxed">
-            To create raffles on mobile, you'll need a Web3 wallet. Choose one of these options:
+            Install a Web3 wallet to use ApeChain Raffles on mobile:
           </p>
           
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2 text-xs">
-              <span className="text-blue-400">•</span>
-              <span className="text-blue-200">Install MetaMask Mobile app and open this site in the app browser</span>
-            </div>
-            <div className="flex items-center space-x-2 text-xs">
-              <span className="text-blue-400">•</span>
-              <span className="text-blue-200">Use WalletConnect to connect your existing wallet</span>
-            </div>
-            <div className="flex items-center space-x-2 text-xs">
-              <span className="text-blue-400">•</span>
-              <span className="text-blue-200">Install Trust Wallet or Coinbase Wallet mobile apps</span>
-            </div>
-          </div>
-          
-          <div className="mt-3 flex space-x-2">
+          <div className="mt-3 space-y-2">
             <a 
               href="https://metamask.io/download/" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-200 px-3 py-1 rounded-lg border border-blue-500/30 transition-colors"
+              className="block w-full text-center text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-200 px-3 py-2 rounded-lg border border-blue-500/30 transition-colors"
             >
               Get MetaMask
             </a>
+            <a 
+              href="https://rainbow.me/download" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="block w-full text-center text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-200 px-3 py-2 rounded-lg border border-purple-500/30 transition-colors"
+            >
+              Get Rainbow
+            </a>
+            <a 
+              href="https://trustwallet.com/download" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="block w-full text-center text-xs bg-green-600/20 hover:bg-green-600/30 text-green-200 px-3 py-2 rounded-lg border border-green-500/30 transition-colors"
+            >
+              Get Trust Wallet
+            </a>
             <button 
               onClick={() => setShowBanner(false)}
-              className="text-xs bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 px-3 py-1 rounded-lg border border-gray-500/30 transition-colors"
+              className="block w-full text-center text-xs bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 px-3 py-2 rounded-lg border border-gray-500/30 transition-colors"
             >
               Dismiss
             </button>
