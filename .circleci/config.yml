@@ -25,9 +25,16 @@ jobs:
             CI=false yarn build
             echo "✅ Build hash: $(ls build/static/js/main.*.js | head -1)"
       - persist_to_workspace:
-          root: .
+          root: /tmp/workspace
           paths:
-            - frontend/build/
+            - frontend-build
+      - run:
+          name: Copy build to workspace
+          command: |
+            mkdir -p /tmp/workspace
+            cp -r frontend/build /tmp/workspace/frontend-build
+            echo "📋 Workspace contents:"
+            ls -la /tmp/workspace/frontend-build/static/js/main.*.js
 
   build-contracts:
     docker:
@@ -101,14 +108,14 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: .
+          at: /tmp/workspace
       - run:
           name: Debug workspace contents
           command: |
             echo "🔍 Debugging workspace contents..."
-            ls -la frontend/build/static/js/main.*.js || echo "No main.js found"
+            ls -la /tmp/workspace/frontend-build/static/js/main.*.js || echo "No main.js found"
             echo "📂 Full build directory:"
-            ls -la frontend/build/ | head -10
+            ls -la /tmp/workspace/frontend-build/ | head -10
       - run:
           name: Deploy to AWS S3 via CDK
           command: |
@@ -120,7 +127,7 @@ jobs:
             echo "🌐 Invalidating CloudFront: $DISTRIBUTION_ID"
             
             # Sync frontend build to S3 bucket
-            aws s3 sync frontend/build/ s3://$BUCKET_NAME --delete
+            aws s3 sync /tmp/workspace/frontend-build/ s3://$BUCKET_NAME --delete
             
             # Invalidate CloudFront cache
             aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
