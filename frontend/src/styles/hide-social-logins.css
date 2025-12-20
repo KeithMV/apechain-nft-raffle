@@ -1,0 +1,45 @@
+/* Hide social login options in Web3Modal */
+w3m-modal::part(w3m-modal),
+w3m-modal [data-testid="w3m-email-login-widget"],
+w3m-modal [data-testid="w3m-social-login-widget"],
+w3m-modal .w3m-social-login,
+w3m-modal .w3m-email-login,
+w3m-modal [data-testid="w3m-connect-email-button"],
+w3m-modal [data-testid="w3m-connect-socials-button"],
+w3m-modal wui-email-input,
+w3m-modal wui-button[data-testid*="email"],
+w3m-modal wui-button[data-testid*="social"],
+w3m-modal [data-testid*="w3m-email"],
+w3m-modal [data-testid*="w3m-social"],
+w3m-connect-button [data-testid*="email"],
+w3m-connect-button [data-testid*="social"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Hide "All Wallets" section if it shows social options */
+w3m-modal .w3m-all-wallets-view [data-testid*="social"],
+w3m-modal .w3m-all-wallets-view [data-testid*="email"],
+w3m-all-wallets-list [data-testid*="social"],
+w3m-all-wallets-list [data-testid*="email"] {
+  display: none !important;
+}
+
+/* Target Web3Modal shadow DOM */
+w3m-modal {
+  --w3m-email-display: none;
+  --w3m-social-display: none;
+}
+
+/* More aggressive hiding */
+[data-testid*="email"],
+[data-testid*="social"],
+[data-testid*="google"],
+[data-testid*="discord"],
+[data-testid*="x"],
+[data-testid*="github"] {
+  display: none !important;
+}

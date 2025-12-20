@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useConnect, useAccount } from 'wagmi';
-import { metaMask, rainbow, trustWallet } from 'wagmi/connectors';
+import { metaMask, injected, walletConnect } from 'wagmi/connectors';
 
 interface CustomWalletModalProps {
   isOpen: boolean;
@@ -41,14 +41,14 @@ const CustomWalletModal: React.FC<CustomWalletModalProps> = ({ isOpen, onClose }
       id: 'rainbow',
       name: 'Rainbow',
       icon: '🌈',
-      connector: rainbow(),
+      connector: injected({ target: 'rainbow' }),
       description: 'Connect using Rainbow wallet'
     },
     {
       id: 'trustWallet',
       name: 'Trust Wallet',
       icon: '🛡️',
-      connector: trustWallet(),
+      connector: injected({ target: 'trust' }),
       description: 'Connect using Trust Wallet'
     }
   ];
