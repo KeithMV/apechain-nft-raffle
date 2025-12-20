@@ -126,6 +126,13 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          name: Debug workspace contents
+          command: |
+            echo "🔍 Debugging workspace contents..."
+            ls -la frontend/build/static/js/main.*.js || echo "No main.js found"
+            echo "📂 Full build directory:"
+            ls -la frontend/build/ | head -10
+      - run:
           name: Deploy to AWS S3 via CDK
           command: |
             # Get CDK stack outputs
