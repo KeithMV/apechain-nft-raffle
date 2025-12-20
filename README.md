@@ -258,4 +258,4 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 # Retrigger pipeline - TypeScript 5.9.3 compatibility fix
 # Deploy mobile Safari connector fix - address-first validation pattern
 # Clean deployment trigger - Mobile Safari fix# Trigger deployment pipeline
-# Deploy security fixes - CSRF protection and access logging prevention
+# Pipeline trigger - Phase 6.9.2 deployment with clean 3-wallet selection
