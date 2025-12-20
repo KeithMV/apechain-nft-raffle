@@ -3,9 +3,9 @@
  * Implements caching strategies for static assets and API responses
  */
 
-const CACHE_NAME = 'apechain-raffles-v1.0.1';
-const STATIC_CACHE = 'static-v1.0.1';
-const DYNAMIC_CACHE = 'dynamic-v1.0.1';
+const CACHE_NAME = 'apechain-raffles-v1.0.2-FORCE-CLEAR';
+const STATIC_CACHE = 'static-v1.0.2-FORCE-CLEAR';
+const DYNAMIC_CACHE = 'dynamic-v1.0.2-FORCE-CLEAR';
 
 // Assets to cache immediately
 const STATIC_ASSETS = [
