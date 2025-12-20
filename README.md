@@ -259,3 +259,4 @@ aws cloudfront create-invalidation --distribution-id ID --paths "/*"
 # Deploy mobile Safari connector fix - address-first validation pattern
 # Clean deployment trigger - Mobile Safari fix# Trigger deployment pipeline
 # Pipeline trigger - Phase 6.9.2 deployment with clean 3-wallet selection - REDEPLOY
+# Force deployment - Local config to live
