@@ -6,51 +6,28 @@ jobs:
       - image: cimg/node:20.18
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - yarn-cache-v3-{{ checksum "frontend/yarn.lock" }}
-            - yarn-cache-v3-
       - run:
-          name: Install frontend dependencies
+          name: Install frontend dependencies (NO CACHE)
           command: |
             cd frontend
-            # Try yarn with multiple registries and network configurations
-            yarn install --frozen-lockfile --prefer-offline --network-timeout 300000 || \
-            yarn install --frozen-lockfile --registry https://registry.npmjs.org/ --network-timeout 300000 || \
-            yarn install --frozen-lockfile --registry https://registry.npmmirror.com/ --network-timeout 300000 || \
-            yarn install --registry https://registry.npmjs.org/ --network-timeout 300000
-      - save_cache:
-          key: yarn-cache-v3-{{ checksum "frontend/yarn.lock" }}
-          paths:
-            - ~/.cache/yarn
+            rm -rf node_modules yarn.lock
+            yarn install --network-timeout 300000
       - run:
           name: Run frontend tests
           command: |
             cd frontend
             yarn test --coverage --watchAll=false --passWithNoTests
       - run:
-          name: Build frontend
+          name: Build frontend (CLEAN)
           command: |
             cd frontend
-            echo "🔍 Checking build configuration..."
-            echo "Node version: $(node --version)"
-            echo "Yarn version: $(yarn --version)"
-            echo "Package.json build script: $(grep '"build"' package.json)"
-            echo "Environment files:"
-            ls -la .env* || echo "No .env files found"
-            echo "🧹 Clean build - removing old artifacts..."
             rm -rf build/ node_modules/.cache/
-            echo "🏗️ Starting clean build..."
             CI=false yarn build
-            echo "✅ Build complete - checking output..."
-            ls -la build/static/js/main.*.js
-            echo "📎 Verifying build directory for workspace persistence..."
-            ls -la build/ | head -10
+            echo "✅ Build hash: $(ls build/static/js/main.*.js | head -1)"
       - persist_to_workspace:
           root: .
           paths:
             - frontend/build/
-            - frontend/node_modules/
 
   build-contracts:
     docker:
