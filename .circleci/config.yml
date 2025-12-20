@@ -103,6 +103,18 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          name: Verify build artifacts
+          command: |
+            echo "📋 Checking workspace contents..."
+            ls -la frontend/
+            if [ -d "frontend/build" ]; then
+              echo "✅ Build directory found"
+              ls -la frontend/build/static/js/main.*.js || echo "⚠️ No main.js found"
+            else
+              echo "❌ Build directory missing"
+              exit 1
+            fi
+      - run:
           name: Deploy to AWS S3 via CDK
           command: |
             # Get CDK stack outputs
