@@ -5,7 +5,6 @@
 
 // Core Components
 export { default as UnifiedNFTImage } from './UnifiedNFTImage';
-export { default as ProfessionalWalletConnection } from './ProfessionalWalletConnection';
 export { default as RaffleDashboard } from './RaffleDashboard';
 export { default as BrowseRaffles } from './BrowseRaffles';
 export { default as CreateRafflePage } from './CreateRafflePage';
@@ -13,7 +12,6 @@ export { default as CreateRafflePage } from './CreateRafflePage';
 // UI Components
 export { default as LoadingFallback } from './LoadingFallback';
 export { ErrorBoundary, Web3ErrorBoundary } from './ErrorBoundary';
-export { WalletErrorBoundary } from './WalletErrorBoundary';
 
 // Utility Components
 export { default as NetworkStatus } from './NetworkStatus';
