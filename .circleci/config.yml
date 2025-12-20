@@ -8,8 +8,8 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - yarn-cache-v2-{{ checksum "frontend/yarn.lock" }}
-            - yarn-cache-v2-
+            - yarn-cache-v3-{{ checksum "frontend/yarn.lock" }}
+            - yarn-cache-v3-
       - run:
           name: Install frontend dependencies
           command: |
@@ -20,7 +20,7 @@ jobs:
             yarn install --frozen-lockfile --registry https://registry.npmmirror.com/ --network-timeout 300000 || \
             yarn install --registry https://registry.npmjs.org/ --network-timeout 300000
       - save_cache:
-          key: yarn-cache-v2-{{ checksum "frontend/yarn.lock" }}
+          key: yarn-cache-v3-{{ checksum "frontend/yarn.lock" }}
           paths:
             - ~/.cache/yarn
       - run:
