@@ -1,5 +1,5 @@
 import { createConfig, http } from 'wagmi';
-import { metaMask, rainbow, trustWallet } from 'wagmi/connectors';
+import { metaMask, injected, walletConnect } from 'wagmi/connectors';
 import { defineChain } from 'viem';
 
 // ApeChain configuration
@@ -30,8 +30,9 @@ export const config = createConfig({
   chains: [apeChain],
   connectors: [
     metaMask(),
-    rainbow(),
-    trustWallet()
+    injected({ target: 'rainbow' }),
+    injected({ target: 'trust' }),
+    walletConnect({ projectId: 'b848c907908cee0c1bcf0ab0493da6c4' })
   ],
   transports: {
     [apeChain.id]: http()
