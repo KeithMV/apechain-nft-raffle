@@ -38,7 +38,9 @@ jobs:
             echo "Package.json build script: $(grep '"build"' package.json)"
             echo "Environment files:"
             ls -la .env* || echo "No .env files found"
-            echo "🏗️ Starting build..."
+            echo "🧹 Clean build - removing old artifacts..."
+            rm -rf build/ node_modules/.cache/
+            echo "🏗️ Starting clean build..."
             CI=false yarn build
             echo "✅ Build complete - checking output..."
             ls -la build/static/js/main.*.js
