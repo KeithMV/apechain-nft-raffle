@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
-import BasicNFTImage from './NFTImage';
+import BasicNFTImage from './BasicNFTImage';
 import CopyAddress from './CopyAddress';
 import toast from 'react-hot-toast';
 import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
