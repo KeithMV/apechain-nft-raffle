@@ -1,8 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useNFTMetadata } from '../hooks/useNFTMetadata';
-import { SimpleImageProxy } from '../services/SimpleImageProxy';
 
-interface BasicNFTImageProps {
+interface NFTImageProps {
   contractAddress: string;
   tokenId: string;
   className?: string;
@@ -10,32 +9,47 @@ interface BasicNFTImageProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export default function BasicNFTImage({ 
+export default function NFTImage({ 
   contractAddress, 
   tokenId, 
   className = '', 
   showName = false,
   size = 'md'
-}: BasicNFTImageProps) {
+}: NFTImageProps) {
   const { metadata, loading } = useNFTMetadata(contractAddress, tokenId);
   const [imageError, setImageError] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
-
-  const imageUrls = SimpleImageProxy.getFallbackUrls(metadata?.image || '');
+  const getImageUrls = (url: string): string[] => {
+    if (!url) return ['/placeholder-nft.svg'];
+    
+    const urls: string[] = [];
+    
+    // IPFS URLs - try multiple gateways
+    if (url.startsWith('ipfs://')) {
+      const path = url.slice(7);
+      const gateways = [
+        'https://ipfs.io/ipfs/',
+        'https://cloudflare-ipfs.com/ipfs/',
+        'https://gateway.pinata.cloud/ipfs/'
+      ];
+      gateways.forEach(gateway => urls.push(`${gateway}${path}`));
+    } else {
+      urls.push(url);
+    }
+    
+    urls.push('/placeholder-nft.svg');
+    return urls;
+  };
 
   const handleImageError = useCallback(() => {
-    if (currentUrlIndex < imageUrls.length - 1) {
-      setCurrentUrlIndex(prev => prev + 1);
+    const imageUrls = getImageUrls(metadata?.image || '');
+    if (currentImageIndex < imageUrls.length - 1) {
+      setCurrentImageIndex(prev => prev + 1);
     } else {
       setImageError(true);
     }
-  }, [currentUrlIndex, imageUrls.length]);
-
-  const getImageUrl = () => {
-    if (imageError) return '/placeholder-nft.svg';
-    return imageUrls[currentUrlIndex] || '/placeholder-nft.svg';
-  };
+  }, [metadata?.image, currentImageIndex]);
 
   const sizeClasses = {
     sm: 'w-16 h-16',
@@ -51,10 +65,13 @@ export default function BasicNFTImage({
     );
   }
 
+  const imageUrls = getImageUrls(metadata?.image || '');
+  const currentImageUrl = imageUrls[currentImageIndex];
+
   return (
     <div className={`${className} relative overflow-hidden rounded-xl bg-slate-900/50`}>
       <img
-        src={getImageUrl()}
+        src={currentImageUrl}
         alt={metadata?.name || `NFT #${tokenId}`}
         className={`${sizeClasses[size]} object-cover`}
         onError={handleImageError}
