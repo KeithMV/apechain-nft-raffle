@@ -9,6 +9,7 @@ import { Toaster } from 'react-hot-toast';
 import { WalletConnection } from './components/WalletConnection';
 import MobileBanner from './components/MobileBanner';
 import { suppressWalletConnectErrors } from './utils/walletCleanup';
+import { suppressWeb3ModalWarnings } from './utils/suppressWarnings';
 import { ErrorBoundary, Web3ErrorBoundary } from './components/ErrorBoundary';
 import './utils/consoleSecure'; // Auto-enables production console security
 
@@ -252,6 +253,9 @@ function App() {
   useEffect(() => {
     // Suppress WalletConnect console errors
     suppressWalletConnectErrors();
+    
+    // Suppress Web3Modal font warnings
+    suppressWeb3ModalWarnings();
   }, []);
 
   return (
