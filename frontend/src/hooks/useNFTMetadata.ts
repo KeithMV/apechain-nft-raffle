@@ -81,156 +81,54 @@ async function fetchNFTMetadata(
     throw new Error('Invalid contract address or token ID');
   }
   
-  // Get tokenURI from contract
-  const tokenURI = await publicClient.readContract({
-    address: contractAddress as `0x${string}`,
-    abi: [
-      {
-        inputs: [{ name: 'tokenId', type: 'uint256' }],
-        name: 'tokenURI',
-        outputs: [{ name: '', type: 'string' }],
-        stateMutability: 'view',
-        type: 'function',
-      },
-    ],
-    functionName: 'tokenURI',
-    args: [BigInt(tokenId)],
-  });
+  try {
+    // Get tokenURI from contract
+    const tokenURI = await publicClient.readContract({
+      address: contractAddress as `0x${string}`,
+      abi: [
+        {
+          inputs: [{ name: 'tokenId', type: 'uint256' }],
+          name: 'tokenURI',
+          outputs: [{ name: '', type: 'string' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+      ],
+      functionName: 'tokenURI',
+      args: [BigInt(tokenId)],
+    });
 
-  if (!tokenURI || typeof tokenURI !== 'string') {
-    console.error(`❌ No token URI found for ${contractAddress} #${tokenId}`);
-    throw new Error('No token URI found');
-  }
-  
-  // Validate tokenURI
-  if (!validateUrl(tokenURI)) {
-    console.error(`❌ Invalid token URI: ${tokenURI}`);
-    throw new Error('Invalid or unsafe token URI');
-  }
-
-  // Try multiple proxy services for better reliability
-  const proxyServices = [
-    `https://api.allorigins.win/get?url=${encodeURIComponent(tokenURI)}`,
-    `https://corsproxy.io/?${encodeURIComponent(tokenURI)}`,
-    `https://cors-anywhere.herokuapp.com/${tokenURI}`
-  ];
-  
-  let data;
-  let proxyError;
-  
-  // Try each proxy service
-  for (const proxyUrl of proxyServices) {
-    try {
-      const response = await fetch(proxyUrl, {
-        signal: AbortSignal.timeout(8000),
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'NFT-Raffle-App/1.0'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Proxy request failed: ${response.status}`);
-      }
-      
-      if (proxyUrl.includes('allorigins.win')) {
-        const proxyData = await response.json();
-        if (!proxyData.contents) {
-          throw new Error('No content in proxy response');
-        }
-        data = JSON.parse(proxyData.contents);
-      } else {
-        // Direct response from other proxies
-        const text = await response.text();
-        data = JSON.parse(text);
-      }
-      
-      break;
-      
-    } catch (error) {
-      proxyError = error;
-      continue;
+    if (!tokenURI || typeof tokenURI !== 'string') {
+      throw new Error('No token URI found');
     }
-  }
-  
-  if (!data) {
-    // All proxies failed, trying direct fetch
     
-    // Fallback to direct fetch for IPFS URLs
+    // Simple IPFS handling - only use ipfs.io gateway
+    let metadataUrl = tokenURI;
     if (tokenURI.startsWith('ipfs://')) {
-      const ipfsPath = tokenURI.slice(7);
-      const ipfsGateways = [
-        'https://cloudflare-ipfs.com/ipfs/',
-        'https://gateway.pinata.cloud/ipfs/',
-        'https://dweb.link/ipfs/'
-      ];
-      
-      for (const gateway of ipfsGateways) {
-        try {
-          const directUrl = `${gateway}${ipfsPath}`;
-          const response = await fetch(directUrl, {
-            signal: AbortSignal.timeout(8000),
-            headers: {
-              'Accept': 'application/json',
-              'Cache-Control': 'public, max-age=3600'
-            }
-          });
-          
-          if (response.ok) {
-            const text = await response.text();
-            data = JSON.parse(text);
-            break;
-          }
-        } catch (err) {
-          continue;
-        }
-      }
+      metadataUrl = `https://ipfs.io/ipfs/${tokenURI.slice(7)}`;
     }
     
-    if (!data) {
-      throw new Error('All metadata fetch attempts failed');
+    // Single fetch attempt with timeout
+    const response = await fetch(metadataUrl, {
+      signal: AbortSignal.timeout(5000),
+      headers: { 'Accept': 'application/json' }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Fetch failed: ${response.status}`);
     }
+    
+    const data = await response.json();
+    return sanitizeMetadata(data);
+    
+  } catch (error) {
+    // Return fallback metadata instead of throwing
+    return {
+      name: `NFT #${tokenId}`,
+      image: '/placeholder-nft.svg',
+      description: 'Metadata unavailable'
+    };
   }
-  
-  // Sanitize and validate metadata
-  const sanitizedData = sanitizeMetadata(data);
-  
-  // Process image URL securely
-  let imageUrl = sanitizedData.image;
-  const imageAlternatives: string[] = [];
-  
-  if (imageUrl?.startsWith('ipfs://')) {
-    const ipfsPath = imageUrl.slice(7);
-    const ipfsHash = ipfsPath.split('/')[0];
-    // Validate IPFS hash format (support both v0 and v1)
-    if (!/^[a-zA-Z0-9]{46,59}$/.test(ipfsHash) && !/^[a-z2-7]{59}$/.test(ipfsHash)) {
-      console.warn('Invalid IPFS hash format:', ipfsHash);
-      imageUrl = '/placeholder-nft.svg';
-    } else {
-      // Keep original URL for proxy service to handle
-      imageUrl = imageUrl;
-    }
-  } else if (imageUrl?.startsWith('ar://')) {
-    // Arweave URLs
-    const arweaveId = imageUrl.slice(5);
-    imageUrl = `https://arweave.net/${arweaveId}`;
-  } else if (imageUrl?.startsWith('data:image/')) {
-    // Data URLs are valid
-    // Keep as is
-  } else if (imageUrl && !validateUrl(imageUrl)) {
-    console.warn('Invalid image URL:', imageUrl);
-    imageUrl = '/placeholder-nft.svg';
-  }
-
-  const processedMetadata: NFTMetadata = {
-    name: sanitizedData.name,
-    description: sanitizedData.description,
-    image: imageUrl || '/placeholder-nft.svg',
-    imageAlternatives,
-    attributes: sanitizedData.attributes,
-  };
-
-  return processedMetadata;
 }
 
 export function useNFTMetadata(contractAddress: string, tokenId: string) {
@@ -253,16 +151,7 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
     enabled: !!publicClient && !!contractAddress && !!tokenId,
     staleTime: 60 * 60 * 1000, // 1 hour - NFT metadata rarely changes
     gcTime: 24 * 60 * 60 * 1000, // 24 hours - keep in memory much longer
-    retry: (failureCount, error) => {
-      // Don't retry CORS errors or 404s
-      if (error?.message?.includes('CORS') || 
-          error?.message?.includes('404') || 
-          error?.message?.includes('invalid') ||
-          error?.message?.includes('ERR_FAILED')) {
-        return false;
-      }
-      return failureCount < 1; // Reduce retries
-    },
+    retry: false, // Disable retries to reduce console spam
     retryDelay: 2000, // Fixed delay
     placeholderData: {
       name: `NFT #${tokenId}`,
