@@ -112,7 +112,7 @@ async function fetchNFTMetadata(
     
     // Try fetching metadata with multiple attempts
     let data;
-    const metadataUrls = [];
+    const metadataUrls: string[] = [];
     
     if (tokenURI.startsWith('ipfs://')) {
       const path = tokenURI.slice(7);
