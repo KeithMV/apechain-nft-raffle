@@ -122,7 +122,8 @@ export function useAllRaffles(limit: number = 20, offset: number = 0) {
       const processedRaffles: CreatedRaffle[] = raffleInfos.map((result: any, index) => {
         const now = Date.now() / 1000;
         const endTime = Number(result.endTime);
-        const isActive = now < endTime;
+        const isSoldOut = Number(result.ticketsSold) >= Number(result.maxTickets);
+        const isActive = now < endTime && !result.completed && !isSoldOut;
         
         return {
           raffleId: startIndex + index,
@@ -270,7 +271,8 @@ export function useUserRafflePositions(userAddress?: string) {
         if (Number(userTickets) > 0) {
           const now = Date.now() / 1000;
           const endTime = Number(raffle.endTime);
-          const isActive = now < endTime;
+          const isSoldOut = Number(raffle.ticketsSold) >= Number(raffle.maxTickets);
+          const isActive = now < endTime && !raffle.completed && !isSoldOut;
           const isWinner = raffle.winner?.toLowerCase() === userAddress.toLowerCase();
           const winProbability = (Number(userTickets) / Number(raffle.maxTickets)) * 100;
 
@@ -405,7 +407,8 @@ export function useCreatedRaffles(userAddress?: string, page: number = 0) {
         if (raffle.creator.toLowerCase() === userAddress.toLowerCase()) {
           const now = Date.now() / 1000;
           const endTime = Number(raffle.endTime);
-          const isActive = now < endTime;
+          const isSoldOut = Number(raffle.ticketsSold) >= Number(raffle.maxTickets);
+          const isActive = now < endTime && !raffle.completed && !isSoldOut;
 
           createdRaffles.push({
             raffleId: i,
