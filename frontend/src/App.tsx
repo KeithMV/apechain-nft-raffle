@@ -175,7 +175,7 @@ const Hero = React.memo(function Hero() {
               </div>
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-teal-400 rounded-full mr-2 animate-pulse shadow-sm shadow-teal-400/50"></div>
-                <span className="text-teal-400 font-medium tracking-wider">10% Platform Fee</span>
+                <span className="text-teal-400 font-medium tracking-wider">5% Platform Fee</span>
               </div>
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-cyan-400 rounded-full mr-2 animate-pulse shadow-sm shadow-cyan-400/50"></div>

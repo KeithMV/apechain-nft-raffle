@@ -5,7 +5,7 @@ const { ethers } = require("hardhat");
  * Supports tiered fee structure: 1%, 5%, 10%, 20%
  */
 
-const FACTORY_ADDRESS = "0x0D0cd14b36B5FBb10F274cd3EC2FA3bBa79FC900";
+const FACTORY_ADDRESS = "0x1dC9F6Cc2e53558a940a7Cd87d6e5fbE2A8635ff";
 
 // Professional fee tiers (basis points)
 const FEE_TIERS = {
@@ -17,7 +17,7 @@ const FEE_TIERS = {
 
 async function getCurrentFee() {
   const [deployer] = await ethers.getSigners();
-  const RaffleFactorySecure = await ethers.getContractFactory("RaffleFactorySecure");
+  const RaffleFactorySecure = await ethers.getContractFactory("RaffleFactorySecureV3");
   const factory = RaffleFactorySecure.attach(FACTORY_ADDRESS);
   
   const currentFee = await factory.platformFee();
@@ -38,7 +38,7 @@ async function updateFee(feeType) {
   console.log("Updating with account:", deployer.address);
   console.log("Account balance:", ethers.utils.formatEther(await deployer.getBalance()), "APE\n");
   
-  const RaffleFactorySecure = await ethers.getContractFactory("RaffleFactorySecure");
+  const RaffleFactorySecure = await ethers.getContractFactory("RaffleFactorySecureV3");
   const factory = RaffleFactorySecure.attach(FACTORY_ADDRESS);
   
   const newFee = FEE_TIERS[feeType.toUpperCase()];
