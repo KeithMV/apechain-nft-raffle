@@ -312,7 +312,7 @@ export default function RaffleDashboard() {
                           </div>
                           <div>
                             <p className="text-pink-400/70 font-mono tracking-wide">Your Revenue</p>
-                            <p className="text-pink-300 font-mono tracking-wider">{(parseFloat(raffle.ticketPrice) * raffle.ticketsSold * 0.9).toFixed(2)} APE</p>
+                            <p className="text-pink-300 font-mono tracking-wider">{(parseFloat(raffle.ticketPrice) * raffle.ticketsSold * 0.95).toFixed(2)} APE</p>
                           </div>
                           <div>
                             <p className="text-pink-400/70 font-mono tracking-wide">Status</p>
