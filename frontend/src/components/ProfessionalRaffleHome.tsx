@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { WalletConnection } from './WalletConnection';
+import BasicNFTImage from './BasicNFTImage';
 import '../styles/professional-theme.css';
 
 interface RaffleCardProps {
   id: number;
   nftName: string;
-  nftImage: string;
+  nftContract: string;
+  tokenId: string;
   ticketPrice: string;
   ticketsSold: number;
   maxTickets: number;
@@ -16,7 +18,8 @@ interface RaffleCardProps {
 
 const RaffleCard: React.FC<RaffleCardProps> = ({
   nftName,
-  nftImage,
+  nftContract,
+  tokenId,
   ticketPrice,
   ticketsSold,
   maxTickets,
@@ -28,14 +31,11 @@ const RaffleCard: React.FC<RaffleCardProps> = ({
   return (
     <div className="card">
       <div className="mb-4">
-        <img 
-          src={nftImage} 
-          alt={nftName}
-          className="w-full h-48 object-cover rounded-lg bg-neutral-800"
-          onError={(e) => {
-            // Set fallback image on error
-            e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjMjcyNzJhIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNzE3MTdhIiBmb250LXNpemU9IjE0Ij5ORlQ8L3RleHQ+Cjwvc3ZnPg==';
-          }}
+        <BasicNFTImage 
+          contractAddress={nftContract}
+          tokenId={tokenId}
+          className="w-full h-48 rounded-lg"
+          size="lg"
         />
       </div>
       
@@ -90,7 +90,8 @@ const ProfessionalRaffleHome: React.FC = () => {
       {
         id: 1,
         nftName: "Bored Ape #1234",
-        nftImage: "https://via.placeholder.com/300x300/27272a/71717a?text=NFT",
+        nftContract: "0x6f2A21A8B9CF699d7D3A713a9d7cFbB9E9760f97",
+        tokenId: "1234",
         ticketPrice: "0.1",
         ticketsSold: 45,
         maxTickets: 100,
@@ -100,7 +101,8 @@ const ProfessionalRaffleHome: React.FC = () => {
       {
         id: 2,
         nftName: "CryptoPunk #5678",
-        nftImage: "https://via.placeholder.com/300x300/27272a/71717a?text=NFT",
+        nftContract: "0xDe970C730cD7056B654b12366ADEE48d21ea2c23",
+        tokenId: "5678",
         ticketPrice: "0.05",
         ticketsSold: 78,
         maxTickets: 150,
@@ -110,7 +112,8 @@ const ProfessionalRaffleHome: React.FC = () => {
       {
         id: 3,
         nftName: "Azuki #9999",
-        nftImage: "https://via.placeholder.com/300x300/27272a/71717a?text=NFT",
+        nftContract: "0x75f511bd8D4Ba4Ad48060E59F189B12810509228",
+        tokenId: "9999",
         ticketPrice: "0.25",
         ticketsSold: 12,
         maxTickets: 50,
