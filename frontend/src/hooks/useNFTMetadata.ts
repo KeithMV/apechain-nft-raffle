@@ -105,7 +105,7 @@ async function fetchNFTMetadata(
     // Try multiple approaches for metadata URL
     let metadataUrl = tokenURI;
     if (tokenURI.startsWith('ipfs://')) {
-      // Try proxy service for IPFS metadata
+    // Try proxy service for IPFS metadata
       const ipfsPath = tokenURI.slice(7);
       metadataUrl = `https://ipfs.io/ipfs/${ipfsPath}`;
     }
@@ -118,8 +118,8 @@ async function fetchNFTMetadata(
       const path = tokenURI.slice(7);
       metadataUrls.push(
         `https://ipfs.io/ipfs/${path}`,
-        `https://cloudflare-ipfs.com/ipfs/${path}`,
-        `https://gateway.pinata.cloud/ipfs/${path}`
+        `https://gateway.pinata.cloud/ipfs/${path}`,
+        `https://dweb.link/ipfs/${path}`
       );
     } else {
       metadataUrls.push(tokenURI);
