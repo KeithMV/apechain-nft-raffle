@@ -42,13 +42,14 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
   const isExpired = !raffle.isActive;
 
   return (
-    <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className={`relative bg-slate-800/60 border rounded-2xl overflow-hidden transition-all duration-300 group ${
+    <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className={`relative bg-black/80 backdrop-blur-xl border rounded-xl overflow-hidden transition-all duration-300 group shadow-lg ${
       isExpired 
         ? 'border-slate-600/30 opacity-75' 
-        : 'border-emerald-400/20 hover:border-emerald-400/50 hover:shadow-lg hover:shadow-emerald-500/20'
+        : 'border-cyan-500/30 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/20'
     }`}>
+      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
       {!isExpired && (
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       )}
       {/* NFT Image */}
       <div className="relative">
@@ -59,8 +60,8 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
           showName={true}
           size="lg"
         />
-        <div className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm border border-emerald-400/30 rounded-xl px-3 py-2">
-          <p className="text-emerald-300 font-semibold text-sm">{raffle.ticketPrice} APE</p>
+        <div className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm border border-cyan-400/30 rounded-xl px-3 py-2">
+          <p className="text-cyan-300 font-semibold text-sm">{raffle.ticketPrice} APE</p>
           <p className="text-slate-400 text-xs">per ticket</p>
         </div>
         {isExpired && (
@@ -73,10 +74,10 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
       <div className="relative z-10 p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h4 className="text-lg font-semibold text-white mb-1">
+            <h4 className="text-lg font-semibold text-pink-300 mb-1 font-mono tracking-wider">
               NFT #{raffle.tokenId}
             </h4>
-            <p className="text-slate-400 text-xs font-mono break-all">
+            <p className="text-pink-400/70 text-xs font-mono break-all">
               {raffle.nftContract}
             </p>
           </div>
@@ -85,15 +86,15 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
         {/* Progress Bar */}
         <div className="mb-4">
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-slate-400">{isExpired ? 'Final Results' : 'Tickets Available'}</span>
-            <span className="text-white">{isExpired ? `${raffle.ticketsSold}/${raffle.maxTickets} sold` : `${availableTickets}/${raffle.maxTickets}`}</span>
+            <span className="text-pink-400/70 font-mono tracking-wide">{isExpired ? 'Final Results' : 'Tickets Available'}</span>
+            <span className="text-pink-300 font-mono tracking-wider">{isExpired ? `${raffle.ticketsSold}/${raffle.maxTickets} sold` : `${availableTickets}/${raffle.maxTickets}`}</span>
           </div>
           <div className="w-full bg-slate-700/50 rounded-full h-3">
             <div 
               className={`h-3 rounded-full transition-all duration-300 shadow-sm ${
                 isExpired 
                   ? 'bg-gradient-to-r from-slate-500 to-slate-600 shadow-slate-500/50' 
-                  : 'bg-gradient-to-r from-emerald-400 to-teal-400 shadow-emerald-400/50'
+                  : 'bg-gradient-to-r from-cyan-400 to-blue-400 shadow-cyan-400/50'
               }`}
               style={{ width: `${progress}%` }}
             ></div>
@@ -103,16 +104,16 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
           <div>
-            <p className="text-slate-400">{isExpired ? 'Status' : 'Time Left'}</p>
-            <p className={`font-mono ${
-              isExpired ? 'text-red-300' : 'text-white'
+            <p className="text-pink-400/70 font-mono tracking-wide">{isExpired ? 'Status' : 'Time Left'}</p>
+            <p className={`font-mono tracking-wider ${
+              isExpired ? 'text-red-300' : 'text-pink-300'
             }`}>
               {isExpired ? 'Ended' : formatTimeRemaining(raffle.endTime)}
             </p>
           </div>
           <div>
-            <p className="text-slate-400">{isExpired ? 'Winner' : 'Win Chance'}</p>
-            <p className="text-white font-mono">
+            <p className="text-pink-400/70 font-mono tracking-wide">{isExpired ? 'Winner' : 'Win Chance'}</p>
+            <p className="text-pink-300 font-mono tracking-wider">
               {isExpired 
                 ? (raffle.winner && raffle.winner !== '0x0000000000000000000000000000000000000000' 
                     ? `${raffle.winner.slice(0, 6)}...${raffle.winner.slice(-4)}` 
@@ -175,26 +176,26 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
             <>
               <div className="flex items-center space-x-3 mb-3">
                 <div className="flex-1">
-                  <label className="block text-xs text-slate-400 mb-1">Quantity</label>
+                  <label className="block text-xs text-pink-400/70 font-mono tracking-wide mb-1">Quantity</label>
                   <input
                     type="number"
                     min="1"
                     max={Math.min(100, availableTickets)}
                     value={quantity}
                     onChange={(e) => setTicketQuantity(raffle.raffleContract, parseInt(e.target.value) || 1, availableTickets)}
-                    className="w-full bg-slate-800/80 border border-emerald-400/30 rounded-xl px-3 py-2 text-slate-100 text-sm font-mono focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 focus:outline-none transition-all"
+                    className="w-full bg-slate-800/80 border border-cyan-400/30 rounded-xl px-3 py-2 text-pink-300 text-sm font-mono focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition-all"
                   />
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-slate-400 mb-1">Total Cost</p>
-                  <p className="text-white font-semibold">{totalCost} APE</p>
+                  <p className="text-xs text-pink-400/70 font-mono tracking-wide mb-1">Total Cost</p>
+                  <p className="text-pink-300 font-semibold font-mono tracking-wider">{totalCost} APE</p>
                 </div>
               </div>
               
               <button
                 onClick={() => handleBuyTickets(raffle)}
                 disabled={processingRaffles.has(raffle.raffleContract) || availableTickets === 0}
-                className="relative w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 overflow-hidden group shadow-lg hover:shadow-emerald-500/25"
+                className="relative w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 overflow-hidden group shadow-lg hover:shadow-cyan-500/25 font-mono tracking-wider"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 {processingRaffles.has(raffle.raffleContract) ? (
