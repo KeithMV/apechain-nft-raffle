@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNFTMetadata } from '../hooks/useNFTMetadata';
 import { SimpleImageProxy } from '../services/SimpleImageProxy';
 
@@ -23,6 +23,14 @@ export default function BasicNFTImage({
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
 
   const imageUrls = SimpleImageProxy.getFallbackUrls(metadata?.image || '');
+
+  // Reset URL index when metadata loads
+  useEffect(() => {
+    if (metadata?.image && metadata.image !== '/placeholder-nft.svg') {
+      setCurrentUrlIndex(0);
+      setImageError(false);
+    }
+  }, [metadata?.image]);
 
   const handleImageError = useCallback(() => {
     if (currentUrlIndex < imageUrls.length - 1) {
