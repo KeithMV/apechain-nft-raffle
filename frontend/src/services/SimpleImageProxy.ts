@@ -32,19 +32,25 @@ export class SimpleImageProxy {
     if (!originalUrl) return ['/placeholder-nft.svg'];
     
     const urls: string[] = [];
+    console.log('🔗 Generating fallback URLs for:', originalUrl);
     
     if (originalUrl.startsWith('ipfs://')) {
       const path = originalUrl.slice(7);
       // Try each gateway through proxy
-      this.IPFS_GATEWAYS.forEach(gateway => {
+      this.IPFS_GATEWAYS.forEach((gateway, index) => {
         const directUrl = `${gateway}${path}`;
-        urls.push(`${this.PROXY_URL}${encodeURIComponent(directUrl)}`);
+        const proxiedUrl = `${this.PROXY_URL}${encodeURIComponent(directUrl)}`;
+        urls.push(proxiedUrl);
+        console.log(`🌐 IPFS Gateway ${index + 1}:`, proxiedUrl);
       });
     } else {
-      urls.push(`${this.PROXY_URL}${encodeURIComponent(originalUrl)}`);
+      const proxiedUrl = `${this.PROXY_URL}${encodeURIComponent(originalUrl)}`;
+      urls.push(proxiedUrl);
+      console.log('🌐 Direct URL:', proxiedUrl);
     }
     
     urls.push('/placeholder-nft.svg');
+    console.log('📋 Total URLs generated:', urls.length);
     return urls;
   }
 }
