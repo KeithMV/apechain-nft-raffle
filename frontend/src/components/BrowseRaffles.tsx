@@ -94,7 +94,7 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
               className={`h-3 rounded-full transition-all duration-300 shadow-sm ${
                 isExpired 
                   ? 'bg-gradient-to-r from-slate-500 to-slate-600 shadow-slate-500/50' 
-                  : 'bg-gradient-to-r from-cyan-400 to-blue-400 shadow-cyan-400/50'
+                  : 'bg-gradient-to-r from-emerald-400 to-green-400 shadow-emerald-400/50'
               }`}
               style={{ width: `${progress}%` }}
             ></div>
@@ -195,9 +195,9 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
               <button
                 onClick={() => handleBuyTickets(raffle)}
                 disabled={processingRaffles.has(raffle.raffleContract) || availableTickets === 0}
-                className="relative w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 overflow-hidden group shadow-lg hover:shadow-cyan-500/25 font-mono tracking-wider"
+                className="relative w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2 overflow-hidden group shadow-lg hover:shadow-emerald-500/25 font-mono tracking-wider"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/20 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 {processingRaffles.has(raffle.raffleContract) ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
