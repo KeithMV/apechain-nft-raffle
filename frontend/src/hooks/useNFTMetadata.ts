@@ -102,23 +102,49 @@ async function fetchNFTMetadata(
       throw new Error('No token URI found');
     }
     
-    // Simple IPFS handling - only use ipfs.io gateway
+    // Try multiple approaches for metadata URL
     let metadataUrl = tokenURI;
     if (tokenURI.startsWith('ipfs://')) {
-      metadataUrl = `https://ipfs.io/ipfs/${tokenURI.slice(7)}`;
+      // Try proxy service for IPFS metadata
+      const ipfsPath = tokenURI.slice(7);
+      metadataUrl = `https://ipfs.io/ipfs/${ipfsPath}`;
     }
     
-    // Single fetch attempt with timeout
-    const response = await fetch(metadataUrl, {
-      signal: AbortSignal.timeout(5000),
-      headers: { 'Accept': 'application/json' }
-    });
+    // Try fetching metadata with multiple attempts
+    let data;
+    const metadataUrls = [];
     
-    if (!response.ok) {
-      throw new Error(`Fetch failed: ${response.status}`);
+    if (tokenURI.startsWith('ipfs://')) {
+      const path = tokenURI.slice(7);
+      metadataUrls.push(
+        `https://ipfs.io/ipfs/${path}`,
+        `https://cloudflare-ipfs.com/ipfs/${path}`,
+        `https://gateway.pinata.cloud/ipfs/${path}`
+      );
+    } else {
+      metadataUrls.push(tokenURI);
     }
     
-    const data = await response.json();
+    // Try each URL until one works
+    for (const url of metadataUrls) {
+      try {
+        const response = await fetch(url, {
+          signal: AbortSignal.timeout(5000),
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (response.ok) {
+          data = await response.json();
+          break;
+        }
+      } catch {
+        continue;
+      }
+    }
+    
+    if (!data) {
+      throw new Error('All metadata URLs failed');
+    }
     return sanitizeMetadata(data);
     
   } catch (error) {
