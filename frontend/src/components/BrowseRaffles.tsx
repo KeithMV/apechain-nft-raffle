@@ -39,7 +39,7 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
   const totalCost = (parseFloat(raffle.ticketPrice) * quantity).toFixed(3);
   const progress = (raffle.ticketsSold / raffle.maxTickets) * 100;
   const availableTickets = raffle.maxTickets - raffle.ticketsSold;
-  const isExpired = !raffle.isActive;
+  const isExpired = !raffle.isActive || raffle.completed;
 
   return (
     <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className={`relative bg-black/80 backdrop-blur-xl border rounded-xl overflow-hidden transition-all duration-300 group shadow-lg ${
