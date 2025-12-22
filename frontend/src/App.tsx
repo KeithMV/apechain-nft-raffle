@@ -160,34 +160,7 @@ const Hero = React.memo(function Hero() {
         <p className="text-base sm:text-lg lg:text-xl text-slate-300 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
           The premier NFT raffle platform on ApeChain. Create, participate, and win amazing digital collectibles with complete transparency and fairness.
         </p>
-        <div className="relative bg-slate-800/80 backdrop-blur-xl border border-emerald-400/30 rounded-3xl p-4 sm:p-6 lg:p-8 mx-4 sm:mx-0 sm:inline-block shadow-2xl shadow-emerald-500/20 max-w-full">
-          {/* Glowing border effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 rounded-3xl blur-sm animate-pulse"></div>
-          
-          <div className="relative z-10">
-            <div className="flex items-center justify-center mb-3 sm:mb-4">
-              <div className="w-3 h-3 bg-emerald-400 rounded-full mr-3 animate-pulse shadow-lg shadow-emerald-400/50"></div>
-              <p className="text-xs sm:text-sm text-emerald-400 font-semibold tracking-wider">ApeChain Protocol Active</p>
-            </div>
-            <p className="text-emerald-300 text-xs sm:text-sm mb-3 sm:mb-4 bg-slate-900/50 px-2 sm:px-4 py-2 rounded-xl break-all border border-emerald-500/20 font-mono">
-              {RAFFLE_FACTORY_ADDRESS || 'Initializing...'}
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-xs">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse shadow-sm shadow-emerald-400/50"></div>
-                <span className="text-emerald-400 font-medium tracking-wider">Provably Fair</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-teal-400 rounded-full mr-2 animate-pulse shadow-sm shadow-teal-400/50"></div>
-                <span className="text-teal-400 font-medium tracking-wider">10% Platform Fee</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-cyan-400 rounded-full mr-2 animate-pulse shadow-sm shadow-cyan-400/50"></div>
-                <span className="text-cyan-400 font-medium tracking-wider">Instant Execution</span>
-              </div>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
   );
