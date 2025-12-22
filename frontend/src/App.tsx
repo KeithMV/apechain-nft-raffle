@@ -69,11 +69,6 @@ const Header = React.memo(function Header() {
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">ApeChain Raffles</h1>
-                <span className="text-xs text-emerald-300 font-medium hidden sm:inline">Powered by ApeChain</span>
-              </div>
-              <div className="relative px-2 py-1 sm:px-3 bg-emerald-500/10 border border-emerald-400/50 rounded-xl text-emerald-300 text-xs sm:text-sm font-semibold">
-                <div className="absolute inset-0 bg-emerald-400/5 rounded-xl animate-pulse"></div>
-                <span className="relative">LIVE</span>
               </div>
             </div>
             <nav className="flex space-x-1 sm:space-x-2">
@@ -115,7 +110,6 @@ const Header = React.memo(function Header() {
           <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 flex-shrink-0">
             {isConnected && (
               <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <NetworkStatus />
                 <LazyWrapper>
                   <WalletInfo />
                 </LazyWrapper>
