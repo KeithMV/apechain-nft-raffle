@@ -4,7 +4,6 @@
  */
 
 // Core Components
-export { default as UnifiedNFTImage } from './UnifiedNFTImage';
 export { default as RaffleDashboard } from './RaffleDashboard';
 export { default as BrowseRaffles } from './BrowseRaffles';
 export { default as CreateRafflePage } from './CreateRafflePage';
