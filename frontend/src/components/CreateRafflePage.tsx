@@ -177,15 +177,7 @@ export default function CreateRafflePage() {
     setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
   };
 
-  // Safe number parsing with NaN validation
-  const ticketPrice = parseFloat(formData.ticketPrice || '0');
-  const maxTickets = parseInt(formData.maxTickets || '0');
-  const feePercentage = parseFloat(platformFee);
-  
-  const totalRevenue = (!isNaN(ticketPrice) && !isNaN(maxTickets) ? ticketPrice * maxTickets : 0).toFixed(2);
-  const platformFeeAmount = (!isNaN(feePercentage) && !isNaN(parseFloat(totalRevenue)) ? 
-    parseFloat(totalRevenue) * feePercentage / 100 : 0).toFixed(2);
-  // const creatorRevenue = (parseFloat(totalRevenue) - parseFloat(platformFeeAmount)).toFixed(2);
+
 
   return (
     <div className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border border-emerald-400/30 rounded-3xl shadow-2xl shadow-emerald-500/20 overflow-hidden">
@@ -326,24 +318,7 @@ export default function CreateRafflePage() {
           </div>
         </div>
 
-        {/* Revenue Summary with Professional Fee Display */}
-        <div className="relative bg-gradient-to-r from-pink-900/20 via-fuchsia-900/20 to-purple-900/20 border border-pink-500/30 rounded-xl p-4 sm:p-6 mt-6 backdrop-blur-sm">
-          <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 via-fuchsia-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
-          <h4 className="relative font-semibold text-pink-200 mb-3 sm:mb-4 flex items-center text-sm sm:text-base font-mono tracking-wider">
-            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-pink-500/20 rounded-lg flex items-center justify-center mr-2">
-              <span className="text-pink-400 text-xs">⚡</span>
-            </div>
-            Revenue Projection (Full Capacity)
-          </h4>
-          
-          <div className="relative mb-4">
-            <FeeDisplay 
-              totalAmount={parseFloat(totalRevenue) || 0}
-              showBreakdown={true}
-              className="bg-gray-800/60 border border-pink-500/20 rounded-lg p-3 backdrop-blur-sm"
-            />
-          </div>
-        </div>
+
 
         {/* Approval Section */}
         {formData.nftContract && (
