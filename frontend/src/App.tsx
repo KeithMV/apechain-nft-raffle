@@ -148,8 +148,9 @@ const Hero = React.memo(function Hero() {
           <span className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse shadow-lg shadow-emerald-400/50"></span>
           <span className="text-emerald-300 text-xs sm:text-sm font-medium tracking-wider">ApeChain Protocol • Secure & Fair</span>
         </div>
-        <h2 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent leading-tight font-sans tracking-tight">
-          ApeChain Raffles
+        <h2 className="relative text-4xl sm:text-5xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent leading-tight font-sans tracking-tight">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 blur-lg animate-pulse"></div>
+          <span className="relative">ApeChain Raffles</span>
         </h2>
         <p className="text-base sm:text-lg lg:text-xl text-slate-300 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
           The premier NFT raffle platform on ApeChain. Create, participate, and win amazing digital collectibles with complete transparency and fairness.
