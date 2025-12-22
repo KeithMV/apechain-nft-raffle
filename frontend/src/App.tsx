@@ -71,41 +71,43 @@ const Header = React.memo(function Header() {
                 <h1 className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">ApeChain Raffles</h1>
               </div>
             </div>
-            <nav className="flex space-x-1 sm:space-x-2">
-              <Link
-                to="/create"
-                className={`relative px-3 py-2 sm:px-4 md:px-3 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
-                  currentPage === 'create' 
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
-                    : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
-                }`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                <span className="relative">CREATE</span>
-              </Link>
-              <Link
-                to="/dashboard"
-                className={`relative px-3 py-2 sm:px-4 md:px-3 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
-                  currentPage === 'dashboard' 
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
-                    : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
-                }`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                <span className="relative">DASHBOARD</span>
-              </Link>
-              <Link
-                to="/browse"
-                className={`relative px-3 py-2 sm:px-4 md:px-3 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
-                  currentPage === 'browse' 
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
-                    : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
-                }`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                <span className="relative">BROWSE</span>
-              </Link>
-            </nav>
+            {isConnected && (
+              <nav className="flex space-x-1 sm:space-x-2">
+                <Link
+                  to="/create"
+                  className={`relative px-3 py-2 sm:px-4 md:px-3 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
+                    currentPage === 'create' 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
+                      : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
+                  }`}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                  <span className="relative">CREATE</span>
+                </Link>
+                <Link
+                  to="/dashboard"
+                  className={`relative px-3 py-2 sm:px-4 md:px-3 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
+                    currentPage === 'dashboard' 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
+                      : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
+                  }`}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                  <span className="relative">DASHBOARD</span>
+                </Link>
+                <Link
+                  to="/browse"
+                  className={`relative px-3 py-2 sm:px-4 md:px-3 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
+                    currentPage === 'browse' 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
+                      : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
+                  }`}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                  <span className="relative">BROWSE</span>
+                </Link>
+              </nav>
+            )}
           </div>
           <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 flex-shrink-0">
             {isConnected && (
