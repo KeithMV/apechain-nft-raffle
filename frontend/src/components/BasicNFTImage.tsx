@@ -34,7 +34,18 @@ export default function BasicNFTImage({
 
   const getImageUrl = () => {
     if (imageError) return '/placeholder-nft.svg';
-    return imageUrls[currentUrlIndex] || '/placeholder-nft.svg';
+    
+    const currentUrl = imageUrls[currentUrlIndex] || '/placeholder-nft.svg';
+    console.log('🖼️ BasicNFTImage rendering:', {
+      tokenId,
+      contractAddress,
+      metadataImage: metadata?.image,
+      currentUrlIndex,
+      currentUrl,
+      totalUrls: imageUrls.length
+    });
+    
+    return currentUrl;
   };
 
   const sizeClasses = {
