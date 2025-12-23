@@ -33,8 +33,9 @@ export class ConsoleSecure {
           const sanitizedArgs = args.map(arg => this.sanitizeErrorData(arg));
           this.originalConsole.log('ERROR:', ...sanitizedArgs);
         } catch (sanitizeError) {
-          // Fallback if sanitization fails
-          this.originalConsole.log('ERROR: [Sanitization failed]', args.length, 'arguments');
+          // Log sanitization error and original error safely
+          this.originalConsole.log('ERROR: [Sanitization failed]', sanitizeError?.message || 'Unknown sanitization error');
+          this.originalConsole.log('ORIGINAL ERROR:', args.map(arg => typeof arg === 'object' ? '[Object]' : String(arg)).join(' '));
         }
       };
     }
