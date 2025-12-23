@@ -21,7 +21,27 @@ export default function RaffleDashboard() {
   
 
   
-  const { cancelRaffle, isPending: isCancelling } = useCancelRaffle();
+  const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
+  
+  // Auto-refresh when raffle is cancelled
+  useEffect(() => {
+    if (cancelSuccess) {
+      refetchPositions();
+      refetchCreatedRaffles();
+    }
+  }, [cancelSuccess, refetchPositions, refetchCreatedRaffles]);
+
+  // Periodic refresh when transactions are pending (for mobile compatibility)
+  useEffect(() => {
+    if (selectingWinnerFor || isCancelling) {
+      const interval = setInterval(() => {
+        refetchPositions();
+        refetchCreatedRaffles();
+      }, 3000); // Refresh every 3 seconds when processing
+      
+      return () => clearInterval(interval);
+    }
+  }, [selectingWinnerFor, isCancelling, refetchPositions, refetchCreatedRaffles]);
   
   const loading = positionsLoading || rafflesLoading;
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
