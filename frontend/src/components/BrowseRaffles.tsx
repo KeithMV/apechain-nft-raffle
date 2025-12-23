@@ -417,7 +417,6 @@ export default function BrowseRaffles() {
           <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="flex-1">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">NFT Raffles</h2>
-              <p className="text-slate-300 mt-1 text-sm sm:text-base font-medium">Discover amazing NFTs • Win incredible prizes</p>
             </div>
             <div className="flex items-center space-x-2">
               <button
