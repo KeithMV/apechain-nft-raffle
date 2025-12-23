@@ -36,7 +36,7 @@ export function useCancelRaffle() {
       });
     } catch (error) {
       console.error('Cancel raffle failed:', error);
-      toast.error('Cancel failed');
+      toast.error('Failed to cancel raffle');
     }
   };
 

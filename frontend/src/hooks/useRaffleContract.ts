@@ -275,7 +275,7 @@ export function useCommitRandomness() {
   useEffect(() => {
     if (isSuccess && hash && hash !== lastSuccessHash.current) {
       lastSuccessHash.current = hash;
-      toast.success('Randomness committed! Reveal in 1 hour.');
+      toast.success('Winner selection process started!');
     }
   }, [isSuccess, hash]);
 

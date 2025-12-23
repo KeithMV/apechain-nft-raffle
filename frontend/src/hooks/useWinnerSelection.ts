@@ -59,7 +59,7 @@ export function useWinnerSelection() {
       setCommitData(null);
       // Success toast is handled by useEmergencyWinner hook
     } catch (error) {
-      toast.error('Emergency selection failed');
+      toast.error('Failed to select winner');
       throw error;
     }
   }, [emergencySelectWinner]);

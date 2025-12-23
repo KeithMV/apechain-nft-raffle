@@ -93,7 +93,7 @@ export default function RaffleDashboard() {
   const handleCancelRaffle = useCallback(async (raffleContract: string) => {
     try {
       await cancelRaffle(raffleContract);
-      toast.success('Raffle cancelled!');
+      toast.success('Raffle cancelled successfully!');
     } catch (error) {
       // Error already handled in hook
     }
