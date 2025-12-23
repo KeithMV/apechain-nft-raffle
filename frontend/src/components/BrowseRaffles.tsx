@@ -288,9 +288,11 @@ export default function BrowseRaffles() {
     
     try {
       await buyTickets(raffle.raffleContract, quantity, raffle.ticketPrice);
+      // Success handling is done in the useEffect for buySuccess
     } catch (error) {
       console.error('Failed to buy tickets:', error);
       toast.error('Failed to purchase tickets. Please try again.');
+      // Always clear processing state on error
       setProcessingRaffles(prev => {
         const newSet = new Set(prev);
         newSet.delete(raffle.raffleContract);
@@ -335,6 +337,9 @@ export default function BrowseRaffles() {
   // Handle buy error
   useEffect(() => {
     if (buyError) {
+      // Clear processing state on error
+      setProcessingRaffles(new Set());
+      
       if (buyError.message?.includes('User rejected')) {
         toast.error('Transaction cancelled by user');
       } else {
