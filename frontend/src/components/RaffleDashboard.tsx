@@ -138,7 +138,6 @@ export default function RaffleDashboard() {
                   <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
                 )}
               </div>
-              <p className="text-emerald-200 mt-1 text-sm sm:text-base font-mono tracking-wide">View your raffle activity and created raffles</p>
             </div>
           </div>
         </div>
