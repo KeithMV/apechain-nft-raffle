@@ -251,7 +251,27 @@ export default function BrowseRaffles() {
 
 
   const { buyTickets, isSuccess: buySuccess, error: buyError } = useBuyTickets();
-  const { startWinnerSelection, revealWinner, emergencyReveal, isPending: selectionPending } = useWinnerSelection();
+  const { startWinnerSelection, revealWinner, emergencyReveal, isPending: selectionPending, revealSuccess } = useWinnerSelection();
+
+  // Auto-refresh when winner selection completes
+  useEffect(() => {
+    if (revealSuccess) {
+      // Clear processing state and refetch data
+      setProcessingRaffles(new Set());
+      refetch();
+    }
+  }, [revealSuccess, refetch]);
+
+  // Periodic refresh when transactions are pending (for mobile compatibility)
+  useEffect(() => {
+    if (processingRaffles.size > 0) {
+      const interval = setInterval(() => {
+        refetch();
+      }, 3000); // Refresh every 3 seconds when processing
+      
+      return () => clearInterval(interval);
+    }
+  }, [processingRaffles.size, refetch]);
 
   const handleBuyTickets = async (raffle: CreatedRaffle) => {
     if (processingRaffles.has(raffle.raffleContract)) return;
