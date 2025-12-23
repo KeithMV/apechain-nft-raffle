@@ -112,13 +112,13 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
             </p>
           </div>
           <div>
-            <p className="text-pink-400/70 font-mono tracking-wide">{isExpired ? 'Winner' : 'Win Chance'}</p>
+            <p className="text-pink-400/70 font-mono tracking-wide">{isExpired ? 'Winner' : 'Tickets Sold'}</p>
             <p className="text-pink-300 font-mono tracking-wider">
               {isExpired 
                 ? (raffle.winner && raffle.winner !== '0x0000000000000000000000000000000000000000' 
                     ? `${raffle.winner.slice(0, 6)}...${raffle.winner.slice(-4)}` 
                     : 'No winner')
-                : `${(quantity / raffle.maxTickets * 100).toFixed(1)}%`
+                : `${raffle.ticketsSold}/${raffle.maxTickets}`
               }
             </p>
           </div>
