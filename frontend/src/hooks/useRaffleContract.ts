@@ -100,8 +100,13 @@ export function useCreateRaffle() {
   useEffect(() => {
     if (isSuccess && hash && hash !== lastSuccessHash.current) {
       lastSuccessHash.current = hash;
-      toast.success('Raffle created successfully!');
+      // Small delay to prevent duplicate toasts in development mode
+      const timeoutId = setTimeout(() => {
+        toast.success('Raffle created successfully!');
+      }, 100);
       invalidateAll();
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [isSuccess, hash, invalidateAll]);
 
