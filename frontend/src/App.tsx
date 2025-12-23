@@ -63,10 +63,6 @@ const Header = React.memo(function Header() {
         <div className="flex flex-col md:flex-row justify-between items-center py-4 sm:py-6 space-y-4 md:space-y-0 gap-4">
           <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 md:space-x-3 lg:space-x-6 flex-shrink min-w-0">
             <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-xl blur-sm animate-pulse"></div>
-                <span className="relative text-slate-900 font-bold text-lg sm:text-xl">🎯</span>
-              </div>
               <div>
                 <h1 className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">ApeChain Raffles</h1>
               </div>
