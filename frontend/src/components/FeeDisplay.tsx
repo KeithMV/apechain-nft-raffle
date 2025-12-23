@@ -90,40 +90,9 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
           Platform Fee:
         </span>
         <span className="font-semibold text-gray-900">
-          {feeDisplay.percentage}
-        </span>
-        <span className={`
-          px-2 py-1 text-xs font-medium rounded-full border
-          ${getBadgeColor(feeDisplay.badge)}
-        `}>
-          {feeDisplay.description}
+          5%
         </span>
       </div>
-
-      {showBreakdown && breakdown && (
-        <div className="mt-2 text-sm text-gray-600 space-y-1">
-          <div className="flex justify-between">
-            <span>Total Sales:</span>
-            <span className="font-medium">{isNaN(totalAmount) ? '0.00' : totalAmount.toFixed(2)} APE</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Platform Fee ({feeDisplay.percentage}):</span>
-            <span className="font-medium">{isNaN(breakdown.feeAmount) ? '0.00' : breakdown.feeAmount.toFixed(2)} APE</span>
-          </div>
-          <div className="flex justify-between border-t pt-1">
-            <span>Creator Receives:</span>
-            <span className="font-semibold text-green-600">
-              {isNaN(breakdown.creatorAmount) ? '0.00' : breakdown.creatorAmount.toFixed(2)} APE
-            </span>
-          </div>
-        </div>
-      )}
-
-      {currentFee.tier && (
-        <div className="mt-1 text-xs text-gray-500">
-          {currentFee.tier.useCase}
-        </div>
-      )}
     </div>
   );
 };
