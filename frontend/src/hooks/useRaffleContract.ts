@@ -352,7 +352,7 @@ export function useEmergencyWinner() {
   useEffect(() => {
     if (isSuccess && hash && hash !== lastSuccessHash.current) {
       lastSuccessHash.current = hash;
-      toast.success('Emergency winner selection complete!');
+      toast.success('Winner selected successfully!');
       invalidateAll();
     }
   }, [isSuccess, hash, invalidateAll]);
