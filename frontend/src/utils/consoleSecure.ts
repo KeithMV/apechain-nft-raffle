@@ -32,9 +32,10 @@ export class ConsoleSecure {
           // Sanitize error messages to remove sensitive data
           const sanitizedArgs = args.map(arg => this.sanitizeErrorData(arg));
           this.originalConsole.log('ERROR:', ...sanitizedArgs);
-        } catch (sanitizeError) {
+        } catch (sanitizeError: unknown) {
           // Log sanitization error and original error safely
-          this.originalConsole.log('ERROR: [Sanitization failed]', sanitizeError?.message || 'Unknown sanitization error');
+          const errorMessage = sanitizeError instanceof Error ? sanitizeError.message : 'Unknown sanitization error';
+          this.originalConsole.log('ERROR: [Sanitization failed]', errorMessage);
           this.originalConsole.log('ORIGINAL ERROR:', args.map(arg => typeof arg === 'object' ? '[Object]' : String(arg)).join(' '));
         }
       };
