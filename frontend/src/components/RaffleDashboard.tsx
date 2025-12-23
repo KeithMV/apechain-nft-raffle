@@ -131,10 +131,6 @@ export default function RaffleDashboard() {
         
         <div className="relative bg-gradient-to-r from-emerald-900/20 via-green-900/20 to-teal-900/20 px-4 sm:px-8 py-6 sm:py-8 border-b border-emerald-500/30">
           <div className="flex items-center space-x-3 sm:space-x-4">
-            <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 rounded-xl blur-sm animate-pulse"></div>
-              <span className="relative text-white text-lg sm:text-xl">⚡</span>
-            </div>
             <div>
               <div className="flex items-center space-x-3">
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400 bg-clip-text text-transparent font-mono tracking-wider">My Raffle Dashboard</h2>
