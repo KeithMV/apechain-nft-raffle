@@ -85,7 +85,7 @@ export default function CreateRafflePage() {
     }
   }, [approvalError]);
 
-  // Handle create raffle success
+  // Handle create raffle success - prevent duplicate toasts
   useEffect(() => {
     if (createSuccess) {
       // Reset form
@@ -97,6 +97,7 @@ export default function CreateRafflePage() {
         duration: '24'
       });
       setApprovalStatus(null);
+      // Note: Success toast is handled by useCreateRaffle hook to prevent duplicates
     }
   }, [createSuccess]);
 
