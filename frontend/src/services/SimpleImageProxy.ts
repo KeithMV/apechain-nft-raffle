@@ -32,7 +32,6 @@ export class SimpleImageProxy {
     if (!originalUrl) return ['/placeholder-nft.svg'];
     
     const urls: string[] = [];
-    console.log('🔗 Generating fallback URLs for:', originalUrl);
     
     if (originalUrl.startsWith('ipfs://')) {
       const path = originalUrl.slice(7);
@@ -41,22 +40,18 @@ export class SimpleImageProxy {
         const directUrl = `${gateway}${path}`;
         const proxiedUrl = `${this.PROXY_URL}${encodeURIComponent(directUrl)}`;
         urls.push(proxiedUrl);
-        console.log(`🌐 IPFS Gateway ${index + 1}:`, proxiedUrl);
       });
     } else {
       // For img.op.xyz and img.other.page, try direct first (they may have CORS headers)
       if (originalUrl.includes('img.op.xyz') || originalUrl.includes('img.other.page')) {
         urls.push(originalUrl);
-        console.log('🌐 Direct URL (CORS-enabled):', originalUrl);
       }
       
       const proxiedUrl = `${this.PROXY_URL}${encodeURIComponent(originalUrl)}`;
       urls.push(proxiedUrl);
-      console.log('🌐 Proxied URL:', proxiedUrl);
     }
     
     urls.push('/placeholder-nft.svg');
-    console.log('📋 Total URLs generated:', urls.length);
     return urls;
   }
 }

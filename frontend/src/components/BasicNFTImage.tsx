@@ -33,11 +33,9 @@ export default function BasicNFTImage({
   }, [metadata?.image]);
 
   const handleImageError = useCallback(() => {
-    console.log('🚨 Image error for token', tokenId, 'at index', currentUrlIndex, 'of', imageUrls.length);
     if (currentUrlIndex < imageUrls.length - 1) {
       setCurrentUrlIndex(prev => prev + 1);
     } else {
-      console.log('❌ All URLs failed for token', tokenId);
       setImageError(true);
     }
   }, [currentUrlIndex, imageUrls.length, tokenId]);
@@ -46,18 +44,6 @@ export default function BasicNFTImage({
     if (imageError) return '/placeholder-nft.svg';
     
     const currentUrl = imageUrls[currentUrlIndex] || '/placeholder-nft.svg';
-    console.log('🖼️ BasicNFTImage rendering:', {
-      tokenId,
-      contractAddress,
-      metadataImage: metadata?.image,
-      currentUrlIndex,
-      currentUrl,
-      totalUrls: imageUrls.length,
-      allUrls: imageUrls,
-      imageError,
-      loading
-    });
-    
     return currentUrl;
   };
 
