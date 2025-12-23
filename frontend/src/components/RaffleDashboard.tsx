@@ -19,9 +19,9 @@ export default function RaffleDashboard() {
   const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositions(address);
   const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRaffles(address, page);
   
-
-  
   const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
+  const { emergencyReveal, isPending: isSelectingWinner, revealSuccess: winnerSelected } = useWinnerSelection();
+  const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
   
   // Auto-refresh when raffle is cancelled
   useEffect(() => {
@@ -79,9 +79,6 @@ export default function RaffleDashboard() {
     if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
   }, []);
-
-  const { emergencyReveal, isPending: isSelectingWinner, revealSuccess: winnerSelected } = useWinnerSelection();
-  const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
 
   const handleSelectWinner = useCallback(async (raffleContract: string) => {
     setSelectingWinnerFor(raffleContract);
