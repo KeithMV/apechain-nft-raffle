@@ -195,23 +195,6 @@ export default function CreateRafflePage() {
       </div>
 
       <div className="relative p-4 sm:p-8 z-10">
-        {/* Connected Wallet Info */}
-        <div className="relative bg-slate-800/80 backdrop-blur-xl border border-emerald-400/30 rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 shadow-lg shadow-emerald-500/10">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-teal-500/5 to-cyan-500/5 rounded-2xl"></div>
-          <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-            <div>
-              <p className="text-slate-200 text-sm mb-1 font-medium">
-                <span className="font-semibold text-emerald-300">Connected Wallet:</span> 
-                <span className="ml-2 text-slate-300 font-mono">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
-              </p>
-              <p className="text-slate-400 text-xs font-medium">
-                <span className="font-semibold">Network:</span> {NETWORK_CONFIG.name} • Chain ID: {NETWORK_CONFIG.chainId}
-              </p>
-            </div>
-            <FeeDisplay className="text-emerald-300 text-sm" />
-          </div>
-        </div>
-
         {/* Network Warning */}
         {isWrongNetwork && (
           <div className="relative bg-red-900/20 border border-red-500/30 rounded-xl p-4 mb-6 backdrop-blur-sm">
