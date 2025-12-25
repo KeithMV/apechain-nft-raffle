@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount, useChainId } from 'wagmi';
-import { usePlatformFee, useNFTApprovalStatus, useNFTApproval, useCreateRaffle } from '../hooks/useRaffleContract';
+import { usePlatformFeeV4, useNFTApprovalStatusV4, useNFTApprovalV4, useCreateRaffleV4 } from '../hooks/useRaffleContractV4';
 import { NETWORK_CONFIG } from '../config/addresses';
 import { useApeChainSwitching } from '../utils/chainSwitching';
 import ApeTokenBalance from './ApeTokenBalance';
 import MobileBanner from './MobileBanner';
 import FeeDisplay from './FeeDisplay';
+import { V4Status, RateLimitInfo } from './V4Status';
 
 import toast from 'react-hot-toast';
 import { 
@@ -39,9 +40,9 @@ export default function CreateRafflePage() {
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   
   const isWrongNetwork = chainId !== 33139;
-  // Professional wagmi hooks
-  const { data: platformFeeData } = usePlatformFee();
-  const { data: approvalData, refetch: refetchApproval } = useNFTApprovalStatus(
+  // Professional wagmi V4 hooks
+  const { data: platformFeeData } = usePlatformFeeV4();
+  const { data: approvalData, refetch: refetchApproval } = useNFTApprovalStatusV4(
     formData.nftContract, 
     address || ''
   );
@@ -50,15 +51,18 @@ export default function CreateRafflePage() {
     isPending: approvalPending, 
     isConfirming: approvalConfirming, 
     isSuccess: approvalSuccess,
-    error: approvalError 
-  } = useNFTApproval();
+    error: approvalError,
+    version: approvalVersion
+  } = useNFTApprovalV4();
   const {
     createRaffle,
     isPending: createPending,
     isConfirming: createConfirming,
     isSuccess: createSuccess,
-    error: createError
-  } = useCreateRaffle();
+    error: createError,
+    version: createVersion,
+    rateLimitText
+  } = useCreateRaffleV4();
 
   const platformFee = platformFeeData ? (Number(platformFeeData) / 100).toString() : '5';
 
@@ -188,8 +192,11 @@ export default function CreateRafflePage() {
       
       <div className="relative bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 px-4 sm:px-8 py-6 sm:py-8 border-b border-emerald-400/30">
         <div className="flex items-center space-x-3 sm:space-x-4">
-          <div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">Create NFT Raffle</h2>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">Create NFT Raffle</h2>
+              <V4Status />
+            </div>
           </div>
         </div>
       </div>
@@ -210,6 +217,9 @@ export default function CreateRafflePage() {
 
         {/* Mobile Wallet Guidance */}
         <MobileBanner />
+
+        {/* V4 Rate Limit Info */}
+        <RateLimitInfo />
 
 
 
