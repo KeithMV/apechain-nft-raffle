@@ -3,10 +3,11 @@ import { useAccount } from 'wagmi';
 import ApeTokenBalance from './ApeTokenBalance';
 import BasicNFTImage from './BasicNFTImage';
 import toast from 'react-hot-toast';
-import { useAllRaffles } from '../hooks/useRafflePositions';
+import { useAllRafflesV4 } from '../hooks/useRafflePositionsV4';
 import { useBuyTickets } from '../hooks/useRaffleContract';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { throttle, useVirtualScrolling } from '../utils/performance';
+import { V4Status } from './V4Status';
 
 interface CreatedRaffle {
   raffleId: number;
@@ -21,6 +22,7 @@ interface CreatedRaffle {
   winner?: string;
   completed: boolean;
   isActive: boolean;
+  version: 'v3' | 'v4'; // Added version tracking
 }
 
 // Memoized raffle card component for performance
@@ -61,8 +63,15 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
           size="lg"
         />
         <div className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm border border-cyan-400/30 rounded-xl px-3 py-2">
-          <p className="text-cyan-300 font-semibold text-sm">{raffle.ticketPrice} APE</p>
-          <p className="text-slate-400 text-xs">per ticket</p>
+          <div className="flex items-center gap-2">
+            <div>
+              <p className="text-cyan-300 font-semibold text-sm">{raffle.ticketPrice} APE</p>
+              <p className="text-slate-400 text-xs">per ticket</p>
+            </div>
+            {raffle.version === 'v4' && (
+              <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+            )}
+          </div>
         </div>
         {isExpired && (
           <div className="absolute top-3 left-3 bg-red-900/90 backdrop-blur-sm border border-red-400/30 rounded-xl px-3 py-2">
@@ -229,7 +238,7 @@ export default function BrowseRaffles() {
   const [processingRaffles, setProcessingRaffles] = useState<Set<string>>(new Set());
   
   const BATCH_SIZE = 10;
-  const { raffles, loading, refetch } = useAllRaffles(BATCH_SIZE, currentPage * BATCH_SIZE);
+  const { raffles, loading, refetch } = useAllRafflesV4(BATCH_SIZE, currentPage * BATCH_SIZE);
 
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
@@ -416,7 +425,10 @@ export default function BrowseRaffles() {
         <div className="bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 px-4 sm:px-8 py-6 sm:py-8 border-b border-emerald-400/30">
           <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="flex-1">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">NFT Raffles</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">NFT Raffles</h2>
+                <V4Status showDetails={true} />
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               <button
@@ -438,6 +450,11 @@ export default function BrowseRaffles() {
           <div className="mb-6 flex flex-wrap gap-4 text-sm">
             <div className="bg-emerald-500/10 border border-emerald-400/30 rounded-xl px-4 py-2">
               <span className="text-emerald-300 font-medium">{activeCount} Active</span>
+            </div>
+            <div className="bg-green-500/10 border border-green-400/30 rounded-xl px-4 py-2">
+              <span className="text-green-300 font-medium">
+                {raffles.filter(r => r.version === 'v4').length} V4 Fast
+              </span>
             </div>
             <button
               onClick={() => setShowExpired(!showExpired)}
