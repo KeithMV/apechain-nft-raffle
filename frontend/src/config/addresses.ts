@@ -198,7 +198,7 @@ function getRateLimit(useV4?: boolean): number {
 
 // Legacy exports for backward compatibility
 const NETWORK_CONFIG = NETWORK_CONFIGS[33139];
-const RAFFLE_FACTORY_ADDRESS = getRaffleFactoryAddress();
+const RAFFLE_FACTORY_ADDRESS = getRaffleFactoryAddress(undefined, true); // Use V4 by default
 const RAFFLE_TEMPLATE_ADDRESS = getRaffleTemplateAddress();
 
 export {
