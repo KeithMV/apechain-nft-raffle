@@ -146,13 +146,6 @@ export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
   const loadRaffles = useCallback(async () => {
     if (!publicClient) return;
 
-    const cacheKey = `all_raffles_v4_${limit}_${offset}`;
-    const cached = raffleCache.get(cacheKey);
-    if (cached) {
-      setRaffles(cached);
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -177,6 +170,9 @@ export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
         .slice(0, limit);
 
       setRaffles(sortedRaffles);
+      
+      // Cache with timestamp to ensure freshness
+      const cacheKey = `all_raffles_v4_${limit}_${offset}_${Date.now()}`;
       raffleCache.set(cacheKey, sortedRaffles);
     } catch (err) {
       console.error('Failed to load raffles:', err);
@@ -198,11 +194,19 @@ export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
   return { raffles, loading, error, refetch: loadRaffles };
 }
 
-// Clear cache utility
+// Clear cache utility - more aggressive clearing
 export function useClearRaffleCacheV4() {
   return useCallback(() => {
     raffleCache.clear();
     positionCache.clear();
-    console.log('V4 Raffle caches cleared');
+    // Force reload by clearing localStorage cache if any
+    if (typeof window !== 'undefined') {
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('raffle') || key.includes('cache')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
+    console.log('V4 Raffle caches cleared aggressively');
   }, []);
 }
