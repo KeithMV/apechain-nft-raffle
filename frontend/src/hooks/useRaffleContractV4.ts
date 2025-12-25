@@ -137,14 +137,18 @@ export function useCreateRaffleV4() {
   useEffect(() => {
     if (isSuccess && hash && hash !== lastSuccessHash.current) {
       lastSuccessHash.current = hash;
-      const timeoutId = setTimeout(() => {
-        toast.success('Raffle created successfully!');
-      }, 100);
-      invalidateAll();
       
-      return () => clearTimeout(timeoutId);
+      // Immediate success notification
+      toast.success('✅ Raffle created successfully!');
+      
+      // Invalidate cache after a short delay to ensure transaction is processed
+      const cacheTimeoutId = setTimeout(() => {
+        invalidateAll();
+      }, 500);
+      
+      return () => clearTimeout(cacheTimeoutId);
     }
-  }, [isSuccess, hash, invalidateAll, currentVersion]);
+  }, [isSuccess, hash, invalidateAll]);
 
   const createRaffle = async (params: CreateRaffleParams) => {
     // Validate inputs
