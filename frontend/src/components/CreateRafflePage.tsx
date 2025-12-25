@@ -195,7 +195,6 @@ export default function CreateRafflePage() {
           <div className="flex-1">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">Create NFT Raffle</h2>
-              <V4Status />
             </div>
           </div>
         </div>
@@ -217,9 +216,6 @@ export default function CreateRafflePage() {
 
         {/* Mobile Wallet Guidance */}
         <MobileBanner />
-
-        {/* V4 Rate Limit Info */}
-        <RateLimitInfo />
 
 
 
