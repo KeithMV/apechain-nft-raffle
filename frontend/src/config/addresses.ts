@@ -29,6 +29,7 @@ const NETWORK_CONFIGS = {
 const CONTRACT_ADDRESSES = {
   33139: { // ApeChain
     RAFFLE_FACTORY: '0x1dC9F6Cc2e53558a940a7Cd87d6e5fbE2A8635ff', // v3-FIXED-FEES
+    RAFFLE_FACTORY_V4: '0x1627E7e63b63878E61f91D336385a59B1747934a', // v4-FAST-RATE-LIMIT
     RAFFLE_TEMPLATE: '0x242f56507BFd5034b369418A7C9FB1b4643710a4',
     RAFFLE_FACTORY_LEGACY: '0x0D0cd14b36B5FBb10F274cd3EC2FA3bBa79FC900', // v2-old
     RAFFLE_FACTORY_V1: '0x05139110Db8FF9cF82A836Af95eff4530011c705' // v1-legacy
@@ -45,9 +46,10 @@ const CONTRACT_ADDRESSES = {
 
 const PROTOCOL_INFO = {
   name: 'ApeCoin NFT Raffle System',
-  version: 'v3-fixed-fees',
-  status: 'Active - Fixed Platform Fee Distribution',
-  securityFixes: ['Fixed reentrancy', 'Enhanced randomness', 'Block-based timing', 'Direct fee transfer to owner']
+  version: 'v4-fast-rate-limit',
+  status: 'Active - 10 Second Rate Limit',
+  securityFixes: ['Fixed reentrancy', 'Enhanced randomness', 'Block-based timing', 'Direct fee transfer to owner'],
+  v4Features: ['10-second rate limit', '5% default fee', 'Faster raffle creation']
 } as const;
 
 function getCurrentChainId(): number {
@@ -102,9 +104,16 @@ function getContracts(chainId?: number) {
   }
 }
 
-function getRaffleFactoryAddress(chainId?: number): string {
+function getRaffleFactoryAddress(chainId?: number, useV4?: boolean): string {
   try {
-    const address = getContracts(chainId).RAFFLE_FACTORY;
+    const contracts = getContracts(chainId);
+    
+    // Use V4 if available and requested
+    if (useV4 && contracts.RAFFLE_FACTORY_V4) {
+      return contracts.RAFFLE_FACTORY_V4;
+    }
+    
+    const address = contracts.RAFFLE_FACTORY;
     
     if (!address) {
       throw new Error(`No Raffle Factory address configured for chain ${chainId || getCurrentChainId()}`);
@@ -168,6 +177,25 @@ function validateChainConfig(chainId: number): { isValid: boolean; errors: strin
   }
 }
 
+/**
+ * Check if V4 is available and configured
+ */
+function isV4Available(chainId?: number): boolean {
+  try {
+    const contracts = getContracts(chainId);
+    return !!(contracts.RAFFLE_FACTORY_V4 && contracts.RAFFLE_FACTORY_V4.length > 0);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get rate limit for current version
+ */
+function getRateLimit(useV4?: boolean): number {
+  return useV4 ? 10 : 300; // 10 seconds for V4, 5 minutes for V3
+}
+
 // Legacy exports for backward compatibility
 const NETWORK_CONFIG = NETWORK_CONFIGS[33139];
 const RAFFLE_FACTORY_ADDRESS = getRaffleFactoryAddress();
@@ -184,6 +212,8 @@ export {
   getRaffleFactoryAddress,
   getRaffleTemplateAddress,
   validateChainConfig,
+  isV4Available,
+  getRateLimit,
   RAFFLE_FACTORY_ADDRESS,
   RAFFLE_TEMPLATE_ADDRESS
 };
