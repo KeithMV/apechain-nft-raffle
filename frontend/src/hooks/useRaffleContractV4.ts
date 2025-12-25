@@ -138,7 +138,7 @@ export function useCreateRaffleV4() {
     if (isSuccess && hash && hash !== lastSuccessHash.current) {
       lastSuccessHash.current = hash;
       const timeoutId = setTimeout(() => {
-        toast.success(`Raffle created successfully! ${currentVersion === 'v4' ? '⚡ V4 Fast Mode' : ''}`);
+        toast.success('Raffle created successfully!');
       }, 100);
       invalidateAll();
       
