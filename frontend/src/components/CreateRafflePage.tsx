@@ -92,12 +92,7 @@ export default function CreateRafflePage() {
   // Handle create raffle success - prevent duplicate toasts
   useEffect(() => {
     if (createSuccess) {
-      // Backup success notification in case hook notification fails
-      const timeoutId = setTimeout(() => {
-        toast.success('🎉 Raffle created successfully! Check Browse Raffles to see it live.');
-      }, 200);
-      
-      // Reset form
+      // Reset form (success toast is handled by hook to prevent duplicates)
       setFormData({
         nftContract: '',
         tokenId: '',
@@ -106,8 +101,6 @@ export default function CreateRafflePage() {
         duration: '24'
       });
       setApprovalStatus(null);
-      
-      return () => clearTimeout(timeoutId);
     }
   }, [createSuccess]);
 
