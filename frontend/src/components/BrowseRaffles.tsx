@@ -264,12 +264,12 @@ export default function BrowseRaffles() {
     }
   }, [revealSuccess, refetch]);
 
-  // Periodic refresh when transactions are pending (for mobile compatibility)
+  // Periodic refresh when transactions are pending (for both mobile and desktop)
   useEffect(() => {
     if (processingRaffles.size > 0) {
       const interval = setInterval(() => {
         refetch();
-      }, 3000); // Refresh every 3 seconds when processing
+      }, 2000); // Refresh every 2 seconds when processing (faster for desktop)
       
       return () => clearInterval(interval);
     }
@@ -332,9 +332,10 @@ export default function BrowseRaffles() {
     if (buySuccess) {
       setTicketQuantities({});
       setProcessingRaffles(new Set());
-      // Hook handles cache invalidation automatically
+      // Immediately refetch data to show updated ticket counts
+      refetch();
     }
-  }, [buySuccess]);
+  }, [buySuccess, refetch]);
 
   // Handle buy error
   useEffect(() => {
