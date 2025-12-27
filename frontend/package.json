@@ -40,9 +40,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "craco build",
+    "build": "GENERATE_SOURCEMAP=false craco build",
     "build:analyze": "yarn build && node webpack-bundle-analyzer.js",
-    "build:production": "NODE_ENV=production craco build && yarn build:analyze",
+    "build:production": "NODE_ENV=production GENERATE_SOURCEMAP=false craco build && yarn build:analyze",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "install:clean": "rm -rf node_modules yarn.lock && yarn install",
