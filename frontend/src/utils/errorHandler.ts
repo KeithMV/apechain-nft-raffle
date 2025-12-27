@@ -28,8 +28,8 @@ export class ErrorHandler {
     };
   }
 
-  static handleWalletError(error: any): AppError {
-    const appError = this.createError('WALLET_ERROR', 'Wallet operation failed', error);
+  static handleWalletError = (error: any): AppError => {
+    const appError = ErrorHandler.createError('WALLET_ERROR', 'Wallet operation failed', error);
     
     if (error?.code === 4001) {
       appError.message = 'Transaction rejected by user';
@@ -41,24 +41,26 @@ export class ErrorHandler {
       appError.message = 'Network connection failed';
     }
     
-    this.logError(appError);
+    ErrorHandler.logError(appError);
     toast.error(appError.message);
     return appError;
-  }
+  };
 
-  static handleContractError(error: any): AppError {
-    const appError = this.createError('CONTRACT_ERROR', 'Contract operation failed', error);
+  static handleContractError = (error: any): AppError => {
+    const appError = ErrorHandler.createError('CONTRACT_ERROR', 'Contract operation failed', error);
     
     if (error?.message?.includes('execution reverted')) {
       appError.message = 'Transaction failed - contract rejected';
     } else if (error?.message?.includes('gas')) {
       appError.message = 'Transaction failed - insufficient gas';
+    } else if (error?.message?.includes('Rate limit exceeded')) {
+      appError.message = 'Please wait before creating another raffle (rate limit)';
     }
     
-    this.logError(appError);
+    ErrorHandler.logError(appError);
     toast.error(appError.message);
     return appError;
-  }
+  };
 
   static handleNetworkError(error: any): AppError {
     const appError = this.createError('NETWORK_ERROR', 'Network request failed', error);
