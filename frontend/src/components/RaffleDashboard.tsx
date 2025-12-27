@@ -22,10 +22,12 @@ export default function RaffleDashboard() {
   const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
   const { emergencyReveal, isPending: isSelectingWinner, revealSuccess: winnerSelected } = useWinnerSelection();
   const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
+  const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
   
   // Auto-refresh when raffle is cancelled
   useEffect(() => {
     if (cancelSuccess) {
+      setCancellingRaffle(null);
       refetchPositions();
       refetchCreatedRaffles();
     }
@@ -33,7 +35,7 @@ export default function RaffleDashboard() {
 
   // Periodic refresh when transactions are pending (for mobile compatibility)
   useEffect(() => {
-    if (selectingWinnerFor || isCancelling) {
+    if (selectingWinnerFor || cancellingRaffle) {
       const interval = setInterval(() => {
         refetchPositions();
         refetchCreatedRaffles();
@@ -41,7 +43,7 @@ export default function RaffleDashboard() {
       
       return () => clearInterval(interval);
     }
-  }, [selectingWinnerFor, isCancelling, refetchPositions, refetchCreatedRaffles]);
+  }, [selectingWinnerFor, cancellingRaffle, refetchPositions, refetchCreatedRaffles]);
   
   const loading = positionsLoading || rafflesLoading;
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
@@ -91,10 +93,12 @@ export default function RaffleDashboard() {
   }, [emergencyReveal]);
 
   const handleCancelRaffle = useCallback(async (raffleContract: string) => {
+    setCancellingRaffle(raffleContract);
     try {
       await cancelRaffle(raffleContract);
       toast.success('Raffle cancelled successfully!');
     } catch (error) {
+      setCancellingRaffle(null);
       // Error already handled in hook
     }
   }, [cancelRaffle]);
@@ -354,10 +358,10 @@ export default function RaffleDashboard() {
                               ) : (
                                 <button
                                   onClick={() => handleCancelRaffle(raffle.raffleContract)}
-                                  disabled={isCancelling}
+                                  disabled={cancellingRaffle === raffle.raffleContract}
                                   className="bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm"
                                 >
-                                  {isCancelling ? 'Cancelling...' : 'Cancel Raffle'}
+                                  {cancellingRaffle === raffle.raffleContract ? 'Cancelling...' : 'Cancel Raffle'}
                                 </button>
                               )}
                             </div>
