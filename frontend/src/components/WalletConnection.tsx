@@ -57,39 +57,17 @@ export function WalletConnection() {
   const handleConnect = async () => {
     console.log('Opening Web3Modal...');
     
-    // Try direct MetaMask connection with aggressive optimization
-    if (window.ethereum && !isConnecting) {
-      try {
-        // Pre-warm the connection - check if already connected
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-          // Already connected, force immediate recognition
-          window.dispatchEvent(new Event('ethereum#accountsChanged'));
-          window.dispatchEvent(new Event('focus'));
-          return;
-        }
-        
-        // Request new connection
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-        
-        // Aggressive immediate recognition burst
-        setTimeout(() => window.dispatchEvent(new Event('ethereum#accountsChanged')), 0);
-        setTimeout(() => window.dispatchEvent(new Event('focus')), 50);
-        setTimeout(() => window.dispatchEvent(new Event('ethereum#accountsChanged')), 100);
-        
-        return;
-      } catch (err) {
-        console.log('Direct connection failed, opening modal:', err);
-      }
-    }
-    
-    // Fallback to Web3Modal with minimal delay
+    // Always open Web3Modal - let user choose their wallet
     const openModal = () => {
-      requestAnimationFrame(() => open());
+      try {
+        open();
+      } catch (err) {
+        console.error('Failed to open Web3Modal:', err);
+      }
     };
     
     if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      setTimeout(openModal, 25); // Reduced from 50ms
+      setTimeout(openModal, 25);
     } else {
       openModal();
     }
