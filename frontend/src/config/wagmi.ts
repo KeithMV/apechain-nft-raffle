@@ -73,5 +73,18 @@ createWeb3Modal({
     '971e689d0a5be527bac79629b4ee9b925e82208e5168b733496a09c0faed0709', // OKX
   ],
   allWallets: 'HIDE',
-  defaultChain: apeChain
+  defaultChain: apeChain,
+  // Mobile optimizations
+  enableWalletFeatures: false, // Disable extra features for faster loading
+  enableNetworkView: false, // Simplify network selection
+  enableAccountView: true, // Keep account view for balance display
+  termsConditionsUrl: undefined, // Remove extra legal links
+  privacyPolicyUrl: undefined, // Remove extra legal links
+  // Connection optimizations
+  connectorImages: {
+    // Preload wallet icons for faster display
+    metaMask: 'https://avatars.githubusercontent.com/u/11744586?s=48&v=4',
+    rainbow: 'https://avatars.githubusercontent.com/u/48327834?s=48&v=4',
+    trust: 'https://avatars.githubusercontent.com/u/33205817?s=48&v=4'
+  }
 });

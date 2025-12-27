@@ -14,7 +14,12 @@ export function WalletConnection() {
 
   const handleConnect = () => {
     console.log('Opening Web3Modal...');
-    open();
+    // Mobile optimization: Add slight delay to prevent double-tap issues
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      setTimeout(() => open(), 100);
+    } else {
+      open();
+    }
   };
 
   const handleSwitchNetwork = async () => {
