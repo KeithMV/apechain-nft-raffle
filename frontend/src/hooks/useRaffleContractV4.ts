@@ -96,26 +96,51 @@ export function useNFTApprovalV4() {
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(undefined, currentVersion === 'v4');
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+  const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
+    timeout: 60000, // 60 second timeout
   });
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Handle approval success
+  useEffect(() => {
+    if (isSuccess) {
+      setIsProcessing(false);
+    }
+  }, [isSuccess]);
+
+  // Handle transaction receipt errors or timeouts
+  useEffect(() => {
+    if (receiptError || (hash && !isConfirming && !isSuccess)) {
+      setIsProcessing(false);
+      if (receiptError) {
+        toast.error('Approval confirmation failed. Please try again.');
+      }
+    }
+  }, [receiptError, hash, isConfirming, isSuccess]);
 
   const approveNFT = async (nftContract: string) => {
-    return await writeContractAsync({
-      address: nftContract as `0x${string}`,
-      abi: ERC721_ABI,
-      functionName: 'setApprovalForAll',
-      args: [factoryAddress as `0x${string}`, true],
-      chainId: 33139,
-    });
+    setIsProcessing(true);
+    try {
+      return await writeContractAsync({
+        address: nftContract as `0x${string}`,
+        abi: ERC721_ABI,
+        functionName: 'setApprovalForAll',
+        args: [factoryAddress as `0x${string}`, true],
+        chainId: 33139,
+      });
+    } catch (error) {
+      setIsProcessing(false);
+      throw error;
+    }
   };
 
   return {
     approveNFT,
     hash,
     error,
-    isPending,
-    isConfirming,
+    isPending: isPending || isProcessing,
+    isConfirming: isConfirming && isProcessing,
     isSuccess,
     version: currentVersion,
   };
