@@ -36,11 +36,15 @@ const metadata = {
   icons: [typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : 'https://apechainraffles.io/favicon.ico']
 };
 
-// Create wagmi config with Web3Modal
+// Create wagmi config with Web3Modal and connection optimizations
 export const config = defaultWagmiConfig({
   chains: [apeChain],
   projectId,
   metadata,
+  // Connection optimizations
+  ssr: false, // Disable SSR for faster client-side connection
+  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+  syncConnectedChain: true, // Sync chain changes faster
 });
 
 // Create Web3Modal with enhanced mobile support

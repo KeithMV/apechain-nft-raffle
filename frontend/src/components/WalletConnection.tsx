@@ -1,16 +1,32 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAccount, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { apeChain } from '../config/wagmi';
 
 export function WalletConnection() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, isConnecting, isReconnecting } = useAccount();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const { open } = useWeb3Modal();
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
+
+  // Optimize reconnection after MetaMask approval
+  useEffect(() => {
+    if (isConnecting || isReconnecting) {
+      // Force a faster check when connecting/reconnecting
+      const checkConnection = () => {
+        if (window.ethereum && window.ethereum.selectedAddress) {
+          // Connection exists, force wagmi to recognize it faster
+          window.dispatchEvent(new Event('focus'));
+        }
+      };
+      
+      const timeoutId = setTimeout(checkConnection, 500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isConnecting, isReconnecting]);
 
   const handleConnect = () => {
     console.log('Opening Web3Modal...');
@@ -33,6 +49,17 @@ export function WalletConnection() {
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
+
+  if (isConnecting || isReconnecting) {
+    return (
+      <div className="flex items-center space-x-2 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 min-h-[44px]">
+        <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+        <span className="text-slate-300 text-xs sm:text-sm font-mono">
+          {isReconnecting ? 'Reconnecting...' : 'Connecting...'}
+        </span>
+      </div>
+    );
+  }
 
   if (isConnected) {
     return (
