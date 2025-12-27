@@ -128,15 +128,18 @@ export function useCreateRaffleV4() {
   const { currentVersion, rateLimit } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(undefined, currentVersion === 'v4');
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+  const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
+    timeout: 60000, // 60 second timeout
   });
   const { invalidateAll } = useCacheInvalidation();
   const lastSuccessHash = useRef<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (isSuccess && hash && hash !== lastSuccessHash.current) {
       lastSuccessHash.current = hash;
+      setIsProcessing(false);
       
       // Immediate success notification
       toast.success('✅ Raffle created successfully!');
@@ -149,6 +152,16 @@ export function useCreateRaffleV4() {
       return () => clearTimeout(cacheTimeoutId);
     }
   }, [isSuccess, hash, invalidateAll]);
+
+  // Handle transaction receipt errors or timeouts
+  useEffect(() => {
+    if (receiptError || (hash && !isConfirming && !isSuccess)) {
+      setIsProcessing(false);
+      if (receiptError) {
+        toast.error('Transaction confirmation failed. Please try again.');
+      }
+    }
+  }, [receiptError, hash, isConfirming, isSuccess]);
 
   const createRaffle = async (params: CreateRaffleParams) => {
     // Validate inputs
@@ -165,29 +178,35 @@ export function useCreateRaffleV4() {
       throw new Error('Invalid duration');
     }
     
+    setIsProcessing(true);
     const ticketPriceWei = parseEther(params.ticketPrice);
     
-    return await writeContractAsync({
-      address: factoryAddress as `0x${string}`,
-      abi: RAFFLE_FACTORY_ABI,
-      functionName: 'createRaffle',
-      args: [
-        params.nftContract as `0x${string}`,
-        BigInt(params.tokenId),
-        ticketPriceWei,
-        BigInt(params.maxTickets),
-        BigInt(params.duration)
-      ],
-      chainId: 33139,
-    });
+    try {
+      return await writeContractAsync({
+        address: factoryAddress as `0x${string}`,
+        abi: RAFFLE_FACTORY_ABI,
+        functionName: 'createRaffle',
+        args: [
+          params.nftContract as `0x${string}`,
+          BigInt(params.tokenId),
+          ticketPriceWei,
+          BigInt(params.maxTickets),
+          BigInt(params.duration)
+        ],
+        chainId: 33139,
+      });
+    } catch (error) {
+      setIsProcessing(false);
+      throw error;
+    }
   };
 
   return {
     createRaffle,
     hash,
     error,
-    isPending,
-    isConfirming,
+    isPending: isPending || isProcessing,
+    isConfirming: isConfirming && isProcessing,
     isSuccess,
     version: currentVersion,
     rateLimit,
