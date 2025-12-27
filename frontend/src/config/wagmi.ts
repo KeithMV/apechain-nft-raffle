@@ -43,7 +43,6 @@ export const config = defaultWagmiConfig({
   metadata,
   // Connection optimizations
   ssr: false, // Disable SSR for faster client-side connection
-  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   syncConnectedChain: true, // Sync chain changes faster
 });
 
