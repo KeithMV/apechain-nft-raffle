@@ -12,27 +12,63 @@ export function WalletConnection() {
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
-  // Optimize reconnection after MetaMask approval
+  // Aggressive connection optimization
   useEffect(() => {
     if (isConnecting || isReconnecting) {
-      // Force a faster check when connecting/reconnecting
-      const checkConnection = () => {
-        if (window.ethereum && window.ethereum.selectedAddress) {
-          // Connection exists, force wagmi to recognize it faster
+      // Immediate check
+      const immediateCheck = () => {
+        if (window.ethereum?.selectedAddress) {
           window.dispatchEvent(new Event('focus'));
+          window.dispatchEvent(new Event('ethereum#accountsChanged'));
         }
       };
       
-      const timeoutId = setTimeout(checkConnection, 500);
-      return () => clearTimeout(timeoutId);
+      // Multiple fast checks
+      immediateCheck();
+      const intervals = [100, 250, 500].map(delay => 
+        setTimeout(immediateCheck, delay)
+      );
+      
+      return () => intervals.forEach(clearTimeout);
     }
   }, [isConnecting, isReconnecting]);
 
-  const handleConnect = () => {
+  // Preemptive connection detection
+  useEffect(() => {
+    const detectConnection = () => {
+      if (!isConnected && window.ethereum?.selectedAddress && !isConnecting) {
+        window.dispatchEvent(new Event('focus'));
+      }
+    };
+    
+    window.addEventListener('focus', detectConnection);
+    window.addEventListener('ethereum#accountsChanged', detectConnection);
+    
+    return () => {
+      window.removeEventListener('focus', detectConnection);
+      window.removeEventListener('ethereum#accountsChanged', detectConnection);
+    };
+  }, [isConnected, isConnecting]);
+
+  const handleConnect = async () => {
     console.log('Opening Web3Modal...');
-    // Mobile optimization: Add slight delay to prevent double-tap issues
+    
+    // Try direct MetaMask connection first if available
+    if (window.ethereum && !isConnecting) {
+      try {
+        // Request accounts immediately
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        // Force immediate recognition
+        window.dispatchEvent(new Event('ethereum#accountsChanged'));
+        return;
+      } catch (err) {
+        console.log('Direct connection failed, opening modal:', err);
+      }
+    }
+    
+    // Fallback to Web3Modal
     if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      setTimeout(() => open(), 100);
+      setTimeout(() => open(), 50);
     } else {
       open();
     }
