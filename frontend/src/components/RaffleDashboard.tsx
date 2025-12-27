@@ -242,14 +242,10 @@ export default function RaffleDashboard() {
                         )}
                       </div>
                       
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
                         <div>
                           <p className="text-pink-400/70 font-mono tracking-wide">Your Tickets</p>
                           <p className="text-pink-300 font-mono tracking-wider">{position.userTickets}</p>
-                        </div>
-                        <div>
-                          <p className="text-pink-400/70 font-mono tracking-wide">Win Probability</p>
-                          <p className="text-pink-300 font-mono tracking-wider">{position.winProbability.toFixed(1)}%</p>
                         </div>
                         <div>
                           <p className="text-pink-400/70 font-mono tracking-wide">Tickets Sold</p>
