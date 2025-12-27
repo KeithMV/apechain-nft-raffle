@@ -36,17 +36,17 @@ const metadata = {
   icons: [typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : 'https://apechainraffles.io/favicon.ico']
 };
 
-// Create wagmi config with Web3Modal and aggressive connection optimizations
+// Create wagmi config with ultra-aggressive connection optimizations
 export const config = defaultWagmiConfig({
   chains: [apeChain],
   projectId,
   metadata,
-  // Aggressive connection optimizations
+  // Ultra-aggressive connection optimizations
   ssr: false,
   syncConnectedChain: true,
-  pollingInterval: 1000, // Faster polling
+  pollingInterval: 500, // Even faster polling - 500ms
   batch: { multicall: true },
-  cacheTime: 2000, // Shorter cache for faster updates
+  cacheTime: 1000, // Ultra-short cache - 1 second
 });
 
 // Create Web3Modal with speed optimizations

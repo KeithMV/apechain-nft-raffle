@@ -12,20 +12,24 @@ export function WalletConnection() {
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
-  // Aggressive connection optimization
+  // Ultra-aggressive connection optimization
   useEffect(() => {
     if (isConnecting || isReconnecting) {
-      // Immediate check
+      // Immediate burst of checks
       const immediateCheck = () => {
         if (window.ethereum?.selectedAddress) {
           window.dispatchEvent(new Event('focus'));
           window.dispatchEvent(new Event('ethereum#accountsChanged'));
+          // Force wagmi to check immediately
+          if (window.ethereum.emit) {
+            window.ethereum.emit('accountsChanged', [window.ethereum.selectedAddress]);
+          }
         }
       };
       
-      // Multiple fast checks
+      // Rapid-fire checks: 0ms, 50ms, 100ms, 200ms, 400ms
       immediateCheck();
-      const intervals = [100, 250, 500].map(delay => 
+      const intervals = [0, 50, 100, 200, 400].map(delay => 
         setTimeout(immediateCheck, delay)
       );
       
@@ -53,24 +57,41 @@ export function WalletConnection() {
   const handleConnect = async () => {
     console.log('Opening Web3Modal...');
     
-    // Try direct MetaMask connection first if available
+    // Try direct MetaMask connection with aggressive optimization
     if (window.ethereum && !isConnecting) {
       try {
-        // Request accounts immediately
+        // Pre-warm the connection - check if already connected
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts.length > 0) {
+          // Already connected, force immediate recognition
+          window.dispatchEvent(new Event('ethereum#accountsChanged'));
+          window.dispatchEvent(new Event('focus'));
+          return;
+        }
+        
+        // Request new connection
         await window.ethereum.request({ method: 'eth_requestAccounts' });
-        // Force immediate recognition
-        window.dispatchEvent(new Event('ethereum#accountsChanged'));
+        
+        // Aggressive immediate recognition burst
+        setTimeout(() => window.dispatchEvent(new Event('ethereum#accountsChanged')), 0);
+        setTimeout(() => window.dispatchEvent(new Event('focus')), 50);
+        setTimeout(() => window.dispatchEvent(new Event('ethereum#accountsChanged')), 100);
+        
         return;
       } catch (err) {
         console.log('Direct connection failed, opening modal:', err);
       }
     }
     
-    // Fallback to Web3Modal
+    // Fallback to Web3Modal with minimal delay
+    const openModal = () => {
+      requestAnimationFrame(() => open());
+    };
+    
     if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      setTimeout(() => open(), 50);
+      setTimeout(openModal, 25); // Reduced from 50ms
     } else {
-      open();
+      openModal();
     }
   };
 
