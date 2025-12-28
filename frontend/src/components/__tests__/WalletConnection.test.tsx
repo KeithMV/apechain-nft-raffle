@@ -134,7 +134,15 @@ describe('WalletConnection', () => {
         name: 'Mock',
         type: 'mock',
         uid: 'mock-uid',
-        emitter: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
+        emitter: { 
+          uid: 'emitter-uid',
+          _emitter: {},
+          on: vi.fn(),
+          off: vi.fn(),
+          once: vi.fn(),
+          emit: vi.fn(),
+          listenerCount: vi.fn()
+        },
         connect: vi.fn(),
         disconnect: vi.fn(),
         getAccounts: vi.fn(),
@@ -199,7 +207,15 @@ describe('WalletConnection', () => {
         name: 'Mock',
         type: 'mock',
         uid: 'mock-uid',
-        emitter: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
+        emitter: { 
+          uid: 'emitter-uid',
+          _emitter: {},
+          on: vi.fn(),
+          off: vi.fn(),
+          once: vi.fn(),
+          emit: vi.fn(),
+          listenerCount: vi.fn()
+        },
         connect: vi.fn(),
         disconnect: vi.fn(),
         getAccounts: vi.fn(),
