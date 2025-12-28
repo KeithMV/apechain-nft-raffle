@@ -46,7 +46,25 @@ describe('CreateRafflePage', () => {
     
     vi.mocked(useChainId).mockReturnValue(33139)
     
-    vi.mocked(useSwitchChain).mockReturnValue({ switchChain: vi.fn() })
+    vi.mocked(useSwitchChain).mockReturnValue({ 
+      switchChain: vi.fn(),
+      switchChainAsync: vi.fn(),
+      data: undefined,
+      error: null,
+      variables: undefined,
+      isError: false,
+      isIdle: true,
+      isPending: false,
+      isSuccess: false,
+      isPaused: false,
+      status: 'idle',
+      reset: vi.fn(),
+      context: undefined,
+      failureCount: 0,
+      failureReason: null,
+      submittedAt: 0,
+      chains: []
+    })
     
     vi.mocked(usePlatformFeeV4).mockReturnValue({
       data: 1000n, // 10%
