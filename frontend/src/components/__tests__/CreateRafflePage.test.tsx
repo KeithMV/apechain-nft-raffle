@@ -63,7 +63,12 @@ describe('CreateRafflePage', () => {
       failureCount: 0,
       failureReason: null,
       submittedAt: 0,
-      chains: [{ id: 33139, name: 'ApeChain' }]
+      chains: [{ 
+        id: 33139, 
+        name: 'ApeChain',
+        nativeCurrency: { name: 'APE', symbol: 'APE', decimals: 18 },
+        rpcUrls: { default: { http: ['https://apechain.calderachain.xyz/http'] } }
+      }]
     })
     
     vi.mocked(usePlatformFeeV4).mockReturnValue({
