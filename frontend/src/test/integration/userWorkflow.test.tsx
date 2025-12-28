@@ -81,9 +81,15 @@ describe('User Workflow Integration Tests', () => {
     // Start with disconnected state
     vi.mocked(useAccount).mockReturnValue({
       address: undefined,
+      addresses: undefined,
+      chain: undefined,
+      chainId: undefined,
+      connector: undefined,
       isConnected: false,
       isConnecting: false,
       isReconnecting: false,
+      isDisconnected: true,
+      status: 'disconnected'
     })
 
     const { rerender } = render(<WalletConnection />)
@@ -98,9 +104,15 @@ describe('User Workflow Integration Tests', () => {
     // Simulate connecting state
     vi.mocked(useAccount).mockReturnValue({
       address: undefined,
+      addresses: undefined,
+      chain: undefined,
+      chainId: undefined,
+      connector: undefined,
       isConnected: false,
       isConnecting: true,
       isReconnecting: false,
+      isDisconnected: false,
+      status: 'connecting'
     })
     
     rerender(<WalletConnection />)
@@ -109,9 +121,15 @@ describe('User Workflow Integration Tests', () => {
     // Simulate connected state
     vi.mocked(useAccount).mockReturnValue({
       address: '0x1234567890123456789012345678901234567890',
+      addresses: ['0x1234567890123456789012345678901234567890'],
+      chain: { id: 33139, name: 'ApeChain' },
+      chainId: 33139,
+      connector: { id: 'mock', name: 'Mock' },
       isConnected: true,
       isConnecting: false,
       isReconnecting: false,
+      isDisconnected: false,
+      status: 'connected'
     })
     
     rerender(<WalletConnection />)
@@ -123,9 +141,15 @@ describe('User Workflow Integration Tests', () => {
     // Connected but wrong network
     vi.mocked(useAccount).mockReturnValue({
       address: '0x1234567890123456789012345678901234567890',
+      addresses: ['0x1234567890123456789012345678901234567890'],
+      chain: { id: 1, name: 'Ethereum' },
+      chainId: 1,
+      connector: { id: 'mock', name: 'Mock' },
       isConnected: true,
       isConnecting: false,
       isReconnecting: false,
+      isDisconnected: false,
+      status: 'connected'
     })
     
     vi.mocked(useChainId).mockReturnValue(1) // Ethereum mainnet
@@ -144,9 +168,15 @@ describe('User Workflow Integration Tests', () => {
     // Start connected
     vi.mocked(useAccount).mockReturnValue({
       address: '0x1234567890123456789012345678901234567890',
+      addresses: ['0x1234567890123456789012345678901234567890'],
+      chain: { id: 33139, name: 'ApeChain' },
+      chainId: 33139,
+      connector: { id: 'mock', name: 'Mock' },
       isConnected: true,
       isConnecting: false,
       isReconnecting: false,
+      isDisconnected: false,
+      status: 'connected'
     })
     
     render(<WalletConnection />)
@@ -160,9 +190,15 @@ describe('User Workflow Integration Tests', () => {
     // Start in reconnecting state
     vi.mocked(useAccount).mockReturnValue({
       address: undefined,
+      addresses: undefined,
+      chain: undefined,
+      chainId: undefined,
+      connector: undefined,
       isConnected: false,
       isConnecting: false,
       isReconnecting: true,
+      isDisconnected: false,
+      status: 'reconnecting'
     })
     
     render(<WalletConnection />)

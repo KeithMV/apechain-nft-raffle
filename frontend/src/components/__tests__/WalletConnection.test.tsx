@@ -83,9 +83,15 @@ describe('WalletConnection', () => {
   it('shows connect button when wallet is not connected', () => {
     vi.mocked(useAccount).mockReturnValue({
       address: undefined,
+      addresses: undefined,
+      chain: undefined,
+      chainId: undefined,
+      connector: undefined,
       isConnected: false,
       isConnecting: false,
       isReconnecting: false,
+      isDisconnected: true,
+      status: 'disconnected'
     })
 
     render(<WalletConnection />)
@@ -96,9 +102,15 @@ describe('WalletConnection', () => {
   it('shows connecting state when wallet is connecting', () => {
     vi.mocked(useAccount).mockReturnValue({
       address: undefined,
+      addresses: undefined,
+      chain: undefined,
+      chainId: undefined,
+      connector: undefined,
       isConnected: false,
       isConnecting: true,
       isReconnecting: false,
+      isDisconnected: false,
+      status: 'connecting'
     })
 
     render(<WalletConnection />)
@@ -109,9 +121,15 @@ describe('WalletConnection', () => {
   it('shows wallet address when connected', () => {
     vi.mocked(useAccount).mockReturnValue({
       address: '0x1234567890123456789012345678901234567890',
+      addresses: ['0x1234567890123456789012345678901234567890'],
+      chain: { id: 33139, name: 'ApeChain' },
+      chainId: 33139,
+      connector: { id: 'mock', name: 'Mock' },
       isConnected: true,
       isConnecting: false,
       isReconnecting: false,
+      isDisconnected: false,
+      status: 'connected'
     })
 
     render(<WalletConnection />)
@@ -123,9 +141,15 @@ describe('WalletConnection', () => {
   it('opens Web3Modal when connect button is clicked', () => {
     vi.mocked(useAccount).mockReturnValue({
       address: undefined,
+      addresses: undefined,
+      chain: undefined,
+      chainId: undefined,
+      connector: undefined,
       isConnected: false,
       isConnecting: false,
       isReconnecting: false,
+      isDisconnected: true,
+      status: 'disconnected'
     })
 
     render(<WalletConnection />)
@@ -139,9 +163,15 @@ describe('WalletConnection', () => {
   it('shows network switch button when on wrong network', () => {
     vi.mocked(useAccount).mockReturnValue({
       address: '0x1234567890123456789012345678901234567890',
+      addresses: ['0x1234567890123456789012345678901234567890'],
+      chain: { id: 1, name: 'Ethereum' },
+      chainId: 1,
+      connector: { id: 'mock', name: 'Mock' },
       isConnected: true,
       isConnecting: false,
       isReconnecting: false,
+      isDisconnected: false,
+      status: 'connected'
     })
     
     // Mock wrong chain ID
