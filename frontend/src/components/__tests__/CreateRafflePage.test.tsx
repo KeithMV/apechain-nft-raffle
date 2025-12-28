@@ -41,7 +41,15 @@ describe('CreateRafflePage', () => {
     
     vi.mocked(useAccount).mockReturnValue({
       address: mockAddress,
+      addresses: [mockAddress],
+      chain: { id: 33139, name: 'ApeChain' },
+      chainId: 33139,
+      connector: { id: 'mock', name: 'Mock' },
       isConnected: true,
+      isConnecting: false,
+      isReconnecting: false,
+      isDisconnected: false,
+      status: 'connected'
     })
     
     vi.mocked(useChainId).mockReturnValue(33139)
