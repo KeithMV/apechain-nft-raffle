@@ -63,7 +63,7 @@ describe('CreateRafflePage', () => {
       failureCount: 0,
       failureReason: null,
       submittedAt: 0,
-      chains: []
+      chains: [{ id: 33139, name: 'ApeChain' }]
     })
     
     vi.mocked(usePlatformFeeV4).mockReturnValue({

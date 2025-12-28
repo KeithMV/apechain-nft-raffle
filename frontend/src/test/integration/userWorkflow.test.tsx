@@ -67,7 +67,7 @@ describe('User Workflow Integration Tests', () => {
       failureCount: 0,
       failureReason: null,
       submittedAt: 0,
-      chains: []
+      chains: [{ id: 33139, name: 'ApeChain' }]
     })
     vi.mocked(useChainId).mockReturnValue(33139)
   })
