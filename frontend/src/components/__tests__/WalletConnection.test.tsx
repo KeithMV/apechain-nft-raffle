@@ -33,7 +33,7 @@ describe('WalletConnection', () => {
     vi.clearAllMocks()
     
     // Default mock implementations
-    vi.mocked(useWeb3Modal).mockReturnValue({ open: mockOpen })
+    vi.mocked(useWeb3Modal).mockReturnValue({ open: mockOpen, close: vi.fn() })
     vi.mocked(useDisconnect).mockReturnValue({ disconnect: mockDisconnect })
     vi.mocked(useSwitchChain).mockReturnValue({ switchChain: mockSwitchChain })
     vi.mocked(useChainId).mockReturnValue(33139)
