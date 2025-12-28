@@ -16,7 +16,7 @@ jobs:
           name: Run frontend tests
           command: |
             cd frontend
-            yarn test --coverage --watchAll=false --passWithNoTests
+            yarn test --coverage --run --passWithNoTests
       - run:
           name: Build frontend (CLEAN)
           command: |
