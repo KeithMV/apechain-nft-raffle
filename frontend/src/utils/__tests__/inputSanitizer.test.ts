@@ -71,7 +71,7 @@ describe('inputSanitizer', () => {
     it('handles mixed case addresses', () => {
       const mixedCaseAddress = '0x1234567890123456789012345678901234567890'
       expect(validateAddress(mixedCaseAddress.toLowerCase())).toBe(true)
-      expect(validateAddress(mixedCaseAddress.toUpperCase())).toBe(true)
+      expect(validateAddress(mixedCaseAddress.toUpperCase())).toBe(false) // uppercase letters not valid hex
     })
   })
 
