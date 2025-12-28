@@ -41,12 +41,14 @@ describe('User Workflow Integration Tests', () => {
       isIdle: true,
       isPending: false,
       isSuccess: false,
+      isPaused: false,
       status: 'idle',
       reset: vi.fn(),
       context: undefined,
       failureCount: 0,
       failureReason: null,
-      submittedAt: 0
+      submittedAt: 0,
+      connectors: []
     })
     vi.mocked(useSwitchChain).mockReturnValue({ switchChain: mockSwitchChain })
     vi.mocked(useChainId).mockReturnValue(33139)
