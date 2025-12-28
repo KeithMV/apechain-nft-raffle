@@ -56,7 +56,18 @@ describe('CreateRafflePage', () => {
         uid: 'mock-uid',
         emitter: { 
           uid: 'emitter-uid',
-          _emitter: {},
+          _emitter: {
+            eventNames: vi.fn(),
+            listeners: vi.fn(),
+            listenerCount: vi.fn(),
+            emit: vi.fn(),
+            on: vi.fn(),
+            off: vi.fn(),
+            once: vi.fn(),
+            removeListener: vi.fn(),
+            removeAllListeners: vi.fn(),
+            setMaxListeners: vi.fn()
+          },
           on: vi.fn(),
           off: vi.fn(),
           once: vi.fn(),
