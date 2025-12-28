@@ -69,7 +69,8 @@ describe('WalletConnection', () => {
       context: undefined,
       failureCount: 0,
       failureReason: null,
-      submittedAt: 0
+      submittedAt: 0,
+      chains: []
     })
     vi.mocked(useChainId).mockReturnValue(33139)
   })
