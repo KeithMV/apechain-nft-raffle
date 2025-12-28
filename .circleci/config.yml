@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build-frontend:
     docker:
-      - image: cimg/node:20.18
+      - image: cimg/node:20.19
     steps:
       - checkout
       - run:
@@ -31,7 +31,7 @@ jobs:
 
   build-contracts:
     docker:
-      - image: cimg/node:20.18
+      - image: cimg/node:20.19
     steps:
       - checkout
       - restore_cache:
@@ -61,7 +61,7 @@ jobs:
 
   test:
     docker:
-      - image: cimg/node:20.18
+      - image: cimg/node:20.19
     steps:
       - checkout
       - attach_workspace:
