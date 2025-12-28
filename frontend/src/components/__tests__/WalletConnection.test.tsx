@@ -34,7 +34,25 @@ describe('WalletConnection', () => {
     
     // Default mock implementations
     vi.mocked(useWeb3Modal).mockReturnValue({ open: mockOpen, close: vi.fn() })
-    vi.mocked(useDisconnect).mockReturnValue({ disconnect: mockDisconnect })
+    vi.mocked(useDisconnect).mockReturnValue({ 
+      disconnect: mockDisconnect,
+      disconnectAsync: vi.fn(),
+      data: undefined,
+      error: null,
+      variables: undefined,
+      isError: false,
+      isIdle: true,
+      isPending: false,
+      isSuccess: false,
+      status: 'idle',
+      reset: vi.fn(),
+      context: undefined,
+      failureCount: 0,
+      failureReason: null,
+      submittedAt: 0,
+      mutate: mockDisconnect,
+      mutateAsync: vi.fn()
+    })
     vi.mocked(useSwitchChain).mockReturnValue({ switchChain: mockSwitchChain })
     vi.mocked(useChainId).mockReturnValue(33139)
   })
