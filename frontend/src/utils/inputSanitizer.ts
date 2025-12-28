@@ -22,6 +22,9 @@ export function sanitizeString(input: string): string {
   }
 }
 
+// Alias for test compatibility
+export const sanitizeInput = sanitizeString;
+
 // Sanitize and validate Ethereum addresses
 export function sanitizeAddress(address: string): string {
   if (typeof address !== 'string') {
@@ -36,6 +39,26 @@ export function sanitizeAddress(address: string): string {
   }
   
   return cleaned;
+}
+
+// Address validation function for tests
+export function validateAddress(address: string): boolean {
+  if (typeof address !== 'string') {
+    return false;
+  }
+  
+  const cleaned = address.trim();
+  return /^0x[a-fA-F0-9]{40}$/.test(cleaned);
+}
+
+// Positive number validation for tests
+export function validatePositiveNumber(value: string): boolean {
+  if (typeof value !== 'string' || value === '') {
+    return false;
+  }
+  
+  const num = parseFloat(value);
+  return !isNaN(num) && num > 0;
 }
 
 // Sanitize numeric inputs
