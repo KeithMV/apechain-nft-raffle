@@ -122,7 +122,12 @@ describe('WalletConnection', () => {
     vi.mocked(useAccount).mockReturnValue({
       address: '0x1234567890123456789012345678901234567890',
       addresses: ['0x1234567890123456789012345678901234567890'],
-      chain: { id: 33139, name: 'ApeChain' },
+      chain: { 
+        id: 33139, 
+        name: 'ApeChain',
+        nativeCurrency: { name: 'APE', symbol: 'APE', decimals: 18 },
+        rpcUrls: { default: { http: ['https://apechain.calderachain.xyz/http'] } }
+      },
       chainId: 33139,
       connector: { id: 'mock', name: 'Mock' },
       isConnected: true,
@@ -164,7 +169,12 @@ describe('WalletConnection', () => {
     vi.mocked(useAccount).mockReturnValue({
       address: '0x1234567890123456789012345678901234567890',
       addresses: ['0x1234567890123456789012345678901234567890'],
-      chain: { id: 1, name: 'Ethereum' },
+      chain: { 
+        id: 1, 
+        name: 'Ethereum',
+        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+        rpcUrls: { default: { http: ['https://mainnet.infura.io'] } }
+      },
       chainId: 1,
       connector: { id: 'mock', name: 'Mock' },
       isConnected: true,

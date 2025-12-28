@@ -42,7 +42,12 @@ describe('CreateRafflePage', () => {
     vi.mocked(useAccount).mockReturnValue({
       address: mockAddress,
       addresses: [mockAddress],
-      chain: { id: 33139, name: 'ApeChain' },
+      chain: { 
+        id: 33139, 
+        name: 'ApeChain',
+        nativeCurrency: { name: 'APE', symbol: 'APE', decimals: 18 },
+        rpcUrls: { default: { http: ['https://apechain.calderachain.xyz/http'] } }
+      },
       chainId: 33139,
       connector: { id: 'mock', name: 'Mock' },
       isConnected: true,
