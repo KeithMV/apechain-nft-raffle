@@ -53,6 +53,8 @@ describe('CreateRafflePage', () => {
         id: 'mock', 
         name: 'Mock',
         type: 'mock',
+        uid: 'mock-uid',
+        emitter: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
         connect: vi.fn(),
         disconnect: vi.fn(),
         getAccounts: vi.fn(),
