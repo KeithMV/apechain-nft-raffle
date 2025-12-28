@@ -47,7 +47,6 @@ describe('User Workflow Integration Tests', () => {
       failureCount: 0,
       failureReason: null,
       submittedAt: 0,
-      mutate: mockDisconnect,
       mutateAsync: vi.fn()
     })
     vi.mocked(useSwitchChain).mockReturnValue({ switchChain: mockSwitchChain })
