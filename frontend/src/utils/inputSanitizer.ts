@@ -11,9 +11,11 @@ export function sanitizeString(input: string): string {
   
   try {
     return input
-      .replace(/[<>]/g, '') // Remove HTML tags
+      .replace(/<script[^>]*>.*?<\/script>/gi, '') // Remove script tags and content
+      .replace(/<[^>]*>/g, '') // Remove all HTML tags
       .replace(/javascript:/gi, '') // Remove javascript: protocol
-      .replace(/on\w+=/gi, '') // Remove event handlers
+      .replace(/on\w+\s*=/gi, '') // Remove event handlers
+      .replace(/alert\s*\(/gi, '') // Remove alert calls
       .trim()
       .slice(0, 1000); // Limit length
   } catch (error) {
@@ -55,6 +57,15 @@ export function validateAddress(address: string): boolean {
 export function validatePositiveNumber(value: string): boolean {
   if (typeof value !== 'string' || value === '') {
     return false;
+  }
+  
+  // Check for invalid formats first
+  if (value.includes('e') || value.includes('E')) {
+    return false; // No scientific notation
+  }
+  
+  if ((value.match(/\./g) || []).length > 1) {
+    return false; // Multiple decimal points
   }
   
   const num = parseFloat(value);
