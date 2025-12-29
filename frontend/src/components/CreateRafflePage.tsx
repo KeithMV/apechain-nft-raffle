@@ -213,8 +213,7 @@ export default function CreateRafflePage() {
           </div>
         )}
 
-        {/* Mobile Wallet Guidance */}
-        <MobileBanner />
+
 
 
 
