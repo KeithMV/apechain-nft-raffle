@@ -146,7 +146,7 @@ export function useNFTApprovalV4() {
     approveNFT,
     hash,
     error,
-    isPending: isPending || isProcessing,
+    isPending: isProcessing,
     isConfirming: isConfirming && isProcessing,
     isSuccess,
     version: currentVersion,
@@ -221,7 +221,7 @@ export function useCreateRaffleV4() {
     const ticketPriceWei = parseEther(params.ticketPrice);
     
     try {
-      return await writeContractAsync({
+      const result = await writeContractAsync({
         address: factoryAddress as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
         functionName: 'createRaffle',
@@ -234,6 +234,7 @@ export function useCreateRaffleV4() {
         ],
         chainId: 33139,
       });
+      return result;
     } catch (error) {
       setIsProcessing(false);
       throw error;
@@ -244,7 +245,7 @@ export function useCreateRaffleV4() {
     createRaffle,
     hash,
     error,
-    isPending: isPending || isProcessing,
+    isPending: isProcessing,
     isConfirming: isConfirming && isProcessing,
     isSuccess,
     version: currentVersion,
