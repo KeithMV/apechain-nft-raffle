@@ -158,7 +158,7 @@ describe('useRaffleContractV4 hooks', () => {
 
       const { result } = renderHook(() => useNFTApprovalV4())
       
-      expect(result.current.isPending).toBe(true)
+      expect(result.current.isPending).toBe(false) // Now uses isProcessing which starts false
     })
   })
 })
