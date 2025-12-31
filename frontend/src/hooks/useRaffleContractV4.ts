@@ -119,6 +119,13 @@ export function useNFTApprovalV4() {
     }
   }, [receiptError, hash, isConfirming, isSuccess]);
 
+  // Handle transaction errors (including user rejection)
+  useEffect(() => {
+    if (error) {
+      setIsProcessing(false);
+    }
+  }, [error]);
+
   const approveNFT = async (nftContract: string) => {
     setIsProcessing(true);
     try {
@@ -187,6 +194,13 @@ export function useCreateRaffleV4() {
       }
     }
   }, [receiptError, hash, isConfirming, isSuccess]);
+
+  // Handle transaction errors (including user rejection)
+  useEffect(() => {
+    if (error) {
+      setIsProcessing(false);
+    }
+  }, [error]);
 
   const createRaffle = async (params: CreateRaffleParams) => {
     // Validate inputs
