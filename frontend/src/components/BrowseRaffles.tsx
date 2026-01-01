@@ -265,17 +265,6 @@ export default function BrowseRaffles() {
     }
   }, [revealSuccess, refetch]);
 
-  // Periodic refresh when transactions are pending (for both mobile and desktop)
-  useEffect(() => {
-    if (buyPending) {
-      const interval = setInterval(() => {
-        refetch();
-      }, 3000); // Refresh every 3 seconds when processing
-      
-      return () => clearInterval(interval);
-    }
-  }, [buyPending, refetch]);
-
   const handleBuyTickets = async (raffle: CreatedRaffle) => {
     const quantity = ticketQuantities[raffle.raffleContract] || 1;
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
