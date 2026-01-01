@@ -26,7 +26,7 @@ interface CreatedRaffle {
 }
 
 // Memoized raffle card component for performance
-const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuantity, handleBuyTickets, handleWinnerSelection, processingRaffles, formatTimeRemaining, address }: {
+const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuantity, handleBuyTickets, handleWinnerSelection, processingRaffles, formatTimeRemaining, address, buyPending }: {
   raffle: CreatedRaffle;
   index: number;
   ticketQuantities: {[key: string]: number};
@@ -36,6 +36,7 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
   processingRaffles: Set<string>;
   formatTimeRemaining: (endTime: number) => string;
   address?: string;
+  buyPending: boolean;
 }) => {
   const quantity = ticketQuantities[raffle.raffleContract] || 1;
   const totalCost = (parseFloat(raffle.ticketPrice) * quantity).toFixed(3);
@@ -477,6 +478,7 @@ export default function BrowseRaffles() {
                       processingRaffles={processingRaffles}
                       formatTimeRemaining={formatTimeRemaining}
                       address={address}
+                      buyPending={buyPending}
                     />
                   ))}
                 </div>
