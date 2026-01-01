@@ -267,18 +267,16 @@ export default function BrowseRaffles() {
 
   // Periodic refresh when transactions are pending (for both mobile and desktop)
   useEffect(() => {
-    if (processingRaffles.size > 0) {
+    if (buyPending) {
       const interval = setInterval(() => {
         refetch();
-      }, 2000); // Refresh every 2 seconds when processing (faster for desktop)
+      }, 3000); // Refresh every 3 seconds when processing
       
       return () => clearInterval(interval);
     }
-  }, [processingRaffles.size, refetch]);
+  }, [buyPending, refetch]);
 
   const handleBuyTickets = async (raffle: CreatedRaffle) => {
-    if (processingRaffles.has(raffle.raffleContract)) return;
-    
     const quantity = ticketQuantities[raffle.raffleContract] || 1;
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
     
@@ -287,20 +285,12 @@ export default function BrowseRaffles() {
       return;
     }
     
-    setProcessingRaffles(prev => new Set(prev).add(raffle.raffleContract));
-    
     try {
       await buyTickets(raffle.raffleContract, quantity, raffle.ticketPrice);
       // Success handling is done in the useEffect for buySuccess
     } catch (error) {
       console.error('Failed to buy tickets:', error);
-      toast.error('Failed to purchase tickets. Please try again.');
-      // Always clear processing state on error
-      setProcessingRaffles(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(raffle.raffleContract);
-        return newSet;
-      });
+      // Error handling is done in the useEffect for buyError
     }
   };
 
@@ -332,7 +322,6 @@ export default function BrowseRaffles() {
   useEffect(() => {
     if (buySuccess) {
       setTicketQuantities({});
-      setProcessingRaffles(new Set());
       // Immediately refetch data to show updated ticket counts
       refetch();
     }
@@ -341,9 +330,6 @@ export default function BrowseRaffles() {
   // Handle buy error
   useEffect(() => {
     if (buyError) {
-      // Clear processing state on error
-      setProcessingRaffles(new Set());
-      
       if (buyError.message?.includes('User rejected')) {
         toast.error('Transaction cancelled by user');
       } else {
