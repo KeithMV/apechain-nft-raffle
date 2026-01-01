@@ -6,7 +6,7 @@
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
 import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCacheInvalidation } from './useCacheInvalidation';
 import toast from 'react-hot-toast';
 
@@ -221,19 +221,39 @@ export function useFactoryPauseStatus() {
  */
 export function useBuyTickets() {
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+  const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
+    timeout: 60000, // 60 second timeout
   });
   const { invalidateAll } = useCacheInvalidation();
   const lastSuccessHash = useRef<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (isSuccess && hash && hash !== lastSuccessHash.current) {
       lastSuccessHash.current = hash;
+      setIsProcessing(false);
       toast.success('Tickets purchased successfully!');
       invalidateAll();
     }
   }, [isSuccess, hash, invalidateAll]);
+
+  // Handle transaction receipt errors or timeouts
+  useEffect(() => {
+    if (receiptError || (hash && !isConfirming && !isSuccess)) {
+      setIsProcessing(false);
+      if (receiptError) {
+        toast.error('Transaction confirmation failed. Please try again.');
+      }
+    }
+  }, [receiptError, hash, isConfirming, isSuccess]);
+
+  // Handle transaction errors (including user rejection)
+  useEffect(() => {
+    if (error) {
+      setIsProcessing(false);
+    }
+  }, [error]);
 
   const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string) => {
     // Validate inputs
@@ -244,25 +264,32 @@ export function useBuyTickets() {
       throw new Error('Invalid quantity');
     }
     
+    setIsProcessing(true);
     const ticketPriceWei = parseEther(ticketPrice);
     const totalCost = ticketPriceWei * BigInt(quantity);
     
-    return await writeContractAsync({
-      address: raffleContract as `0x${string}`,
-      abi: RAFFLE_CONTRACT_ABI,
-      functionName: 'buyTickets',
-      args: [BigInt(quantity)],
-      value: totalCost,
-      chainId: 33139,
-    });
+    try {
+      const result = await writeContractAsync({
+        address: raffleContract as `0x${string}`,
+        abi: RAFFLE_CONTRACT_ABI,
+        functionName: 'buyTickets',
+        args: [BigInt(quantity)],
+        value: totalCost,
+        chainId: 33139,
+      });
+      return result;
+    } catch (error) {
+      setIsProcessing(false);
+      throw error;
+    }
   };
 
   return {
     buyTickets,
     hash,
     error,
-    isPending,
-    isConfirming,
+    isPending: isProcessing,
+    isConfirming: isConfirming && isProcessing,
     isSuccess,
   };
 }
