@@ -125,7 +125,7 @@ const Hero = React.memo(function Hero() {
           <span className="text-emerald-300 text-xs sm:text-sm font-medium tracking-wider">Live on ApeChain</span>
         </div>
         <h2 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent leading-tight font-sans tracking-tight">
-          NFT Raffles
+          ApeChain NFT Raffles
         </h2>
         <p className="text-base sm:text-lg lg:text-xl text-slate-300 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
           Create and participate in NFT raffles with transparent, provably fair results.
@@ -134,11 +134,8 @@ const Hero = React.memo(function Hero() {
           <div className="relative z-10">
             <div className="flex items-center justify-center mb-3 sm:mb-4">
               <div className="w-3 h-3 bg-emerald-400 rounded-full mr-3 shadow-lg shadow-emerald-400/50"></div>
-              <p className="text-xs sm:text-sm text-emerald-400 font-semibold tracking-wider">Active</p>
+              <p className="text-xs sm:text-sm text-emerald-400 font-semibold tracking-wider">Contract Active</p>
             </div>
-            <p className="text-emerald-300 text-xs sm:text-sm mb-3 sm:mb-4 bg-slate-900/50 px-2 sm:px-4 py-2 rounded-xl break-all border border-emerald-500/20 font-mono">
-              {RAFFLE_FACTORY_ADDRESS || 'Initializing...'}
-            </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-xs">
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 shadow-sm shadow-emerald-400/50"></div>
