@@ -55,10 +55,6 @@ const Header = React.memo(function Header() {
   
   return (
     <header className="relative bg-slate-900/95 backdrop-blur-xl border-b border-emerald-400/30 shadow-2xl overflow-hidden">
-      {/* Animated background pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.1),transparent_50%)]"></div>
-      <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(-45deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:30px_30px]"></div>
-      
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-center py-4 sm:py-6 space-y-4 md:space-y-0 gap-4">
           <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 md:space-x-3 lg:space-x-6 flex-shrink min-w-0">
@@ -77,7 +73,6 @@ const Header = React.memo(function Header() {
                       : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
                   }`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                   <span className="relative">CREATE</span>
                 </Link>
                 <Link
@@ -88,7 +83,6 @@ const Header = React.memo(function Header() {
                       : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
                   }`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                   <span className="relative">DASHBOARD</span>
                 </Link>
                 <Link
@@ -99,7 +93,6 @@ const Header = React.memo(function Header() {
                       : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
                   }`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                   <span className="relative">BROWSE</span>
                 </Link>
               </nav>
@@ -126,39 +119,21 @@ const Header = React.memo(function Header() {
 const Hero = React.memo(function Hero() {
   return (
     <div className="relative text-white py-12 sm:py-16 lg:py-24 overflow-hidden">
-      {/* Animated background pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(16,185,129,0.1),transparent_50%)] animate-pulse"></div>
-      <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(-45deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
-      
-      {/* Floating particles */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-emerald-400 rounded-full animate-ping"></div>
-        <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-teal-400 rounded-full animate-pulse"></div>
-        <div className="absolute top-1/2 left-3/4 w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"></div>
-      </div>
-      
-      {/* Glowing orbs */}
-      <div className="absolute top-20 right-20 w-32 h-32 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-20 left-20 w-40 h-40 bg-gradient-to-r from-teal-500/20 to-cyan-500/20 rounded-full blur-3xl animate-pulse"></div>
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
         <div className="inline-flex items-center px-3 py-2 sm:px-4 bg-emerald-500/10 border border-emerald-400/30 rounded-full mb-6 sm:mb-8 backdrop-blur-sm">
-          <span className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse shadow-lg shadow-emerald-400/50"></span>
+          <span className="w-2 h-2 bg-emerald-400 rounded-full mr-2 shadow-lg shadow-emerald-400/50"></span>
           <span className="text-emerald-300 text-xs sm:text-sm font-medium tracking-wider">ApeChain Protocol • Secure & Fair</span>
         </div>
-        <h2 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent leading-tight font-sans tracking-tight drop-shadow-[0_0_20px_rgba(16,185,129,0.5)] animate-pulse">
+        <h2 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent leading-tight font-sans tracking-tight">
           ApeChain Raffles
         </h2>
         <p className="text-base sm:text-lg lg:text-xl text-slate-300 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
           The premier NFT raffle platform on ApeChain. Create, participate, and win amazing digital collectibles with complete transparency and fairness.
         </p>
         <div className="relative bg-slate-800/80 backdrop-blur-xl border border-emerald-400/30 rounded-3xl p-4 sm:p-6 lg:p-8 mx-4 sm:mx-0 sm:inline-block shadow-2xl shadow-emerald-500/20 max-w-full">
-          {/* Glowing border effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 rounded-3xl blur-sm animate-pulse"></div>
-          
           <div className="relative z-10">
             <div className="flex items-center justify-center mb-3 sm:mb-4">
-              <div className="w-3 h-3 bg-emerald-400 rounded-full mr-3 animate-pulse shadow-lg shadow-emerald-400/50"></div>
+              <div className="w-3 h-3 bg-emerald-400 rounded-full mr-3 shadow-lg shadow-emerald-400/50"></div>
               <p className="text-xs sm:text-sm text-emerald-400 font-semibold tracking-wider">ApeChain Protocol Active</p>
             </div>
             <p className="text-emerald-300 text-xs sm:text-sm mb-3 sm:mb-4 bg-slate-900/50 px-2 sm:px-4 py-2 rounded-xl break-all border border-emerald-500/20 font-mono">
@@ -166,21 +141,20 @@ const Hero = React.memo(function Hero() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-xs">
               <div className="flex items-center">
-                <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse shadow-sm shadow-emerald-400/50"></div>
+                <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 shadow-sm shadow-emerald-400/50"></div>
                 <span className="text-emerald-400 font-medium tracking-wider">Provably Fair</span>
               </div>
               <div className="flex items-center">
-                <div className="w-2 h-2 bg-teal-400 rounded-full mr-2 animate-pulse shadow-sm shadow-teal-400/50"></div>
+                <div className="w-2 h-2 bg-teal-400 rounded-full mr-2 shadow-sm shadow-teal-400/50"></div>
                 <span className="text-teal-400 font-medium tracking-wider">5% Platform Fee</span>
               </div>
               <div className="flex items-center">
-                <div className="w-2 h-2 bg-cyan-400 rounded-full mr-2 animate-pulse shadow-sm shadow-cyan-400/50"></div>
+                <div className="w-2 h-2 bg-cyan-400 rounded-full mr-2 shadow-sm shadow-cyan-400/50"></div>
                 <span className="text-cyan-400 font-medium tracking-wider">Instant Execution</span>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
