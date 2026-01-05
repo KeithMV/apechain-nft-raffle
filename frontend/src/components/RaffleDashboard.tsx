@@ -117,7 +117,7 @@ export default function RaffleDashboard() {
   if (loading && userPositions.length === 0 && createdRaffles.length === 0) {
     return (
       <div className="relative bg-gray-900/95 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl shadow-emerald-500/10 p-8">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-2xl blur-sm animate-pulse"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-2xl blur-sm"></div>
         <div className="relative flex items-center justify-center py-12">
           <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mr-3"></div>
           <span className="text-emerald-200 font-mono tracking-wide">Loading raffle data...</span>
@@ -131,7 +131,7 @@ export default function RaffleDashboard() {
       {/* Header */}
       <div className="relative bg-gray-900/95 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl shadow-emerald-500/10 overflow-hidden">
         {/* Animated background grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:20px_20px] animate-pulse"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
         
         <div className="relative bg-gradient-to-r from-emerald-900/20 via-green-900/20 to-teal-900/20 px-4 sm:px-8 py-6 sm:py-8 border-b border-emerald-500/30">
           <div className="flex items-center space-x-3 sm:space-x-4">
@@ -193,7 +193,7 @@ export default function RaffleDashboard() {
               {filteredPositions.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm"></div>
                     <span className="relative text-cyan-400 text-2xl">⚡</span>
                   </div>
                   <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffle Participation</h3>
@@ -202,7 +202,7 @@ export default function RaffleDashboard() {
               ) : (
                 filteredPositions.map((position) => (
                 <div key={`${position.raffleContract}-${position.raffleId}`} className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm "></div>
                   <div className="flex flex-col sm:flex-row">
                     <div className="w-full sm:w-80 h-64 sm:h-80">
                       <BasicNFTImage 
@@ -267,7 +267,7 @@ export default function RaffleDashboard() {
               {filteredRaffles.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="relative w-16 h-16 bg-black/80 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm animate-pulse"></div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-sm "></div>
                       <span className="relative text-cyan-400 text-2xl">⚡</span>
                     </div>
                     <h3 className="text-lg font-semibold text-cyan-300 mb-2 font-mono tracking-wider">No Raffles Created</h3>
@@ -276,7 +276,7 @@ export default function RaffleDashboard() {
                 ) : (
                   filteredRaffles.map((raffle) => (
                   <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm "></div>
                     <div className="flex flex-col sm:flex-row">
                       <div className="w-full sm:w-80 h-64 sm:h-80">
                         <BasicNFTImage 

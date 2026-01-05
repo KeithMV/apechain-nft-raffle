@@ -57,12 +57,12 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div className="relative bg-gray-900/95 backdrop-blur-xl border border-red-500/30 rounded-2xl shadow-2xl shadow-red-500/10 overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(239,68,68,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(239,68,68,0.03)_1px,transparent_1px)] bg-[size:20px_20px] animate-pulse"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(239,68,68,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(239,68,68,0.03)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
         
         <div className="relative bg-gradient-to-r from-red-900/20 via-orange-900/20 to-red-900/20 px-8 py-6 border-b border-red-500/30">
           <div className="flex items-center space-x-4">
             <div className="relative w-12 h-12 bg-gradient-to-br from-red-400 via-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/25">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-400 via-orange-500 to-red-600 rounded-xl blur-sm animate-pulse"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-red-400 via-orange-500 to-red-600 rounded-xl blur-sm"></div>
               <span className="relative text-white text-xl">🛡️</span>
             </div>
             <div>
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
         <div className="relative p-8 z-10 space-y-6">
           {/* Admin Info */}
           <div className="relative bg-gray-800/90 backdrop-blur-xl border border-red-500/30 rounded-xl p-6 shadow-lg shadow-red-500/10">
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-orange-500/5 to-red-500/5 rounded-xl blur-sm animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-orange-500/5 to-red-500/5 rounded-xl blur-sm"></div>
             <div className="relative">
               <h3 className="text-lg font-semibold text-red-300 mb-3 font-mono">Administrator Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
 
           {/* Additional Admin Functions */}
           <div className="relative bg-gray-800/90 backdrop-blur-xl border border-red-500/30 rounded-xl p-6 shadow-lg shadow-red-500/10">
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-orange-500/5 to-red-500/5 rounded-xl blur-sm animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-orange-500/5 to-red-500/5 rounded-xl blur-sm"></div>
             <div className="relative">
               <h3 className="text-lg font-semibold text-red-300 mb-3 font-mono">Additional Functions</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
