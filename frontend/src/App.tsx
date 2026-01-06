@@ -7,6 +7,8 @@ import { config } from './config/wagmi';
 import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
 import { WalletConnection } from './components/WalletConnection';
+import { NetworkSwitcher } from './components/NetworkSwitcher';
+import { MobileDebug } from './components/MobileDebug';
 import MobileBanner from './components/MobileBanner';
 import { suppressWalletConnectErrors } from './utils/walletCleanup';
 import { suppressWeb3ModalWarnings } from './utils/suppressWarnings';
@@ -54,61 +56,58 @@ const Header = React.memo(function Header() {
   const currentPage = location.pathname.slice(1) || 'browse';
   
   return (
-    <header className="relative bg-slate-900/95 backdrop-blur-xl border-b border-emerald-400/30 shadow-2xl overflow-hidden">
+    <header className="relative bg-slate-900/95 backdrop-blur-xl border-b border-emerald-400/30 shadow-2xl z-10">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-center py-4 sm:py-6 space-y-4 md:space-y-0 gap-4">
-          <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 md:space-x-3 lg:space-x-6 flex-shrink min-w-0">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div>
-                <h1 className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">ApeChain Raffles</h1>
-              </div>
+        <div className="flex flex-col justify-center items-center py-4 space-y-3">
+          <div className="flex flex-col items-center space-y-2">
+            <div>
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight text-center">ApeChain Raffles</h1>
             </div>
             {isConnected && (
-              <nav className="flex space-x-1 sm:space-x-2">
+              <nav className="flex space-x-2">
                 <Link
                   to="/create"
-                  className={`relative px-3 py-2 sm:px-4 md:px-3 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
                     currentPage === 'create' 
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50' 
                       : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
                   }`}
                 >
-                  <span className="relative">CREATE</span>
+                  CREATE
                 </Link>
                 <Link
                   to="/dashboard"
-                  className={`relative px-3 py-2 sm:px-4 md:px-3 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
                     currentPage === 'dashboard' 
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50' 
                       : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
                   }`}
                 >
-                  <span className="relative">DASHBOARD</span>
+                  DASHBOARD
                 </Link>
                 <Link
                   to="/browse"
-                  className={`relative px-3 py-2 sm:px-4 md:px-3 lg:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden group ${
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
                     currentPage === 'browse' 
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-lg shadow-emerald-500/25' 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50' 
                       : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
                   }`}
                 >
-                  <span className="relative">BROWSE</span>
+                  BROWSE
                 </Link>
               </nav>
             )}
           </div>
-          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 flex-shrink-0">
+          <div className="flex flex-col items-center space-y-2">
             {isConnected && (
-              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3">
+              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                <NetworkSwitcher />
                 <LazyWrapper>
                   <WalletInfo />
                 </LazyWrapper>
               </div>
             )}
-            <div className="flex-shrink-0">
-              <WalletConnection />
-            </div>
+            <WalletConnection />
           </div>
         </div>
       </div>
@@ -226,7 +225,7 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative z-0">
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
