@@ -128,7 +128,7 @@ const Hero = React.memo(function Hero() {
           ApeChain NFT Raffles
         </h2>
         <p className="text-base sm:text-lg lg:text-xl text-slate-300 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
-          Make NFT raffles. Buy tickets for raffles, completely fair.
+          Create and participate in NFT raffles with transparent, provably fair results.
         </p>
         <div className="relative bg-slate-800/80 backdrop-blur-xl border border-emerald-400/30 rounded-3xl p-4 sm:p-6 lg:p-8 mx-4 sm:mx-0 sm:inline-block shadow-2xl shadow-emerald-500/20 max-w-full">
           <div className="relative z-10">
