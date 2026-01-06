@@ -2,12 +2,9 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { RaffleInfrastructureStack } from '../lib/raffle-infrastructure-stack';
+import { RaffleStagingStack } from '../lib/raffle-staging-stack';
 
 const app = new cdk.App();
-
-// Get domain configuration from context
-const domainName = app.node.tryGetContext('domainName');
-const hostedZoneId = app.node.tryGetContext('hostedZoneId');
 
 // Validate environment variables
 if (!process.env.CDK_DEFAULT_ACCOUNT || !process.env.CDK_DEFAULT_REGION) {
@@ -16,9 +13,17 @@ if (!process.env.CDK_DEFAULT_ACCOUNT || !process.env.CDK_DEFAULT_REGION) {
 }
 
 try {
+  // Production Stack
   new RaffleInfrastructureStack(app, 'RaffleInfrastructureStack', {
     domainName: 'apechainraffles.io',
     hostedZoneId: 'Z02864901E4MLJMH828IC',
+    env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+  });
+
+  // Staging Stack
+  new RaffleStagingStack(app, 'RaffleStagingStack', {
+    domainName: 'staging.apechainraffles.io',
+    certificateArn: 'arn:aws:acm:us-east-1:856872546342:certificate/f9cd027a-611e-4aa5-a7be-9301cfd82ddc',
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
   });
 } catch (error) {
