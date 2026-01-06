@@ -1,10 +1,11 @@
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defineChain } from 'viem';
+import { config as envConfig } from './environment';
 
-// ApeChain configuration
+// ApeChain configuration with environment support
 export const apeChain = defineChain({
-  id: 33139,
+  id: envConfig.chainId,
   name: 'ApeChain',
   nativeCurrency: {
     decimals: 18,
@@ -13,27 +14,24 @@ export const apeChain = defineChain({
   },
   rpcUrls: {
     default: { 
-      http: [
-        process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
-        'https://rpc.apechain.com'
-      ] 
+      http: [envConfig.rpcUrl, 'https://rpc.apechain.com'] 
     },
   },
   blockExplorers: {
     default: { name: 'ApeChain Explorer', url: 'https://apechain.calderaexplorer.xyz' },
   },
-  testnet: false,
+  testnet: envConfig.environment !== 'production',
 });
 
 // WalletConnect project ID
 const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
 
-// Minimal Web3Modal metadata
+// Minimal Web3Modal metadata with environment support
 const metadata = {
-  name: 'ApeChain NFT Raffles',
+  name: envConfig.appName,
   description: 'Decentralized NFT raffle platform on ApeChain',
-  url: typeof window !== 'undefined' ? window.location.origin : 'https://apechainraffles.io',
-  icons: [typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : 'https://apechainraffles.io/favicon.ico']
+  url: envConfig.appUrl,
+  icons: [`${envConfig.appUrl}/favicon.ico`]
 };
 
 // Create wagmi config with ultra-aggressive connection optimizations

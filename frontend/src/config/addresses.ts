@@ -1,8 +1,24 @@
+import { config as envConfig } from './environment';
+
 /**
  * Centralized Contract Addresses Configuration for ApeCoin NFT Raffle System
  */
 
 const NETWORK_CONFIGS = {
+  31337: { // Hardhat localhost
+    chainId: 31337,
+    rpcUrl: 'http://127.0.0.1:8545',
+    name: 'Hardhat',
+    explorerUrl: 'http://localhost:8545',
+    nativeCurrency: 'ETH'
+  },
+  33111: { // ApeChain Curtis Testnet
+    chainId: 33111,
+    rpcUrl: 'https://curtis.rpc.caldera.xyz/http',
+    name: 'ApeChain Curtis',
+    explorerUrl: 'https://curtis.explorer.caldera.xyz',
+    nativeCurrency: 'APE'
+  },
   33139: { // ApeChain
     chainId: 33139,
     rpcUrl: 'https://apechain.calderachain.xyz/http',
@@ -27,6 +43,16 @@ const NETWORK_CONFIGS = {
 } as const;
 
 const CONTRACT_ADDRESSES = {
+  31337: { // Hardhat localhost
+    RAFFLE_FACTORY: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+    RAFFLE_FACTORY_V4: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+    RAFFLE_TEMPLATE: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
+  },
+  33111: { // ApeChain Curtis Testnet
+    RAFFLE_FACTORY: '', // Deploy test contracts here
+    RAFFLE_FACTORY_V4: '',
+    RAFFLE_TEMPLATE: ''
+  },
   33139: { // ApeChain
     RAFFLE_FACTORY: '0x1dC9F6Cc2e53558a940a7Cd87d6e5fbE2A8635ff', // v3-FIXED-FEES
     RAFFLE_FACTORY_V4: '0x1627E7e63b63878E61f91D336385a59B1747934a', // v4-FAST-RATE-LIMIT
@@ -53,6 +79,11 @@ const PROTOCOL_INFO = {
 } as const;
 
 function getCurrentChainId(): number {
+  // Use environment configuration first
+  if (envConfig.chainId) {
+    return envConfig.chainId;
+  }
+  
   // Try to get chain ID from window.ethereum if available
   if (typeof window !== 'undefined' && window.ethereum) {
     const chainId = window.ethereum.chainId;
