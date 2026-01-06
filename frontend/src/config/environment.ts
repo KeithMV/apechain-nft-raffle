@@ -12,6 +12,14 @@ export interface EnvironmentConfig {
 }
 
 const getEnvironment = (): Environment => {
+  // Check for development indicators
+  if (process.env.NODE_ENV === 'development' || 
+      process.env.REACT_APP_ENV === 'development' ||
+      window.location.hostname === 'localhost' ||
+      window.location.hostname.includes('192.168')) {
+    return 'development';
+  }
+  
   const env = process.env.REACT_APP_ENV || process.env.REACT_APP_ENVIRONMENT || 'production';
   return env as Environment;
 };
