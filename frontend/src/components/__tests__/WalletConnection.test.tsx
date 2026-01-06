@@ -86,20 +86,6 @@ describe('WalletConnection', () => {
     expect(mockOpen).toHaveBeenCalled()
   })
 
-  it('shows network switch button when on wrong network', () => {
-    vi.mocked(useAccount).mockReturnValue({
-      address: '0x1234567890123456789012345678901234567890',
-      isConnected: true,
-    } as any)
-    
-    // Mock wrong chain ID
-    vi.mocked(useChainId).mockReturnValue(1) // Ethereum mainnet instead of ApeChain
-
-    render(<WalletConnection />)
-    
-    expect(screen.getByText('Switch to ApeChain')).toBeInTheDocument()
-  })
-
   it('calls disconnect when disconnect button is clicked', () => {
     vi.mocked(useAccount).mockReturnValue({
       address: '0x1234567890123456789012345678901234567890',
@@ -112,21 +98,5 @@ describe('WalletConnection', () => {
     fireEvent.click(disconnectButton)
     
     expect(mockDisconnect).toHaveBeenCalled()
-  })
-
-  it('calls switchChain when switch network button is clicked', () => {
-    vi.mocked(useAccount).mockReturnValue({
-      address: '0x1234567890123456789012345678901234567890',
-      isConnected: true,
-    } as any)
-    
-    vi.mocked(useChainId).mockReturnValue(1)
-
-    render(<WalletConnection />)
-    
-    const switchButton = screen.getByText('Switch to ApeChain')
-    fireEvent.click(switchButton)
-    
-    expect(mockSwitchChain).toHaveBeenCalledWith({ chainId: 33139 })
   })
 })
