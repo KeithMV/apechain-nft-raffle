@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useAccount, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { apeChain } from '../config/wagmi';
 
 export function WalletConnection() {
-  const { address, isConnected, isConnecting, isReconnecting } = useAccount();
+  const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
@@ -12,64 +12,13 @@ export function WalletConnection() {
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
-  // Ultra-aggressive connection optimization
-  useEffect(() => {
-    if (isConnecting || isReconnecting) {
-      // Immediate burst of checks
-      const immediateCheck = () => {
-        if (window.ethereum?.selectedAddress) {
-          window.dispatchEvent(new Event('focus'));
-          window.dispatchEvent(new Event('ethereum#accountsChanged'));
-          // Force wagmi to check immediately
-          if (window.ethereum.emit) {
-            window.ethereum.emit('accountsChanged', [window.ethereum.selectedAddress]);
-          }
-        }
-      };
-      
-      // Rapid-fire checks: 0ms, 50ms, 100ms, 200ms, 400ms
-      immediateCheck();
-      const intervals = [0, 50, 100, 200, 400].map(delay => 
-        setTimeout(immediateCheck, delay)
-      );
-      
-      return () => intervals.forEach(clearTimeout);
-    }
-  }, [isConnecting, isReconnecting]);
-
-  // Preemptive connection detection
-  useEffect(() => {
-    const detectConnection = () => {
-      if (!isConnected && window.ethereum?.selectedAddress && !isConnecting) {
-        window.dispatchEvent(new Event('focus'));
-      }
-    };
-    
-    window.addEventListener('focus', detectConnection);
-    window.addEventListener('ethereum#accountsChanged', detectConnection);
-    
-    return () => {
-      window.removeEventListener('focus', detectConnection);
-      window.removeEventListener('ethereum#accountsChanged', detectConnection);
-    };
-  }, [isConnected, isConnecting]);
-
-  const handleConnect = async () => {
+  const handleConnect = () => {
     console.log('Opening Web3Modal...');
-    
-    // Always open Web3Modal - let user choose their wallet
-    const openModal = () => {
-      try {
-        open();
-      } catch (err) {
-        console.error('Failed to open Web3Modal:', err);
-      }
-    };
-    
+    // Let Web3Modal handle mobile wallet connections properly
     if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      setTimeout(openModal, 25);
+      setTimeout(() => open(), 100);
     } else {
-      openModal();
+      open();
     }
   };
 
@@ -84,17 +33,6 @@ export function WalletConnection() {
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
-
-  if (isConnecting || isReconnecting) {
-    return (
-      <div className="flex items-center space-x-2 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 min-h-[44px]">
-        <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
-        <span className="text-slate-300 text-xs sm:text-sm font-mono">
-          {isReconnecting ? 'Reconnecting...' : 'Connecting...'}
-        </span>
-      </div>
-    );
-  }
 
   if (isConnected) {
     return (
@@ -128,10 +66,9 @@ export function WalletConnection() {
   return (
     <button
       onClick={handleConnect}
-      className="relative px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 active:scale-95 active:shadow-inner overflow-hidden group"
+      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105"
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-active:translate-x-[100%] transition-transform duration-500"></div>
-      <span className="relative">Connect Wallet</span>
+      Connect Wallet
     </button>
   );
 }
