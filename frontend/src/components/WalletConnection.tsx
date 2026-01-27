@@ -14,12 +14,8 @@ export function WalletConnection() {
 
   const handleConnect = () => {
     console.log('Opening Web3Modal...');
-    // Let Web3Modal handle mobile wallet connections properly
-    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      setTimeout(() => open(), 100);
-    } else {
-      open();
-    }
+    // Safari mobile needs direct approach
+    open();
   };
 
   const handleSwitchNetwork = async () => {
