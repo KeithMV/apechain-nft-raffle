@@ -18,10 +18,14 @@ jobs:
         node-version: '18'
         
     - name: Install frontend dependencies
-      run: cd frontend && yarn install
+      run: |
+        cd frontend
+        yarn install --frozen-lockfile
       
     - name: Build frontend for staging
-      run: cd frontend && CI=false yarn build
+      run: |
+        cd frontend
+        CI=false yarn build
       env:
         REACT_APP_WALLETCONNECT_PROJECT_ID: ${{ secrets.WALLETCONNECT_PROJECT_ID }}
         REACT_APP_ENV: staging
