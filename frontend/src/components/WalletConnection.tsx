@@ -3,6 +3,7 @@ import { useAccount, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { apeChain } from '../config/wagmi';
 import { MobileWalletConnect } from './MobileWalletConnect';
+import { config as envConfig } from '../config/environment';
 
 export function WalletConnection() {
   const { address, isConnected } = useAccount();
@@ -30,11 +31,18 @@ export function WalletConnection() {
   }, [isConnected]);
 
   const handleConnect = async () => {
-    console.log('Opening Web3Modal...');
+    console.log('🔍 [DESKTOP DEBUG] Connect button clicked');
+    console.log('🔍 [DESKTOP DEBUG] Environment:', envConfig.environment);
+    console.log('🔍 [DESKTOP DEBUG] Chain ID:', envConfig.chainId);
+    console.log('🔍 [DESKTOP DEBUG] User Agent:', navigator.userAgent);
+    console.log('🔍 [DESKTOP DEBUG] Window.ethereum:', !!window.ethereum);
+    
     try {
-      open();
+      console.log('🔍 [DESKTOP DEBUG] Opening Web3Modal...');
+      await open();
+      console.log('🔍 [DESKTOP DEBUG] Web3Modal opened successfully');
     } catch (err) {
-      console.error('Failed to connect:', err);
+      console.error('🔍 [DESKTOP DEBUG] Failed to connect:', err);
     }
   };
 
