@@ -1,8 +1,6 @@
 import React from 'react';
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
 import { apeChain, baseChain } from '../config/wagmi';
-import { AddNetworkButton } from '../utils/addTestnet';
-import { config as envConfig } from '../config/environment';
 
 const SUPPORTED_CHAINS = [
   {
@@ -54,11 +52,6 @@ export const NetworkSwitcher: React.FC = () => {
               </div>
             </button>
           ))}
-          {envConfig.environment === 'staging' && (
-            <div className="border-t border-slate-600/50 mt-2 pt-2">
-              <AddNetworkButton />
-            </div>
-          )}
         </div>
       </div>
     </div>
