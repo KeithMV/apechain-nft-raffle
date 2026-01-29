@@ -1,0 +1,46 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install frontend dependencies
+      run: cd frontend && yarn install
+      
+    - name: Build frontend for staging
+      run: cd frontend && CI=false yarn build
+      env:
+        REACT_APP_WALLETCONNECT_PROJECT_ID: ${{ secrets.WALLETCONNECT_PROJECT_ID }}
+        REACT_APP_ENV: staging
+        REACT_APP_ENVIRONMENT: staging
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+        
+    - name: Deploy to Staging S3
+      run: |
+        aws s3 sync frontend/build/ s3://apechain-nft-raffle-staging-856872546342-us-east-1/ --delete
+        aws cloudfront create-invalidation --distribution-id E2OQG8N4GFFTXI --paths "/*"
+        
+    - name: Staging deployment complete
+      run: |
+        echo "✅ Staging deployment complete!"
+        echo "🌐 Staging URL: https://d2v74bfsjdq40l.cloudfront.net"
+        echo "⏱️ Cache invalidation may take 1-2 minutes to propagate"
