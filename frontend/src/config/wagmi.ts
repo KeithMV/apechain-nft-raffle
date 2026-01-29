@@ -7,7 +7,7 @@ import { config as envConfig } from './environment';
 // ApeChain configuration with environment support
 export const apeChain = defineChain({
   id: envConfig.chainId, // Use environment-specific chain ID
-  name: envConfig.environment === 'staging' ? 'ApeChain Testnet' : 'ApeChain',
+  name: envConfig.environment === 'staging' ? 'ApeChain (Staging)' : 'ApeChain',
   nativeCurrency: {
     decimals: 18,
     name: 'ApeCoin',
@@ -20,11 +20,11 @@ export const apeChain = defineChain({
   },
   blockExplorers: {
     default: { 
-      name: envConfig.environment === 'staging' ? 'ApeChain Testnet Explorer' : 'ApeChain Explorer', 
-      url: envConfig.environment === 'staging' ? 'https://curtis.explorer.caldera.xyz' : 'https://apechain.calderaexplorer.xyz' 
+      name: 'ApeChain Explorer', 
+      url: 'https://apechain.calderaexplorer.xyz' 
     },
   },
-  testnet: envConfig.environment === 'staging',
+  testnet: false, // Both staging and production use mainnet
 });
 
 // Base chain (imported from viem)
@@ -75,7 +75,6 @@ createWeb3Modal({
   defaultChain: apeChain,
   chainImages: {
     33139: 'https://apechain.calderaexplorer.xyz/favicon.ico',
-    33111: 'https://curtis.explorer.caldera.xyz/favicon.ico',
     8453: 'https://base.org/favicon.ico'
   }
 });

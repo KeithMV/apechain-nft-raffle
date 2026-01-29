@@ -43,8 +43,8 @@ const configs: Record<Environment, EnvironmentConfig> = {
   },
   staging: {
     environment: 'staging',
-    chainId: 33111,
-    rpcUrl: process.env.REACT_APP_APECHAIN_RPC_URL || 'https://curtis.rpc.caldera.xyz/http',
+    chainId: 33139, // Use mainnet like production
+    rpcUrl: process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
     contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS || '0x1627E7e63b63878E61f91D336385a59B1747934a',
     appName: 'ApeChain NFT Raffles (STAGING)',
     appUrl: 'https://staging.apechainraffles.io',
