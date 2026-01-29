@@ -49,10 +49,10 @@ describe('User Workflow Integration Tests', () => {
     fireEvent.click(screen.getByText('Connect Wallet'))
     expect(mockOpen).toHaveBeenCalled()
     
-    // Simulate connecting state
+    // Simulate connecting state (simplified UI shows connect button)
     vi.mocked(useAccount).mockReturnValue({ address: undefined, isConnected: false, isConnecting: true } as any)
     rerender(<WalletConnection />)
-    expect(screen.getByText('Connecting...')).toBeInTheDocument()
+    expect(screen.getByText('Connect Wallet')).toBeInTheDocument()
     
     // Simulate connected state
     vi.mocked(useAccount).mockReturnValue({ address: '0x1234567890123456789012345678901234567890', isConnected: true } as any)
@@ -96,7 +96,7 @@ describe('User Workflow Integration Tests', () => {
     
     render(<WalletConnection />)
     
-    expect(screen.getByText('Reconnecting...')).toBeInTheDocument()
+    expect(screen.getByText('Connect Wallet')).toBeInTheDocument()
   })
 
   it('validates form input workflow', () => {
