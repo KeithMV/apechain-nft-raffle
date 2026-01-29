@@ -136,12 +136,24 @@ workflows:
   version: 2
   build_test_deploy:
     jobs:
-      - build-frontend
-      - build-contracts
+      - build-frontend:
+          filters:
+            branches:
+              ignore: develop  # Skip CircleCI for staging branch
+      - build-contracts:
+          filters:
+            branches:
+              ignore: develop  # Skip CircleCI for staging branch
       - test:
           requires:
             - build-frontend
             - build-contracts
+          filters:
+            branches:
+              ignore: develop  # Skip CircleCI for staging branch
       - deploy:
           requires:
             - test
+          filters:
+            branches:
+              ignore: develop  # Skip CircleCI for staging branch
