@@ -48,6 +48,8 @@ export const config = defaultWagmiConfig({
   metadata,
   ssr: false,
   syncConnectedChain: true,
+  enableEIP6963: true,
+  enableCoinbase: true,
 });
 
 // Create Web3Modal with mobile-optimized settings
