@@ -1,36 +1,36 @@
 #!/bin/bash
 
-# Staging Deployment Script
+# ApeChain NFT Raffle - Staging Deployment Script
+# Deploy develop branch to staging environment
+
 set -e
 
-echo "🚀 Deploying ApeChain Raffle Platform to STAGING..."
+echo "🚀 Deploying ApeChain NFT Raffle to STAGING..."
 
-# Build frontend for staging
-echo "📦 Building frontend for staging..."
+# Ensure we're on develop branch
+CURRENT_BRANCH=$(git branch --show-current)
+if [ "$CURRENT_BRANCH" != "develop" ]; then
+  echo "❌ Must be on develop branch for staging deployment"
+  echo "Current branch: $CURRENT_BRANCH"
+  exit 1
+fi
+
+# Build React app with staging environment
+echo "📦 Building React app for staging..."
 cd frontend
-yarn build:staging
+REACT_APP_ENV=staging REACT_APP_ENVIRONMENT=staging yarn build
 
-# Deploy infrastructure (if needed)
-echo "🏗️  Checking staging infrastructure..."
-cd ../infrastructure
-npx cdk deploy RaffleStagingStack --require-approval never
+# Deploy to Staging S3
+echo "☁️ Uploading to Staging S3..."
+aws s3 sync build/ s3://apechain-nft-raffle-staging-856872546342-us-east-1/ --delete
 
-# Get staging bucket name and distribution ID
-STAGING_BUCKET=$(aws cloudformation describe-stacks --stack-name RaffleStagingStack --query 'Stacks[0].Outputs[?OutputKey==`StagingBucketName`].OutputValue' --output text)
-STAGING_DISTRIBUTION=$(aws cloudformation describe-stacks --stack-name RaffleStagingStack --query 'Stacks[0].Outputs[?OutputKey==`StagingDistributionId`].OutputValue' --output text)
-
-echo "📤 Uploading to S3: $STAGING_BUCKET"
-cd ../frontend
-aws s3 sync build/ s3://$STAGING_BUCKET/ --delete
-
-echo "🔄 Invalidating CloudFront: $STAGING_DISTRIBUTION"
-aws cloudfront create-invalidation --distribution-id $STAGING_DISTRIBUTION --paths "/*"
+# Invalidate Staging CloudFront cache
+echo "🔄 Invalidating Staging CloudFront cache..."
+aws cloudfront create-invalidation --distribution-id E2OQG8N4GFFTXI --paths "/*"
 
 echo "✅ Staging deployment complete!"
-echo "🌐 Staging URL: https://staging.apechainraffles.io"
+echo "🌐 Staging URL: https://d2v74bfsjdq40l.cloudfront.net"
+echo "⏱️ Cache invalidation may take 1-2 minutes to propagate globally"
 echo ""
-echo "🧪 Test the following:"
-echo "  - Multi-chain network switching"
-echo "  - Mobile wallet connections"
-echo "  - Raffle creation (testnet)"
-echo "  - Responsive design"
+echo "🔍 Environment: STAGING (testnet 33111)"
+echo "📋 To promote to production: merge develop → main"
