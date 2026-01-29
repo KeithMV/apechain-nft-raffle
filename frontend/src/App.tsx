@@ -8,6 +8,7 @@ import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
 import { WalletConnection } from './components/WalletConnection';
 import { NetworkSwitcher } from './components/NetworkSwitcher';
+import { NetworkMismatchBanner } from './components/NetworkMismatchBanner';
 import { MobileDebug } from './components/MobileDebug';
 import MobileBanner from './components/MobileBanner';
 import { suppressWalletConnectErrors } from './utils/walletCleanup';
@@ -163,6 +164,7 @@ const ConnectWalletPage = React.memo(function ConnectWalletPage() {
   return (
     <>
       <Header />
+      <NetworkMismatchBanner />
       <Hero />
       <div className="max-w-4xl mx-auto px-4 py-12">
         <MobileBanner />
@@ -175,6 +177,7 @@ const AppLayout = React.memo(function AppLayout() {
   return (
     <>
       <Header />
+      <NetworkMismatchBanner />
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
         <Routes>
           <Route path="/" element={<Navigate to="/browse" replace />} />
