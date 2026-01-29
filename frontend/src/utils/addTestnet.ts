@@ -1,3 +1,4 @@
+import React from 'react';
 import { config as envConfig } from '../config/environment';
 
 export const addApeChainTestnet = async () => {
