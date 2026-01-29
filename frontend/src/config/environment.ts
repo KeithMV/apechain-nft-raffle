@@ -20,8 +20,15 @@ const getEnvironment = (): Environment => {
     return 'development';
   }
   
-  const env = process.env.REACT_APP_ENV || process.env.REACT_APP_ENVIRONMENT || 'production';
-  return env as Environment;
+  // Check for staging indicators
+  if (process.env.REACT_APP_ENV === 'staging' ||
+      process.env.REACT_APP_ENVIRONMENT === 'staging' ||
+      window.location.hostname.includes('staging') ||
+      window.location.hostname.includes('d2v74bfsjdq40l')) {
+    return 'staging';
+  }
+  
+  return 'production';
 };
 
 const configs: Record<Environment, EnvironmentConfig> = {
