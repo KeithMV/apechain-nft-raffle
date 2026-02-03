@@ -69,8 +69,11 @@ export function WalletConnection() {
         </div>
         
         <button
-          onClick={() => disconnect()}
-          className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 transition-colors min-h-[44px] whitespace-nowrap"
+          onClick={() => {
+            console.log('🔍 [MOBILE DEBUG] Disconnect button clicked');
+            disconnect();
+          }}
+          className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 active:bg-slate-600/70 transition-colors min-h-[44px] whitespace-nowrap touch-manipulation"
         >
           Disconnect
         </button>
