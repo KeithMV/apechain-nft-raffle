@@ -76,9 +76,5 @@ createWeb3Modal({
   chainImages: {
     33139: 'https://apechain.calderaexplorer.xyz/favicon.ico',
     8453: 'https://base.org/favicon.ico'
-  },
-  // Mobile redirect fix
-  enableWalletConnect: true,
-  enableInjected: true,
-  enableCoinbase: true
+  }
 });
