@@ -37,8 +37,11 @@ export function usePlatformFee() {
  * Hook for reading raffle counter
  */
 export function useRaffleCounter() {
+  const chainId = useChainId();
+  const factoryAddress = getRaffleFactoryAddress(chainId);
+  
   return useReadContract({
-    address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+    address: factoryAddress as `0x${string}`,
     abi: RAFFLE_FACTORY_ABI,
     functionName: 'raffleCounter',
   });
@@ -48,13 +51,15 @@ export function useRaffleCounter() {
  * Hook for checking NFT approval status
  */
 export function useNFTApprovalStatus(nftContract: string, userAddress: string) {
+  const chainId = useChainId();
+  const factoryAddress = getRaffleFactoryAddress(chainId);
   const isValidAddress = (addr: string) => /^0x[a-fA-F0-9]{40}$/.test(addr);
   
   return useReadContract({
     address: nftContract as `0x${string}`,
     abi: ERC721_ABI,
     functionName: 'isApprovedForAll',
-    args: [userAddress as `0x${string}`, RAFFLE_FACTORY_ADDRESS as `0x${string}`],
+    args: [userAddress as `0x${string}`, factoryAddress as `0x${string}`],
     query: {
       enabled: !!(nftContract && userAddress && isValidAddress(nftContract) && isValidAddress(userAddress)),
     },
@@ -164,8 +169,11 @@ export function useCreateRaffle() {
  * Hook for reading raffle contract address by ID
  */
 export function useRaffleContract(raffleId: number) {
+  const chainId = useChainId();
+  const factoryAddress = getRaffleFactoryAddress(chainId);
+  
   return useReadContract({
-    address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+    address: factoryAddress as `0x${string}`,
     abi: RAFFLE_FACTORY_ABI,
     functionName: 'getRaffleContract',
     args: [BigInt(raffleId)],
@@ -179,6 +187,8 @@ export function useRaffleContract(raffleId: number) {
  * Hook for emergency pause (owner only)
  */
 export function useEmergencyPause() {
+  const chainId = useChainId();
+  const factoryAddress = getRaffleFactoryAddress(chainId);
   const { writeContract, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -186,7 +196,7 @@ export function useEmergencyPause() {
 
   const pause = () => {
     writeContract({
-      address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+      address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'emergencyPause',
       chainId: chainId,
@@ -195,7 +205,7 @@ export function useEmergencyPause() {
 
   const unpause = () => {
     writeContract({
-      address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+      address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'emergencyUnpause',
       chainId: chainId,
@@ -217,8 +227,11 @@ export function useEmergencyPause() {
  * Hook for checking if factory is paused
  */
 export function useFactoryPauseStatus() {
+  const chainId = useChainId();
+  const factoryAddress = getRaffleFactoryAddress(chainId);
+  
   return useReadContract({
-    address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+    address: factoryAddress as `0x${string}`,
     abi: RAFFLE_FACTORY_ABI,
     functionName: 'paused',
   });
@@ -307,6 +320,7 @@ export function useBuyTickets() {
  * Hook for committing randomness (winner selection step 1)
  */
 export function useCommitRandomness() {
+  const chainId = useChainId();
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -344,6 +358,7 @@ export function useCommitRandomness() {
  * Hook for revealing randomness and selecting winner (step 2)
  */
 export function useRevealWinner() {
+  const chainId = useChainId();
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -383,6 +398,7 @@ export function useRevealWinner() {
  * Hook for emergency winner selection (if reveal deadline passes)
  */
 export function useEmergencyWinner() {
+  const chainId = useChainId();
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
