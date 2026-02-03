@@ -13,11 +13,11 @@ export default function WalletInfo() {
   const getTokenInfo = () => {
     switch (chainId) {
       case 33139: // ApeChain
-        return { symbol: 'APE', emoji: '🐵', color: 'orange' };
+        return { symbol: 'APE', color: 'orange' };
       case 8453: // Base
-        return { symbol: 'ETH', emoji: '🔵', color: 'blue' };
+        return { symbol: 'ETH', color: 'blue' };
       default:
-        return { symbol: 'ETH', emoji: '⚡', color: 'gray' };
+        return { symbol: 'ETH', color: 'gray' };
     }
   };
 
@@ -62,9 +62,6 @@ export default function WalletInfo() {
   return (
     <div className="flex items-center space-x-2 sm:space-x-3 bg-slate-800/50 border border-slate-700/50 rounded-lg px-2 sm:px-3 py-2 min-h-[44px]">
       <div className="flex items-center space-x-1 sm:space-x-2">
-        <div className={`w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-br ${colorClasses[tokenInfo.color as keyof typeof colorClasses].split(' ')[0]} ${colorClasses[tokenInfo.color as keyof typeof colorClasses].split(' ')[1]} rounded-full flex items-center justify-center shrink-0`}>
-          <span className="text-white text-xs">{tokenInfo.emoji}</span>
-        </div>
         <span className="text-slate-300 text-xs sm:text-sm font-medium">{tokenInfo.symbol}:</span>
       </div>
       {loading ? (
