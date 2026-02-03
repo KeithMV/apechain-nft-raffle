@@ -3,7 +3,7 @@
  * Combines raffles from both V3 and V4 contracts
  */
 
-import { usePublicClient, useReadContract } from 'wagmi';
+import { usePublicClient, useReadContract, useChainId } from 'wagmi';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getRaffleFactoryAddress, isV4Available } from '../config/addresses';
 import { RAFFLE_FACTORY_ABI } from '../config/contracts';
@@ -139,12 +139,13 @@ async function getRafflesFromFactory(
 // Get all raffles from both V3 and V4
 export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
   const publicClient = usePublicClient();
+  const chainId = useChainId();
   const [raffles, setRaffles] = useState<CreatedRaffle[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadRaffles = useCallback(async () => {
-    if (!publicClient) return;
+    if (!publicClient || !chainId) return;
 
     setLoading(true);
     setError(null);
@@ -153,13 +154,13 @@ export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
       const allRaffles: CreatedRaffle[] = [];
       
       // Get V3 raffles
-      const v3Address = getRaffleFactoryAddress(undefined, false);
+      const v3Address = getRaffleFactoryAddress(chainId, false);
       const v3Raffles = await getRafflesFromFactory(publicClient, v3Address, 'v3', limit, offset);
       allRaffles.push(...v3Raffles);
       
       // Get V4 raffles if available
-      if (isV4Available()) {
-        const v4Address = getRaffleFactoryAddress(undefined, true);
+      if (isV4Available(chainId)) {
+        const v4Address = getRaffleFactoryAddress(chainId, true);
         const v4Raffles = await getRafflesFromFactory(publicClient, v4Address, 'v4', limit, 0);
         allRaffles.push(...v4Raffles);
       }
@@ -180,7 +181,7 @@ export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
     } finally {
       setLoading(false);
     }
-  }, [publicClient, limit, offset]);
+  }, [publicClient, chainId, limit, offset]);
 
   const debouncedLoadRaffles = useMemo(
     () => debounce(loadRaffles, 300),
