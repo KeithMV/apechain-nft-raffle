@@ -12,12 +12,8 @@ export function WalletConnection() {
 
   const isWrongNetwork = isConnected && chainId !== apeChain.id;
 
-  const handleConnect = async () => {
-    try {
-      await open();
-    } catch (err) {
-      console.error('Failed to connect:', err);
-    }
+  const handleConnect = () => {
+    open();
   };
 
   const handleSwitchNetwork = async () => {
@@ -38,7 +34,7 @@ export function WalletConnection() {
         {isWrongNetwork && (
           <button
             onClick={handleSwitchNetwork}
-            className="px-3 py-2 bg-red-500/20 border border-red-400/50 text-red-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-red-500/30 active:bg-red-500/40 transition-colors min-h-[44px] whitespace-nowrap touch-manipulation"
+            className="px-3 py-2 bg-red-500/20 border border-red-400/50 text-red-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-red-500/30 transition-colors min-h-[44px] whitespace-nowrap"
           >
             Switch to ApeChain
           </button>
@@ -53,7 +49,7 @@ export function WalletConnection() {
         
         <button
           onClick={() => disconnect()}
-          className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 active:bg-slate-600/70 transition-colors min-h-[44px] whitespace-nowrap touch-manipulation"
+          className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 text-slate-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-600/50 transition-colors min-h-[44px] whitespace-nowrap"
         >
           Disconnect
         </button>
@@ -64,12 +60,9 @@ export function WalletConnection() {
   return (
     <button
       onClick={handleConnect}
-      className="relative px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 active:scale-95 active:shadow-inner overflow-hidden group touch-manipulation"
+      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-xs sm:text-sm font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[44px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105"
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-active:translate-x-[100%] transition-transform duration-500"></div>
-      <span className="relative">
-        Connect Wallet
-      </span>
+      Connect Wallet
     </button>
   );
 }
