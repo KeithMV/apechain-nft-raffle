@@ -3,7 +3,7 @@
  * Automatically detects and uses V4 when available
  */
 
-import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useReadContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { getRaffleFactoryAddress, isV4Available, getRateLimit } from '../config/addresses';
 import { RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
@@ -46,8 +46,9 @@ export function useVersionInfo() {
  * Hook for reading platform fee (V4 aware)
  */
 export function usePlatformFeeV4() {
+  const chainId = useChainId();
   const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(undefined, currentVersion === 'v4');
+  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
@@ -93,8 +94,9 @@ export function useNFTApprovalStatusV4(nftContract: string, userAddress: string)
  * Hook for NFT approval transaction (V4 aware)
  */
 export function useNFTApprovalV4() {
+  const chainId = useChainId();
   const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(undefined, currentVersion === 'v4');
+  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
@@ -134,7 +136,7 @@ export function useNFTApprovalV4() {
         abi: ERC721_ABI,
         functionName: 'setApprovalForAll',
         args: [factoryAddress as `0x${string}`, true],
-        chainId: 33139,
+        chainId: chainId,
       });
     } catch (error) {
       setIsProcessing(false);
@@ -157,8 +159,9 @@ export function useNFTApprovalV4() {
  * Hook for creating raffle with V4 support and rate limit awareness
  */
 export function useCreateRaffleV4() {
+  const chainId = useChainId();
   const { currentVersion, rateLimit } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(undefined, currentVersion === 'v4');
+  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
@@ -232,7 +235,7 @@ export function useCreateRaffleV4() {
           BigInt(params.maxTickets),
           BigInt(params.duration)
         ],
-        chainId: 33139,
+        chainId: chainId,
       });
       return result;
     } catch (error) {
