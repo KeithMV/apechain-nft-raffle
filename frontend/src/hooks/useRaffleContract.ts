@@ -3,8 +3,9 @@
  * Uses wagmi React hooks for proper mobile Safari compatibility
  */
 
-import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
-import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
+import { useWriteContract, useReadContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
+import { getRaffleFactoryAddress } from '../config/addresses';
+import { RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
 import { useEffect, useRef, useState } from 'react';
 import { useCacheInvalidation } from './useCacheInvalidation';
@@ -22,8 +23,11 @@ export interface CreateRaffleParams {
  * Hook for reading platform fee
  */
 export function usePlatformFee() {
+  const chainId = useChainId();
+  const factoryAddress = getRaffleFactoryAddress(chainId);
+  
   return useReadContract({
-    address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+    address: factoryAddress as `0x${string}`,
     abi: RAFFLE_FACTORY_ABI,
     functionName: 'platformFee',
   });
@@ -61,6 +65,8 @@ export function useNFTApprovalStatus(nftContract: string, userAddress: string) {
  * Hook for NFT approval transaction
  */
 export function useNFTApproval() {
+  const chainId = useChainId();
+  const factoryAddress = getRaffleFactoryAddress(chainId);
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -71,8 +77,8 @@ export function useNFTApproval() {
       address: nftContract as `0x${string}`,
       abi: ERC721_ABI,
       functionName: 'setApprovalForAll',
-      args: [RAFFLE_FACTORY_ADDRESS as `0x${string}`, true],
-      chainId: 33139, // Force ApeChain
+      args: [factoryAddress as `0x${string}`, true],
+      chainId: chainId,
     });
   };
 
@@ -90,6 +96,8 @@ export function useNFTApproval() {
  * Hook for creating raffle - simplified standard wagmi pattern
  */
 export function useCreateRaffle() {
+  const chainId = useChainId();
+  const factoryAddress = getRaffleFactoryAddress(chainId);
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -128,7 +136,7 @@ export function useCreateRaffle() {
     const ticketPriceWei = parseEther(params.ticketPrice);
     
     return await writeContractAsync({
-      address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+      address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'createRaffle',
       args: [
@@ -138,7 +146,7 @@ export function useCreateRaffle() {
         BigInt(params.maxTickets),
         BigInt(params.duration)
       ],
-      chainId: 33139,
+      chainId: chainId,
     });
   };
 
@@ -181,7 +189,7 @@ export function useEmergencyPause() {
       address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'emergencyPause',
-      chainId: 33139,
+      chainId: chainId,
     });
   };
 
@@ -190,7 +198,7 @@ export function useEmergencyPause() {
       address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'emergencyUnpause',
-      chainId: 33139,
+      chainId: chainId,
     });
   };
 
@@ -220,6 +228,7 @@ export function useFactoryPauseStatus() {
  * Hook for buying raffle tickets
  */
 export function useBuyTickets() {
+  const chainId = useChainId();
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
@@ -275,7 +284,7 @@ export function useBuyTickets() {
         functionName: 'buyTickets',
         args: [BigInt(quantity)],
         value: totalCost,
-        chainId: 33139,
+        chainId: chainId,
       });
       return result;
     } catch (error) {
@@ -317,7 +326,7 @@ export function useCommitRandomness() {
       abi: RAFFLE_CONTRACT_ABI,
       functionName: 'commitRandomness',
       args: [commitHash as `0x${string}`],
-      chainId: 33139,
+      chainId: chainId,
     });
   };
 
@@ -356,7 +365,7 @@ export function useRevealWinner() {
       abi: RAFFLE_CONTRACT_ABI,
       functionName: 'revealAndSelectWinner',
       args: [nonce],
-      chainId: 33139,
+      chainId: chainId,
     });
   };
 
@@ -394,7 +403,7 @@ export function useEmergencyWinner() {
       address: raffleContract as `0x${string}`,
       abi: RAFFLE_CONTRACT_ABI,
       functionName: 'emergencySelectWinner',
-      chainId: 33139,
+      chainId: chainId,
     });
   };
 
