@@ -47,7 +47,7 @@ export const config = defaultWagmiConfig({
   projectId,
   metadata,
   ssr: false,
-  syncConnectedChain: true,
+  syncConnectedChain: false,
   enableEIP6963: true,
   enableCoinbase: true,
 });
