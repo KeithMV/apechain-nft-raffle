@@ -25,11 +25,9 @@ jobs:
     - name: Build frontend for staging
       run: |
         cd frontend
-        CI=false yarn build
+        CI=false yarn build:staging
       env:
         REACT_APP_WALLETCONNECT_PROJECT_ID: ${{ secrets.WALLETCONNECT_PROJECT_ID }}
-        REACT_APP_ENV: staging
-        REACT_APP_ENVIRONMENT: staging
       
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
@@ -46,5 +44,5 @@ jobs:
     - name: Staging deployment complete
       run: |
         echo "✅ Staging deployment complete!"
-        echo "🌐 Staging URL: https://d2v74bfsjdq40l.cloudfront.net"
+        echo "🌐 Staging URL: https://staging.apechainraffles.io"
         echo "⏱️ Cache invalidation may take 1-2 minutes to propagate"
