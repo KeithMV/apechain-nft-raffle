@@ -61,8 +61,9 @@ export function usePlatformFeeV4() {
  * Hook for reading raffle counter (V4 aware)
  */
 export function useRaffleCounterV4() {
+  const chainId = useChainId();
   const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(undefined, currentVersion === 'v4');
+  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
@@ -261,8 +262,9 @@ export function useCreateRaffleV4() {
  * Hook for reading raffle contract address by ID (V4 aware)
  */
 export function useRaffleContractV4(raffleId: number) {
+  const chainId = useChainId();
   const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(undefined, currentVersion === 'v4');
+  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
@@ -279,8 +281,9 @@ export function useRaffleContractV4(raffleId: number) {
  * Hook for checking if factory is paused (V4 aware)
  */
 export function useFactoryPauseStatusV4() {
+  const chainId = useChainId();
   const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(undefined, currentVersion === 'v4');
+  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
