@@ -19,7 +19,8 @@ jobs:
     - name: Install frontend dependencies
       run: |
         cd frontend
-        yarn install --frozen-lockfile
+        rm -rf node_modules yarn.lock
+        yarn install
       
     - name: Build frontend for staging
       run: |
