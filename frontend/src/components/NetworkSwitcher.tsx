@@ -28,13 +28,10 @@ export const NetworkSwitcher: React.FC = () => {
 
   const handleNetworkSwitch = async (chainId: number) => {
     try {
-      console.log('🔍 Switching to chain:', chainId);
       await switchChain({ chainId });
-      console.log('✅ Switch successful');
       setIsOpen(false);
     } catch (error) {
-      console.error('❌ Switch failed:', error);
-      // Don't close dropdown on error so user can try again
+      console.error('Network switch failed:', error);
     }
   };
 
