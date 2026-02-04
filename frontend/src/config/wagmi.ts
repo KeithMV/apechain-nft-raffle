@@ -43,6 +43,7 @@ const metadata = {
 
 // Detect mobile for conditional sync
 const isMobile = typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+console.log('🔍 Mobile detection:', isMobile, 'User agent:', typeof window !== 'undefined' ? navigator.userAgent : 'SSR');
 
 // Create wagmi config with multi-chain support
 export const config = defaultWagmiConfig({
