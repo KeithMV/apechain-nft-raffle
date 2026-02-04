@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
 import { apeChain, baseChain } from '../config/wagmi';
+import { useEffect } from 'react';
 
 const SUPPORTED_CHAINS = [
   {
@@ -20,15 +21,35 @@ export const NetworkSwitcher: React.FC = () => {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [currentChainId, setCurrentChainId] = React.useState(chainId);
+
+  // Manual chain detection when syncConnectedChain is false
+  useEffect(() => {
+    const checkChain = () => {
+      if (window.ethereum?.chainId) {
+        const walletChainId = parseInt(window.ethereum.chainId, 16);
+        if (walletChainId !== currentChainId) {
+          setCurrentChainId(walletChainId);
+        }
+      }
+    };
+    
+    checkChain();
+    const interval = setInterval(checkChain, 1000);
+    return () => clearInterval(interval);
+  }, [currentChainId]);
 
   if (!isConnected) return null;
 
-  const currentChain = SUPPORTED_CHAINS.find(chain => chain.id === chainId);
-  const otherChains = SUPPORTED_CHAINS.filter(chain => chain.id !== chainId);
+  const displayChainId = currentChainId || chainId;
+
+  const currentChain = SUPPORTED_CHAINS.find(chain => chain.id === displayChainId);
+  const otherChains = SUPPORTED_CHAINS.filter(chain => chain.id !== displayChainId);
 
   const handleNetworkSwitch = async (chainId: number) => {
     try {
       await switchChain({ chainId });
+      setCurrentChainId(chainId); // Immediately update local state
       setIsOpen(false);
     } catch (error) {
       console.error('Network switch failed:', error);
