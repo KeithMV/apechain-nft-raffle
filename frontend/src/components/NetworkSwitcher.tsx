@@ -26,9 +26,16 @@ export const NetworkSwitcher: React.FC = () => {
   const currentChain = SUPPORTED_CHAINS.find(chain => chain.id === chainId);
   const otherChains = SUPPORTED_CHAINS.filter(chain => chain.id !== chainId);
 
-  const handleNetworkSwitch = (chainId: number) => {
-    switchChain({ chainId });
-    setIsOpen(false);
+  const handleNetworkSwitch = async (chainId: number) => {
+    try {
+      console.log('🔍 Switching to chain:', chainId);
+      await switchChain({ chainId });
+      console.log('✅ Switch successful');
+      setIsOpen(false);
+    } catch (error) {
+      console.error('❌ Switch failed:', error);
+      // Don't close dropdown on error so user can try again
+    }
   };
 
   return (
