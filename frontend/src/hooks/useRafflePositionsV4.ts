@@ -211,3 +211,76 @@ export function useClearRaffleCacheV4() {
     console.log('V4 Raffle caches cleared aggressively');
   }, []);
 }
+// Get user's raffle positions (network-aware)
+export function useUserRafflePositionsV4(userAddress?: string) {
+  const publicClient = usePublicClient();
+  const chainId = useChainId();
+  const [positions, setPositions] = useState<UserRafflePosition[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadPositions = useCallback(async () => {
+    if (!publicClient || !userAddress || !chainId) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const allPositions: UserRafflePosition[] = [];
+      
+      // Get positions from current network's factory
+      const factoryAddress = getRaffleFactoryAddress(chainId, true);
+      // Simple implementation - just return empty for now
+      
+      setPositions(allPositions);
+    } catch (err) {
+      console.error('Failed to load user positions:', err);
+      setError('Failed to load user positions');
+    } finally {
+      setLoading(false);
+    }
+  }, [publicClient, userAddress, chainId]);
+
+  useEffect(() => {
+    loadPositions();
+  }, [loadPositions]);
+
+  return { positions, loading, error, refetch: loadPositions };
+}
+
+// Get user's created raffles (network-aware)
+export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
+  const publicClient = usePublicClient();
+  const chainId = useChainId();
+  const [raffles, setRaffles] = useState<CreatedRaffle[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadCreatedRaffles = useCallback(async () => {
+    if (!publicClient || !userAddress || !chainId) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const allRaffles: CreatedRaffle[] = [];
+      
+      // Get raffles from current network's factory
+      const factoryAddress = getRaffleFactoryAddress(chainId, true);
+      // Simple implementation - just return empty for now
+      
+      setRaffles(allRaffles);
+    } catch (err) {
+      console.error('Failed to load created raffles:', err);
+      setError('Failed to load created raffles');
+    } finally {
+      setLoading(false);
+    }
+  }, [publicClient, userAddress, chainId, page]);
+
+  useEffect(() => {
+    loadCreatedRaffles();
+  }, [loadCreatedRaffles]);
+
+  return { raffles, loading, error, refetch: loadCreatedRaffles };
+}
