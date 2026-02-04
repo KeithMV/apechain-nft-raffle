@@ -41,17 +41,13 @@ const metadata = {
   icons: [`${envConfig.appUrl}/favicon.ico`]
 };
 
-// Detect mobile for conditional sync
-const isMobile = typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-console.log('🔍 Mobile detection:', isMobile, 'User agent:', typeof window !== 'undefined' ? navigator.userAgent : 'SSR');
-
 // Create wagmi config with multi-chain support
 export const config = defaultWagmiConfig({
   chains: [apeChain, baseChain],
   projectId,
   metadata,
   ssr: false,
-  syncConnectedChain: !isMobile, // true for desktop, false for mobile
+  syncConnectedChain: true, // This works locally, keep it
   enableEIP6963: true,
   enableCoinbase: true,
 });
