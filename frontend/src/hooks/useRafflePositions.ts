@@ -5,7 +5,7 @@
 
 import { usePublicClient, useReadContract, useChainId } from 'wagmi';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { getRaffleFactoryAddress } from '../config/addresses';
+import { getRaffleFactoryAddress, RAFFLE_FACTORY_ADDRESS } from '../config/addresses';
 import { RAFFLE_FACTORY_ABI } from '../config/contracts';
 import { processBatch, OptimizedCache, debounce } from '../utils/performance';
 
@@ -173,10 +173,8 @@ export function useUserRafflePositions(userAddress?: string) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const factoryAddress = getRaffleFactoryAddress(chainId, true);
-
   const { data: raffleCount } = useReadContract({
-    address: factoryAddress as `0x${string}`,
+    address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
     abi: RAFFLE_FACTORY_ABI,
     functionName: 'raffleCounter',
   });
