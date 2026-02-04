@@ -124,12 +124,6 @@ function getContracts(chainId?: number) {
       return CONTRACT_ADDRESSES[33139];
     }
     
-    // Validate that required contracts are configured
-    if (!contracts.RAFFLE_FACTORY || !contracts.RAFFLE_TEMPLATE) {
-      // Fallback to ApeChain for incomplete configurations
-      return CONTRACT_ADDRESSES[33139];
-    }
-    
     return contracts;
   } catch (error) {
     // Safe fallback to ApeChain on error
@@ -141,12 +135,12 @@ function getRaffleFactoryAddress(chainId?: number, useV4?: boolean): string {
   try {
     const contracts = getContracts(chainId);
     
-    // Use V4 if available and requested
-    if (useV4 && contracts.RAFFLE_FACTORY_V4) {
+    // Use V4 if available and requested, or if it's the only option
+    if ((useV4 && contracts.RAFFLE_FACTORY_V4) || (!contracts.RAFFLE_FACTORY && contracts.RAFFLE_FACTORY_V4)) {
       return contracts.RAFFLE_FACTORY_V4;
     }
     
-    const address = contracts.RAFFLE_FACTORY;
+    const address = contracts.RAFFLE_FACTORY || contracts.RAFFLE_FACTORY_V4;
     
     if (!address) {
       throw new Error(`No Raffle Factory address configured for chain ${chainId || getCurrentChainId()}`);
