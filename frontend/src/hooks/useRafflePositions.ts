@@ -3,9 +3,10 @@
  * Professional wagmi hooks for raffle position management
  */
 
-import { usePublicClient, useReadContract } from 'wagmi';
+import { usePublicClient, useReadContract, useChainId } from 'wagmi';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { RAFFLE_FACTORY_ADDRESS, RAFFLE_FACTORY_ABI } from '../config/contracts';
+import { getRaffleFactoryAddress } from '../config/addresses';
+import { RAFFLE_FACTORY_ABI } from '../config/contracts';
 import { processBatch, OptimizedCache, debounce } from '../utils/performance';
 
 interface CreatedRaffle {
@@ -167,12 +168,15 @@ export function useAllRaffles(limit: number = 20, offset: number = 0) {
 // Get user's raffle positions
 export function useUserRafflePositions(userAddress?: string) {
   const publicClient = usePublicClient();
+  const chainId = useChainId();
   const [positions, setPositions] = useState<UserRafflePosition[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const factoryAddress = getRaffleFactoryAddress(chainId, true);
+
   const { data: raffleCount } = useReadContract({
-    address: RAFFLE_FACTORY_ADDRESS as `0x${string}`,
+    address: factoryAddress as `0x${string}`,
     abi: RAFFLE_FACTORY_ABI,
     functionName: 'raffleCounter',
   });
