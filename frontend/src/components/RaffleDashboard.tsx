@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 import BasicNFTImage from './BasicNFTImage';
 import CopyAddress from './CopyAddress';
 import toast from 'react-hot-toast';
-import { useUserRafflePositionsV4, useCreatedRafflesV4 } from '../hooks/useRafflePositionsV4';
+import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 
@@ -16,8 +16,8 @@ export default function RaffleDashboard() {
   const [showExpired, setShowExpired] = useState(true);
   const [page, setPage] = useState(0);
   
-  const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositionsV4(address);
-  const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRafflesV4(address, page);
+  const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositions(address);
+  const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRaffles(address, page);
   
   const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
   const { emergencyReveal, isPending: isSelectingWinner, revealSuccess: winnerSelected } = useWinnerSelection();
