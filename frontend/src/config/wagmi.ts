@@ -47,7 +47,7 @@ export const config = defaultWagmiConfig({
   projectId,
   metadata,
   ssr: false,
-  syncConnectedChain: true, // Enable chain sync to detect network changes
+  syncConnectedChain: false, // Keep false for mobile compatibility
   enableEIP6963: true,
   enableCoinbase: true,
 });
