@@ -8,14 +8,31 @@ import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
 import { WalletConnection } from './components/WalletConnection';
 import { NetworkSwitcher } from './components/NetworkSwitcher';
+import { NetworkAwareHeader } from './components/NetworkAwareHeader';
 import { MobileDebug } from './components/MobileDebug';
 import MobileBanner from './components/MobileBanner';
 import { suppressWalletConnectErrors } from './utils/walletCleanup';
 import { suppressWeb3ModalWarnings } from './utils/suppressWarnings';
 import { ErrorBoundary, Web3ErrorBoundary } from './components/ErrorBoundary';
+import { NetworkProvider, useNetwork } from './contexts/NetworkContext';
 import './utils/consoleSecure'; // Auto-enables production console security
 
 import './index.css';
+
+// Network-aware title component
+const NetworkAwareTitle = () => {
+  const { theme, networkName, nativeCurrency } = useNetwork();
+  return (
+    <div className="flex items-center gap-2">
+      <h1 className={`text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r ${theme.gradient} bg-clip-text text-transparent font-sans tracking-tight text-center`}>
+        {networkName} Raffles
+      </h1>
+      <span className={`px-2 py-1 bg-${theme.primary}-500/20 border border-${theme.primary}-400/30 rounded-full text-${theme.primary}-300 text-xs font-medium`}>
+        {nativeCurrency}
+      </span>
+    </div>
+  );
+};
 
 // Lazy load all heavy components for optimal performance
 const CreateRafflePage = lazy(() => import('./components/CreateRafflePage'));
@@ -61,7 +78,7 @@ const Header = React.memo(function Header() {
         <div className="flex flex-col justify-center items-center py-4 space-y-3">
           <div className="flex flex-col items-center space-y-2">
             <div>
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight text-center">ApeChain Raffles</h1>
+              <NetworkAwareTitle />
             </div>
             {isConnected && (
               <nav className="flex space-x-2">
@@ -228,10 +245,12 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative z-0">
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <RaffleApp />
-            <Toaster position="top-right" />
-          </BrowserRouter>
+          <NetworkProvider>
+            <BrowserRouter>
+              <RaffleApp />
+              <Toaster position="top-right" />
+            </BrowserRouter>
+          </NetworkProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </div>
