@@ -20,6 +20,7 @@ export const NetworkSwitcher: React.FC = () => {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [switching, setSwitching] = React.useState(false);
 
   if (!isConnected) return null;
 
@@ -27,11 +28,14 @@ export const NetworkSwitcher: React.FC = () => {
   const otherChains = SUPPORTED_CHAINS.filter(chain => chain.id !== chainId);
 
   const handleNetworkSwitch = async (chainId: number) => {
+    setSwitching(true);
     try {
       await switchChain({ chainId });
       setIsOpen(false);
     } catch (error) {
       console.error('Network switch failed:', error);
+    } finally {
+      setSwitching(false);
     }
   };
 
@@ -63,7 +67,8 @@ export const NetworkSwitcher: React.FC = () => {
                 <button
                   key={chain.id}
                   onClick={() => handleNetworkSwitch(chain.id)}
-                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-slate-700/50 active:bg-slate-700/70 transition-colors duration-200 text-left"
+                  disabled={switching}
+                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-slate-700/50 active:bg-slate-700/70 transition-colors duration-200 text-left disabled:opacity-50"
                 >
                   <div>
                     <div className="text-sm font-medium text-slate-200">{chain.name}</div>
