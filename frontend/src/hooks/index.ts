@@ -6,7 +6,7 @@
 // Primary Hooks
 export { useNFTMetadata } from './useNFTMetadata';
 export { useRaffleContract } from './useRaffleContract';
-export { useAllRaffles, useUserRafflePositions, useCreatedRaffles } from './useRafflePositions';
+export { useUserRafflePositions, useCreatedRaffles } from './useRafflePositions';
 
 // Specialized Hooks
 export { useWinnerSelection } from './useWinnerSelection';
