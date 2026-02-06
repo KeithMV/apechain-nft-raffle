@@ -38,7 +38,7 @@ const configs: Record<Environment, EnvironmentConfig> = {
     rpcUrl: process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
     contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS || '0x1627E7e63b63878E61f91D336385a59B1747934a',
     appName: 'ApeChain NFT Raffles (DEV)',
-    appUrl: 'http://192.168.0.62:3000', // Use mobile-accessible IP
+    appUrl: 'http://192.168.0.252:3000', // Use mobile-accessible IP
     enableLogging: true,
   },
   staging: {
