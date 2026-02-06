@@ -7,6 +7,7 @@ import ApeTokenBalance from './ApeTokenBalance';
 import MobileBanner from './MobileBanner';
 import FeeDisplay from './FeeDisplay';
 import { V4Status, RateLimitInfo } from './V4Status';
+import { useNetwork } from '../contexts/NetworkContext';
 
 import toast from 'react-hot-toast';
 import { 
@@ -27,6 +28,7 @@ interface FormData {
 export default function CreateRafflePage() {
   const { address } = useAccount();
   const chainId = useChainId();
+  const { theme, nativeCurrency, networkName, isApeChain, isBase } = useNetwork();
   const { switchToApeChain, isSwitching } = useApeChainSwitching();
   const [formData, setFormData] = useState<FormData>({
     nftContract: '',
@@ -39,7 +41,7 @@ export default function CreateRafflePage() {
   const [approvalStatus, setApprovalStatus] = useState<boolean | null>(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   
-  const isWrongNetwork = chainId !== 33139;
+  const isWrongNetwork = !isApeChain && !isBase;
   // Professional wagmi V4 hooks
   const { data: platformFeeData } = usePlatformFeeV4();
   const { data: approvalData, refetch: refetchApproval } = useNFTApprovalStatusV4(
@@ -207,7 +209,7 @@ export default function CreateRafflePage() {
               <span className="mr-2">⚠️</span>
               <div>
                 <p className="font-semibold">Wrong Network Detected</p>
-                <p className="text-sm text-red-400">Please switch to ApeChain (Chain ID: 33139) to create raffles</p>
+                <p className="text-sm text-red-400">Please switch to {networkName} to create raffles</p>
               </div>
             </div>
           </div>
@@ -252,7 +254,7 @@ export default function CreateRafflePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-pink-200 mb-2 font-mono tracking-wider">
-                Ticket Price (APE) *
+                Ticket Price ({nativeCurrency}) *
               </label>
               <input
                 type="number"
@@ -378,7 +380,7 @@ export default function CreateRafflePage() {
                 <span className="text-sm sm:text-base">{createConfirming ? 'Confirming...' : 'Creating raffle...'}</span>
               </span>
             ) : isWrongNetwork ? (
-              <span className="relative">Switch to ApeChain</span>
+              <span className="relative">Switch to {networkName}</span>
             ) : approvalStatus !== true ? (
               <span className="relative">NFT Approval Required</span>
             ) : (
@@ -417,7 +419,7 @@ export default function CreateRafflePage() {
                 <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
                   <div className="text-red-300 font-medium mb-2">❌ What This Approval Does NOT Do:</div>
                   <ul className="text-red-200 text-xs space-y-1">
-                    <li>• Cannot access your APE tokens or other cryptocurrencies</li>
+                    <li>• Cannot access your {nativeCurrency} tokens or other cryptocurrencies</li>
                     <li>• Cannot access NFTs from other contracts</li>
                     <li>• Cannot transfer anything without your explicit action</li>
                     <li>• Cannot be used by anyone except the raffle system</li>

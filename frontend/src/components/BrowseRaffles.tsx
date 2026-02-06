@@ -8,6 +8,7 @@ import { useBuyTickets } from '../hooks/useRaffleContract';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { throttle, useVirtualScrolling } from '../utils/performance';
 import { V4Status } from './V4Status';
+import { useNetwork } from '../contexts/NetworkContext';
 
 interface CreatedRaffle {
   raffleId: number;
@@ -26,7 +27,7 @@ interface CreatedRaffle {
 }
 
 // Memoized raffle card component for performance
-const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuantity, handleBuyTickets, handleWinnerSelection, processingRaffles, formatTimeRemaining, address, buyPending }: {
+const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuantity, handleBuyTickets, handleWinnerSelection, processingRaffles, formatTimeRemaining, address, buyPending, nativeCurrency }: {
   raffle: CreatedRaffle;
   index: number;
   ticketQuantities: {[key: string]: number};
@@ -37,6 +38,7 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
   formatTimeRemaining: (endTime: number) => string;
   address?: string;
   buyPending: boolean;
+  nativeCurrency: string;
 }) => {
   const quantity = ticketQuantities[raffle.raffleContract] || 1;
   const totalCost = (parseFloat(raffle.ticketPrice) * quantity).toFixed(3);
@@ -64,7 +66,7 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
           size="lg"
         />
         <div className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm border border-cyan-400/30 rounded-xl px-3 py-2">
-          <p className="text-cyan-300 font-semibold text-sm">{raffle.ticketPrice} APE</p>
+          <p className="text-cyan-300 font-semibold text-sm">{raffle.ticketPrice} {nativeCurrency}</p>
           <p className="text-slate-400 text-xs">per ticket</p>
         </div>
         {isExpired && (
@@ -191,7 +193,7 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-pink-400/70 font-mono tracking-wide mb-1">Total Cost</p>
-                  <p className="text-pink-300 font-semibold font-mono tracking-wider">{totalCost} APE</p>
+                  <p className="text-pink-300 font-semibold font-mono tracking-wider">{totalCost} {nativeCurrency}</p>
                 </div>
               </div>
               
@@ -225,6 +227,7 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
 
 export default function BrowseRaffles() {
   const { address } = useAccount();
+  const { nativeCurrency } = useNetwork();
   
   const [ticketQuantities, setTicketQuantities] = useState<{[key: string]: number}>({});
   const [showExpired, setShowExpired] = useState(false);
@@ -453,6 +456,7 @@ export default function BrowseRaffles() {
                       processingRaffles={processingRaffles}
                       formatTimeRemaining={formatTimeRemaining}
                       address={address}
+                      nativeCurrency={nativeCurrency}
                       buyPending={buyPending}
                     />
                   ))}

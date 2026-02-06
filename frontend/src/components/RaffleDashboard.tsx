@@ -6,11 +6,13 @@ import toast from 'react-hot-toast';
 import { useUserRafflePositions, useCreatedRaffles } from '../hooks/useRafflePositions';
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
+import { useNetwork } from '../contexts/NetworkContext';
 
 // Interfaces moved to hooks file to avoid duplication
 
 export default function RaffleDashboard() {
   const { address } = useAccount();
+  const { theme, nativeCurrency } = useNetwork();
   
   const [activeTab, setActiveTab] = useState<'participated' | 'created'>('participated');
   const [showExpired, setShowExpired] = useState(true);
@@ -316,7 +318,7 @@ export default function RaffleDashboard() {
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                           <div>
                             <p className="text-pink-400/70 font-mono tracking-wide">Ticket Price</p>
-                            <p className="text-pink-300 font-mono tracking-wider">{raffle.ticketPrice} APE</p>
+                            <p className="text-pink-300 font-mono tracking-wider">{raffle.ticketPrice} {nativeCurrency}</p>
                           </div>
                           <div>
                             <p className="text-pink-400/70 font-mono tracking-wide">Tickets Sold</p>
@@ -324,7 +326,7 @@ export default function RaffleDashboard() {
                           </div>
                           <div>
                             <p className="text-pink-400/70 font-mono tracking-wide">Your Revenue</p>
-                            <p className="text-pink-300 font-mono tracking-wider">{(parseFloat(raffle.ticketPrice) * raffle.ticketsSold * 0.95).toFixed(2)} APE</p>
+                            <p className="text-pink-300 font-mono tracking-wider">{(parseFloat(raffle.ticketPrice) * raffle.ticketsSold * 0.95).toFixed(2)} {nativeCurrency}</p>
                           </div>
                           <div>
                             <p className="text-pink-400/70 font-mono tracking-wide">Status</p>
