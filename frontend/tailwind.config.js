@@ -3,6 +3,43 @@ module.exports = {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
+  safelist: [
+    // Network-aware classes for dynamic theming
+    'border-emerald-400/30',
+    'border-blue-400/30',
+    'shadow-emerald-500/20',
+    'shadow-blue-500/20',
+    'from-emerald-500/10',
+    'via-teal-500/10',
+    'to-cyan-500/10',
+    'from-blue-500/10',
+    'via-indigo-500/10',
+    'to-purple-500/10',
+    'from-emerald-400',
+    'via-teal-300',
+    'to-cyan-400',
+    'from-blue-400',
+    'via-indigo-300',
+    'to-purple-400',
+    'bg-emerald-500/20',
+    'text-emerald-300',
+    'border-emerald-400/50',
+    'bg-blue-500/20',
+    'text-blue-300',
+    'border-blue-400/30',
+    'border-blue-400/50',
+    'hover:text-emerald-300',
+    'hover:bg-emerald-500/10',
+    'hover:border-emerald-400/30',
+    'hover:text-blue-300',
+    'hover:bg-blue-500/10',
+    'hover:border-blue-400/30',
+    // Network-aware utility classes
+    'network-border',
+    'network-shadow',
+    'network-bg',
+    'network-text',
+  ],
   theme: {
     extend: {
       colors: {
