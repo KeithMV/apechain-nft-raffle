@@ -185,17 +185,33 @@ export default function CreateRafflePage() {
 
 
 
+  const containerBorderColor = isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30';
+  const containerShadowColor = isApeChain ? 'shadow-emerald-500/20' : 'shadow-blue-500/20';
+  const headerBgGradient = isApeChain 
+    ? 'from-emerald-500/10 via-teal-500/10 to-cyan-500/10' 
+    : 'from-blue-500/10 via-indigo-500/10 to-purple-500/10';
+  const headerBorderColor = isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30';
+  const titleGradient = isApeChain 
+    ? 'from-emerald-400 via-teal-300 to-cyan-400' 
+    : 'from-blue-400 via-indigo-300 to-purple-400';
+  const patternColor = isApeChain ? 'rgba(16,185,129,0.1)' : 'rgba(59,130,246,0.1)';
+  const gridColor = isApeChain ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)';
+
   return (
-    <div className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border border-emerald-400/30 rounded-3xl shadow-2xl shadow-emerald-500/20 overflow-hidden">
+    <div className={`relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border ${containerBorderColor} rounded-3xl shadow-2xl ${containerShadowColor} overflow-hidden`}>
       {/* Animated background pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.1),transparent_50%)] animate-pulse"></div>
-      <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(-45deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:30px_30px]"></div>
+      <div className="absolute inset-0 animate-pulse" style={{
+        background: `radial-gradient(circle_at_50%_50%, ${patternColor}, transparent_50%)`
+      }}></div>
+      <div className="absolute inset-0 bg-[size:30px_30px]" style={{
+        backgroundImage: `linear-gradient(45deg, ${gridColor} 1px, transparent 1px), linear-gradient(-45deg, ${gridColor} 1px, transparent 1px)`
+      }}></div>
       
-      <div className="relative bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 px-4 sm:px-8 py-6 sm:py-8 border-b border-emerald-400/30">
+      <div className={`relative bg-gradient-to-r ${headerBgGradient} px-4 sm:px-8 py-6 sm:py-8 border-b ${headerBorderColor}`}>
         <div className="flex items-center space-x-3 sm:space-x-4">
           <div className="flex-1">
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">Create NFT Raffle</h2>
+              <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r ${titleGradient} bg-clip-text text-transparent font-sans tracking-tight`}>Create NFT Raffle</h2>
             </div>
           </div>
         </div>
@@ -233,7 +249,7 @@ export default function CreateRafflePage() {
                 value={formData.nftContract}
                 onChange={(e) => handleInputChange('nftContract', e.target.value)}
                 placeholder="0x..."
-                className="w-full bg-slate-800/80 border border-emerald-400/30 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all font-mono backdrop-blur-sm shadow-lg"
+                className={`w-full bg-slate-800/80 border ${isApeChain ? 'border-emerald-400/30 focus:border-emerald-400 focus:ring-emerald-400/20' : 'border-blue-400/30 focus:border-blue-400 focus:ring-blue-400/20'} rounded-xl px-4 py-3 text-slate-100 placeholder-slate-400 focus:ring-2 transition-all font-mono backdrop-blur-sm shadow-lg`}
               />
             </div>
             
@@ -246,14 +262,14 @@ export default function CreateRafflePage() {
                 value={formData.tokenId}
                 onChange={(e) => handleInputChange('tokenId', e.target.value)}
                 placeholder="123"
-                className="w-full bg-slate-800/80 border border-emerald-400/30 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all font-mono backdrop-blur-sm shadow-lg"
+                className={`w-full bg-slate-800/80 border ${isApeChain ? 'border-emerald-400/30 focus:border-emerald-400 focus:ring-emerald-400/20' : 'border-blue-400/30 focus:border-blue-400 focus:ring-blue-400/20'} rounded-xl px-4 py-3 text-slate-100 placeholder-slate-400 focus:ring-2 transition-all font-mono backdrop-blur-sm shadow-lg`}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-pink-200 mb-2 font-mono tracking-wider">
+              <label className={`block text-sm font-medium ${isApeChain ? 'text-emerald-200' : 'text-blue-200'} mb-2 font-mono tracking-wider`}>
                 Ticket Price ({nativeCurrency}) *
               </label>
               <input
@@ -263,12 +279,12 @@ export default function CreateRafflePage() {
                 value={formData.ticketPrice}
                 onChange={(e) => handleInputChange('ticketPrice', e.target.value)}
                 placeholder="0.1"
-                className="w-full bg-gray-800/90 border border-pink-500/30 rounded-lg px-4 py-3 text-pink-100 placeholder-pink-400/50 focus:border-pink-400 focus:ring-1 focus:ring-pink-400 transition-colors font-mono backdrop-blur-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className={`w-full bg-gray-800/90 border ${isApeChain ? 'border-emerald-500/30 focus:border-emerald-400 focus:ring-emerald-400' : 'border-blue-500/30 focus:border-blue-400 focus:ring-blue-400'} rounded-lg px-4 py-3 ${isApeChain ? 'text-emerald-100 placeholder-emerald-400/50' : 'text-blue-100 placeholder-blue-400/50'} focus:ring-1 transition-colors font-mono backdrop-blur-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-pink-200 mb-2 font-mono tracking-wider">
+              <label className={`block text-sm font-medium ${isApeChain ? 'text-emerald-200' : 'text-blue-200'} mb-2 font-mono tracking-wider`}>
                 Max Tickets *
               </label>
               <input
@@ -278,18 +294,18 @@ export default function CreateRafflePage() {
                 value={formData.maxTickets}
                 onChange={(e) => handleInputChange('maxTickets', e.target.value)}
                 placeholder="100"
-                className="w-full bg-gray-800/90 border border-pink-500/30 rounded-lg px-4 py-3 text-pink-100 placeholder-pink-400/50 focus:border-pink-400 focus:ring-1 focus:ring-pink-400 transition-colors font-mono backdrop-blur-sm"
+                className={`w-full bg-gray-800/90 border ${isApeChain ? 'border-emerald-500/30 focus:border-emerald-400 focus:ring-emerald-400' : 'border-blue-500/30 focus:border-blue-400 focus:ring-blue-400'} rounded-lg px-4 py-3 ${isApeChain ? 'text-emerald-100 placeholder-emerald-400/50' : 'text-blue-100 placeholder-blue-400/50'} focus:ring-1 transition-colors font-mono backdrop-blur-sm`}
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-pink-200 mb-2 font-mono tracking-wider">
+              <label className={`block text-sm font-medium ${isApeChain ? 'text-emerald-200' : 'text-blue-200'} mb-2 font-mono tracking-wider`}>
                 Duration *
               </label>
               <select
                 value={formData.duration}
                 onChange={(e) => handleInputChange('duration', e.target.value)}
-                className="w-full bg-gray-800/90 border border-pink-500/30 rounded-lg px-4 py-3 text-pink-100 focus:border-pink-400 focus:ring-1 focus:ring-pink-400 transition-colors font-mono backdrop-blur-sm"
+                className={`w-full bg-gray-800/90 border ${isApeChain ? 'border-emerald-500/30 focus:border-emerald-400 focus:ring-emerald-400' : 'border-blue-500/30 focus:border-blue-400 focus:ring-blue-400'} rounded-lg px-4 py-3 ${isApeChain ? 'text-emerald-100' : 'text-blue-100'} focus:ring-1 transition-colors font-mono backdrop-blur-sm`}
               >
                 <option value="1">1 HOUR</option>
                 <option value="6">6 HOURS</option>
@@ -307,22 +323,22 @@ export default function CreateRafflePage() {
 
         {/* Approval Section */}
         {formData.nftContract && (
-          <div className="relative bg-gray-800/90 backdrop-blur-xl border border-pink-500/30 rounded-xl p-4 sm:p-6 mt-6 shadow-lg shadow-pink-500/10">
-            <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 via-fuchsia-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
-            <h4 className="relative font-semibold text-pink-200 mb-3 flex items-center text-sm sm:text-base font-mono tracking-wider">
-              <div className="w-4 h-4 sm:w-5 sm:h-5 bg-pink-500/20 rounded-lg flex items-center justify-center mr-2">
-                <span className="text-pink-400 text-xs">⚡</span>
+          <div className={`relative bg-gray-800/90 backdrop-blur-xl border ${isApeChain ? 'border-emerald-500/30 shadow-emerald-500/10' : 'border-blue-500/30 shadow-blue-500/10'} rounded-xl p-4 sm:p-6 mt-6 shadow-lg`}>
+            <div className={`absolute inset-0 bg-gradient-to-r ${isApeChain ? 'from-emerald-500/5 via-teal-500/5 to-cyan-500/5' : 'from-blue-500/5 via-indigo-500/5 to-purple-500/5'} rounded-xl blur-sm animate-pulse`}></div>
+            <h4 className={`relative font-semibold ${isApeChain ? 'text-emerald-200' : 'text-blue-200'} mb-3 flex items-center text-sm sm:text-base font-mono tracking-wider`}>
+              <div className={`w-4 h-4 sm:w-5 sm:h-5 ${isApeChain ? 'bg-emerald-500/20' : 'bg-blue-500/20'} rounded-lg flex items-center justify-center mr-2`}>
+                <span className={`${isApeChain ? 'text-emerald-400' : 'text-blue-400'} text-xs`}>⚡</span>
               </div>
               NFT Approval Status
             </h4>
             
             {approvalStatus === null ? (
-              <div className="relative flex items-center text-pink-300/70 text-sm font-mono">
-                <div className="w-4 h-4 border-2 border-pink-400 border-t-transparent rounded-full animate-spin mr-2"></div>
+              <div className={`relative flex items-center ${isApeChain ? 'text-emerald-300/70' : 'text-blue-300/70'} text-sm font-mono`}>
+                <div className={`w-4 h-4 border-2 ${isApeChain ? 'border-emerald-400' : 'border-blue-400'} border-t-transparent rounded-full animate-spin mr-2`}></div>
                 Checking approval status...
               </div>
             ) : approvalStatus ? (
-              <div className="relative flex items-center text-pink-300 text-sm font-mono tracking-wide">
+              <div className={`relative flex items-center ${isApeChain ? 'text-emerald-300' : 'text-blue-300'} text-sm font-mono tracking-wide`}>
                 <span className="mr-2">✅</span>
                 NFT Contract Approved • Ready to create raffle
               </div>
@@ -336,9 +352,9 @@ export default function CreateRafflePage() {
                   <button
                     onClick={() => setShowApprovalModal(true)}
                     disabled={approvalPending || approvalConfirming}
-                    className="relative bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group"
+                    className={`relative bg-gradient-to-r ${isApeChain ? 'from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500' : 'from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'} text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group`}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    <div className={`absolute inset-0 bg-gradient-to-r ${isApeChain ? 'from-emerald-500/0 via-emerald-500/20 to-emerald-500/0' : 'from-blue-500/0 via-blue-500/20 to-blue-500/0'} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
                     {approvalPending || approvalConfirming ? (
                       <span className="relative flex items-center">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
@@ -366,9 +382,9 @@ export default function CreateRafflePage() {
           <button
             onClick={handleCreateRaffle}
             disabled={createPending || createConfirming || isSwitching || (!isWrongNetwork && (!formData.nftContract || !formData.tokenId || approvalStatus !== true))}
-            className="relative flex-1 bg-gradient-to-r from-pink-600 via-fuchsia-600 to-purple-600 hover:from-pink-500 hover:via-fuchsia-500 hover:to-purple-500 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/40 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group"
+            className={`relative flex-1 bg-gradient-to-r ${isApeChain ? 'from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 shadow-emerald-500/25 hover:shadow-emerald-500/40' : 'from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 shadow-blue-500/25 hover:shadow-blue-500/40'} text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group`}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-pink-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            <div className={`absolute inset-0 bg-gradient-to-r ${isApeChain ? 'from-emerald-500/0 via-emerald-500/20 to-emerald-500/0' : 'from-blue-500/0 via-blue-500/20 to-blue-500/0'} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
             {isSwitching ? (
               <span className="relative flex items-center justify-center">
                 <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
@@ -392,7 +408,7 @@ export default function CreateRafflePage() {
         {/* Approval Education Modal */}
         {showApprovalModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-slate-800 border border-emerald-400/30 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className={`bg-slate-800 border ${isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30'} rounded-2xl p-6 max-w-md w-full shadow-2xl`}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-white flex items-center">
                   <span className="mr-2">🛡️</span>
@@ -448,7 +464,7 @@ export default function CreateRafflePage() {
                     setShowApprovalModal(false);
                     handleApproval();
                   }}
-                  className="flex-1 bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-500 hover:to-fuchsia-500 text-white py-2 px-4 rounded-lg font-medium transition-all"
+                  className={`flex-1 bg-gradient-to-r ${isApeChain ? 'from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500' : 'from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'} text-white py-2 px-4 rounded-lg font-medium transition-all`}
                 >
                   I Understand - Approve
                 </button>
