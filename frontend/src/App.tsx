@@ -208,6 +208,8 @@ const ConnectWalletPage = React.memo(function ConnectWalletPage() {
 });
 
 const AppLayout = React.memo(function AppLayout() {
+  const { chainId } = useNetwork();
+  
   return (
     <>
       <Header />
@@ -217,21 +219,21 @@ const AppLayout = React.memo(function AppLayout() {
           <Route path="/browse" element={
             <ErrorBoundary>
               <LazyWrapper>
-                <BrowseRaffles />
+                <BrowseRaffles key={`browse-${chainId}`} />
               </LazyWrapper>
             </ErrorBoundary>
           } />
           <Route path="/create" element={
             <Web3ErrorBoundary>
               <LazyWrapper>
-                <CreateRafflePage />
+                <CreateRafflePage key={`create-${chainId}`} />
               </LazyWrapper>
             </Web3ErrorBoundary>
           } />
           <Route path="/dashboard" element={
             <ErrorBoundary>
               <LazyWrapper>
-                <RaffleDashboard />
+                <RaffleDashboard key={`dashboard-${chainId}`} />
               </LazyWrapper>
             </ErrorBoundary>
           } />
