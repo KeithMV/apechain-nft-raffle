@@ -21,13 +21,22 @@ import './index.css';
 
 // Network-aware title component
 const NetworkAwareTitle = () => {
-  const { theme, networkName, nativeCurrency } = useNetwork();
+  const { theme, networkName, nativeCurrency, isApeChain } = useNetwork();
+  
+  const titleStyle = isApeChain 
+    ? 'text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight text-center'
+    : 'text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent font-sans tracking-tight text-center';
+    
+  const badgeStyle = isApeChain
+    ? 'px-2 py-1 bg-emerald-500/20 border border-emerald-400/30 rounded-full text-emerald-300 text-xs font-medium'
+    : 'px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-medium';
+  
   return (
     <div className="flex items-center gap-2">
-      <h1 className={`text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r ${theme.gradient} bg-clip-text text-transparent font-sans tracking-tight text-center`}>
+      <h1 className={titleStyle}>
         {networkName} Raffles
       </h1>
-      <span className={`px-2 py-1 bg-${theme.primary}-500/20 border border-${theme.primary}-400/30 rounded-full text-${theme.primary}-300 text-xs font-medium`}>
+      <span className={badgeStyle}>
         {nativeCurrency}
       </span>
     </div>
@@ -69,11 +78,21 @@ const queryClient = new QueryClient({
 
 const Header = React.memo(function Header() {
   const { isConnected } = useAccount();
+  const { isApeChain } = useNetwork();
   const location = useLocation();
   const currentPage = location.pathname.slice(1) || 'browse';
   
+  // Network-aware header styling
+  const headerBorderColor = isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30';
+  const navActiveStyle = isApeChain 
+    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50'
+    : 'bg-blue-500/20 text-blue-300 border border-blue-400/50';
+  const navHoverStyle = isApeChain
+    ? 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
+    : 'text-slate-300 hover:text-blue-300 hover:bg-blue-500/10 border border-transparent hover:border-blue-400/30';
+  
   return (
-    <header className="relative bg-slate-900/95 backdrop-blur-xl border-b border-emerald-400/30 shadow-2xl z-10">
+    <header className={`relative bg-slate-900/95 backdrop-blur-xl border-b ${headerBorderColor} shadow-2xl z-10`}>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col justify-center items-center py-4 space-y-3">
           <div className="flex flex-col items-center space-y-2">
@@ -86,8 +105,8 @@ const Header = React.memo(function Header() {
                   to="/create"
                   className={`relative px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
                     currentPage === 'create' 
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50' 
-                      : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
+                      ? navActiveStyle
+                      : navHoverStyle
                   }`}
                 >
                   CREATE
@@ -96,8 +115,8 @@ const Header = React.memo(function Header() {
                   to="/dashboard"
                   className={`relative px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
                     currentPage === 'dashboard' 
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50' 
-                      : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
+                      ? navActiveStyle
+                      : navHoverStyle
                   }`}
                 >
                   DASHBOARD
@@ -106,8 +125,8 @@ const Header = React.memo(function Header() {
                   to="/browse"
                   className={`relative px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
                     currentPage === 'browse' 
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50' 
-                      : 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
+                      ? navActiveStyle
+                      : navHoverStyle
                   }`}
                 >
                   BROWSE
@@ -141,7 +160,7 @@ const Hero = React.memo(function Hero() {
           <span className="text-emerald-300 text-xs sm:text-sm font-medium tracking-wider">Live on ApeChain</span>
         </div>
         <h2 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent leading-tight font-sans tracking-tight">
-          ApeChain NFT Raffles
+          NFT Raffles
         </h2>
         <p className="text-base sm:text-lg lg:text-xl text-slate-300 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
           Create and participate in NFT raffles with transparent, provably fair results.

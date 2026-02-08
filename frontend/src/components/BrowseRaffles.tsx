@@ -227,7 +227,22 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
 
 export default function BrowseRaffles() {
   const { address } = useAccount();
-  const { nativeCurrency } = useNetwork();
+  const { nativeCurrency, isApeChain } = useNetwork();
+  
+  console.log('🎨 BrowseRaffles: isApeChain =', isApeChain, 'currency =', nativeCurrency);
+  
+  // Network-aware styling
+  const borderColor = isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30';
+  const shadowColor = isApeChain ? 'shadow-emerald-500/20' : 'shadow-blue-500/20';
+  const gradientBg = isApeChain 
+    ? 'from-emerald-500/10 via-teal-500/10 to-cyan-500/10'
+    : 'from-blue-500/10 via-indigo-500/10 to-purple-500/10';
+  const titleGradient = isApeChain
+    ? 'from-emerald-400 via-teal-300 to-cyan-400'
+    : 'from-blue-400 via-indigo-300 to-purple-400';
+  const activeButtonStyle = isApeChain
+    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
+    : 'bg-blue-500/20 text-blue-300 border border-blue-400/30';
   
   const [ticketQuantities, setTicketQuantities] = useState<{[key: string]: number}>({});
   const [showExpired, setShowExpired] = useState(false);
@@ -390,22 +405,22 @@ export default function BrowseRaffles() {
   }
 
   return (
-    <div className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border border-emerald-400/30 rounded-3xl shadow-2xl shadow-emerald-500/20 overflow-hidden">
+    <div className={`relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border ${borderColor} rounded-3xl shadow-2xl ${shadowColor} overflow-hidden`}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(16,185,129,0.1),transparent_50%)] animate-pulse"></div>
       <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(-45deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:30px_30px]"></div>
       
       <div className="relative z-10">
-        <div className="bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 px-4 sm:px-8 py-6 sm:py-8 border-b border-emerald-400/30">
+        <div className={`bg-gradient-to-r ${gradientBg} px-4 sm:px-8 py-6 sm:py-8 border-b ${borderColor}`}>
           <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="flex-1">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight">NFT Raffles</h2>
+              <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r ${titleGradient} bg-clip-text text-transparent font-sans tracking-tight`}>NFT Raffles</h2>
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowExpired(!showExpired)}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   showExpired 
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' 
+                    ? activeButtonStyle
                     : 'bg-slate-700/50 text-slate-400 border border-slate-600/30 hover:bg-slate-600/50'
                 }`}
               >

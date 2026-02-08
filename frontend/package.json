@@ -40,7 +40,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "start:dev": "REACT_APP_ENV=development HOST=0.0.0.0 react-scripts start",
+    "start:dev": "REACT_APP_ENV=development HOST=0.0.0.0 PUBLIC_URL=http://192.168.0.218:3000 react-scripts start",
     "start:staging": "REACT_APP_ENV=staging react-scripts start",
     "build": "GENERATE_SOURCEMAP=false craco build",
     "build:dev": "REACT_APP_ENV=development craco build",
