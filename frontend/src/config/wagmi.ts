@@ -33,12 +33,12 @@ export const baseChain = base;
 // WalletConnect project ID
 const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
 
-// Environment-aware metadata
+// Environment-aware metadata - use build-time env vars directly
 const metadata = {
-  name: envConfig.appName,
+  name: process.env.REACT_APP_APP_NAME || 'ApeChain NFT Raffles',
   description: 'Decentralized NFT raffle platform on ApeChain',
-  url: envConfig.appUrl,
-  icons: [`${envConfig.appUrl}/favicon.ico`]
+  url: process.env.REACT_APP_APP_URL || 'http://localhost:3000',
+  icons: [`${process.env.REACT_APP_APP_URL || 'http://localhost:3000'}/favicon.ico`]
 };
 
 // Create wagmi config with multi-chain support
