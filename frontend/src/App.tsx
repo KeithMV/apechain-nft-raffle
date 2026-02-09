@@ -15,6 +15,7 @@ import { suppressWalletConnectErrors } from './utils/walletCleanup';
 import { suppressWeb3ModalWarnings } from './utils/suppressWarnings';
 import { ErrorBoundary, Web3ErrorBoundary } from './components/ErrorBoundary';
 import { NetworkProvider, useNetwork } from './contexts/NetworkContext';
+import { EnvironmentDebugger } from './components/EnvironmentDebugger';
 import './utils/consoleSecure'; // Auto-enables production console security
 
 import './index.css';
@@ -269,6 +270,7 @@ function App() {
           <NetworkProvider>
             <BrowserRouter>
               <RaffleApp />
+              <EnvironmentDebugger />
               <Toaster position="top-right" />
             </BrowserRouter>
           </NetworkProvider>
