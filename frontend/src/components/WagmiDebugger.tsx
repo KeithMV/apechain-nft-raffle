@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { config as envConfig } from '../config/environment';
-import { config as wagmiConfig, apeChain, baseChain } from '../config/wagmi';
+import { apeChain, baseChain } from '../config/wagmi';
 
 export const WagmiDebugger: React.FC = () => {
   useEffect(() => {
@@ -18,18 +18,6 @@ export const WagmiDebugger: React.FC = () => {
     console.log('- Name:', apeChain.name);
     console.log('- RPC URLs:', apeChain.rpcUrls.default.http);
     console.log('- Testnet:', apeChain.testnet);
-    console.log('');
-    console.log('Wagmi Config:');
-    console.log('- Chains:', wagmiConfig.chains.map(c => ({ id: c.id, name: c.name })));
-    console.log('- Project ID:', wagmiConfig.projectId);
-    console.log('- SSR:', wagmiConfig.ssr);
-    console.log('- Sync Connected Chain:', wagmiConfig.syncConnectedChain);
-    console.log('');
-    console.log('Metadata:');
-    console.log('- Name:', wagmiConfig.metadata?.name);
-    console.log('- Description:', wagmiConfig.metadata?.description);
-    console.log('- URL:', wagmiConfig.metadata?.url);
-    console.log('- Icons:', wagmiConfig.metadata?.icons);
     console.log('');
     console.log('Environment Variables:');
     console.log('- NODE_ENV:', process.env.NODE_ENV);
@@ -58,9 +46,7 @@ export const WagmiDebugger: React.FC = () => {
       <div>ENV: {envConfig.environment}</div>
       <div>Chain: {apeChain.name} ({apeChain.id})</div>
       <div>URL: {envConfig.appUrl}</div>
-      <div>Metadata URL: {wagmiConfig.metadata?.url}</div>
-      <div>Project ID: {wagmiConfig.projectId}</div>
-      <div>Sync Chain: {wagmiConfig.syncConnectedChain ? 'true' : 'false'}</div>
+      <div>Project ID: {process.env.REACT_APP_WALLETCONNECT_PROJECT_ID}</div>
     </div>
   );
 };
