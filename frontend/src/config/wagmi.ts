@@ -7,7 +7,7 @@ import { config as envConfig } from './environment';
 // ApeChain configuration with environment support
 export const apeChain = defineChain({
   id: 33139, // Always ApeChain mainnet
-  name: envConfig.environment === 'staging' ? 'ApeChain (Staging)' : 'ApeChain',
+  name: 'ApeChain', // Keep consistent name across environments
   nativeCurrency: {
     decimals: 18,
     name: 'ApeCoin',
