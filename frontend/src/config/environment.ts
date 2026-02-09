@@ -52,7 +52,7 @@ const configs: Record<Environment, EnvironmentConfig> = {
     rpcUrl: process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
     contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS || '0x1627E7e63b63878E61f91D336385a59B1747934a',
     appName: 'ApeChain NFT Raffles (DEV)',
-    appUrl: isLocalDevelopment() ? `http://${window.location.hostname}:${window.location.port}` : 'http://localhost:3000',
+    appUrl: 'http://192.168.0.62:3000', // Use current working IP
     enableLogging: true,
   },
   staging: {
@@ -61,7 +61,7 @@ const configs: Record<Environment, EnvironmentConfig> = {
     rpcUrl: process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
     contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS || '0x1627E7e63b63878E61f91D336385a59B1747934a',
     appName: 'ApeChain NFT Raffles (STAGING)',
-    appUrl: isLocalDevelopment() ? `http://${window.location.hostname}:${window.location.port}` : 'https://staging.apechainraffles.io',
+    appUrl: 'https://staging.apechainraffles.io', // Simple hardcoded staging URL
     enableLogging: true,
   },
   production: {
