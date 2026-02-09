@@ -42,7 +42,7 @@ const getEnvironment = (): Environment => {
 const isLocalDevelopment = () => {
   return window.location.hostname === 'localhost' || 
          window.location.hostname.includes('192.168') ||
-         window.location.port === '3000';
+         (window.location.port === '3000' && !window.location.hostname.includes('staging'));
 };
 
 const configs: Record<Environment, EnvironmentConfig> = {
