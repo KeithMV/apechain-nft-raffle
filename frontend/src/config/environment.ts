@@ -12,17 +12,24 @@ export interface EnvironmentConfig {
 }
 
 const getEnvironment = (): Environment => {
+  // Explicit environment variable takes priority
+  if (process.env.REACT_APP_ENV === 'staging') {
+    return 'staging';
+  }
+  
+  if (process.env.REACT_APP_ENV === 'development') {
+    return 'development';
+  }
+  
   // Check for development indicators
   if (process.env.NODE_ENV === 'development' || 
-      process.env.REACT_APP_ENV === 'development' ||
       window.location.hostname === 'localhost' ||
       window.location.hostname.includes('192.168')) {
     return 'development';
   }
   
   // Check for staging indicators
-  if (process.env.REACT_APP_ENV === 'staging' ||
-      process.env.REACT_APP_ENVIRONMENT === 'staging' ||
+  if (process.env.REACT_APP_ENVIRONMENT === 'staging' ||
       window.location.hostname.includes('staging') ||
       window.location.hostname.includes('d2v74bfsjdq40l')) {
     return 'staging';
