@@ -31,6 +31,13 @@ const getEnvironment = (): Environment => {
   return 'production';
 };
 
+// Helper to detect if running locally (dev server)
+const isLocalDevelopment = () => {
+  return window.location.hostname === 'localhost' || 
+         window.location.hostname.includes('192.168') ||
+         window.location.port === '3000';
+};
+
 const configs: Record<Environment, EnvironmentConfig> = {
   development: {
     environment: 'development',
@@ -47,7 +54,7 @@ const configs: Record<Environment, EnvironmentConfig> = {
     rpcUrl: process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
     contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS || '0x1627E7e63b63878E61f91D336385a59B1747934a',
     appName: 'ApeChain NFT Raffles (STAGING)',
-    appUrl: 'https://staging.apechainraffles.io',
+    appUrl: isLocalDevelopment() ? `http://${window.location.hostname}:${window.location.port}` : 'https://staging.apechainraffles.io',
     enableLogging: true,
   },
   production: {
