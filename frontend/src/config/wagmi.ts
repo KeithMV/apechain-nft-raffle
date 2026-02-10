@@ -3,10 +3,11 @@ import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defineChain } from 'viem';
 import { base } from 'viem/chains';
 import { config as envConfig } from './environment';
+import { CHAIN_IDS, WALLET_IDS } from '../constants/chains';
 
 // ApeChain configuration with environment support
 export const apeChain = defineChain({
-  id: 33139, // Always ApeChain mainnet
+  id: CHAIN_IDS.APECHAIN_MAINNET, // Always ApeChain mainnet
   name: 'ApeChain', // Keep consistent name across environments
   nativeCurrency: {
     decimals: 18,
@@ -62,23 +63,23 @@ createWeb3Modal({
   themeMode: 'dark',
   // Mobile-optimized wallet selection
   featuredWalletIds: [
-    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
-    '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
-    '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0', // Trust Wallet
+    WALLET_IDS.METAMASK,
+    WALLET_IDS.RAINBOW,
+    WALLET_IDS.TRUST_WALLET,
   ],
   includeWalletIds: [
-    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
-    '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
-    '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0', // Trust Wallet
+    WALLET_IDS.METAMASK,
+    WALLET_IDS.RAINBOW,
+    WALLET_IDS.TRUST_WALLET,
   ],
   excludeWalletIds: [
-    'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Coinbase
-    '19177a98252e07ddfc9af2083ba8e07ef627cb6103467ffebb3f8f4205fd7927', // Ledger
+    WALLET_IDS.COINBASE,
+    WALLET_IDS.LEDGER,
   ],
   allWallets: 'HIDE',
   defaultChain: apeChain,
   chainImages: {
-    33139: 'https://apechain.calderaexplorer.xyz/favicon.ico',
-    8453: 'https://base.org/favicon.ico'
+    [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
+    [baseChain.id]: 'https://base.org/favicon.ico'
   }
 });
