@@ -28,6 +28,9 @@ jobs:
         CI=false yarn build:staging
       env:
         REACT_APP_WALLETCONNECT_PROJECT_ID: ${{ secrets.WALLETCONNECT_PROJECT_ID }}
+        REACT_APP_APP_NAME: "ApeChain NFT Raffles (STAGING)"
+        REACT_APP_APP_URL: "https://staging.apechainraffles.io"
+        REACT_APP_ENV: "staging"
       
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
