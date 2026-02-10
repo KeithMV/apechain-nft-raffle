@@ -29,8 +29,7 @@ const getEnvironment = (): Environment => {
   }
   
   // Check for staging indicators
-  if (process.env.REACT_APP_ENVIRONMENT === 'staging' ||
-      window.location.hostname.includes('staging') ||
+  if (window.location.hostname.includes('staging') ||
       window.location.hostname.includes('d2v74bfsjdq40l')) {
     return 'staging';
   }
