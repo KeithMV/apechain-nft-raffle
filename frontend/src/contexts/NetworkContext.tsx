@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useChainId } from 'wagmi';
 import { getNetworkConfig, getContracts } from '../config/addresses';
+import { CHAIN_IDS } from '../constants/chains';
 
 interface NetworkTheme {
   primary: string;
@@ -30,8 +31,8 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const config = getNetworkConfig(chainId);
     const contracts = getContracts(chainId);
     
-    const isApeChain = chainId === 33139 || chainId === 33111;
-    const isBase = chainId === 8453 || chainId === 84532;
+    const isApeChain = chainId === CHAIN_IDS.APECHAIN_MAINNET || chainId === CHAIN_IDS.APECHAIN_TESTNET;
+    const isBase = chainId === CHAIN_IDS.BASE_MAINNET || chainId === CHAIN_IDS.BASE_SEPOLIA;
     
     const theme: NetworkTheme = isApeChain 
       ? {
