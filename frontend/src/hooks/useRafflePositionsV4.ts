@@ -53,87 +53,120 @@ async function getRafflesFromFactory(
   limit: number = 20,
   offset: number = 0
 ): Promise<CreatedRaffle[]> {
-  const raffleCount = await publicClient.readContract({
-    address: factoryAddress as `0x${string}`,
-    abi: RAFFLE_FACTORY_ABI,
-    functionName: 'raffleCounter',
-  });
-
-  const totalRaffles = Number(raffleCount);
-  if (totalRaffles === 0) return [];
-
-  const startIndex = Math.max(0, totalRaffles - offset - limit);
-  const endIndex = Math.max(0, totalRaffles - offset);
-  
-  const indices = Array.from({ length: endIndex - startIndex }, (_, i) => startIndex + i);
-  
-  // Get raffle contracts
-  const raffleContracts = await processBatch(
-    indices,
-    (i) => publicClient.readContract({
+  try {
+    const raffleCount = await publicClient.readContract({
       address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
-      functionName: 'getRaffleContract',
-      args: [BigInt(i)],
-    }),
-    5,
-    10
-  );
-  
-  // Get raffle info
-  const raffleInfos = await processBatch(
-    raffleContracts,
-    (contract: any) => publicClient.readContract({
-      address: contract as `0x${string}`,
-      abi: [{
-        inputs: [],
-        name: 'getRaffleInfo',
-        outputs: [{
-          components: [
-            { name: 'nftContract', type: 'address' },
-            { name: 'tokenId', type: 'uint256' },
-            { name: 'creator', type: 'address' },
-            { name: 'ticketPrice', type: 'uint256' },
-            { name: 'maxTickets', type: 'uint256' },
-            { name: 'ticketsSold', type: 'uint256' },
-            { name: 'endTime', type: 'uint256' },
-            { name: 'winner', type: 'address' },
-            { name: 'completed', type: 'bool' },
-            { name: 'platformFee', type: 'uint256' }
-          ],
-          type: 'tuple'
-        }],
-        stateMutability: 'view',
-        type: 'function'
-      }],
-      functionName: 'getRaffleInfo',
-    }),
-    3,
-    20
-  );
-  
-  return raffleInfos.map((result: any, index) => {
-    const now = Date.now() / 1000;
-    const endTime = Number(result.endTime);
-    const isSoldOut = Number(result.ticketsSold) >= Number(result.maxTickets);
-    const isActive = now < endTime && !result.completed && !isSoldOut;
+      functionName: 'raffleCounter',
+    });
+
+    const totalRaffles = Number(raffleCount);
+    if (totalRaffles === 0) return [];
+
+    const startIndex = Math.max(0, totalRaffles - offset - limit);
+    const endIndex = Math.max(0, totalRaffles - offset);
     
-    return {
-      raffleId: startIndex + index,
-      raffleContract: raffleContracts[index] as string,
-      nftContract: result.nftContract,
-      tokenId: result.tokenId.toString(),
-      creator: result.creator,
-      ticketPrice: (Number(result.ticketPrice) / 1e18).toString(),
-      maxTickets: Number(result.maxTickets),
-      ticketsSold: Number(result.ticketsSold),
-      endTime,
-      winner: result.winner,
-      completed: result.completed,
-      isActive,
-      version,
-    };
-  });
+    const indices = Array.from({ length: endIndex - startIndex }, (_, i) => startIndex + i);
+    
+    // Get raffle contracts with proper index tracking
+    const contractResults = await processBatch(
+      indices,
+      async (i) => {
+        try {
+          const contract = await publicClient.readContract({
+            address: factoryAddress as `0x${string}`,
+            abi: RAFFLE_FACTORY_ABI,
+            functionName: 'getRaffleContract',
+            args: [BigInt(i)],
+          });
+          return { index: i, contract };
+        } catch (error) {
+          return { index: i, contract: null };
+        }
+      },
+      5,
+      10
+    );
+    
+    // Filter out failed contracts while maintaining index mapping
+    const validContractResults = contractResults.filter(result => result.contract !== null);
+    
+    // Get raffle info with error handling
+    const raffleInfoResults = await processBatch(
+      validContractResults,
+      async (contractResult: any) => {
+        try {
+          const raffleInfo = await publicClient.readContract({
+            address: contractResult.contract as `0x${string}`,
+            abi: [{
+              inputs: [],
+              name: 'getRaffleInfo',
+              outputs: [{
+                components: [
+                  { name: 'nftContract', type: 'address' },
+                  { name: 'tokenId', type: 'uint256' },
+                  { name: 'creator', type: 'address' },
+                  { name: 'ticketPrice', type: 'uint256' },
+                  { name: 'maxTickets', type: 'uint256' },
+                  { name: 'ticketsSold', type: 'uint256' },
+                  { name: 'endTime', type: 'uint256' },
+                  { name: 'winner', type: 'address' },
+                  { name: 'completed', type: 'bool' },
+                  { name: 'platformFee', type: 'uint256' }
+                ],
+                type: 'tuple'
+              }],
+              stateMutability: 'view',
+              type: 'function'
+            }],
+            functionName: 'getRaffleInfo',
+          });
+          return { ...contractResult, raffleInfo };
+        } catch (error) {
+          return { ...contractResult, raffleInfo: null };
+        }
+      },
+      3,
+      20
+    );
+    
+    // Process valid results with correct index mapping
+    const validRaffles: CreatedRaffle[] = [];
+    
+    raffleInfoResults.forEach((result: any) => {
+      if (!result.raffleInfo) return;
+      
+      try {
+        const now = Date.now() / 1000;
+        const endTime = Number(result.raffleInfo.endTime);
+        const isSoldOut = Number(result.raffleInfo.ticketsSold) >= Number(result.raffleInfo.maxTickets);
+        const isActive = now < endTime && !result.raffleInfo.completed && !isSoldOut;
+        
+        validRaffles.push({
+          raffleId: result.index,
+          raffleContract: result.contract as string,
+          nftContract: result.raffleInfo.nftContract,
+          tokenId: result.raffleInfo.tokenId.toString(),
+          creator: result.raffleInfo.creator,
+          ticketPrice: (Number(result.raffleInfo.ticketPrice) / 1e18).toString(),
+          maxTickets: Number(result.raffleInfo.maxTickets),
+          ticketsSold: Number(result.raffleInfo.ticketsSold),
+          endTime,
+          winner: result.raffleInfo.winner || undefined,
+          completed: result.raffleInfo.completed,
+          isActive,
+          version,
+        });
+      } catch (error) {
+        // Silent fail for individual raffle processing
+      }
+    });
+    
+    return validRaffles;
+  } catch (error) {
+    console.error(`Failed to get raffles from factory ${factoryAddress}:`, error);
+    throw new Error(`Failed to load ${version} raffles: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 // Get all raffles from both V3 and V4
@@ -153,20 +186,31 @@ export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
     try {
       const allRaffles: CreatedRaffle[] = [];
       
-      // Get V3 raffles
-      const v3Address = getRaffleFactoryAddress(chainId, false);
-      const v3Raffles = await getRafflesFromFactory(publicClient, v3Address, 'v3', limit, offset);
-      allRaffles.push(...v3Raffles);
-      
-      // Get V4 raffles if available
+      // Get V4 raffles first (priority)
       if (isV4Available(chainId)) {
         const v4Address = getRaffleFactoryAddress(chainId, true);
-        const v4Raffles = await getRafflesFromFactory(publicClient, v4Address, 'v4', limit, 0);
+        const v4Raffles = await getRafflesFromFactory(publicClient, v4Address, 'v4', limit, offset);
         allRaffles.push(...v4Raffles);
       }
       
+      // Only get V3 raffles if we don't have enough V4 raffles
+      if (allRaffles.length < limit) {
+        const v3Address = getRaffleFactoryAddress(chainId, false);
+        const remainingLimit = limit - allRaffles.length;
+        const v3Raffles = await getRafflesFromFactory(publicClient, v3Address, 'v3', remainingLimit, offset);
+        allRaffles.push(...v3Raffles);
+      }
+      
+      // Remove duplicates based on unique contract address + raffle ID combination
+      const uniqueRaffles = allRaffles.filter((raffle, index, self) => 
+        index === self.findIndex(r => 
+          r.raffleContract === raffle.raffleContract && 
+          r.raffleId === raffle.raffleId
+        )
+      );
+      
       // Sort by creation time (newest first) and limit results
-      const sortedRaffles = allRaffles
+      const sortedRaffles = uniqueRaffles
         .sort((a, b) => b.endTime - a.endTime)
         .slice(0, limit);
 
@@ -208,7 +252,6 @@ export function useClearRaffleCacheV4() {
         }
       });
     }
-    console.log('V4 Raffle caches cleared aggressively');
   }, []);
 }
 // Get user's raffle positions (network-aware)

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { useEmergencyPause, useFactoryPauseStatus } from '../hooks/useRaffleContract';
+import { useEmergencyPause, useFactoryPauseStatusV4 } from '../hooks/useRaffleContractV4';
 import toast from 'react-hot-toast';
 
 export default function EmergencyControls() {
   const { address } = useAccount();
-  const { data: isPausedData, isLoading: checkingStatus, refetch } = useFactoryPauseStatus();
+  const { data: isPausedData, isLoading: checkingStatus, refetch } = useFactoryPauseStatusV4();
   const { pause, unpause, isPending, isSuccess, error } = useEmergencyPause();
   
   const isPaused = isPausedData || false;

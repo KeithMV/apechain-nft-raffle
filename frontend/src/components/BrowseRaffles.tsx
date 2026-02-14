@@ -4,7 +4,7 @@ import ApeTokenBalance from './ApeTokenBalance';
 import BasicNFTImage from './BasicNFTImage';
 import toast from 'react-hot-toast';
 import { useAllRafflesV4 } from '../hooks/useRafflePositionsV4';
-import { useBuyTickets } from '../hooks/useRaffleContract';
+import { useBuyTickets } from '../hooks/useRaffleContractV4';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { throttle, useVirtualScrolling } from '../utils/performance';
 import { V4Status } from './V4Status';

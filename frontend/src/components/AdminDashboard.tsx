@@ -19,7 +19,17 @@ const validatedAdmins = ADMIN_ADDRESSES.filter(addr =>
 );
 
 export default function AdminDashboard() {
-  const { address } = useAccount();
+  const { address, isConnecting, isReconnecting } = useAccount();
+
+  // Handle connection states
+  if (isConnecting || isReconnecting) {
+    return (
+      <div className="relative bg-gray-900/95 backdrop-blur-xl border border-red-500/30 rounded-2xl p-8 text-center">
+        <h2 className="text-xl font-bold text-red-300 mb-4 font-mono">Admin Dashboard</h2>
+        <p className="text-red-400/70 font-mono">Connecting wallet...</p>
+      </div>
+    );
+  }
 
   // Check if current user is admin (you can implement more sophisticated logic)
   const isAdmin = (() => {
