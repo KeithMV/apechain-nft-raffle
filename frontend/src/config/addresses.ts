@@ -48,10 +48,11 @@ const CONTRACT_ADDRESSES = {
     RAFFLE_FACTORY_V4: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
     RAFFLE_TEMPLATE: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
   },
-  33111: { // ApeChain Curtis Testnet
-    RAFFLE_FACTORY: '', // Deploy test contracts here
-    RAFFLE_FACTORY_V4: '',
-    RAFFLE_TEMPLATE: ''
+  33111: { // ApeChain Curtis Testnet - DISABLED
+    RAFFLE_FACTORY: '0x0000000000000000000000000000000000000000', // Testnet disabled
+    RAFFLE_FACTORY_V4: '0x0000000000000000000000000000000000000000',
+    RAFFLE_TEMPLATE: '0x0000000000000000000000000000000000000000',
+    disabled: true
   },
   33139: { // ApeChain
     RAFFLE_FACTORY: '0x1dC9F6Cc2e53558a940a7Cd87d6e5fbE2A8635ff', // v3-FIXED-FEES
@@ -61,9 +62,9 @@ const CONTRACT_ADDRESSES = {
     RAFFLE_FACTORY_V1: '0x05139110Db8FF9cF82A836Af95eff4530011c705' // v1-legacy
   },
   8453: { // Base Mainnet
-    RAFFLE_FACTORY: '0xaD3B887a57a9e3a3103De2a372BC3834A7C5023c', // V4 Deployed!
-    RAFFLE_FACTORY_V4: '0xaD3B887a57a9e3a3103De2a372BC3834A7C5023c',
-    RAFFLE_TEMPLATE: '0x9500de45ec75Bb243442d230aD159bC79826d36C'
+    RAFFLE_FACTORY: '0xeBB962e8949e67301B4d2c4727EBC689E22516f8', // BASE V3 DIRECT CREATION
+    RAFFLE_FACTORY_V4: '0xeBB962e8949e67301B4d2c4727EBC689E22516f8',
+    RAFFLE_TEMPLATE: '0x378c4CF716124c16Ed91402b9e2296f201fB2042' // Not used in direct creation
   },
   84532: { // Base Sepolia - For testing
     RAFFLE_FACTORY: '0x534578Ccb03850FBC2780f1F84AbC0F48823e901', // V4 Factory deployed
@@ -81,19 +82,20 @@ const PROTOCOL_INFO = {
 } as const;
 
 function getCurrentChainId(): number {
-  // Use environment configuration first
-  if (envConfig.chainId) {
-    return envConfig.chainId;
-  }
-  
-  // Try to get chain ID from window.ethereum if available
+  // Always prioritize wallet's actual chain ID
   if (typeof window !== 'undefined' && window.ethereum) {
     const chainId = window.ethereum.chainId;
     if (chainId) {
-      return parseInt(chainId, 16);
+      // Handle both string (hex) and number types
+      if (typeof chainId === 'string') {
+        return parseInt(chainId, 16);
+      } else if (typeof chainId === 'number') {
+        return chainId;
+      }
     }
   }
-  // Default to ApeChain
+  
+  // Default to ApeChain only as last resort
   return 33139;
 }
 
@@ -135,12 +137,16 @@ function getRaffleFactoryAddress(chainId?: number, useV4?: boolean): string {
   try {
     const contracts = getContracts(chainId);
     
+    // Type-safe access to contract properties
+    const factoryV4 = contracts.RAFFLE_FACTORY_V4;
+    const factory = contracts.RAFFLE_FACTORY;
+    
     // Use V4 if available and requested, or if it's the only option
-    if ((useV4 && contracts.RAFFLE_FACTORY_V4) || (!contracts.RAFFLE_FACTORY && contracts.RAFFLE_FACTORY_V4)) {
-      return contracts.RAFFLE_FACTORY_V4;
+    if ((useV4 && factoryV4) || (!factory && factoryV4)) {
+      return factoryV4;
     }
     
-    const address = contracts.RAFFLE_FACTORY || contracts.RAFFLE_FACTORY_V4;
+    const address = factory || factoryV4;
     
     if (!address) {
       throw new Error(`No Raffle Factory address configured for chain ${chainId || getCurrentChainId()}`);
@@ -186,11 +192,15 @@ function validateChainConfig(chainId: number): { isValid: boolean; errors: strin
     if (!contracts) {
       errors.push(`No contract addresses configured for chain ${chainId}`);
     } else {
-      if (!contracts.RAFFLE_FACTORY) {
-        errors.push(`Missing Raffle Factory address for chain ${chainId}`);
+      // Check for empty string addresses (invalid) - improved validation
+      const factoryAddr = contracts.RAFFLE_FACTORY;
+      const templateAddr = contracts.RAFFLE_TEMPLATE;
+      
+      if (!factoryAddr || factoryAddr === '0x0000000000000000000000000000000000000000') {
+        errors.push(`Missing or invalid Raffle Factory address for chain ${chainId}`);
       }
-      if (!contracts.RAFFLE_TEMPLATE) {
-        errors.push(`Missing Raffle Template address for chain ${chainId}`);
+      if (!templateAddr || templateAddr === '0x0000000000000000000000000000000000000000') {
+        errors.push(`Missing or invalid Raffle Template address for chain ${chainId}`);
       }
     }
     
@@ -210,7 +220,8 @@ function validateChainConfig(chainId: number): { isValid: boolean; errors: strin
 function isV4Available(chainId?: number): boolean {
   try {
     const contracts = getContracts(chainId);
-    return !!(contracts.RAFFLE_FACTORY_V4 && contracts.RAFFLE_FACTORY_V4.length > 0);
+    const v4Address = contracts.RAFFLE_FACTORY_V4;
+    return !!(v4Address && v4Address !== '0x0000000000000000000000000000000000000000');
   } catch {
     return false;
   }

@@ -23,14 +23,15 @@ export interface CreateRaffleParams {
  * Hook to detect V4 availability and get current version info
  */
 export function useVersionInfo() {
+  const chainId = useChainId();
   const [v4Available, setV4Available] = useState(false);
   const [currentVersion, setCurrentVersion] = useState<'v3' | 'v4'>('v3');
   
   useEffect(() => {
-    const checkV4 = isV4Available();
+    const checkV4 = isV4Available(chainId);
     setV4Available(checkV4);
     setCurrentVersion(checkV4 ? 'v4' : 'v3');
-  }, []);
+  }, [chainId]);
   
   const rateLimit = getRateLimit(currentVersion === 'v4');
   
@@ -76,8 +77,9 @@ export function useRaffleCounterV4() {
  * Hook for checking NFT approval status (V4 aware)
  */
 export function useNFTApprovalStatusV4(nftContract: string, userAddress: string) {
+  const chainId = useChainId();
   const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(undefined, currentVersion === 'v4');
+  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   const isValidAddress = (addr: string) => /^0x[a-fA-F0-9]{40}$/.test(addr);
   
   return useReadContract({
@@ -166,7 +168,7 @@ export function useCreateRaffleV4() {
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
-    timeout: 60000, // 60 second timeout
+    timeout: 30000, // Reduced timeout
   });
   const { invalidateAll } = useCacheInvalidation();
   const lastSuccessHash = useRef<string | null>(null);
@@ -176,33 +178,37 @@ export function useCreateRaffleV4() {
     if (isSuccess && hash && hash !== lastSuccessHash.current) {
       lastSuccessHash.current = hash;
       setIsProcessing(false);
-      
-      // Immediate success notification
-      toast.success('✅ Raffle created successfully!');
-      
-      // Invalidate cache after a short delay to ensure transaction is processed
       const cacheTimeoutId = setTimeout(() => {
         invalidateAll();
       }, 500);
-      
       return () => clearTimeout(cacheTimeoutId);
     }
   }, [isSuccess, hash, invalidateAll]);
 
-  // Handle transaction receipt errors or timeouts
   useEffect(() => {
-    if (receiptError || (hash && !isConfirming && !isSuccess)) {
+    if (receiptError) {
       setIsProcessing(false);
-      if (receiptError) {
-        toast.error('Transaction confirmation failed. Please try again.');
-      }
+      toast.error('Transaction failed or timed out. Please try again.');
+    }
+    if (hash && !isConfirming && !isSuccess && !receiptError) {
+      const timeoutId = setTimeout(() => {
+        setIsProcessing(false);
+        toast.error('Transaction confirmation timed out. Check wallet or try again.');
+      }, 35000);
+      return () => clearTimeout(timeoutId);
     }
   }, [receiptError, hash, isConfirming, isSuccess]);
 
-  // Handle transaction errors (including user rejection)
   useEffect(() => {
     if (error) {
       setIsProcessing(false);
+      if (error.message?.includes('User rejected')) {
+        toast.error('Transaction cancelled by user.');
+      } else if (error.message?.includes('insufficient funds')) {
+        toast.error('Insufficient funds for transaction.');
+      } else {
+        toast.error(`Transaction failed: ${error.message || 'Unknown error'}`);
+      }
     }
   }, [error]);
 
@@ -236,10 +242,11 @@ export function useCreateRaffleV4() {
           BigInt(params.maxTickets),
           BigInt(params.duration)
         ],
+        gas: chainId === 8453 ? 1000000n : undefined, // Increased gas for Base
         chainId: chainId,
       });
       return result;
-    } catch (error) {
+    } catch (error: any) {
       setIsProcessing(false);
       throw error;
     }
@@ -293,15 +300,129 @@ export function useFactoryPauseStatusV4() {
 }
 
 /**
+ * Hook for buying raffle tickets (V4 aware)
+ */
+export function useBuyTickets() {
+  const chainId = useChainId();
+  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
+    hash,
+    timeout: 60000,
+  });
+  const { invalidateAll } = useCacheInvalidation();
+  const lastSuccessHash = useRef<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (isSuccess && hash && hash !== lastSuccessHash.current) {
+      lastSuccessHash.current = hash;
+      setIsProcessing(false);
+      toast.success('Tickets purchased successfully!');
+      invalidateAll();
+    }
+  }, [isSuccess, hash, invalidateAll]);
+
+  useEffect(() => {
+    if (receiptError || (hash && !isConfirming && !isSuccess)) {
+      setIsProcessing(false);
+      if (receiptError) {
+        toast.error('Transaction confirmation failed. Please try again.');
+      }
+    }
+  }, [receiptError, hash, isConfirming, isSuccess]);
+
+  useEffect(() => {
+    if (error) {
+      setIsProcessing(false);
+    }
+  }, [error]);
+
+  const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string) => {
+    if (!ticketPrice || isNaN(parseFloat(ticketPrice))) {
+      throw new Error('Invalid ticket price');
+    }
+    if (!quantity || quantity <= 0) {
+      throw new Error('Invalid quantity');
+    }
+    
+    setIsProcessing(true);
+    const ticketPriceWei = parseEther(ticketPrice);
+    const totalCost = ticketPriceWei * BigInt(quantity);
+    
+    try {
+      const result = await writeContractAsync({
+        address: raffleContract as `0x${string}`,
+        abi: RAFFLE_CONTRACT_ABI,
+        functionName: 'buyTickets',
+        args: [BigInt(quantity)],
+        value: totalCost,
+        chainId: chainId,
+      });
+      return result;
+    } catch (error) {
+      setIsProcessing(false);
+      throw error;
+    }
+  };
+
+  return {
+    buyTickets,
+    hash,
+    error,
+    isPending: isProcessing,
+    isConfirming: isConfirming && isProcessing,
+    isSuccess,
+  };
+}
+
+/**
+ * Hook for emergency pause (owner only) - V4 aware
+ */
+export function useEmergencyPause() {
+  const chainId = useChainId();
+  const { currentVersion } = useVersionInfo();
+  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
+  const { writeContract, data: hash, error, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const pause = () => {
+    writeContract({
+      address: factoryAddress as `0x${string}`,
+      abi: RAFFLE_FACTORY_ABI,
+      functionName: 'emergencyPause',
+      chainId: chainId,
+    });
+  };
+
+  const unpause = () => {
+    writeContract({
+      address: factoryAddress as `0x${string}`,
+      abi: RAFFLE_FACTORY_ABI,
+      functionName: 'emergencyUnpause',
+      chainId: chainId,
+    });
+  };
+
+  return {
+    pause,
+    unpause,
+    hash,
+    error,
+    isPending,
+    isConfirming,
+    isSuccess,
+  };
+}
+
+/**
  * Rate limit checker hook
  */
 export function useRateLimitChecker(userAddress?: string) {
   const { currentVersion, rateLimit } = useVersionInfo();
   const [canCreateRaffle, setCanCreateRaffle] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  
-  // This would need to be implemented with actual last raffle time from contract
-  // For now, just return the rate limit info
   
   return {
     canCreateRaffle,

@@ -33,7 +33,8 @@ export function WalletConnection() {
   const handleConnect = async () => {
     console.log('🔍 [DESKTOP DEBUG] Connect button clicked');
     console.log('🔍 [DESKTOP DEBUG] Environment:', envConfig.environment);
-    console.log('🔍 [DESKTOP DEBUG] Chain ID:', envConfig.chainId);
+    console.log('🔍 [DESKTOP DEBUG] Env Chain ID:', envConfig.chainId);
+    console.log('🔍 [DESKTOP DEBUG] Actual Chain ID (wagmi):', chainId);
     console.log('🔍 [DESKTOP DEBUG] User Agent:', navigator.userAgent);
     console.log('🔍 [DESKTOP DEBUG] Window.ethereum:', !!window.ethereum);
     

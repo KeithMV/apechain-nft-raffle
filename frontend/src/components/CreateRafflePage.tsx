@@ -91,18 +91,26 @@ export default function CreateRafflePage() {
     }
   }, [approvalError]);
 
-  // Handle create raffle success - prevent duplicate toasts
+  // Handle create raffle success - show success state and redirect
   useEffect(() => {
     if (createSuccess) {
-      // Reset form (success toast is handled by hook to prevent duplicates)
-      setFormData({
-        nftContract: '',
-        tokenId: '',
-        ticketPrice: '0.1',
-        maxTickets: '100',
-        duration: '24'
-      });
-      setApprovalStatus(null);
+      // Show success message
+      toast.success('🎉 Raffle created successfully! Redirecting to browse raffles...');
+      
+      // Reset form after a short delay
+      setTimeout(() => {
+        setFormData({
+          nftContract: '',
+          tokenId: '',
+          ticketPrice: '0.1',
+          maxTickets: '100',
+          duration: '24'
+        });
+        setApprovalStatus(null);
+        
+        // Redirect to browse raffles page
+        window.location.href = '/browse';
+      }, 2000);
     }
   }, [createSuccess]);
 
