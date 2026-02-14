@@ -8,9 +8,9 @@ vi.mock('wagmi', () => ({
 }))
 
 // Mock custom hooks
-vi.mock('../../hooks/useRafflePositions', () => ({
-  useUserRafflePositions: vi.fn(),
-  useCreatedRaffles: vi.fn(),
+vi.mock('../../hooks/useRafflePositionsV4', () => ({
+  useUserRafflePositionsV4: vi.fn(),
+  useCreatedRafflesV4: vi.fn(),
 }))
 
 vi.mock('../../hooks/useCancelRaffle', () => ({
@@ -35,7 +35,7 @@ vi.mock('../CopyAddress', () => ({
 }))
 
 import { useAccount } from 'wagmi'
-import { useUserRafflePositions, useCreatedRaffles } from '../../hooks/useRafflePositions'
+import { useUserRafflePositionsV4, useCreatedRafflesV4 } from '../../hooks/useRafflePositionsV4'
 import { useCancelRaffle } from '../../hooks/useCancelRaffle'
 import { useWinnerSelection } from '../../hooks/useWinnerSelection'
 
@@ -78,13 +78,13 @@ describe('RaffleDashboard', () => {
       address: mockAddress,
     })
     
-    vi.mocked(useUserRafflePositions).mockReturnValue({
+    vi.mocked(useUserRafflePositionsV4).mockReturnValue({
       positions: [mockPosition],
       loading: false,
       refetch: vi.fn(),
     })
     
-    vi.mocked(useCreatedRaffles).mockReturnValue({
+    vi.mocked(useCreatedRafflesV4).mockReturnValue({
       raffles: [mockRaffle],
       loading: false,
       refetch: vi.fn(),
@@ -147,13 +147,13 @@ describe('RaffleDashboard', () => {
   })
 
   it('shows loading state when data is loading', () => {
-    vi.mocked(useUserRafflePositions).mockReturnValue({
+    vi.mocked(useUserRafflePositionsV4).mockReturnValue({
       positions: [],
       loading: true,
       refetch: vi.fn(),
     })
     
-    vi.mocked(useCreatedRaffles).mockReturnValue({
+    vi.mocked(useCreatedRafflesV4).mockReturnValue({
       raffles: [],
       loading: true,
       refetch: vi.fn(),
@@ -165,7 +165,7 @@ describe('RaffleDashboard', () => {
   })
 
   it('shows empty state when no raffles exist', () => {
-    vi.mocked(useUserRafflePositions).mockReturnValue({
+    vi.mocked(useUserRafflePositionsV4).mockReturnValue({
       positions: [],
       loading: false,
       refetch: vi.fn(),

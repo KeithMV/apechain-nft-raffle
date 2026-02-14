@@ -1,5 +1,5 @@
 import React from 'react';
-import { usePlatformFee } from '../hooks/useRaffleContract';
+import { usePlatformFeeV4 } from '../hooks/useRaffleContractV4';
 
 // Fee tier definitions
 const FEE_TIERS = {
@@ -23,7 +23,7 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
   className = ""
 }) => {
   // Professional wagmi hook with error handling
-  const { data: platformFeeData, isLoading: loading, error } = usePlatformFee();
+  const { data: platformFeeData, isLoading: loading, error } = usePlatformFeeV4();
   
   // Determine current fee tier
   const getCurrentFeeTier = (basisPoints: number): FeeTier => {

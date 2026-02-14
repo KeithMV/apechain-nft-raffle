@@ -3,7 +3,7 @@ import { useAccount, useChainId } from 'wagmi';
 import BasicNFTImage from './BasicNFTImage';
 import CopyAddress from './CopyAddress';
 import toast from 'react-hot-toast';
-import { useUserRafflePositions, useCreatedRaffles, useClearRaffleCache } from '../hooks/useRafflePositionsNetworkAware';
+import { useUserRafflePositionsV4, useCreatedRafflesV4, useClearRaffleCacheV4 } from '../hooks/useRafflePositionsV4';
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { useNetwork } from '../contexts/NetworkContext';
@@ -44,9 +44,9 @@ export default function RaffleDashboard() {
   const textPrimary = isApeChain ? 'text-emerald-300' : 'text-blue-300';
   const textSecondary = isApeChain ? 'text-emerald-400/70' : 'text-blue-400/70';
   
-  const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositions(address);
-  const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRaffles(address, page);
-  const clearCache = useClearRaffleCache();
+  const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositionsV4(address);
+  const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRafflesV4(address, page);
+  const clearCache = useClearRaffleCacheV4();
   
   const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
   const { emergencyReveal, isPending: isSelectingWinner, revealSuccess: winnerSelected } = useWinnerSelection();

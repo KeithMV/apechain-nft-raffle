@@ -1,4 +1,4 @@
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { parseAbi } from 'viem';
 import toast from 'react-hot-toast';
 import { useEffect } from 'react';
@@ -9,6 +9,7 @@ const RAFFLE_ABI = parseAbi([
 ]);
 
 export function useCancelRaffle() {
+  const chainId = useChainId();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -32,7 +33,7 @@ export function useCancelRaffle() {
         address: raffleAddress as `0x${string}`,
         abi: RAFFLE_ABI,
         functionName: 'cancelRaffle',
-        chainId: 33139,
+        chainId: chainId,
       });
     } catch (error) {
       console.error('Cancel raffle failed:', error);
