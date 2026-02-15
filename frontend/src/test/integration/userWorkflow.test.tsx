@@ -67,7 +67,7 @@ describe('User Workflow Integration Tests', () => {
     // This test now validates that users can switch networks via the dropdown
     
     vi.mocked(useAccount).mockReturnValue({ address: '0x1234567890123456789012345678901234567890', isConnected: true } as any)
-    vi.mocked(useChainId).mockReturnValue(8453) // Base network
+    vi.mocked(useChainId).mockReturnValue(33139) // ApeChain network
     
     render(<WalletConnection />)
     
