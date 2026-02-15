@@ -5,7 +5,7 @@
 
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { getRaffleFactoryAddress, isV4Available, getRateLimit } from '../config/addresses';
-import { RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
+import { RAFFLE_FACTORY_ABI, BASE_RAFFLE_SYSTEM_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
 import { useEffect, useRef, useState } from 'react';
 import { useCacheInvalidation } from './useCacheInvalidation';
@@ -51,9 +51,11 @@ export function usePlatformFeeV4() {
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   
+  const isBase = chainId === 8453 || chainId === 84532;
+  
   return useReadContract({
     address: factoryAddress as `0x${string}`,
-    abi: RAFFLE_FACTORY_ABI,
+    abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
     functionName: 'platformFee',
   });
 }
@@ -66,9 +68,11 @@ export function useRaffleCounterV4() {
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   
+  const isBase = chainId === 8453 || chainId === 84532;
+  
   return useReadContract({
     address: factoryAddress as `0x${string}`,
-    abi: RAFFLE_FACTORY_ABI,
+    abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
     functionName: 'raffleCounter',
   });
 }
@@ -229,20 +233,27 @@ export function useCreateRaffleV4() {
     
     setIsProcessing(true);
     const ticketPriceWei = parseEther(params.ticketPrice);
+    const isBase = chainId === 8453 || chainId === 84532;
     
     try {
       const result = await writeContractAsync({
         address: factoryAddress as `0x${string}`,
-        abi: RAFFLE_FACTORY_ABI,
+        abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
         functionName: 'createRaffle',
-        args: [
+        args: isBase ? [
+          params.nftContract as `0x${string}`,
+          parseInt(params.tokenId), // uint32
+          ticketPriceWei, // uint96
+          params.maxTickets, // uint16
+          params.duration // uint24
+        ] : [
           params.nftContract as `0x${string}`,
           BigInt(params.tokenId),
           ticketPriceWei,
           BigInt(params.maxTickets),
           BigInt(params.duration)
         ],
-        gas: chainId === 8453 ? 1000000n : undefined, // Increased gas for Base
+        gas: isBase ? 3000000n : undefined,
         chainId: chainId,
       });
       return result;
@@ -273,9 +284,11 @@ export function useRaffleContractV4(raffleId: number) {
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   
+  const isBase = chainId === 8453 || chainId === 84532;
+  
   return useReadContract({
     address: factoryAddress as `0x${string}`,
-    abi: RAFFLE_FACTORY_ABI,
+    abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
     functionName: 'getRaffleContract',
     args: [BigInt(raffleId)],
     query: {
@@ -291,11 +304,12 @@ export function useFactoryPauseStatusV4() {
   const chainId = useChainId();
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
+  const isBase = chainId === 8453 || chainId === 84532;
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
-    abi: RAFFLE_FACTORY_ABI,
-    functionName: 'paused',
+    abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
+    functionName: isBase ? 'emergencyPaused' : 'paused',
   });
 }
 
