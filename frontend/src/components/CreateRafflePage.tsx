@@ -8,6 +8,7 @@ import MobileBanner from './MobileBanner';
 import FeeDisplay from './FeeDisplay';
 import { V4Status, RateLimitInfo } from './V4Status';
 import { useNetwork } from '../contexts/NetworkContext';
+import QuickDebug from './QuickDebug';
 
 import toast from 'react-hot-toast';
 import { 
@@ -207,7 +208,7 @@ export default function CreateRafflePage() {
 
   return (
     <div className={`relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border ${containerBorderColor} rounded-3xl shadow-2xl ${containerShadowColor} overflow-hidden`}>
-      {/* Animated background pattern */}
+      <QuickDebug />
       <div className="absolute inset-0 animate-pulse" style={{
         background: `radial-gradient(circle_at_50%_50%, ${patternColor}, transparent_50%)`
       }}></div>
