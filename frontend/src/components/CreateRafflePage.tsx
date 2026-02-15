@@ -28,7 +28,7 @@ interface FormData {
 export default function CreateRafflePage() {
   const { address } = useAccount();
   const chainId = useChainId();
-  const { theme, nativeCurrency, networkName, isApeChain, isBase } = useNetwork();
+  const { theme, nativeCurrency, networkName, isApeChain, isPolygon } = useNetwork();
   const { switchToApeChain, isSwitching } = useApeChainSwitching();
   const [formData, setFormData] = useState<FormData>({
     nftContract: '',
