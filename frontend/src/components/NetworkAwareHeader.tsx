@@ -2,7 +2,7 @@ import React from 'react';
 import { useNetwork } from '../contexts/NetworkContext';
 
 export const NetworkAwareHeader: React.FC<{ title: string }> = ({ title }) => {
-  const { theme, nativeCurrency, networkName, isApeChain, isBase } = useNetwork();
+  const { theme, nativeCurrency, networkName, isApeChain, isPolygon } = useNetwork();
   
   return (
     <div className={`bg-gradient-to-r from-${theme.primary}-500/10 via-${theme.secondary}-500/10 to-${theme.accent}-500/10 px-4 sm:px-8 py-6 sm:py-8 border-b border-${theme.primary}-400/30`}>
