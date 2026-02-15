@@ -402,18 +402,20 @@ export function useEmergencyPause() {
   });
 
   const pause = () => {
+    const isBase = chainId === 8453 || chainId === 84532;
     writeContract({
       address: factoryAddress as `0x${string}`,
-      abi: RAFFLE_FACTORY_ABI,
+      abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
       functionName: 'emergencyPause',
       chainId: chainId,
     });
   };
 
   const unpause = () => {
+    const isBase = chainId === 8453 || chainId === 84532;
     writeContract({
       address: factoryAddress as `0x${string}`,
-      abi: RAFFLE_FACTORY_ABI,
+      abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
       functionName: 'emergencyUnpause',
       chainId: chainId,
     });
