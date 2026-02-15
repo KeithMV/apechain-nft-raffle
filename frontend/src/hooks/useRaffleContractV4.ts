@@ -5,7 +5,7 @@
 
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { getRaffleFactoryAddress, isV4Available, getRateLimit } from '../config/addresses';
-import { RAFFLE_FACTORY_ABI, BASE_RAFFLE_SYSTEM_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
+import { RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
 import { useEffect, useRef, useState } from 'react';
 import { useCacheInvalidation } from './useCacheInvalidation';
@@ -51,8 +51,6 @@ export function usePlatformFeeV4() {
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   
-  const isPolygon = chainId === 137;
-  
   return useReadContract({
     address: factoryAddress as `0x${string}`,
     abi: RAFFLE_FACTORY_ABI,
@@ -67,8 +65,6 @@ export function useRaffleCounterV4() {
   const chainId = useChainId();
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
-  
-  const isPolygon = chainId === 137;
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
@@ -172,7 +168,7 @@ export function useCreateRaffleV4() {
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
-    timeout: 30000, // Reduced timeout
+    timeout: 60000, // 60 second timeout
   });
   const { invalidateAll } = useCacheInvalidation();
   const lastSuccessHash = useRef<string | null>(null);
@@ -233,7 +229,6 @@ export function useCreateRaffleV4() {
     
     setIsProcessing(true);
     const ticketPriceWei = parseEther(params.ticketPrice);
-    const isPolygon = chainId === 137;
     
     try {
       const result = await writeContractAsync({
@@ -277,8 +272,6 @@ export function useRaffleContractV4(raffleId: number) {
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   
-  const isPolygon = chainId === 137;
-  
   return useReadContract({
     address: factoryAddress as `0x${string}`,
     abi: RAFFLE_FACTORY_ABI,
@@ -297,7 +290,6 @@ export function useFactoryPauseStatusV4() {
   const chainId = useChainId();
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
-  const isPolygon = chainId === 137;
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
@@ -395,7 +387,6 @@ export function useEmergencyPause() {
   });
 
   const pause = () => {
-    const isPolygon = chainId === 137;
     writeContract({
       address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
@@ -405,7 +396,6 @@ export function useEmergencyPause() {
   };
 
   const unpause = () => {
-    const isPolygon = chainId === 137;
     writeContract({
       address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,

@@ -22,8 +22,7 @@ export const RaffleDebugLogger: React.FC<{
     console.log('Ticket Price:', ticketPrice);
     console.log('Max Tickets:', maxTickets);
     console.log('Duration:', duration);
-    console.log('Expected Base Chain ID: 8453');
-    console.log('Is Base Network:', chainId === 8453);
+
   }, [chainId, address, nftContract, tokenId, ticketPrice, maxTickets, duration]);
 
   return null; // Invisible component
