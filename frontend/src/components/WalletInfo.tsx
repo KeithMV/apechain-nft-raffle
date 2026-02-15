@@ -36,8 +36,13 @@ export default function WalletInfo() {
     try {
       const bal = await publicClient.getBalance({ address: address as `0x${string}` });
       const formattedBalance = formatEther(bal);
-      console.log(`Network: ${chainId}, ${tokenInfo.symbol} balance for ${address}:`, formattedBalance);
-      console.log('Raw balance (wei):', bal.toString());
+      // Only log in local development
+      if (process.env.NODE_ENV === 'development' && 
+          typeof window !== 'undefined' && 
+          (window.location.hostname === 'localhost' || window.location.hostname.includes('192.168'))) {
+        console.log(`Network: ${chainId}, ${tokenInfo.symbol} balance for ${address}:`, formattedBalance);
+        console.log('Raw balance (wei):', bal.toString());
+      }
       setBalance(formattedBalance);
     } catch (error) {
       console.error(`Failed to load ${tokenInfo.symbol} balance:`, error);

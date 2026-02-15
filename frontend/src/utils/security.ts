@@ -16,18 +16,23 @@ export class SecurityUtils {
   /**
    * Validate URL for safety (prevent SSRF)
    */
-  static validateUrl(url: string): boolean {
+  static validateUrl(url: string): { valid: boolean; error?: string } {
+    if (!url || typeof url !== 'string') {
+      return { valid: false, error: 'URL must be a non-empty string' };
+    }
+
     try {
       const parsed = new URL(url);
+      
       // Only allow HTTPS and IPFS protocols
       if (!['https:', 'ipfs:', 'wss:', 'ws:'].includes(parsed.protocol)) {
-        return false;
+        return { valid: false, error: `Unsupported protocol: ${parsed.protocol}. Only HTTPS, IPFS, WSS, and WS are allowed` };
       }
       
       // Allow WalletConnect domains
       if (parsed.hostname.includes('walletconnect.org') || 
           parsed.hostname.includes('walletconnect.com')) {
-        return true;
+        return { valid: true };
       }
       
       // Block private/local networks
@@ -36,11 +41,13 @@ export class SecurityUtils {
           parsed.hostname.startsWith('192.168.') ||
           parsed.hostname.startsWith('10.') ||
           parsed.hostname.includes('169.254.')) {
-        return false;
+        return { valid: false, error: `Private/local network access blocked: ${parsed.hostname}` };
       }
-      return true;
-    } catch {
-      return false;
+      
+      return { valid: true };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Invalid URL format';
+      return { valid: false, error: `URL parsing failed: ${errorMessage}` };
     }
   }
 
@@ -65,16 +72,26 @@ export class SecurityUtils {
   /**
    * Validate and sanitize localStorage data
    */
-  static validateCacheData(data: string, maxSize: number = 100000): any | null {
+  static validateCacheData(data: string, maxSize: number = 100000): { valid: boolean; data?: any; error?: string } {
+    if (!data || typeof data !== 'string') {
+      return { valid: false, error: 'Cache data must be a non-empty string' };
+    }
+    
+    if (data.length > maxSize) {
+      return { valid: false, error: `Cache data exceeds maximum size of ${maxSize} characters` };
+    }
+    
     try {
-      if (!data || data.length > maxSize) return null;
-      
       const parsed = JSON.parse(data);
-      if (!parsed || typeof parsed !== 'object') return null;
       
-      return parsed;
-    } catch {
-      return null;
+      if (!parsed || typeof parsed !== 'object') {
+        return { valid: false, error: 'Cache data must be a valid JSON object' };
+      }
+      
+      return { valid: true, data: parsed };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Invalid JSON format';
+      return { valid: false, error: `JSON parsing failed: ${errorMessage}` };
     }
   }
 
