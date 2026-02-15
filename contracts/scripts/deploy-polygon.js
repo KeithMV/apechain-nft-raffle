@@ -15,12 +15,20 @@ async function main() {
         process.exit(1);
     }
     
-    console.log("Deploying RaffleFactorySecureV4...");
+    console.log("Deploying RaffleContractSecureV3 template...");
+    const RaffleContractSecureV3 = await ethers.getContractFactory("RaffleContractSecureV3");
+    const template = await RaffleContractSecureV3.deploy({
+        gasLimit: 3000000,
+        gasPrice: ethers.utils.parseUnits("30", "gwei")
+    });
+    await template.deployed();
+    const templateAddress = template.address;
+    console.log("✅ Template deployed to:", templateAddress);
     
-    // Deploy factory with explicit gas settings
+    console.log("Deploying RaffleFactorySecureV4 with template...");
     const RaffleFactorySecureV4 = await ethers.getContractFactory("RaffleFactorySecureV4");
-    const factory = await RaffleFactorySecureV4.deploy({
-        gasLimit: 5000000,
+    const factory = await RaffleFactorySecureV4.deploy(templateAddress, {
+        gasLimit: 3000000,
         gasPrice: ethers.utils.parseUnits("30", "gwei")
     });
     
@@ -30,9 +38,7 @@ async function main() {
     const factoryAddress = factory.address;
     console.log("✅ RaffleFactorySecureV4 deployed to:", factoryAddress);
     
-    // Get template address (it's a public immutable variable)
-    const templateAddress = await factory.raffleTemplate();
-    console.log("✅ RaffleContractSecureV3 template at:", templateAddress);
+    console.log("✅ Template address:", templateAddress);
     
     // Verify basic functionality
     const owner = await factory.owner();

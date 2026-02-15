@@ -37,7 +37,10 @@ module.exports = {
         ? [process.env.OWNER_PRIVATE_KEY] 
         : ["0x1234567890123456789012345678901234567890123456789012345678901234"],
       chainId: 137,
-      gasPrice: 30000000000 // 30 gwei
+      timeout: 120000,
+      gas: "auto",
+      gasPrice: 50000000000,
+      gasMultiplier: 1.2
     },
   }
 };
