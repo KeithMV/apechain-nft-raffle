@@ -18,7 +18,7 @@ interface NetworkContextType {
   explorerUrl: string;
   contracts: ReturnType<typeof getContracts>;
   isApeChain: boolean;
-  isBase: boolean;
+  isPolygon: boolean;
   theme: NetworkTheme;
 }
 
@@ -32,7 +32,7 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const contracts = getContracts(chainId);
     
     const isApeChain = chainId === CHAIN_IDS.APECHAIN_MAINNET || chainId === CHAIN_IDS.APECHAIN_TESTNET;
-    const isBase = chainId === CHAIN_IDS.BASE_MAINNET || chainId === CHAIN_IDS.BASE_SEPOLIA;
+    const isPolygon = chainId === CHAIN_IDS.POLYGON_MAINNET;
     
     const theme: NetworkTheme = isApeChain 
       ? {
@@ -41,6 +41,14 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
           accent: 'cyan',
           logo: '',
           gradient: 'from-emerald-400 via-teal-300 to-cyan-400'
+        }
+      : isPolygon
+      ? {
+          primary: 'purple',
+          secondary: 'violet',
+          accent: 'indigo', 
+          logo: '',
+          gradient: 'from-purple-400 via-violet-300 to-indigo-400'
         }
       : {
           primary: 'blue',
@@ -58,6 +66,11 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
         root.style.setProperty('--network-primary-light', '#34d399'); // emerald-400
         root.style.setProperty('--network-border', 'rgba(52, 211, 153, 0.3)'); // emerald-400/30
         root.style.setProperty('--network-shadow', 'rgba(16, 185, 129, 0.2)'); // emerald-500/20
+      } else if (isPolygon) {
+        root.style.setProperty('--network-primary', '#a855f7'); // purple-500
+        root.style.setProperty('--network-primary-light', '#c084fc'); // purple-400
+        root.style.setProperty('--network-border', 'rgba(192, 132, 252, 0.3)'); // purple-400/30
+        root.style.setProperty('--network-shadow', 'rgba(168, 85, 247, 0.2)'); // purple-500/20
       } else {
         root.style.setProperty('--network-primary', '#3b82f6'); // blue-500
         root.style.setProperty('--network-primary-light', '#60a5fa'); // blue-400
@@ -73,7 +86,7 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
       explorerUrl: config.explorerUrl,
       contracts,
       isApeChain,
-      isBase,
+      isPolygon,
       theme
     };
   }, [chainId]);
