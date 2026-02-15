@@ -1,6 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAccount, usePublicClient, useChainId } from 'wagmi';
 import { formatEther } from 'viem/utils';
+
+// Pure function moved outside component
+const getTokenInfo = (chainId: number) => {
+  switch (chainId) {
+    case 33139: // ApeChain
+      return { symbol: 'APE', emoji: '🐵', color: 'orange' };
+    case 137: // Polygon
+      return { symbol: 'MATIC', emoji: '🔷', color: 'purple' };
+    default:
+      return { symbol: 'ETH', emoji: '⚡', color: 'gray' };
+  }
+};
+
+const colorClasses = {
+  orange: 'from-orange-400 to-red-500 text-orange-400',
+  purple: 'from-purple-400 to-purple-600 text-purple-400',
+  gray: 'from-gray-400 to-gray-600 text-gray-400'
+} as const;
 
 export default function WalletInfo() {
   const { address } = useAccount();
@@ -9,21 +27,10 @@ export default function WalletInfo() {
   const [balance, setBalance] = useState<string>('0');
   const [loading, setLoading] = useState(true);
 
-  // Get network-specific token info
-  const getTokenInfo = () => {
-    switch (chainId) {
-      case 33139: // ApeChain
-        return { symbol: 'APE', emoji: '🐵', color: 'orange' };
-      case 137: // Polygon
-        return { symbol: 'MATIC', emoji: '🔷', color: 'purple' };
-      default:
-        return { symbol: 'ETH', emoji: '⚡', color: 'gray' };
-    }
-  };
+  // Memoize token info to prevent recalculation
+  const tokenInfo = useMemo(() => getTokenInfo(chainId), [chainId]);
 
-  const tokenInfo = getTokenInfo();
-
-  const loadBalance = async () => {
+  const loadBalance = useCallback(async () => {
     if (!address || !publicClient) return;
     
     try {
@@ -37,7 +44,7 @@ export default function WalletInfo() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [address, publicClient, chainId, tokenInfo.symbol]);
 
   useEffect(() => {
     if (address && publicClient) {
@@ -47,17 +54,11 @@ export default function WalletInfo() {
       const interval = setInterval(loadBalance, 30000);
       return () => clearInterval(interval);
     }
-  }, [address, publicClient, chainId]);
+  }, [address, publicClient, chainId, loadBalance]);
 
 
 
   if (!address) return null;
-
-  const colorClasses = {
-    orange: 'from-orange-400 to-red-500 text-orange-400',
-    purple: 'from-purple-400 to-purple-600 text-purple-400',
-    gray: 'from-gray-400 to-gray-600 text-gray-400'
-  };
 
   return (
     <div className="flex items-center space-x-2 sm:space-x-3 bg-slate-800/50 border border-slate-700/50 rounded-lg px-2 sm:px-3 py-2 min-h-[44px]">
