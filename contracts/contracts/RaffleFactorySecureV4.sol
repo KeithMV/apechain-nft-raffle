@@ -54,8 +54,9 @@ contract RaffleFactorySecureV4 is Ownable, ReentrancyGuard, Pausable {
     mapping(address => uint256) public lastRaffleTime;
     uint256 public constant RATE_LIMIT = 10; // 10 seconds between raffles
     
-    constructor() {
-        raffleTemplate = address(new RaffleContractSecureV3());
+    constructor(address _raffleTemplate) {
+        require(_raffleTemplate != address(0), "Invalid template");
+        raffleTemplate = _raffleTemplate;
     }
     
     function createRaffle(

@@ -5,37 +5,15 @@ async function main() {
   
   const [deployer] = await ethers.getSigners();
   console.log("Deploying with account:", deployer.address);
-  
-  const balance = await deployer.getBalance();
-  console.log("Account balance:", ethers.utils.formatEther(balance), "ETH");
+  console.log("Account balance:", ethers.utils.formatEther(await deployer.getBalance()), "ETH");
 
-  // Get current gas price
-  const gasPrice = await deployer.provider.getGasPrice();
-  console.log("Current gas price:", ethers.utils.formatUnits(gasPrice, "gwei"), "gwei");
-
-  // Deploy BaseRaffleSystem with gas estimation
+  // Deploy BaseRaffleSystem
   const BaseRaffleSystem = await ethers.getContractFactory("BaseRaffleSystem");
   
-  // Estimate gas for deployment
-  const deploymentData = BaseRaffleSystem.getDeployTransaction();
-  const estimatedGas = await deployer.provider.estimateGas(deploymentData);
-  console.log("Estimated gas:", estimatedGas.toString());
-  
-  const totalCost = gasPrice.mul(estimatedGas);
-  console.log("Estimated cost:", ethers.utils.formatEther(totalCost), "ETH");
-  
-  if (balance.lt(totalCost)) {
-    console.log("❌ Insufficient funds!");
-    console.log("Required:", ethers.utils.formatEther(totalCost), "ETH");
-    console.log("Available:", ethers.utils.formatEther(balance), "ETH");
-    console.log("Shortfall:", ethers.utils.formatEther(totalCost.sub(balance)), "ETH");
-    return;
-  }
-
   console.log("Deploying BaseRaffleSystem...");
   const baseRaffleSystem = await BaseRaffleSystem.deploy({
-    gasLimit: estimatedGas.add(50000), // Add 50k buffer
-    gasPrice: gasPrice
+    gasLimit: 3000000,
+    gasPrice: ethers.utils.parseUnits("1", "gwei")
   });
 
   await baseRaffleSystem.deployed();
@@ -44,6 +22,7 @@ async function main() {
   console.log("📊 Deployment details:");
   console.log("  - Contract Address:", baseRaffleSystem.address);
   console.log("  - Transaction Hash:", baseRaffleSystem.deployTransaction.hash);
+  console.log("  - Block Number:", baseRaffleSystem.deployTransaction.blockNumber);
   console.log("  - Gas Used:", baseRaffleSystem.deployTransaction.gasLimit.toString());
 
   // Verify deployment
