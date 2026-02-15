@@ -126,7 +126,7 @@ export default function RaffleDashboard() {
     setSelectingWinnerFor(raffleContract);
     try {
       await emergencyReveal(raffleContract);
-      // Toast is handled by useEmergencyWinner hook
+      // Toast is handled by useWinnerSelection hook - don't add another one
     } catch (error) {
       setSelectingWinnerFor(null);
     }
