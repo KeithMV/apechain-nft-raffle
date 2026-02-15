@@ -242,10 +242,10 @@ export function useCreateRaffleV4() {
         functionName: 'createRaffle',
         args: isBase ? [
           params.nftContract as `0x${string}`,
-          parseInt(params.tokenId), // uint32
+          BigInt(params.tokenId), // uint32 - use BigInt for consistency
           ticketPriceWei, // uint96
-          params.maxTickets, // uint16
-          params.duration // uint24
+          BigInt(params.maxTickets), // uint16 - use BigInt for consistency
+          BigInt(params.duration) // uint24 - use BigInt for consistency
         ] : [
           params.nftContract as `0x${string}`,
           BigInt(params.tokenId),
