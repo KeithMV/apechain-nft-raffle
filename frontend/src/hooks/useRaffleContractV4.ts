@@ -51,11 +51,11 @@ export function usePlatformFeeV4() {
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   
-  const isBase = chainId === 8453 || chainId === 84532;
+  const isPolygon = chainId === 137;
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
-    abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
+    abi: RAFFLE_FACTORY_ABI,
     functionName: 'platformFee',
   });
 }
@@ -68,11 +68,11 @@ export function useRaffleCounterV4() {
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   
-  const isBase = chainId === 8453 || chainId === 84532;
+  const isPolygon = chainId === 137;
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
-    abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
+    abi: RAFFLE_FACTORY_ABI,
     functionName: 'raffleCounter',
   });
 }
@@ -233,27 +233,20 @@ export function useCreateRaffleV4() {
     
     setIsProcessing(true);
     const ticketPriceWei = parseEther(params.ticketPrice);
-    const isBase = chainId === 8453 || chainId === 84532;
+    const isPolygon = chainId === 137;
     
     try {
       const result = await writeContractAsync({
         address: factoryAddress as `0x${string}`,
-        abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
+        abi: RAFFLE_FACTORY_ABI,
         functionName: 'createRaffle',
-        args: isBase ? [
-          params.nftContract as `0x${string}`,
-          BigInt(params.tokenId), // uint32 - use BigInt for consistency
-          ticketPriceWei, // uint96
-          BigInt(params.maxTickets), // uint16 - use BigInt for consistency
-          BigInt(params.duration) // uint24 - use BigInt for consistency
-        ] : [
+        args: [
           params.nftContract as `0x${string}`,
           BigInt(params.tokenId),
           ticketPriceWei,
           BigInt(params.maxTickets),
           BigInt(params.duration)
         ],
-        gas: isBase ? 3000000n : undefined,
         chainId: chainId,
       });
       return result;
@@ -284,11 +277,11 @@ export function useRaffleContractV4(raffleId: number) {
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
   
-  const isBase = chainId === 8453 || chainId === 84532;
+  const isPolygon = chainId === 137;
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
-    abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
+    abi: RAFFLE_FACTORY_ABI,
     functionName: 'getRaffleContract',
     args: [BigInt(raffleId)],
     query: {
@@ -304,12 +297,12 @@ export function useFactoryPauseStatusV4() {
   const chainId = useChainId();
   const { currentVersion } = useVersionInfo();
   const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
-  const isBase = chainId === 8453 || chainId === 84532;
+  const isPolygon = chainId === 137;
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
-    abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
-    functionName: isBase ? 'emergencyPaused' : 'paused',
+    abi: RAFFLE_FACTORY_ABI,
+    functionName: 'paused',
   });
 }
 
@@ -402,20 +395,20 @@ export function useEmergencyPause() {
   });
 
   const pause = () => {
-    const isBase = chainId === 8453 || chainId === 84532;
+    const isPolygon = chainId === 137;
     writeContract({
       address: factoryAddress as `0x${string}`,
-      abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
+      abi: RAFFLE_FACTORY_ABI,
       functionName: 'emergencyPause',
       chainId: chainId,
     });
   };
 
   const unpause = () => {
-    const isBase = chainId === 8453 || chainId === 84532;
+    const isPolygon = chainId === 137;
     writeContract({
       address: factoryAddress as `0x${string}`,
-      abi: isBase ? BASE_RAFFLE_SYSTEM_ABI : RAFFLE_FACTORY_ABI,
+      abi: RAFFLE_FACTORY_ABI,
       functionName: 'emergencyUnpause',
       chainId: chainId,
     });
