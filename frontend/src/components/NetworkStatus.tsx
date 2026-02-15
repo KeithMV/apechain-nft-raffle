@@ -11,8 +11,8 @@ export default function NetworkStatus() {
 
   const networkConfig = NETWORK_CONFIGS[chainId as keyof typeof NETWORK_CONFIGS];
   const isApeChain = chainId === CHAIN_IDS.APECHAIN_MAINNET;
-  const isBase = chainId === CHAIN_IDS.BASE_MAINNET;
-  const isSupportedNetwork = isApeChain || isBase;
+  const isPolygon = chainId === CHAIN_IDS.POLYGON_MAINNET;
+  const isSupportedNetwork = isApeChain || isPolygon;
 
   return (
     <div className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium min-h-[44px] ${
