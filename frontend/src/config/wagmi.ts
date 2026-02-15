@@ -1,7 +1,7 @@
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defineChain } from 'viem';
-import { base } from 'viem/chains';
+import { polygon } from 'viem/chains';
 import { config as envConfig } from './environment';
 import { CHAIN_IDS, WALLET_IDS } from '../constants/chains';
 
@@ -28,8 +28,8 @@ export const apeChain = defineChain({
   testnet: false, // Both staging and production use mainnet
 });
 
-// Base chain (imported from viem)
-export const baseChain = base;
+// Polygon chain (imported from viem)
+export const polygonChain = polygon;
 
 // WalletConnect project ID
 const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
@@ -44,7 +44,7 @@ const metadata = {
 
 // Create wagmi config with multi-chain support
 export const config = defaultWagmiConfig({
-  chains: [apeChain, baseChain],
+  chains: [apeChain, polygonChain],
   projectId,
   metadata,
   ssr: false,
@@ -80,6 +80,6 @@ createWeb3Modal({
   defaultChain: apeChain,
   chainImages: {
     [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
-    [baseChain.id]: 'https://base.org/favicon.ico'
+    [polygonChain.id]: 'https://polygon.technology/favicon.ico'
   }
 });
