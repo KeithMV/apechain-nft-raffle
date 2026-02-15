@@ -1,0 +1,12 @@
+[profile.default]
+src = "contracts"
+out = "artifacts"
+libs = ["node_modules", "lib"]
+remappings = [
+    "@openzeppelin/=node_modules/@openzeppelin/",
+    "hardhat/=node_modules/hardhat/",
+]
+
+[rpc_endpoints]
+polygon = "https://polygon-mainnet.infura.io/v3/2275e07415e7485ba5b202bfd13eaed3"
+apechain = "https://apechain.calderachain.xyz/http"
