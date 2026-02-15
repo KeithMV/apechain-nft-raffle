@@ -26,20 +26,14 @@ const NETWORK_CONFIGS = {
     explorerUrl: 'https://apescan.io',
     nativeCurrency: 'APE'
   },
-  8453: { // Base Mainnet
-    chainId: 8453,
-    rpcUrl: 'https://mainnet.base.org',
-    name: 'Base',
-    explorerUrl: 'https://basescan.org',
-    nativeCurrency: 'ETH'
+  137: { // Polygon Mainnet
+    chainId: 137,
+    rpcUrl: 'https://polygon-rpc.com',
+    name: 'Polygon',
+    explorerUrl: 'https://polygonscan.com',
+    nativeCurrency: 'MATIC'
   },
-  84532: { // Base Sepolia Testnet
-    chainId: 84532,
-    rpcUrl: 'https://sepolia.base.org',
-    name: 'Base Sepolia',
-    explorerUrl: 'https://sepolia.basescan.org',
-    nativeCurrency: 'ETH'
-  }
+
 } as const;
 
 const CONTRACT_ADDRESSES = {
@@ -61,16 +55,12 @@ const CONTRACT_ADDRESSES = {
     RAFFLE_FACTORY_LEGACY: '0x0D0cd14b36B5FBb10F274cd3EC2FA3bBa79FC900', // v2-old
     RAFFLE_FACTORY_V1: '0x05139110Db8FF9cF82A836Af95eff4530011c705' // v1-legacy
   },
-  8453: { // Base Mainnet
-    RAFFLE_FACTORY: '0xDE107f1463d97134122b6b42137EBfEd996B0F43', // BaseRaffleSystem (working deployment)
-    RAFFLE_FACTORY_V4: '0xDE107f1463d97134122b6b42137EBfEd996B0F43',
-    RAFFLE_TEMPLATE: '0xDE107f1463d97134122b6b42137EBfEd996B0F43' // Monolithic architecture
+  137: { // Polygon Mainnet
+    RAFFLE_FACTORY: '0x0000000000000000000000000000000000000000', // Deploy here
+    RAFFLE_FACTORY_V4: '0x0000000000000000000000000000000000000000',
+    RAFFLE_TEMPLATE: '0x0000000000000000000000000000000000000000'
   },
-  84532: { // Base Sepolia - For testing
-    RAFFLE_FACTORY: '0x534578Ccb03850FBC2780f1F84AbC0F48823e901', // V4 Factory deployed
-    RAFFLE_FACTORY_V4: '0x534578Ccb03850FBC2780f1F84AbC0F48823e901',
-    RAFFLE_TEMPLATE: '0xDD6904FDca5D12B3dE0ad67cAb0bdc846d41C1a1'
-  }
+
 } as const;
 
 const PROTOCOL_INFO = {
