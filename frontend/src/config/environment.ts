@@ -88,13 +88,13 @@ export const isStaging = config.environment === 'staging';
 export const isProduction = config.environment === 'production';
 
 // Logging helper
-export const log = (...args: any[]) => {
+export const log = (...args: unknown[]) => {
   if (config.enableLogging) {
     console.log(`[${config.environment.toUpperCase()}]`, ...args);
   }
 };
 
-export const logError = (...args: any[]) => {
+export const logError = (...args: unknown[]) => {
   if (config.enableLogging) {
     console.error(`[${config.environment.toUpperCase()}]`, ...args);
   }

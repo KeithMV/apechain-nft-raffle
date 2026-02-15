@@ -308,11 +308,27 @@ export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
     try {
       const allRaffles: CreatedRaffle[] = [];
       
-      // Get raffles from current network's factory
-      const factoryAddress = getRaffleFactoryAddress(chainId, true);
-      // Simple implementation - just return empty for now
+      // Get V4 raffles first
+      if (isV4Available(chainId)) {
+        const v4Address = getRaffleFactoryAddress(chainId, true);
+        const v4Raffles = await getRafflesFromFactory(publicClient, v4Address, 'v4', 50, page * 20);
+        allRaffles.push(...v4Raffles.filter(r => r.creator.toLowerCase() === userAddress.toLowerCase()));
+      }
       
-      setRaffles(allRaffles);
+      // Get V3 raffles
+      const v3Address = getRaffleFactoryAddress(chainId, false);
+      const v3Raffles = await getRafflesFromFactory(publicClient, v3Address, 'v3', 50, page * 20);
+      allRaffles.push(...v3Raffles.filter(r => r.creator.toLowerCase() === userAddress.toLowerCase()));
+      
+      // Remove duplicates based on unique contract address
+      const uniqueRaffles = allRaffles.filter((raffle, index, self) => 
+        index === self.findIndex(r => r.raffleContract === raffle.raffleContract)
+      );
+      
+      // Sort by creation time (newest first)
+      const sortedRaffles = uniqueRaffles.sort((a, b) => b.endTime - a.endTime);
+      
+      setRaffles(sortedRaffles);
     } catch (err) {
       console.error('Failed to load created raffles:', err);
       setError('Failed to load created raffles');
