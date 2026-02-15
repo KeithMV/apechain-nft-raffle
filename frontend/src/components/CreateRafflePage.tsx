@@ -41,7 +41,7 @@ export default function CreateRafflePage() {
   const [approvalStatus, setApprovalStatus] = useState<boolean | null>(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   
-  const isWrongNetwork = !isApeChain && !isBase;
+  const isWrongNetwork = !isApeChain && !isPolygon;
   // Professional wagmi V4 hooks
   const { data: platformFeeData } = usePlatformFeeV4();
   const { data: approvalData, refetch: refetchApproval } = useNFTApprovalStatusV4(
