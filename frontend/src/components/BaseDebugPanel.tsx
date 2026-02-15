@@ -38,7 +38,7 @@ export const BaseDebugPanel: React.FC = () => {
         <div className="mt-2 pt-2 border-t border-gray-600">
           <div><strong>Expected Base Values:</strong></div>
           <div>Chain: 8453</div>
-          <div>Factory: 0xeBB962e8949e67301B4d2c4727EBC689E22516f8</div>
+          <div>Factory: 0xDE107f1463d97134122b6b42137EBfEd996B0F43</div>
         </div>
       </div>
     </div>
