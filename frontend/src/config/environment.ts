@@ -68,7 +68,7 @@ const configs: Record<Environment, EnvironmentConfig> = {
     contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS || '0x1627E7e63b63878E61f91D336385a59B1747934a',
     appName: 'ApeChain NFT Raffles (STAGING)',
     appUrl: 'https://staging.apechainraffles.io', // Back to proper staging URL
-    enableLogging: true,
+    enableLogging: false,
   },
   production: {
     environment: 'production',

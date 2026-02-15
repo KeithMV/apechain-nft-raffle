@@ -75,7 +75,10 @@ class PerformanceMonitor {
       // Monitor memory every 30 seconds
       setInterval(() => {
         const currentMemory = (performance as any).memory.usedJSHeapSize;
-        if (currentMemory > this.metrics.memoryUsage! * 1.5 && process.env.NODE_ENV === 'development') {
+        if (currentMemory > this.metrics.memoryUsage! * 1.5 && 
+            process.env.NODE_ENV === 'development' &&
+            typeof window !== 'undefined' && 
+            (window.location.hostname === 'localhost' || window.location.hostname.includes('192.168'))) {
           console.warn('Memory usage increased significantly:', {
             previous: this.metrics.memoryUsage,
             current: currentMemory,
@@ -94,8 +97,10 @@ class PerformanceMonitor {
   }
 
   private logMetrics(event: string, data: any) {
-    // Only log in development and sanitize sensitive data
-    if (process.env.NODE_ENV === 'development') {
+    // Only log in local development (not staging/production)
+    if (process.env.NODE_ENV === 'development' && 
+        typeof window !== 'undefined' && 
+        (window.location.hostname === 'localhost' || window.location.hostname.includes('192.168'))) {
       const sanitizedData = this.sanitizeMetricsData(data);
       console.group(`🚀 Performance: ${event}`);
       Object.entries(sanitizedData).forEach(([key, value]) => {
