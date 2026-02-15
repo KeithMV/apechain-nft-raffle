@@ -8,8 +8,6 @@ import { RAFFLE_FACTORY_ADDRESS } from './config/contracts';
 import { Toaster } from 'react-hot-toast';
 import { WalletConnection } from './components/WalletConnection';
 import { NetworkSwitcher } from './components/NetworkSwitcher';
-import { NetworkAwareHeader } from './components/NetworkAwareHeader';
-import { MobileDebug } from './components/MobileDebug';
 import MobileBanner from './components/MobileBanner';
 import { suppressWalletConnectErrors } from './utils/walletCleanup';
 import { suppressWeb3ModalWarnings } from './utils/suppressWarnings';
@@ -21,7 +19,7 @@ import './index.css';
 
 // Network-aware title component
 const NetworkAwareTitle = () => {
-  const { theme, networkName, nativeCurrency, isApeChain } = useNetwork();
+  const { networkName, nativeCurrency, isApeChain } = useNetwork();
   
   const titleStyle = isApeChain 
     ? 'text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight text-center'
@@ -48,7 +46,6 @@ const CreateRafflePage = lazy(() => import('./components/CreateRafflePage'));
 const RaffleDashboard = lazy(() => import('./components/RaffleDashboard'));
 const BrowseRaffles = lazy(() => import('./components/BrowseRaffles'));
 const WalletInfo = lazy(() => import('./components/WalletInfo'));
-const NetworkStatus = lazy(() => import('./components/NetworkStatus'));
 
 // Optimized loading fallback with memoization
 const LoadingFallback = React.memo(() => (
