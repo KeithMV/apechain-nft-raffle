@@ -6,6 +6,7 @@
 import { usePublicClient } from 'wagmi';
 import { useQuery } from '@tanstack/react-query';
 import { OptimizedCache } from '../utils/performance';
+import { SecurityUtils } from '../utils/security';
 
 interface NFTMetadata {
   name?: string;
@@ -21,22 +22,26 @@ interface NFTMetadata {
 // Optimized cache for NFT metadata
 const metadataCache = new OptimizedCache<NFTMetadata>(5 * 1024 * 1024, 500, 900000); // 5MB, 500 items, 15min TTL
 
-function validateUrl(url: string): boolean {
+function validateMetadataUrl(url: string): { valid: boolean; error?: string } {
+  if (!url || typeof url !== 'string') {
+    return { valid: false, error: 'URL must be a non-empty string' };
+  }
+
   try {
     // Handle data URLs
     if (url.startsWith('data:image/')) {
-      return true;
+      return { valid: true };
     }
     
     const parsed = new URL(url);
     // Allow HTTPS, IPFS, and Arweave protocols
     if (!['https:', 'ipfs:', 'ar:'].includes(parsed.protocol)) {
-      return false;
+      return { valid: false, error: `Unsupported protocol: ${parsed.protocol}. Only HTTPS, IPFS, and Arweave are allowed` };
     }
     
     // Skip hostname checks for non-HTTP protocols
     if (parsed.protocol !== 'https:') {
-      return true;
+      return { valid: true };
     }
     
     // Block private/local networks for HTTPS
@@ -45,40 +50,53 @@ function validateUrl(url: string): boolean {
         parsed.hostname.startsWith('192.168.') ||
         parsed.hostname.startsWith('10.') ||
         parsed.hostname.includes('169.254.')) {
-      return false;
+      return { valid: false, error: `Private/local network access blocked: ${parsed.hostname}` };
     }
-    return true;
-  } catch {
-    return false;
+    
+    return { valid: true };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Invalid URL format';
+    return { valid: false, error: `URL parsing failed: ${errorMessage}` };
   }
 }
 
-function sanitizeMetadata(data: any): NFTMetadata {
+function sanitizeMetadata(data: any): { metadata?: NFTMetadata; error?: string } {
   if (!data || typeof data !== 'object') {
-    throw new Error('Invalid metadata format');
+    return { error: 'Invalid metadata format: must be a valid JSON object' };
   }
   
-  return {
-    name: typeof data.name === 'string' ? data.name.slice(0, 100) : undefined,
-    description: typeof data.description === 'string' ? data.description.slice(0, 1000) : undefined,
-    image: typeof data.image === 'string' ? data.image.slice(0, 500) : undefined,
-    attributes: Array.isArray(data.attributes) ? 
-      data.attributes.slice(0, 50).map((attr: any) => ({
-        trait_type: typeof attr.trait_type === 'string' ? attr.trait_type.slice(0, 50) : '',
-        value: typeof attr.value === 'string' || typeof attr.value === 'number' ? 
-          String(attr.value).slice(0, 100) : ''
-      })) : undefined
-  };
+  try {
+    const metadata: NFTMetadata = {
+      name: typeof data.name === 'string' ? SecurityUtils.sanitizeString(data.name, 100) : undefined,
+      description: typeof data.description === 'string' ? SecurityUtils.sanitizeString(data.description, 1000) : undefined,
+      image: typeof data.image === 'string' ? data.image.slice(0, 500) : undefined,
+      attributes: Array.isArray(data.attributes) ? 
+        data.attributes.slice(0, 50).map((attr: any) => ({
+          trait_type: typeof attr.trait_type === 'string' ? SecurityUtils.sanitizeString(attr.trait_type, 50) : '',
+          value: typeof attr.value === 'string' || typeof attr.value === 'number' ? 
+            SecurityUtils.sanitizeString(String(attr.value), 100) : ''
+        })) : undefined
+    };
+    
+    return { metadata };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown sanitization error';
+    return { error: `Metadata sanitization failed: ${errorMessage}` };
+  }
 }
 
 async function fetchNFTMetadata(
   publicClient: any,
   contractAddress: string,
   tokenId: string
-): Promise<NFTMetadata> {
+): Promise<{ metadata?: NFTMetadata; error?: string }> {
   // Validate inputs
   if (!contractAddress || !tokenId) {
-    throw new Error('Invalid contract address or token ID');
+    return { error: 'Invalid contract address or token ID' };
+  }
+  
+  if (!SecurityUtils.validateAddress(contractAddress)) {
+    return { error: 'Invalid contract address format' };
   }
   
   try {
@@ -99,7 +117,13 @@ async function fetchNFTMetadata(
     });
 
     if (!tokenURI || typeof tokenURI !== 'string') {
-      throw new Error('No token URI found');
+      return { error: 'No token URI found for this NFT' };
+    }
+    
+    // Validate the token URI
+    const urlValidation = validateMetadataUrl(tokenURI);
+    if (!urlValidation.valid) {
+      return { error: `Invalid token URI: ${urlValidation.error}` };
     }
     
     // Try multiple approaches for metadata URL
@@ -126,6 +150,7 @@ async function fetchNFTMetadata(
     }
     
     // Try each URL until one works
+    let lastError = 'All metadata URLs failed';
     for (const url of metadataUrls) {
       try {
         const response = await fetch(url, {
@@ -136,42 +161,52 @@ async function fetchNFTMetadata(
         if (response.ok) {
           data = await response.json();
           break;
+        } else {
+          lastError = `HTTP ${response.status}: ${response.statusText}`;
         }
-      } catch {
+      } catch (error: unknown) {
+        lastError = error instanceof Error ? error.message : 'Network error';
         continue;
       }
     }
     
     if (!data) {
-      throw new Error('All metadata URLs failed');
+      return { error: `Failed to fetch metadata: ${lastError}` };
     }
-    return sanitizeMetadata(data);
     
-  } catch (error) {
-    // Return fallback metadata instead of throwing
-    return {
-      name: `NFT #${tokenId}`,
-      image: '/placeholder-nft.svg',
-      description: 'Metadata unavailable'
-    };
+    const sanitized = sanitizeMetadata(data);
+    if (sanitized.error) {
+      return { error: sanitized.error };
+    }
+    
+    return { metadata: sanitized.metadata };
+    
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return { error: `Contract read failed: ${errorMessage}` };
   }
 }
 
 export function useNFTMetadata(contractAddress: string, tokenId: string) {
   const publicClient = usePublicClient();
   
-  const { data: metadata, isLoading: loading, error } = useQuery({
+  const { data: result, isLoading: loading, error } = useQuery({
     queryKey: ['nft-metadata', contractAddress?.toLowerCase(), tokenId],
     queryFn: async () => {
       // Check optimized cache first
       const cacheKey = `${contractAddress?.toLowerCase()}_${tokenId}`;
       const cached = metadataCache.get(cacheKey);
       if (cached) {
-        return cached;
+        return { metadata: cached };
       }
       
       const result = await fetchNFTMetadata(publicClient, contractAddress, tokenId);
-      metadataCache.set(cacheKey, result);
+      
+      // Only cache successful results
+      if (result.metadata) {
+        metadataCache.set(cacheKey, result.metadata);
+      }
+      
       return result;
     },
     enabled: !!publicClient && !!contractAddress && !!tokenId,
@@ -180,8 +215,10 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
     retry: false, // Disable retries to reduce console spam
     retryDelay: 2000, // Fixed delay
     placeholderData: {
-      name: `NFT #${tokenId}`,
-      image: '/placeholder-nft.svg',
+      metadata: {
+        name: `NFT #${tokenId}`,
+        image: '/placeholder-nft.svg',
+      }
     },
     // Prevent excessive requests
     refetchOnWindowFocus: false,
@@ -191,9 +228,17 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
     networkMode: 'online',
   });
 
+  // Handle the structured result
+  const metadata = result?.metadata || { 
+    name: `NFT #${tokenId}`, 
+    image: '/placeholder-nft.svg',
+    description: result?.error || 'Metadata unavailable'
+  };
+
   return { 
-    metadata: metadata || { name: `NFT #${tokenId}`, image: '/placeholder-nft.svg' }, 
+    metadata, 
     loading, 
-    error: !!error 
+    error: !!error || !!result?.error,
+    errorMessage: result?.error
   };
 }
