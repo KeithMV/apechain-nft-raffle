@@ -14,8 +14,8 @@ export default function WalletInfo() {
     switch (chainId) {
       case 33139: // ApeChain
         return { symbol: 'APE', emoji: '🐵', color: 'orange' };
-      case 8453: // Base
-        return { symbol: 'ETH', emoji: '🔵', color: 'blue' };
+      case 137: // Polygon
+        return { symbol: 'MATIC', emoji: '🔷', color: 'purple' };
       default:
         return { symbol: 'ETH', emoji: '⚡', color: 'gray' };
     }
@@ -55,7 +55,7 @@ export default function WalletInfo() {
 
   const colorClasses = {
     orange: 'from-orange-400 to-red-500 text-orange-400',
-    blue: 'from-blue-400 to-blue-600 text-blue-400',
+    purple: 'from-purple-400 to-purple-600 text-purple-400',
     gray: 'from-gray-400 to-gray-600 text-gray-400'
   };
 
