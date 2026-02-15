@@ -1,8 +1,9 @@
-export const addApeChainToMetaMask = async (): Promise<void> => {
+export const addApeChainToMetaMask = async (): Promise<{ success: boolean; error?: string }> => {
   // Proper type guard for ethereum object
   if (typeof window === 'undefined' || !window.ethereum || !window.ethereum.request) {
-    console.warn('Ethereum provider not available');
-    return;
+    const error = 'MetaMask not detected. Please install MetaMask to add ApeChain.';
+    console.warn(error);
+    return { success: false, error };
   }
 
   try {
@@ -20,10 +21,29 @@ export const addApeChainToMetaMask = async (): Promise<void> => {
         blockExplorerUrls: ['https://apechain.calderaexplorer.xyz'],
       }],
     });
+    return { success: true };
   } catch (error: unknown) {
-    // Silently handle MetaMask extension errors
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('ApeChain add failed:', error);
+    // Handle specific MetaMask error codes
+    if (error && typeof error === 'object' && 'code' in error) {
+      const metamaskError = error as { code: number; message?: string };
+      
+      switch (metamaskError.code) {
+        case 4001:
+          return { success: false, error: 'User rejected the request to add ApeChain' };
+        case -32602:
+          return { success: false, error: 'Invalid parameters for adding ApeChain' };
+        case -32603:
+          return { success: false, error: 'Internal error occurred while adding ApeChain' };
+        default:
+          const errorMsg = metamaskError.message || 'Unknown error occurred';
+          console.error('Failed to add ApeChain:', errorMsg);
+          return { success: false, error: `Failed to add ApeChain: ${errorMsg}` };
+      }
     }
+    
+    // Handle generic errors
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error('Failed to add ApeChain:', errorMessage);
+    return { success: false, error: `Failed to add ApeChain: ${errorMessage}` };
   }
 };
