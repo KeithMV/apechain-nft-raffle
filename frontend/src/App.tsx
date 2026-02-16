@@ -34,9 +34,6 @@ const NetworkAwareTitle = () => {
       <h1 className={titleStyle}>
         {networkName} Raffles
       </h1>
-      <span className={badgeStyle}>
-        {nativeCurrency}
-      </span>
     </div>
   );
 };
