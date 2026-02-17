@@ -17,23 +17,30 @@ import './utils/consoleSecure'; // Auto-enables production console security
 
 import './index.css';
 
-// Network-aware title component
-const NetworkAwareTitle = () => {
-  const { networkName, nativeCurrency, isApeChain } = useNetwork();
-  
-  const titleStyle = isApeChain 
-    ? 'text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent font-sans tracking-tight text-center'
-    : 'text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent font-sans tracking-tight text-center';
-    
-  const badgeStyle = isApeChain
-    ? 'px-2 py-1 bg-emerald-500/20 border border-emerald-400/30 rounded-full text-emerald-300 text-xs font-medium'
-    : 'px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-medium';
-  
+// Web3 title component with animated gradient
+const Web3Title = () => {
   return (
     <div className="flex items-center gap-2">
-      <h1 className={titleStyle}>
-        {networkName} Raffles
+      <h1 
+        className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-center leading-tight font-sans tracking-tight bg-clip-text text-transparent"
+        style={{
+          backgroundImage: 'linear-gradient(45deg, #10b981, #8b5cf6, #06b6d4, #10b981)',
+          backgroundSize: '300% 300%',
+          animation: 'gradientShift 6s ease-in-out infinite'
+        }}
+      >
+        Web3 Raffles
       </h1>
+      
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+        `
+      }} />
     </div>
   );
 };
@@ -91,7 +98,7 @@ const Header = React.memo(function Header() {
         <div className="flex flex-col justify-center items-center py-4 space-y-3">
           <div className="flex flex-col items-center space-y-2">
             <div>
-              <NetworkAwareTitle />
+              <Web3Title />
             </div>
             {isConnected && (
               <nav className="flex space-x-2">
@@ -146,43 +153,56 @@ const Header = React.memo(function Header() {
 });
 
 const Hero = React.memo(function Hero() {
+  const handleContractClick = (address: string, explorerUrl: string) => {
+    window.open(`${explorerUrl}/address/${address}`, '_blank', 'noopener,noreferrer');
+  };
+
   return (
-    <div className="relative text-white py-12 sm:py-16 lg:py-24 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-        <div className="inline-flex items-center px-3 py-2 sm:px-4 bg-emerald-500/10 border border-emerald-400/30 rounded-full mb-6 sm:mb-8 backdrop-blur-sm">
-          <span className="w-2 h-2 bg-emerald-400 rounded-full mr-2 shadow-lg shadow-emerald-400/50"></span>
-          <span className="text-emerald-300 text-xs sm:text-sm font-medium tracking-wider">Live on ApeChain</span>
-        </div>
-        <h2 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent leading-tight font-sans tracking-tight">
-          NFT Raffles
-        </h2>
-        <p className="text-base sm:text-lg lg:text-xl text-slate-300 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
-          Create and participate in NFT raffles with transparent, provably fair results.
+    <div className="relative text-white py-16 sm:py-24 lg:py-32 overflow-hidden">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+        {/* Platform Description */}
+        <p className="text-2xl sm:text-3xl lg:text-4xl text-slate-300 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed">
+          A NFT raffle platform. Connect wallet and have fun.
         </p>
-        <div className="relative bg-slate-800/80 backdrop-blur-xl border border-emerald-400/30 rounded-3xl p-4 sm:p-6 lg:p-8 mx-4 sm:mx-0 sm:inline-block shadow-2xl shadow-emerald-500/20 max-w-full">
-          <div className="relative z-10">
-            <div className="flex items-center justify-center mb-3 sm:mb-4">
-              <div className="w-3 h-3 bg-emerald-400 rounded-full mr-3 shadow-lg shadow-emerald-400/50"></div>
-              <p className="text-xs sm:text-sm text-emerald-400 font-semibold tracking-wider">Contract Active</p>
-            </div>
-            <div className="text-xs text-slate-400 font-mono mb-3 break-all px-2">
-              {RAFFLE_FACTORY_ADDRESS}
-            </div>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-xs">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 shadow-sm shadow-emerald-400/50"></div>
-                <span className="text-emerald-400 font-medium tracking-wider">Fair</span>
+        
+        {/* Contract Description */}
+        <div className="mb-6 sm:mb-8">
+          <p className="text-lg sm:text-xl lg:text-2xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            These are the smart contracts that power our platform.
+          </p>
+        </div>
+        
+        {/* Contract Address Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 sm:mb-12">
+          <button
+            onClick={() => handleContractClick('0x1627E7e63b63878E61f91D336385a59B1747934a', 'https://apescan.io')}
+            className="group relative px-6 py-4 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-400/30 text-emerald-300 rounded-xl hover:from-emerald-500/30 hover:to-teal-500/30 hover:border-emerald-400/50 transition-all duration-300 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 hover:scale-105 active:scale-95 backdrop-blur-sm w-full max-w-sm"
+          >
+            <div className="flex flex-col items-center space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-emerald-400 rounded-full shadow-lg shadow-emerald-400/50"></div>
+                <span className="font-semibold text-base sm:text-lg">ApeChain Contract</span>
               </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-teal-400 rounded-full mr-2 shadow-sm shadow-teal-400/50"></div>
-                <span className="text-teal-400 font-medium tracking-wider">5% Fee</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-cyan-400 rounded-full mr-2 shadow-sm shadow-cyan-400/50"></div>
-                <span className="text-cyan-400 font-medium tracking-wider">Fast</span>
-              </div>
+              <code className="text-sm sm:text-base font-mono text-emerald-200 group-hover:text-emerald-100 transition-colors break-all text-center px-2">
+                0x1627E7e63b63878E61f91D336385a59B1747934a
+              </code>
             </div>
-          </div>
+          </button>
+          
+          <button
+            onClick={() => handleContractClick('0x5854AF7c836275c55469350a114F62a1609c4A42', 'https://polygonscan.com')}
+            className="group relative px-6 py-4 bg-gradient-to-r from-purple-500/20 to-violet-500/20 border border-purple-400/30 text-purple-300 rounded-xl hover:from-purple-500/30 hover:to-violet-500/30 hover:border-purple-400/50 transition-all duration-300 shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20 hover:scale-105 active:scale-95 backdrop-blur-sm w-full max-w-sm"
+          >
+            <div className="flex flex-col items-center space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-purple-400 rounded-full shadow-lg shadow-purple-400/50"></div>
+                <span className="font-semibold text-base sm:text-lg">Polygon Contract</span>
+              </div>
+              <code className="text-sm sm:text-base font-mono text-purple-200 group-hover:text-purple-100 transition-colors break-all text-center px-2">
+                0x5854AF7c836275c55469350a114F62a1609c4A42
+              </code>
+            </div>
+          </button>
         </div>
       </div>
     </div>
@@ -191,13 +211,14 @@ const Hero = React.memo(function Hero() {
 
 const ConnectWalletPage = React.memo(function ConnectWalletPage() {
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <Hero />
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        <MobileBanner />
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <Hero />
+        </div>
       </div>
-    </>
+    </div>
   );
 });
 
