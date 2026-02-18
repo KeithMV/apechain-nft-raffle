@@ -348,6 +348,10 @@ export default function BrowseRaffles() {
     if (buyError) {
       if (buyError.message?.includes('User rejected')) {
         toast.error('Transaction cancelled by user');
+      } else if (buyError.message?.includes('Unauthorized') || buyError.message?.includes('JSON-RPC')) {
+        toast.error('Network connection issue. Try refreshing or use WalletConnect.');
+      } else if (buyError.message?.includes('insufficient funds')) {
+        toast.error('Insufficient funds for transaction');
       } else {
         toast.error('Failed to buy tickets');
       }
