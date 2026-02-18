@@ -33,7 +33,6 @@ export function useCancelRaffle() {
         address: raffleAddress as `0x${string}`,
         abi: RAFFLE_ABI,
         functionName: 'cancelRaffle',
-        chainId: chainId,
       });
     } catch (error) {
       console.error('Cancel raffle failed:', error);
