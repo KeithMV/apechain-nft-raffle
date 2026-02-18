@@ -83,7 +83,6 @@ export function useNFTApproval() {
       abi: ERC721_ABI,
       functionName: 'setApprovalForAll',
       args: [factoryAddress as `0x${string}`, true],
-      chainId: chainId,
     });
   };
 
@@ -151,7 +150,6 @@ export function useCreateRaffle() {
         BigInt(params.maxTickets),
         BigInt(params.duration)
       ],
-      chainId: chainId,
     });
   };
 
@@ -199,7 +197,6 @@ export function useEmergencyPause() {
       address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'emergencyPause',
-      chainId: chainId,
     });
   };
 
@@ -208,7 +205,6 @@ export function useEmergencyPause() {
       address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'emergencyUnpause',
-      chainId: chainId,
     });
   };
 
@@ -297,7 +293,6 @@ export function useBuyTickets() {
         functionName: 'buyTickets',
         args: [BigInt(quantity)],
         value: totalCost,
-        chainId: chainId,
       });
       return result;
     } catch (error) {
@@ -340,7 +335,6 @@ export function useCommitRandomness() {
       abi: RAFFLE_CONTRACT_ABI,
       functionName: 'commitRandomness',
       args: [commitHash as `0x${string}`],
-      chainId: chainId,
     });
   };
 
@@ -380,7 +374,6 @@ export function useRevealWinner() {
       abi: RAFFLE_CONTRACT_ABI,
       functionName: 'revealAndSelectWinner',
       args: [nonce],
-      chainId: chainId,
     });
   };
 
@@ -419,7 +412,6 @@ export function useEmergencyWinner() {
       address: raffleContract as `0x${string}`,
       abi: RAFFLE_CONTRACT_ABI,
       functionName: 'emergencySelectWinner',
-      chainId: chainId,
     });
   };
 
