@@ -39,11 +39,11 @@ export const polygonChain = defineChain({
   rpcUrls: {
     default: { 
       http: [
-        'https://polygon-mainnet.g.alchemy.com/v2/demo',
         'https://polygon-rpc.com',
         'https://rpc-mainnet.matic.network',
         'https://matic-mainnet.chainstacklabs.com',
-        'https://rpc-mainnet.maticvigil.com'
+        'https://rpc-mainnet.maticvigil.com',
+        'https://polygonapi.terminet.io/rpc'
       ]
     },
   },

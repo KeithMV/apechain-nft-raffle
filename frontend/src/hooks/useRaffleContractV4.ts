@@ -348,43 +348,19 @@ export function useBuyTickets() {
     const ticketPriceWei = parseEther(ticketPrice);
     const totalCost = ticketPriceWei * BigInt(quantity);
     
-    // Simple retry logic for RPC issues
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const result = await writeContractAsync({
-          address: raffleContract as `0x${string}`,
-          abi: RAFFLE_CONTRACT_ABI,
-          functionName: 'buyTickets',
-          args: [BigInt(quantity)],
-          value: totalCost,
-          chainId: chainId,
-        });
-        return result;
-      } catch (error: any) {
-        console.log(`Attempt ${attempt} failed:`, error.message);
-        
-        // Don't retry user rejections or insufficient funds
-        if (error.message?.includes('User rejected') || 
-            error.message?.includes('insufficient funds')) {
-          setIsProcessing(false);
-          throw error;
-        }
-        
-        // Retry RPC/network issues
-        if (attempt < 3 && (
-          error.message?.includes('Unauthorized') ||
-          error.message?.includes('JSON-RPC') ||
-          error.message?.includes('network') ||
-          error.message?.includes('timeout')
-        )) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
-          continue;
-        }
-        
-        // Last attempt or non-retryable error
-        setIsProcessing(false);
-        throw error;
-      }
+    try {
+      const result = await writeContractAsync({
+        address: raffleContract as `0x${string}`,
+        abi: RAFFLE_CONTRACT_ABI,
+        functionName: 'buyTickets',
+        args: [BigInt(quantity)],
+        value: totalCost,
+        chainId: chainId,
+      });
+      return result;
+    } catch (error) {
+      setIsProcessing(false);
+      throw error;
     }
   };
 
