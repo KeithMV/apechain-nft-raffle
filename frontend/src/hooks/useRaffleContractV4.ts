@@ -353,6 +353,7 @@ export function useBuyTickets() {
         functionName: 'buyTickets',
         args: [BigInt(quantity)],
         value: totalCost,
+        chainId: chainId,
       });
       return result;
     } catch (error) {
