@@ -139,6 +139,7 @@ export function useNFTApprovalV4() {
         abi: ERC721_ABI,
         functionName: 'setApprovalForAll',
         args: [factoryAddress as `0x${string}`, true],
+        chainId: chainId,
       });
     } catch (error) {
       setIsProcessing(false);
@@ -241,6 +242,7 @@ export function useCreateRaffleV4() {
           BigInt(params.maxTickets),
           BigInt(params.duration)
         ],
+        chainId: chainId,
       });
       return result;
     } catch (error: any) {
@@ -389,6 +391,7 @@ export function useEmergencyPause() {
       address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'emergencyPause',
+      chainId: chainId,
     });
   };
 
@@ -397,6 +400,7 @@ export function useEmergencyPause() {
       address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'emergencyUnpause',
+      chainId: chainId,
     });
   };
 
