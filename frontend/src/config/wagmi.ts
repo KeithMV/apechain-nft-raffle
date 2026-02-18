@@ -16,10 +16,7 @@ export const apeChain = defineChain({
   },
   rpcUrls: {
     default: { 
-      http: [
-        'https://rpc.apechain.com',
-        'https://apechain.calderachain.xyz/http'
-      ]
+      http: [envConfig.rpcUrl, 'https://rpc.apechain.com'] 
     },
   },
   blockExplorers: {
