@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import ApeTokenBalance from './ApeTokenBalance';
 import BasicNFTImage from './BasicNFTImage';
+import { LiveCountdown } from './LiveCountdown';
 import toast from 'react-hot-toast';
 import { useAllRafflesV4 } from '../hooks/useRafflePositionsV4';
 import { useBuyTickets } from '../hooks/useRaffleContractV4';
@@ -109,11 +110,15 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
         <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
           <div>
             <p className="text-pink-400/70 font-mono tracking-wide">{isExpired ? 'Status' : 'Time Left'}</p>
-            <p className={`font-mono tracking-wider ${
-              isExpired ? 'text-red-300' : 'text-pink-300'
-            }`}>
-              {isExpired ? 'Ended' : formatTimeRemaining(raffle.endTime)}
-            </p>
+            {isExpired ? (
+              <p className="text-red-300 font-mono tracking-wider">Ended</p>
+            ) : (
+              <LiveCountdown 
+                endTime={raffle.endTime} 
+                isActive={raffle.isActive} 
+                className="tracking-wider"
+              />
+            )}
           </div>
           <div>
             <p className="text-pink-400/70 font-mono tracking-wide">{isExpired ? 'Winner' : 'Tickets Sold'}</p>
