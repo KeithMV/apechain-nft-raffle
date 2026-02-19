@@ -21,6 +21,9 @@ jobs:
     - name: Build frontend
       run: cd frontend && CI=false yarn build
       env:
+        REACT_APP_APP_NAME: "ApeChain NFT Raffles"
+        REACT_APP_APP_URL: "https://apechainraffles.io"
+        REACT_APP_ENV: "production"
         REACT_APP_WALLETCONNECT_PROJECT_ID: ${{ secrets.WALLETCONNECT_PROJECT_ID }}
       
     - name: Configure AWS credentials
