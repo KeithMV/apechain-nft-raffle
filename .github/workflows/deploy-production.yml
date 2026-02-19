@@ -1,0 +1,59 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        rm -rf node_modules yarn.lock
+        yarn install
+      
+    - name: Build frontend for production
+      run: |
+        cd frontend
+        CI=false yarn build
+      env:
+        REACT_APP_APP_NAME: "ApeChain NFT Raffles"
+        REACT_APP_APP_URL: "https://apechainraffles.io"
+        REACT_APP_ENV: "production"
+        REACT_APP_NETWORK: "apechain"
+        REACT_APP_CHAIN_ID: "33139"
+        REACT_APP_APECHAIN_RPC_URL: "https://apechain.calderachain.xyz/http"
+        REACT_APP_CONTRACT_ADDRESS: "0x1627E7e63b63878E61f91D336385a59B1747934a"
+        REACT_APP_WALLETCONNECT_PROJECT_ID: "b848c907908cee0c1bcf0ab0493da6c4"
+        REACT_APP_ENABLE_LOGGING: "false"
+        GENERATE_SOURCEMAP: "false"
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+        
+    - name: Deploy to Production S3
+      run: |
+        # TODO: Add production S3 bucket and CloudFront distribution
+        echo "🚧 Production deployment not configured yet"
+        echo "📋 Build completed successfully for production"
+        echo "🌐 Production URL: https://apechainraffles.io"
+        
+    - name: Production deployment complete
+      run: |
+        echo "✅ Production build complete!"
+        echo "🌐 Production URL: https://apechainraffles.io"
+        echo "⚠️  Manual deployment to production S3 required"
