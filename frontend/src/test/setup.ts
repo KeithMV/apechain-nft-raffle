@@ -1,6 +1,17 @@
 import '@testing-library/jest-dom'
 import { beforeAll, vi } from 'vitest'
 
+// Mock wagmi hooks
+vi.mock('wagmi', () => ({
+  useAccount: vi.fn(() => ({ address: '0x123', isConnected: true })),
+  useChainId: vi.fn(() => 33139),
+  useConnect: vi.fn(() => ({ connect: vi.fn(), connectors: [] })),
+  useDisconnect: vi.fn(() => ({ disconnect: vi.fn() })),
+  useReadContract: vi.fn(() => ({ data: null, isLoading: false })),
+  useWriteContract: vi.fn(() => ({ writeContract: vi.fn(), isPending: false })),
+  useWaitForTransactionReceipt: vi.fn(() => ({ isLoading: false, isSuccess: false })),
+}))
+
 // Mock localStorage
 const localStorageMock = {
   getItem: vi.fn(),
