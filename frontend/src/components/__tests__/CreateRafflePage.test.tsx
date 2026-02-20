@@ -1,6 +1,42 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
 import CreateRafflePage from '../CreateRafflePage'
+
+// Mock wagmi hooks with simple return values
+vi.mock('wagmi', () => ({
+  useAccount: vi.fn(),
+  useChainId: vi.fn(),
+  useSwitchChain: vi.fn(),
+}))
+
+// Mock react-router-dom
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom')
+  return {
+    ...actual,
+    useNavigate: vi.fn(() => vi.fn()),
+  }
+})
+
+// Mock Network Context
+vi.mock('../../contexts/NetworkContext', () => ({
+  useNetwork: vi.fn(() => ({
+    theme: 'apechain',
+    nativeCurrency: 'APE',
+    networkName: 'ApeChain',
+    isApeChain: true,
+    isPolygon: false,
+  })),
+}))
+
+// Mock ApeChain switching
+vi.mock('../../hooks/useApeChainSwitching', () => ({
+  useApeChainSwitching: vi.fn(() => ({
+    switchToApeChain: vi.fn(),
+    isSwitching: false,
+  })),
+}))
 
 // Mock wagmi hooks with simple return values
 vi.mock('wagmi', () => ({
@@ -56,8 +92,12 @@ describe('CreateRafflePage', () => {
     vi.mocked(useNFTMetadata).mockReturnValue({ metadata: null, loading: false, error: null, refetch: vi.fn() } as any)
   })
 
+  const renderWithRouter = (component: React.ReactElement) => {
+    return render(<BrowserRouter>{component}</BrowserRouter>)
+  }
+
   it('renders create raffle form', () => {
-    render(<CreateRafflePage />)
+    renderWithRouter(<CreateRafflePage />)
     
     expect(screen.getByText('Create NFT Raffle')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('0x...')).toBeInTheDocument()
@@ -67,7 +107,7 @@ describe('CreateRafflePage', () => {
   })
 
   it('validates NFT contract address format', async () => {
-    render(<CreateRafflePage />)
+    renderWithRouter(<CreateRafflePage />)
     
     const contractInput = screen.getByPlaceholderText('0x...')
     fireEvent.change(contractInput, { target: { value: 'invalid-address' } })
@@ -76,7 +116,7 @@ describe('CreateRafflePage', () => {
   })
 
   it('validates ticket price is positive', async () => {
-    render(<CreateRafflePage />)
+    renderWithRouter(<CreateRafflePage />)
     
     const priceInput = screen.getByPlaceholderText('0.1')
     fireEvent.change(priceInput, { target: { value: '0' } })
@@ -85,7 +125,7 @@ describe('CreateRafflePage', () => {
   })
 
   it('validates max tickets range', async () => {
-    render(<CreateRafflePage />)
+    renderWithRouter(<CreateRafflePage />)
     
     const maxTicketsInput = screen.getByPlaceholderText('100')
     fireEvent.change(maxTicketsInput, { target: { value: '0' } })
@@ -96,7 +136,7 @@ describe('CreateRafflePage', () => {
   it('shows approval button when NFT needs approval', async () => {
     vi.mocked(useNFTApprovalStatusV4).mockReturnValue({ data: false, refetch: vi.fn() } as any)
 
-    render(<CreateRafflePage />)
+    renderWithRouter(<CreateRafflePage />)
     
     const contractInput = screen.getByPlaceholderText('0x...')
     fireEvent.change(contractInput, { target: { value: '0x1234567890123456789012345678901234567890' } })
@@ -109,7 +149,7 @@ describe('CreateRafflePage', () => {
   it('shows processing state during raffle creation', () => {
     vi.mocked(useCreateRaffleV4).mockReturnValue({ createRaffle: vi.fn(), isPending: true, isSuccess: false } as any)
 
-    render(<CreateRafflePage />)
+    renderWithRouter(<CreateRafflePage />)
     
     expect(screen.getByText('Creating raffle...')).toBeInTheDocument()
   })
@@ -119,7 +159,7 @@ describe('CreateRafflePage', () => {
     vi.mocked(useCreateRaffleV4).mockReturnValue({ createRaffle: mockCreateRaffle, isPending: false, isSuccess: false } as any)
     vi.mocked(useNFTApprovalStatusV4).mockReturnValue({ data: true, refetch: vi.fn() } as any)
 
-    render(<CreateRafflePage />)
+    renderWithRouter(<CreateRafflePage />)
     
     // Fill form
     fireEvent.change(screen.getByPlaceholderText('0x...'), { target: { value: '0x1234567890123456789012345678901234567890' } })
