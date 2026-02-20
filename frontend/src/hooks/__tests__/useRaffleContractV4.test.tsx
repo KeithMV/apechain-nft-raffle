@@ -7,6 +7,7 @@ import { ReactNode } from 'react'
 // Mock wagmi hooks
 vi.mock('wagmi', () => ({
   useAccount: vi.fn(),
+  useChainId: vi.fn(() => 33139),
   useWriteContract: vi.fn(),
   useWaitForTransactionReceipt: vi.fn(),
   useReadContract: vi.fn(),

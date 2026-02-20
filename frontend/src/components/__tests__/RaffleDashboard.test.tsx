@@ -5,12 +5,14 @@ import RaffleDashboard from '../RaffleDashboard'
 // Mock wagmi hooks
 vi.mock('wagmi', () => ({
   useAccount: vi.fn(),
+  useChainId: vi.fn(() => 33139),
 }))
 
 // Mock custom hooks
 vi.mock('../../hooks/useRafflePositionsV4', () => ({
   useUserRafflePositionsV4: vi.fn(),
   useCreatedRafflesV4: vi.fn(),
+  useClearRaffleCacheV4: vi.fn(() => vi.fn()),
 }))
 
 vi.mock('../../hooks/useCancelRaffle', () => ({
@@ -19,6 +21,17 @@ vi.mock('../../hooks/useCancelRaffle', () => ({
 
 vi.mock('../../hooks/useWinnerSelection', () => ({
   useWinnerSelection: vi.fn(),
+}))
+
+// Mock Network Context
+vi.mock('../../contexts/NetworkContext', () => ({
+  useNetwork: vi.fn(() => ({
+    theme: 'apechain',
+    nativeCurrency: 'APE',
+    networkName: 'ApeChain',
+    isApeChain: true,
+    isPolygon: false,
+  })),
 }))
 
 // Mock components
