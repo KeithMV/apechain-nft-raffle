@@ -1,13 +1,13 @@
 version: 2.1
 
 jobs:
-  build-frontend:
+  build-frontend-staging:
     docker:
       - image: cimg/node:20.19
     steps:
       - checkout
       - run:
-          name: Install frontend dependencies (NO CACHE)
+          name: Install frontend dependencies
           command: |
             cd frontend
             rm -rf node_modules yarn.lock
@@ -18,12 +18,56 @@ jobs:
             cd frontend
             yarn test --coverage --run --passWithNoTests
       - run:
-          name: Build frontend (CLEAN)
+          name: Build frontend for staging
           command: |
             cd frontend
             rm -rf build/ node_modules/.cache/
             CI=false yarn build
-            echo "✅ Build hash: $(ls build/static/js/main.*.js | head -1)"
+          environment:
+            REACT_APP_APP_NAME: "ApeChain NFT Raffles (STAGING)"
+            REACT_APP_APP_URL: "https://staging.apechainraffles.io"
+            REACT_APP_ENV: "staging"
+            REACT_APP_NETWORK: "apechain"
+            REACT_APP_CHAIN_ID: "33139"
+            REACT_APP_APECHAIN_RPC_URL: "https://apechain.calderachain.xyz/http"
+            REACT_APP_CONTRACT_ADDRESS: "0x1627E7e63b63878E61f91D336385a59B1747934a"
+            REACT_APP_WALLETCONNECT_PROJECT_ID: "b848c907908cee0c1bcf0ab0493da6c4"
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/build
+
+  build-frontend-production:
+    docker:
+      - image: cimg/node:20.19
+    steps:
+      - checkout
+      - run:
+          name: Install frontend dependencies
+          command: |
+            cd frontend
+            rm -rf node_modules yarn.lock
+            yarn install --network-timeout 300000
+      - run:
+          name: Run frontend tests
+          command: |
+            cd frontend
+            yarn test --coverage --run --passWithNoTests
+      - run:
+          name: Build frontend for production
+          command: |
+            cd frontend
+            rm -rf build/ node_modules/.cache/
+            CI=false yarn build
+          environment:
+            REACT_APP_APP_NAME: "ApeChain NFT Raffles"
+            REACT_APP_APP_URL: "https://apechainraffles.io"
+            REACT_APP_ENV: "production"
+            REACT_APP_NETWORK: "apechain"
+            REACT_APP_CHAIN_ID: "33139"
+            REACT_APP_APECHAIN_RPC_URL: "https://apechain.calderachain.xyz/http"
+            REACT_APP_CONTRACT_ADDRESS: "0x1627E7e63b63878E61f91D336385a59B1747934a"
+            REACT_APP_WALLETCONNECT_PROJECT_ID: "b848c907908cee0c1bcf0ab0493da6c4"
       - persist_to_workspace:
           root: .
           paths:
@@ -95,7 +139,7 @@ jobs:
             yarn cdk synth > /dev/null
             echo "✅ CDK infrastructure validation complete!"
 
-  deploy:
+  deploy-staging:
     docker:
       - image: cimg/aws:2024.03
     steps:
@@ -103,19 +147,22 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Verify build artifacts
+          name: Deploy to Staging S3
           command: |
-            echo "📋 Checking workspace contents..."
-            ls -la frontend/
-            if [ -d "frontend/build" ]; then
-              echo "✅ Build directory found"
-              ls -la frontend/build/static/js/main.*.js || echo "⚠️ No main.js found"
-            else
-              echo "❌ Build directory missing"
-              exit 1
-            fi
+            aws s3 sync frontend/build/ s3://apechain-nft-raffle-staging-856872546342-us-east-1/ --delete
+            aws cloudfront create-invalidation --distribution-id E2OQG8N4GFFTXI --paths "/*"
+            echo "✅ Staging deployment complete!"
+            echo "🌐 Staging URL: https://staging.apechainraffles.io"
+
+  deploy-production:
+    docker:
+      - image: cimg/aws:2024.03
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
       - run:
-          name: Deploy to AWS S3 via CDK
+          name: Deploy to Production S3
           command: |
             # Get CDK stack outputs
             BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name RaffleInfrastructureStack --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)
@@ -130,30 +177,54 @@ jobs:
             # Invalidate CloudFront cache
             aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
             
-            echo "✅ CDK-managed deployment complete!"
+            echo "✅ Production deployment complete!"
 
 workflows:
   version: 2
-  build_test_deploy:
+  staging_deploy:
     jobs:
-      - build-frontend:
+      - build-frontend-staging:
           filters:
             branches:
-              ignore: develop  # Skip CircleCI for staging branch
+              only: develop
       - build-contracts:
           filters:
             branches:
-              ignore: develop  # Skip CircleCI for staging branch
+              only: develop
       - test:
           requires:
-            - build-frontend
+            - build-frontend-staging
             - build-contracts
           filters:
             branches:
-              ignore: develop  # Skip CircleCI for staging branch
-      - deploy:
+              only: develop
+      - deploy-staging:
           requires:
             - test
           filters:
             branches:
-              ignore: develop  # Skip CircleCI for staging branch
+              only: develop
+  
+  production_deploy:
+    jobs:
+      - build-frontend-production:
+          filters:
+            branches:
+              only: main
+      - build-contracts:
+          filters:
+            branches:
+              only: main
+      - test:
+          requires:
+            - build-frontend-production
+            - build-contracts
+          filters:
+            branches:
+              only: main
+      - deploy-production:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
