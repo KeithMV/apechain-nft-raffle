@@ -40,11 +40,27 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
   address?: string;
   nativeCurrency: string;
 }) => {
-  const quantity = ticketQuantities[raffle.raffleContract] || 1;
-  const totalCost = (parseFloat(raffle.ticketPrice) * quantity).toFixed(3);
-  const progress = (raffle.ticketsSold / raffle.maxTickets) * 100;
-  const availableTickets = raffle.maxTickets - raffle.ticketsSold;
-  const isExpired = !raffle.isActive || raffle.completed;
+  // Memoize expensive calculations
+  const { quantity, totalCost, progress, availableTickets, isExpired } = useMemo(() => {
+    const qty = ticketQuantities[raffle.raffleContract] || 1;
+    const cost = (parseFloat(raffle.ticketPrice) * qty).toFixed(3);
+    const prog = (raffle.ticketsSold / raffle.maxTickets) * 100;
+    const available = raffle.maxTickets - raffle.ticketsSold;
+    const expired = !raffle.isActive || raffle.completed;
+    
+    return {
+      quantity: qty,
+      totalCost: cost,
+      progress: prog,
+      availableTickets: available,
+      isExpired: expired
+    };
+  }, [raffle.raffleContract, raffle.ticketPrice, raffle.ticketsSold, raffle.maxTickets, raffle.isActive, raffle.completed, ticketQuantities]);
+
+  // Memoize input change handler
+  const handleQuantityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setTicketQuantity(raffle.raffleContract, parseInt(e.target.value) || 1, availableTickets);
+  }, [raffle.raffleContract, availableTickets, setTicketQuantity]);
 
   return (
     <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className={`relative bg-black/80 backdrop-blur-xl border rounded-xl overflow-hidden transition-all duration-300 group shadow-lg ${
@@ -191,7 +207,7 @@ const RaffleCard = React.memo(({ raffle, index, ticketQuantities, setTicketQuant
                     min="1"
                     max={Math.min(100, availableTickets)}
                     value={quantity}
-                    onChange={(e) => setTicketQuantity(raffle.raffleContract, parseInt(e.target.value) || 1, availableTickets)}
+                    onChange={handleQuantityChange}
                     className="w-full bg-slate-800/80 border border-cyan-400/30 rounded-xl px-3 py-2 text-pink-300 text-sm font-mono focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition-all"
                   />
                 </div>
@@ -233,20 +249,23 @@ export default function BrowseRaffles() {
   const { address } = useAccount();
   const { nativeCurrency, isApeChain } = useNetwork();
   
-  console.log('🎨 BrowseRaffles: isApeChain =', isApeChain, 'currency =', nativeCurrency);
+  // Remove debug console.log for production
+  // console.log('🎨 BrowseRaffles: isApeChain =', isApeChain, 'currency =', nativeCurrency);
   
-  // Network-aware styling
-  const borderColor = isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30';
-  const shadowColor = isApeChain ? 'shadow-emerald-500/20' : 'shadow-blue-500/20';
-  const gradientBg = isApeChain 
-    ? 'from-emerald-500/10 via-teal-500/10 to-cyan-500/10'
-    : 'from-blue-500/10 via-indigo-500/10 to-purple-500/10';
-  const titleGradient = isApeChain
-    ? 'from-emerald-400 via-teal-300 to-cyan-400'
-    : 'from-blue-400 via-indigo-300 to-purple-400';
-  const activeButtonStyle = isApeChain
-    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
-    : 'bg-blue-500/20 text-blue-300 border border-blue-400/30';
+  // Memoize network-aware styling to prevent recalculation
+  const styles = useMemo(() => ({
+    borderColor: isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30',
+    shadowColor: isApeChain ? 'shadow-emerald-500/20' : 'shadow-blue-500/20',
+    gradientBg: isApeChain 
+      ? 'from-emerald-500/10 via-teal-500/10 to-cyan-500/10'
+      : 'from-blue-500/10 via-indigo-500/10 to-purple-500/10',
+    titleGradient: isApeChain
+      ? 'from-emerald-400 via-teal-300 to-cyan-400'
+      : 'from-blue-400 via-indigo-300 to-purple-400',
+    activeButtonStyle: isApeChain
+      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
+      : 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
+  }), [isApeChain]);
   
   const [ticketQuantities, setTicketQuantities] = useState<{[key: string]: number}>({});
   const [showExpired, setShowExpired] = useState(false);
@@ -275,8 +294,9 @@ export default function BrowseRaffles() {
 
 
 
-  const { buyTickets, isPending: buyPending, isSuccess: buySuccess, error: buyError } = useBuyTickets();
-  const { startWinnerSelection, revealWinner, emergencyReveal, isPending: selectionPending, revealSuccess } = useWinnerSelection();
+  // Remove unused destructured variables to fix warnings
+  const { buyTickets, isSuccess: buySuccess, error: buyError } = useBuyTickets();
+  const { startWinnerSelection, revealSuccess } = useWinnerSelection();
 
   // Auto-refresh when winner selection completes
   useEffect(() => {
@@ -287,7 +307,8 @@ export default function BrowseRaffles() {
     }
   }, [revealSuccess, refetch]);
 
-  const handleBuyTickets = async (raffle: CreatedRaffle) => {
+  // Memoize handlers to prevent recreation on every render
+  const handleBuyTickets = useCallback(async (raffle: CreatedRaffle) => {
     const quantity = ticketQuantities[raffle.raffleContract] || 1;
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
     
@@ -296,9 +317,14 @@ export default function BrowseRaffles() {
       return;
     }
     
-    if (processingRaffles.has(raffle.raffleContract)) return;
+    // Use functional update to avoid dependency on processingRaffles
+    let isProcessing = false;
+    setProcessingRaffles(prev => {
+      isProcessing = prev.has(raffle.raffleContract);
+      return isProcessing ? prev : new Set(prev).add(raffle.raffleContract);
+    });
     
-    setProcessingRaffles(prev => new Set(prev).add(raffle.raffleContract));
+    if (isProcessing) return;
     
     try {
       await buyTickets(raffle.raffleContract, quantity, raffle.ticketPrice);
@@ -313,12 +339,17 @@ export default function BrowseRaffles() {
         return newSet;
       });
     }
-  };
+  }, [ticketQuantities, buyTickets]);
 
-  const handleWinnerSelection = async (raffle: CreatedRaffle) => {
-    if (processingRaffles.has(raffle.raffleContract)) return;
+  const handleWinnerSelection = useCallback(async (raffle: CreatedRaffle) => {
+    // Use functional update to avoid dependency on processingRaffles
+    let isProcessing = false;
+    setProcessingRaffles(prev => {
+      isProcessing = prev.has(raffle.raffleContract);
+      return isProcessing ? prev : new Set(prev).add(raffle.raffleContract);
+    });
     
-    setProcessingRaffles(prev => new Set(prev).add(raffle.raffleContract));
+    if (isProcessing) return;
     
     try {
       await startWinnerSelection(raffle.raffleContract);
@@ -337,7 +368,7 @@ export default function BrowseRaffles() {
         return newSet;
       });
     }
-  };
+  }, [startWinnerSelection]);
 
   // Handle buy success
   useEffect(() => {
@@ -361,13 +392,19 @@ export default function BrowseRaffles() {
 
   // Optimized ticket quantity setter with throttling
   const setTicketQuantity = useCallback(
-    throttle((raffleContract: string, quantity: number, maxAvailable: number) => {
+    (raffleContract: string, quantity: number, maxAvailable: number) => {
       setTicketQuantities(prev => ({
         ...prev,
         [raffleContract]: Math.max(1, Math.min(25, maxAvailable, quantity))
       }));
-    }, 100),
+    },
     []
+  );
+  
+  // Throttled version of setTicketQuantity
+  const throttledSetTicketQuantity = useMemo(
+    () => throttle(setTicketQuantity, 100),
+    [setTicketQuantity]
   );
   
   const formatTimeRemaining = useCallback((endTime: number) => {
@@ -419,22 +456,22 @@ export default function BrowseRaffles() {
   }
 
   return (
-    <div className={`relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border ${borderColor} rounded-3xl shadow-2xl ${shadowColor} overflow-hidden`}>
+    <div className={`relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border ${styles.borderColor} rounded-3xl shadow-2xl ${styles.shadowColor} overflow-hidden`}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(16,185,129,0.1),transparent_50%)] animate-pulse"></div>
       <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(-45deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:30px_30px]"></div>
       
       <div className="relative z-10">
-        <div className={`bg-gradient-to-r ${gradientBg} px-4 sm:px-8 py-6 sm:py-8 border-b ${borderColor}`}>
+        <div className={`bg-gradient-to-r ${styles.gradientBg} px-4 sm:px-8 py-6 sm:py-8 border-b ${styles.borderColor}`}>
           <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="flex-1">
-              <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r ${titleGradient} bg-clip-text text-transparent font-sans tracking-tight`}>NFT Raffles</h2>
+              <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent font-sans tracking-tight`}>NFT Raffles</h2>
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowExpired(!showExpired)}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   showExpired 
-                    ? activeButtonStyle
+                    ? styles.activeButtonStyle
                     : 'bg-slate-700/50 text-slate-400 border border-slate-600/30 hover:bg-slate-600/50'
                 }`}
               >
@@ -479,7 +516,7 @@ export default function BrowseRaffles() {
                       raffle={raffle}
                       index={index}
                       ticketQuantities={ticketQuantities}
-                      setTicketQuantity={setTicketQuantity}
+                      setTicketQuantity={throttledSetTicketQuantity}
                       handleBuyTickets={handleBuyTickets}
                       handleWinnerSelection={handleWinnerSelection}
                       processingRaffles={processingRaffles}
