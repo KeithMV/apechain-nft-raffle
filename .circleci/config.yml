@@ -22,7 +22,7 @@ jobs:
           command: |
             cd frontend
             rm -rf build/ node_modules/.cache/
-            CI=false yarn build
+            CI=false yarn build:staging
           environment:
             REACT_APP_APP_NAME: "ApeChain NFT Raffles (STAGING)"
             REACT_APP_APP_URL: "https://staging.apechainraffles.io"
@@ -58,7 +58,7 @@ jobs:
           command: |
             cd frontend
             rm -rf build/ node_modules/.cache/
-            CI=false yarn build
+            CI=false yarn build:production
           environment:
             REACT_APP_APP_NAME: "ApeChain NFT Raffles"
             REACT_APP_APP_URL: "https://apechainraffles.io"
