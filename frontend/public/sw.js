@@ -43,6 +43,11 @@ self.addEventListener('fetch', event => {
 async function handleRequest(request) {
   const url = new URL(request.url);
   
+  // SSRF Protection - validate request URL
+  if (!isValidUrl(url)) {
+    return new Response('Invalid request', { status: 400 });
+  }
+  
   // HTML - always network first
   if (request.headers.get('accept')?.includes('text/html')) {
     try {
@@ -72,4 +77,26 @@ async function handleRequest(request) {
   
   // Everything else - network first
   return fetch(request);
+}
+
+// SSRF Protection - validate URLs
+function isValidUrl(url) {
+  // Only allow HTTPS and same-origin requests
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+    return false;
+  }
+  
+  // Block private/local networks
+  const hostname = url.hostname;
+  if (hostname === 'localhost' ||
+      hostname.startsWith('127.') ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.includes('169.254.') ||
+      /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+    return false;
+  }
+  
+  // Allow same-origin and CDN requests
+  return true;
 }

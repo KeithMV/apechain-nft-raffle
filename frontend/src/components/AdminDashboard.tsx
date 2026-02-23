@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import EmergencyControls from './EmergencyControls';
 import ApeTokenBalance from './ApeTokenBalance';
 
-// Add known admin addresses here
-const ADMIN_ADDRESSES: string[] = [
+// Configuration: Admin wallet addresses
+const ADMIN_ADDRESSES: readonly string[] = [
   '0x4dF4e9aeb0d58AbE64E7FbC0160119304e9764E4', // Contract deployer wallet
   // Add additional admin wallet addresses here
-];
+] as const;
 
 // Validate admin addresses with proper Ethereum address validation
 const isValidEthereumAddress = (addr: string): boolean => {
@@ -31,18 +31,19 @@ export default function AdminDashboard() {
     );
   }
 
-  // Check if current user is admin (you can implement more sophisticated logic)
-  const isAdmin = (() => {
+  // Check admin authorization
+  const isAdmin = useMemo(() => {
+    if (!address) return false;
+    
     try {
-      if (!address) return false;
       return validatedAdmins.some(adminAddr => 
         adminAddr.toLowerCase() === address.toLowerCase()
       );
     } catch (error) {
-      // Return false on error checking admin status
+      console.error('Admin validation error:', error);
       return false;
     }
-  })();
+  }, [address]);
 
   if (!address) {
     return (
@@ -116,14 +117,22 @@ export default function AdminDashboard() {
                 <div className="p-4 bg-black/30 border border-red-500/20 rounded-lg">
                   <h4 className="text-red-300 font-mono font-medium mb-2">Platform Fee Management</h4>
                   <p className="text-red-400/70 text-sm font-mono mb-3">Adjust platform fee percentage</p>
-                  <button className="w-full bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-300 py-2 px-4 rounded-lg font-mono text-sm transition-colors">
+                  <button 
+                    className="w-full bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-300 py-2 px-4 rounded-lg font-mono text-sm transition-colors"
+                    onClick={() => console.log('Fee management not implemented')}
+                    disabled
+                  >
                     Manage Fees
                   </button>
                 </div>
                 <div className="p-4 bg-black/30 border border-red-500/20 rounded-lg">
                   <h4 className="text-red-300 font-mono font-medium mb-2">Fee Withdrawal</h4>
                   <p className="text-red-400/70 text-sm font-mono mb-3">Withdraw collected platform fees</p>
-                  <button className="w-full bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-300 py-2 px-4 rounded-lg font-mono text-sm transition-colors">
+                  <button 
+                    className="w-full bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-300 py-2 px-4 rounded-lg font-mono text-sm transition-colors"
+                    onClick={() => console.log('Fee withdrawal not implemented')}
+                    disabled
+                  >
                     Withdraw Fees
                   </button>
                 </div>
