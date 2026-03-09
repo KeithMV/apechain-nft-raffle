@@ -28,10 +28,10 @@ const NETWORK_CONFIGS = {
   },
   137: { // Polygon Mainnet
     chainId: 137,
-    rpcUrl: 'https://polygon-rpc.com',
+    rpcUrl: 'https://polygon-mainnet.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78',
     name: 'Polygon',
     explorerUrl: 'https://polygonscan.com',
-    nativeCurrency: 'MATIC'
+    nativeCurrency: 'POL'
   },
 
 } as const;
