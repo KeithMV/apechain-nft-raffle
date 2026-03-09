@@ -2,7 +2,6 @@
   "name": "apechain-nft-raffle-frontend",
   "version": "1.0.0",
   "description": "Frontend for ApeCoin NFT Raffle System",
-  "homepage": ".",
   "private": true,
   "dependencies": {
     "@headlessui/react": "^2.2.9",
