@@ -11,7 +11,7 @@ jobs:
           command: |
             cd frontend
             rm -rf node_modules yarn.lock
-            yarn install --network-timeout 300000
+            yarn install --network-timeout 300000 --ignore-engines
       - run:
           name: Run frontend tests
           command: |
@@ -22,7 +22,7 @@ jobs:
           command: |
             cd frontend
             rm -rf build/ node_modules/.cache/
-            CI=false yarn build:staging
+            CI=false yarn build:production
           environment:
             REACT_APP_APP_NAME: "ApeChain NFT Raffles (STAGING)"
             REACT_APP_APP_URL: "https://staging.apechainraffles.io"
@@ -47,7 +47,7 @@ jobs:
           command: |
             cd frontend
             rm -rf node_modules yarn.lock
-            yarn install --network-timeout 300000
+            yarn install --network-timeout 300000 --ignore-engines
       - run:
           name: Run frontend tests
           command: |
@@ -58,7 +58,7 @@ jobs:
           command: |
             cd frontend
             rm -rf build/ node_modules/.cache/
-            CI=false yarn build:production
+            CI=false yarn build
           environment:
             REACT_APP_APP_NAME: "ApeChain NFT Raffles"
             REACT_APP_APP_URL: "https://apechainraffles.io"
