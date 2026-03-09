@@ -18,8 +18,8 @@ export class RaffleStagingStack extends cdk.Stack {
     super(scope, id, props);
 
     // S3 Bucket for staging frontend
-    this.s3Bucket = new s3.Bucket(this, 'RaffleStagingBucket', {
-      bucketName: `apechain-nft-raffle-staging-${this.account}-${this.region}`,
+    this.s3Bucket = new s3.Bucket(this, 'RaffleStagingV2Bucket', {
+      bucketName: `apechain-nft-raffle-staging-v2-${this.account}-${this.region}`,
       versioned: true,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
@@ -29,8 +29,8 @@ export class RaffleStagingStack extends cdk.Stack {
     });
 
     // Origin Access Control
-    const originAccessControl = new cloudfront.S3OriginAccessControl(this, 'RaffleStagingOAC', {
-      description: 'OAC for Raffle Staging S3 bucket',
+    const originAccessControl = new cloudfront.S3OriginAccessControl(this, 'RaffleStagingV2OAC', {
+      description: 'OAC for Raffle Staging V2 S3 bucket',
     });
 
     // Import existing certificate
@@ -41,7 +41,7 @@ export class RaffleStagingStack extends cdk.Stack {
     );
 
     // CloudFront Distribution for staging
-    const distribution = new cloudfront.Distribution(this, 'RaffleStagingDistribution', {
+    const distribution = new cloudfront.Distribution(this, 'RaffleStagingV2Distribution', {
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(this.s3Bucket, {
           originAccessControl,
@@ -49,8 +49,8 @@ export class RaffleStagingStack extends cdk.Stack {
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, // Disable cache for staging
       },
-      domainNames: [props.domainName],
-      certificate,
+      // domainNames: [props.domainName], // Commented out - will add after DNS switch
+      // certificate, // Commented out - will add after DNS switch
       sslSupportMethod: cloudfront.SSLMethod.SNI,
       defaultRootObject: 'index.html',
       errorResponses: [
@@ -83,6 +83,10 @@ export class RaffleStagingStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'StagingWebsiteURL', {
       value: `https://${props.domainName}`,
+    });
+
+    new cdk.CfnOutput(this, 'StagingCloudFrontURL', {
+      value: `https://${distribution.distributionDomainName}`,
     });
   }
 }
