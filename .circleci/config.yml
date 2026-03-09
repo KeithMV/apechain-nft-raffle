@@ -87,6 +87,17 @@ jobs:
           command: |
             cd contracts
             npm install --prefer-offline
+      - run:
+          name: Download Solidity compiler with retry
+          command: |
+            cd contracts
+            # Retry compiler download up to 3 times with longer timeout
+            for i in {1..3}; do
+              echo "Attempt $i: Downloading Solidity compiler..."
+              timeout 300 npx hardhat compile --force && break
+              echo "Attempt $i failed, retrying in 10 seconds..."
+              sleep 10
+            done
       - save_cache:
           key: npm-cache-v1-{{ checksum "contracts/package-lock.json" }}
           paths:
@@ -95,6 +106,7 @@ jobs:
           name: Compile contracts
           command: |
             cd contracts
+            # Use cached compiler if available
             npx hardhat compile
       - persist_to_workspace:
           root: .
