@@ -355,7 +355,7 @@ export function useBuyTickets() {
         functionName: 'buyTickets',
         args: [BigInt(quantity)],
         value: totalCost,
-        chainId: chainId,
+        // Remove chainId parameter - let Wagmi handle it automatically
       });
       return result;
     } catch (error) {

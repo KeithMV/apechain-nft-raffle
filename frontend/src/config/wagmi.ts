@@ -1,7 +1,6 @@
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defineChain } from 'viem';
-import { polygon } from 'viem/chains';
 import { config as envConfig } from './environment';
 import { CHAIN_IDS, WALLET_IDS } from '../constants/chains';
 
@@ -28,8 +27,27 @@ export const apeChain = defineChain({
   testnet: false, // Both staging and production use mainnet
 });
 
-// Polygon chain (imported from viem)
-export const polygonChain = polygon;
+// Polygon chain - explicitly defined to ensure proper MetaMask compatibility
+export const polygonChain = defineChain({
+  id: 137,
+  name: 'Polygon',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'POL',
+    symbol: 'POL',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://polygon-mainnet.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78'],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: 'PolygonScan',
+      url: 'https://polygonscan.com',
+    },
+  },
+});
 
 // WalletConnect project ID
 const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
