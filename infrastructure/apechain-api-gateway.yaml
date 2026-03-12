@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'ApeChain NFT Raffle - Image Proxy API Gateway'
+
+Resources:
+  # API Gateway REST API
+  ImageProxyApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: apechain-image-proxy-api
+      Description: API Gateway for NFT image and metadata proxy
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # API Gateway Resource (proxy path)
+  ProxyResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ImageProxyApi
+      ParentId: !GetAtt ImageProxyApi.RootResourceId
+      PathPart: 'proxy'
+
+  # API Gateway Method (GET)
+  ProxyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ImageProxyApi
+      ResourceId: !Ref ProxyResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:apechain-raffle-image-proxy/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Origin: "'*'"
+            Access-Control-Allow-Headers: "'*'"
+            Access-Control-Allow-Methods: "'GET,OPTIONS'"
+
+  # OPTIONS method for CORS
+  ProxyOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ImageProxyApi
+      ResourceId: !Ref ProxyResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseHeaders:
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Headers: "'*'"
+              Access-Control-Allow-Methods: "'GET,OPTIONS'"
+            ResponseTemplates:
+              application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Origin: "'*'"
+            Access-Control-Allow-Headers: "'*'"
+            Access-Control-Allow-Methods: "'GET,OPTIONS'"
+
+  # API Gateway Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ProxyMethod
+      - ProxyOptionsMethod
+    Properties:
+      RestApiId: !Ref ImageProxyApi
+      StageName: prod
+
+  # Lambda permission for API Gateway
+  ApiGatewayInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: apechain-raffle-image-proxy
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub '${ImageProxyApi}/*/GET/proxy'
+
+Outputs:
+  ApiGatewayUrl:
+    Description: 'API Gateway URL for image proxy'
+    Value: !Sub 'https://${ImageProxyApi}.execute-api.${AWS::Region}.amazonaws.com/prod/proxy'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiGatewayUrl'
+  
+  ApiId:
+    Description: 'API Gateway ID'
+    Value: !Ref ImageProxyApi

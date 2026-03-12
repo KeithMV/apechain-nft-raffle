@@ -33,13 +33,20 @@ export class SimpleImageProxy {
     
     const urls: string[] = [];
     
+    // Use your working API Gateway Lambda proxy first (best option)
+    const lambdaProxy = 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    
+    if (originalUrl.startsWith('http') && !originalUrl.includes('localhost')) {
+      urls.push(`${lambdaProxy}?url=${encodeURIComponent(originalUrl)}`);
+    }
+    
     if (originalUrl.startsWith('ipfs://')) {
       const path = originalUrl.slice(7);
-      // Try each gateway through proxy
-      this.IPFS_GATEWAYS.forEach((gateway, index) => {
+      // Try each gateway through your Lambda proxy
+      this.IPFS_GATEWAYS.forEach((gateway) => {
         const directUrl = `${gateway}${path}`;
-        const proxiedUrl = `${this.PROXY_URL}${encodeURIComponent(directUrl)}`;
-        urls.push(proxiedUrl);
+        urls.push(`${lambdaProxy}?url=${encodeURIComponent(directUrl)}`);
+        urls.push(directUrl); // Also try direct
       });
     } else {
       // For img.op.xyz and img.other.page, try direct first (they may have CORS headers)

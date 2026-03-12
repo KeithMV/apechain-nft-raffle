@@ -134,44 +134,40 @@ async function fetchNFTMetadata(
       metadataUrl = `https://ipfs.io/ipfs/${ipfsPath}`;
     }
     
-    // Try fetching metadata with multiple attempts
+    // Use API Gateway Lambda proxy for metadata fetching to avoid CORS
+    const lambdaProxy = 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    const proxiedMetadataUrl = `${lambdaProxy}?url=${encodeURIComponent(metadataUrl)}`;
+    
+    // Try fetching metadata with Lambda proxy first
     let data;
-    const metadataUrls: string[] = [];
-    
-    if (tokenURI.startsWith('ipfs://')) {
-      const path = tokenURI.slice(7);
-      metadataUrls.push(
-        `https://ipfs.io/ipfs/${path}`,
-        `https://gateway.pinata.cloud/ipfs/${path}`,
-        `https://dweb.link/ipfs/${path}`
-      );
-    } else {
-      metadataUrls.push(tokenURI);
-    }
-    
-    // Try each URL until one works
-    let lastError = 'All metadata URLs failed';
-    for (const url of metadataUrls) {
+    try {
+      const response = await fetch(proxiedMetadataUrl, {
+        signal: AbortSignal.timeout(5000),
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (response.ok) {
+        data = await response.json();
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (proxyError) {
+      // Fallback to direct fetch if proxy fails
       try {
-        const response = await fetch(url, {
+        const response = await fetch(metadataUrl, {
           signal: AbortSignal.timeout(5000),
           headers: { 'Accept': 'application/json' }
         });
         
         if (response.ok) {
           data = await response.json();
-          break;
         } else {
-          lastError = `HTTP ${response.status}: ${response.statusText}`;
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-      } catch (error: unknown) {
-        lastError = error instanceof Error ? error.message : 'Network error';
-        continue;
+      } catch (directError) {
+        const errorMessage = directError instanceof Error ? directError.message : 'Network error';
+        return { error: `Failed to fetch metadata: ${errorMessage}` };
       }
-    }
-    
-    if (!data) {
-      return { error: `Failed to fetch metadata: ${lastError}` };
     }
     
     const sanitized = sanitizeMetadata(data);
