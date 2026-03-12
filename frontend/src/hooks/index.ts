@@ -5,6 +5,7 @@
 
 // Primary Hooks
 export { useNFTMetadata } from './useNFTMetadata';
+export { useUserNFTs } from './useUserNFTs';
 export { useRaffleContract } from './useRaffleContract';
 export { useUserRafflePositions, useCreatedRaffles } from './useRafflePositions';
 

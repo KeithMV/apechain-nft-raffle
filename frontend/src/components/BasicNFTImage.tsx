@@ -36,15 +36,30 @@ export default function BasicNFTImage({
     if (currentUrlIndex < imageUrls.length - 1) {
       setCurrentUrlIndex(prev => prev + 1);
     } else {
+      // All URLs failed, show generated placeholder
       setImageError(true);
     }
-  }, [currentUrlIndex, imageUrls.length, tokenId]);
+  }, [currentUrlIndex, imageUrls.length]);
 
   const getImageUrl = () => {
     if (imageError) return '/placeholder-nft.svg';
     
-    const currentUrl = imageUrls[currentUrlIndex] || '/placeholder-nft.svg';
-    return currentUrl;
+    // If we have metadata image, try multiple sources
+    if (metadata?.image) {
+      const currentUrl = imageUrls[currentUrlIndex] || '/placeholder-nft.svg';
+      return currentUrl;
+    }
+    
+    // Fallback: Generate a simple placeholder with contract info
+    const svgContent = `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+      <rect width="200" height="200" fill="#1e293b"/>
+      <circle cx="100" cy="80" r="20" fill="#64748b"/>
+      <rect x="85" y="70" width="30" height="20" rx="2" fill="#1e293b"/>
+      <text x="100" y="120" text-anchor="middle" fill="#94a3b8" font-size="12" font-family="monospace">NFT #${tokenId}</text>
+      <text x="100" y="140" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">${contractAddress.slice(0,6)}...${contractAddress.slice(-4)}</text>
+    </svg>`;
+    
+    return `data:image/svg+xml;base64,${btoa(svgContent)}`;
   };
 
   const sizeClasses = {

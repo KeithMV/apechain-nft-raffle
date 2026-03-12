@@ -53,29 +53,38 @@ class ProductionLogger {
 
 export const logger = new ProductionLogger();
 
-// Aggressive console suppression for production
-if (typeof window !== 'undefined' && config.environment !== 'development') {
-  const originalConsole = { ...console };
-  
-  // Override all console methods except error
-  (window as any).console = {
-    ...console,
-    log: () => {},
-    info: () => {},
-    debug: () => {},
-    warn: (message: string, ...args: any[]) => {
-      const msg = [message, ...args].join(' ');
-      // Only allow specific warnings through
-      if (msg.includes('Failed to') || msg.includes('Error:')) {
-        originalConsole.warn(message, ...args);
-      }
-    },
-    error: originalConsole.error,
-    group: () => {},
-    groupEnd: () => {},
-    groupCollapsed: () => {},
-    table: () => {},
-    time: () => {},
-    timeEnd: () => {},
-  };
+// Aggressive console suppression for production ONLY
+if (typeof window !== 'undefined' && config.environment === 'production') {
+    const isLocalDev = window.location.hostname === 'localhost' || 
+                      window.location.hostname.includes('192.168') ||
+                      window.location.hostname.includes('127.0.0.1');
+    
+    // Don't suppress console in local development
+    if (isLocalDev) {
+      // Exit early for local development
+    } else {
+      const originalConsole = { ...console };
+    
+      // Override all console methods except error
+      (window as any).console = {
+        ...console,
+        log: () => {},
+        info: () => {},
+        debug: () => {},
+        warn: (message: string, ...args: any[]) => {
+          const msg = [message, ...args].join(' ');
+          // Only allow specific warnings through
+          if (msg.includes('Failed to') || msg.includes('Error:')) {
+            originalConsole.warn(message, ...args);
+          }
+        },
+        error: originalConsole.error,
+        group: () => {},
+        groupEnd: () => {},
+        groupCollapsed: () => {},
+        table: () => {},
+        time: () => {},
+        timeEnd: () => {},
+      };
+    }
 }

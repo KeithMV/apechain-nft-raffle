@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useChainId } from 'wagmi';
 import { useNavigate } from 'react-router-dom';
 import { usePlatformFeeV4, useNFTApprovalStatusV4, useNFTApprovalV4, useCreateRaffleV4 } from '../hooks/useRaffleContractV4';
 import { useApeChainSwitching } from '../utils/chainSwitching';
 import { useNetwork } from '../contexts/NetworkContext';
+import { useUserNFTs } from '../hooks/useUserNFTs';
 import ApprovalModal from './ApprovalModal';
+import NFTGrid from './NFTGrid';
 
 import toast from 'react-hot-toast';
 import { 
@@ -41,10 +43,14 @@ const getInitialFormData = (): FormData => ({
 
 export default function CreateRafflePage() {
   const { address } = useAccount();
+  const chainId = useChainId();
   const navigate = useNavigate();
   const { theme, nativeCurrency, networkName, isApeChain, isPolygon } = useNetwork();
   const { switchToApeChain, isSwitching } = useApeChainSwitching();
   const [formData, setFormData] = useState<FormData>(getInitialFormData);
+  
+  // Fetch user's NFTs
+  const { nfts, loading: nftsLoading } = useUserNFTs(address || '', chainId || 0);
   
   const [approvalStatus, setApprovalStatus] = useState<boolean | null>(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
@@ -190,6 +196,16 @@ export default function CreateRafflePage() {
     setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
   };
 
+  const handleNFTSelect = (nft: { contractAddress: string; tokenId: string }) => {
+    setFormData(prev => ({
+      ...prev,
+      nftContract: nft.contractAddress,
+      tokenId: nft.tokenId
+    }));
+    // Reset approval status when NFT changes
+    setApprovalStatus(null);
+  };
+
 
 
   const containerBorderColor = isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30';
@@ -243,6 +259,16 @@ export default function CreateRafflePage() {
 
 
 
+
+        {/* NFT Wallet Display */}
+        {address && !isWrongNetwork && (
+          <NFTGrid 
+            nfts={nfts} 
+            onSelect={handleNFTSelect}
+            isApeChain={isApeChain}
+            loading={nftsLoading}
+          />
+        )}
 
         {/* NFT Details Form */}
         <div className="space-y-6">
