@@ -122,6 +122,15 @@ Resources:
           - "*"
         MaxAge: 86400
 
+  # Permission for Function URL public access
+  ImageProxyUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApeChainImageProxy
+      Action: lambda:InvokeFunctionUrl
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
 Outputs:
   ImageProxyEndpoint:
     Description: 'ApeChain Raffle Image Proxy URL'
