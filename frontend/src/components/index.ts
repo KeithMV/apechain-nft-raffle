@@ -11,6 +11,8 @@ export { default as CreateRafflePage } from './CreateRafflePage';
 // UI Components
 export { default as LoadingFallback } from './LoadingFallback';
 export { ErrorBoundary, Web3ErrorBoundary } from './ErrorBoundary';
+export { default as NFTGrid } from './NFTGrid';
+export { default as BasicNFTImage } from './BasicNFTImage';
 
 // Utility Components
 export { default as NetworkStatus } from './NetworkStatus';
