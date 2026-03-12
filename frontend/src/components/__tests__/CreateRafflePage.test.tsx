@@ -8,6 +8,7 @@ vi.mock('wagmi', () => ({
   useAccount: vi.fn(),
   useChainId: vi.fn(),
   useSwitchChain: vi.fn(),
+  usePublicClient: vi.fn(),
 }))
 
 // Mock react-router-dom
@@ -38,13 +39,6 @@ vi.mock('../../hooks/useApeChainSwitching', () => ({
   })),
 }))
 
-// Mock wagmi hooks with simple return values
-vi.mock('wagmi', () => ({
-  useAccount: vi.fn(),
-  useChainId: vi.fn(),
-  useSwitchChain: vi.fn(),
-}))
-
 // Mock custom hooks
 vi.mock('../../hooks/useRaffleContractV4', () => ({
   useRaffleContractV4: vi.fn(),
@@ -58,6 +52,15 @@ vi.mock('../../hooks/useNFTMetadata', () => ({
   useNFTMetadata: vi.fn(),
 }))
 
+// Mock new hooks
+vi.mock('../../hooks/useUserNFTs', () => ({
+  useUserNFTs: vi.fn(() => ({
+    nfts: [],
+    loading: false,
+    error: false,
+  })),
+}))
+
 // Mock components
 vi.mock('../BasicNFTImage', () => ({
   default: ({ contractAddress, tokenId }: any) => (
@@ -65,9 +68,16 @@ vi.mock('../BasicNFTImage', () => ({
   ),
 }))
 
-import { useAccount, useChainId, useSwitchChain } from 'wagmi'
+vi.mock('../NFTGrid', () => ({
+  default: ({ nfts, onSelect }: any) => (
+    <div data-testid="nft-grid">NFT Grid with {nfts.length} NFTs</div>
+  ),
+}))
+
+import { useAccount, useChainId, useSwitchChain, usePublicClient } from 'wagmi'
 import { useRaffleContractV4, usePlatformFeeV4, useNFTApprovalStatusV4, useNFTApprovalV4, useCreateRaffleV4 } from '../../hooks/useRaffleContractV4'
 import { useNFTMetadata } from '../../hooks/useNFTMetadata'
+import { useUserNFTs } from '../../hooks/useUserNFTs'
 
 describe('CreateRafflePage', () => {
   const mockAddress = '0x1234567890123456789012345678901234567890'
@@ -83,6 +93,7 @@ describe('CreateRafflePage', () => {
     
     vi.mocked(useChainId).mockReturnValue(33139)
     vi.mocked(useSwitchChain).mockReturnValue({ switchChain: vi.fn() } as any)
+    vi.mocked(usePublicClient).mockReturnValue({} as any)
     
     vi.mocked(usePlatformFeeV4).mockReturnValue({ data: 1000n } as any)
     vi.mocked(useNFTApprovalStatusV4).mockReturnValue({ data: false, refetch: vi.fn() } as any)
@@ -90,6 +101,7 @@ describe('CreateRafflePage', () => {
     vi.mocked(useCreateRaffleV4).mockReturnValue({ createRaffle: vi.fn(), isPending: false, isSuccess: false } as any)
     vi.mocked(useRaffleContractV4).mockReturnValue({ createRaffle: vi.fn(), approveNFT: vi.fn(), isProcessing: false, needsApproval: false, checkApproval: vi.fn() } as any)
     vi.mocked(useNFTMetadata).mockReturnValue({ metadata: null, loading: false, error: null, refetch: vi.fn() } as any)
+    vi.mocked(useUserNFTs).mockReturnValue({ nfts: [], loading: false, error: false } as any)
   })
 
   const renderWithRouter = (component: React.ReactElement) => {
