@@ -32,7 +32,7 @@ jobs:
             REACT_APP_APECHAIN_RPC_URL: "https://apechain.calderachain.xyz/http"
             REACT_APP_CONTRACT_ADDRESS: "0x1627E7e63b63878E61f91D336385a59B1747934a"
             REACT_APP_WALLETCONNECT_PROJECT_ID: "b848c907908cee0c1bcf0ab0493da6c4"
-            REACT_APP_ALCHEMY_API_KEY: $REACT_APP_ALCHEMY_API_KEY
+            REACT_APP_ALCHEMY_API_KEY: ${REACT_APP_ALCHEMY_API_KEY}
       - persist_to_workspace:
           root: .
           paths:
@@ -69,7 +69,7 @@ jobs:
             REACT_APP_APECHAIN_RPC_URL: "https://apechain.calderachain.xyz/http"
             REACT_APP_CONTRACT_ADDRESS: "0x1627E7e63b63878E61f91D336385a59B1747934a"
             REACT_APP_WALLETCONNECT_PROJECT_ID: "b848c907908cee0c1bcf0ab0493da6c4"
-            REACT_APP_ALCHEMY_API_KEY: $REACT_APP_ALCHEMY_API_KEY
+            REACT_APP_ALCHEMY_API_KEY: ${REACT_APP_ALCHEMY_API_KEY}
       - persist_to_workspace:
           root: .
           paths:
