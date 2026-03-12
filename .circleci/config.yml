@@ -22,6 +22,7 @@ jobs:
           command: |
             cd frontend
             rm -rf build/ node_modules/.cache/
+            export REACT_APP_ALCHEMY_API_KEY="$REACT_APP_ALCHEMY_API_KEY"
             CI=false yarn build:production
           environment:
             REACT_APP_APP_NAME: "ApeChain NFT Raffles (STAGING)"
@@ -32,7 +33,6 @@ jobs:
             REACT_APP_APECHAIN_RPC_URL: "https://apechain.calderachain.xyz/http"
             REACT_APP_CONTRACT_ADDRESS: "0x1627E7e63b63878E61f91D336385a59B1747934a"
             REACT_APP_WALLETCONNECT_PROJECT_ID: "b848c907908cee0c1bcf0ab0493da6c4"
-            REACT_APP_ALCHEMY_API_KEY: "hCQL99tnvVmLRlDVwJgiH"
       - persist_to_workspace:
           root: .
           paths:
@@ -59,6 +59,7 @@ jobs:
           command: |
             cd frontend
             rm -rf build/ node_modules/.cache/
+            export REACT_APP_ALCHEMY_API_KEY="$REACT_APP_ALCHEMY_API_KEY"
             CI=false yarn build
           environment:
             REACT_APP_APP_NAME: "ApeChain NFT Raffles"
@@ -69,7 +70,6 @@ jobs:
             REACT_APP_APECHAIN_RPC_URL: "https://apechain.calderachain.xyz/http"
             REACT_APP_CONTRACT_ADDRESS: "0x1627E7e63b63878E61f91D336385a59B1747934a"
             REACT_APP_WALLETCONNECT_PROJECT_ID: "b848c907908cee0c1bcf0ab0493da6c4"
-            REACT_APP_ALCHEMY_API_KEY: "hCQL99tnvVmLRlDVwJgiH"
       - persist_to_workspace:
           root: .
           paths:
