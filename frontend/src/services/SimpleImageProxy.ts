@@ -33,8 +33,8 @@ export class SimpleImageProxy {
     
     const urls: string[] = [];
     
-    // Use your working API Gateway Lambda proxy first (best option)
-    const lambdaProxy = 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    // Use your working Lambda proxy first (best option)
+    const lambdaProxy = 'https://jozcl4cuwoelx73rz72bsvfz440zdjhe.lambda-url.us-east-1.on.aws';
     
     if (originalUrl.startsWith('http') && !originalUrl.includes('localhost')) {
       urls.push(`${lambdaProxy}?url=${encodeURIComponent(originalUrl)}`);
