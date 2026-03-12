@@ -22,7 +22,7 @@ export function useWinnerSelection() {
       // Commit to blockchain
       await commitRandomness(raffleContract, commitHash);
       
-      toast.success('Winner selection started! You can reveal in 1 hour.');
+      // Toast is handled by useCommitRandomness hook
       return { nonce, commitHash };
     } catch (error) {
       toast.error('Failed to start winner selection');
@@ -43,6 +43,7 @@ export function useWinnerSelection() {
       WinnerSelectionService.clearCommitData(raffleContract);
       setCommitData(null);
       
+      // Toast is handled by useRevealWinner hook
       return storedNonce;
     } catch (error) {
       toast.error('Failed to reveal winner');
