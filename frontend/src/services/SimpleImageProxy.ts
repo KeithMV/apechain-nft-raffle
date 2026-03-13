@@ -12,19 +12,15 @@ export class SimpleImageProxy {
     if (!originalUrl) return '/placeholder-nft.svg';
     
     try {
-      // Handle IPFS URLs - try direct IPFS gateway first
+      // Handle IPFS URLs
       if (originalUrl.startsWith('ipfs://')) {
         const path = originalUrl.slice(7);
         const directUrl = `${this.IPFS_GATEWAYS[0]}${path}`;
-        return directUrl; // Return direct IPFS, fallback will handle failures
+        // Use proxy to bypass CORS
+        return `${this.PROXY_URL}${encodeURIComponent(directUrl)}`;
       }
       
-      // For trusted domains, try direct first
-      if (originalUrl.includes('img.op.xyz') || originalUrl.includes('img.other.page') || originalUrl.includes('nft-cdn.alchemy.com')) {
-        return originalUrl;
-      }
-      
-      // For other URLs, use external proxy
+      // Regular URLs through proxy
       return `${this.PROXY_URL}${encodeURIComponent(originalUrl)}`;
       
     } catch {
@@ -37,37 +33,32 @@ export class SimpleImageProxy {
     
     const urls: string[] = [];
     
+    // Use your working API Gateway Lambda proxy first (best option)
+    const lambdaProxy = 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    
+    if (originalUrl.startsWith('http') && !originalUrl.includes('localhost')) {
+      urls.push(`${lambdaProxy}?url=${encodeURIComponent(originalUrl)}`);
+    }
+    
     if (originalUrl.startsWith('ipfs://')) {
       const path = originalUrl.slice(7);
-      // Try direct IPFS gateways first (faster)
-      this.IPFS_GATEWAYS.forEach((gateway) => {
-        const directUrl = `${gateway}${path}`;
-        urls.push(directUrl);
-      });
-      
-      // Then try Lambda proxy as fallback
-      const lambdaProxy = 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+      // Try each gateway through your Lambda proxy
       this.IPFS_GATEWAYS.forEach((gateway) => {
         const directUrl = `${gateway}${path}`;
         urls.push(`${lambdaProxy}?url=${encodeURIComponent(directUrl)}`);
+        urls.push(directUrl); // Also try direct
       });
-    } else if (originalUrl.startsWith('http')) {
-      // For HTTP URLs, try direct first if it's a trusted domain
-      if (originalUrl.includes('img.op.xyz') || originalUrl.includes('img.other.page') || originalUrl.includes('nft-cdn.alchemy.com')) {
+    } else {
+      // For img.op.xyz and img.other.page, try direct first (they may have CORS headers)
+      if (originalUrl.includes('img.op.xyz') || originalUrl.includes('img.other.page')) {
         urls.push(originalUrl);
       }
       
-      // Try Lambda proxy
-      const lambdaProxy = 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
-      urls.push(`${lambdaProxy}?url=${encodeURIComponent(originalUrl)}`);
-      
-      // Try external proxy as final fallback
       const proxiedUrl = `${this.PROXY_URL}${encodeURIComponent(originalUrl)}`;
       urls.push(proxiedUrl);
     }
     
-    // Always end with placeholder
     urls.push('/placeholder-nft.svg');
-    return [...new Set(urls)]; // Remove duplicates
+    return urls;
   }
 }
