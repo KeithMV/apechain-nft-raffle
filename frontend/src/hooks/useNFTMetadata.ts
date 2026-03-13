@@ -129,16 +129,19 @@ async function fetchNFTMetadata(
     // Try multiple approaches for metadata URL
     let metadataUrl = tokenURI;
     if (tokenURI.startsWith('ipfs://')) {
-      // Try proxy service for IPFS metadata
+    // Try proxy service for IPFS metadata
       const ipfsPath = tokenURI.slice(7);
       metadataUrl = `https://ipfs.io/ipfs/${ipfsPath}`;
     }
     
-    // Try direct fetch first (faster), then Lambda proxy as fallback
+    // Use API Gateway Lambda proxy for metadata fetching to avoid CORS
+    const lambdaProxy = 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    const proxiedMetadataUrl = `${lambdaProxy}?url=${encodeURIComponent(metadataUrl)}`;
+    
+    // Try fetching metadata with Lambda proxy first
     let data;
     try {
-      // Try direct fetch first
-      const response = await fetch(metadataUrl, {
+      const response = await fetch(proxiedMetadataUrl, {
         signal: AbortSignal.timeout(5000),
         headers: { 'Accept': 'application/json' }
       });
@@ -148,13 +151,10 @@ async function fetchNFTMetadata(
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-    } catch (directError) {
-      // Fallback to Lambda proxy if direct fetch fails
+    } catch (proxyError) {
+      // Fallback to direct fetch if proxy fails
       try {
-        const lambdaProxy = 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
-        const proxiedMetadataUrl = `${lambdaProxy}?url=${encodeURIComponent(metadataUrl)}`;
-        
-        const response = await fetch(proxiedMetadataUrl, {
+        const response = await fetch(metadataUrl, {
           signal: AbortSignal.timeout(5000),
           headers: { 'Accept': 'application/json' }
         });
@@ -164,8 +164,8 @@ async function fetchNFTMetadata(
         } else {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-      } catch (proxyError) {
-        const errorMessage = proxyError instanceof Error ? proxyError.message : 'Network error';
+      } catch (directError) {
+        const errorMessage = directError instanceof Error ? directError.message : 'Network error';
         return { error: `Failed to fetch metadata: ${errorMessage}` };
       }
     }
@@ -208,7 +208,7 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
     enabled: !!publicClient && !!contractAddress && !!tokenId,
     staleTime: 60 * 60 * 1000, // 1 hour - NFT metadata rarely changes
     gcTime: 24 * 60 * 60 * 1000, // 24 hours - keep in memory much longer
-    retry: 1, // Try once more on failure
+    retry: false, // Disable retries to reduce console spam
     retryDelay: 2000, // Fixed delay
     placeholderData: {
       metadata: {
