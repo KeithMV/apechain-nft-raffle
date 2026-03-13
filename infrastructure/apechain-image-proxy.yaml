@@ -164,7 +164,7 @@ Resources:
 Outputs:
   ImageProxyEndpoint:
     Description: 'ApeChain Raffle Image Proxy URL'
-    Value: !GetAtt ImageProxyUrl.FunctionUrl
+    Value: !Sub 'https://${ImageProxyApi}.execute-api.${AWS::Region}.amazonaws.com/prod/proxy'
     Export:
       Name: !Sub '${AWS::StackName}-ImageProxyUrl'
   
