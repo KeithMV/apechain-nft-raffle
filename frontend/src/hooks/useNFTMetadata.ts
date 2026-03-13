@@ -126,56 +126,37 @@ async function fetchNFTMetadata(
       return { error: `Invalid token URI: ${urlValidation.error}` };
     }
     
-    // Try multiple approaches for metadata URL
+    // Convert IPFS URLs to HTTP
     let metadataUrl = tokenURI;
     if (tokenURI.startsWith('ipfs://')) {
-    // Try proxy service for IPFS metadata
       const ipfsPath = tokenURI.slice(7);
       metadataUrl = `https://ipfs.io/ipfs/${ipfsPath}`;
     }
     
-    // Use API Gateway Lambda proxy for metadata fetching to avoid CORS
+    // Use Lambda proxy for metadata fetching (working API Gateway endpoint)
     const lambdaProxy = 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
     const proxiedMetadataUrl = `${lambdaProxy}?url=${encodeURIComponent(metadataUrl)}`;
     
-    // Try fetching metadata with Lambda proxy first
-    let data;
     try {
       const response = await fetch(proxiedMetadataUrl, {
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(10000),
         headers: { 'Accept': 'application/json' }
       });
       
       if (response.ok) {
-        data = await response.json();
+        const data = await response.json();
+        const sanitized = sanitizeMetadata(data);
+        if (sanitized.metadata) {
+          return { metadata: sanitized.metadata };
+        }
+        return { error: sanitized.error };
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (proxyError) {
-      // Fallback to direct fetch if proxy fails
-      try {
-        const response = await fetch(metadataUrl, {
-          signal: AbortSignal.timeout(5000),
-          headers: { 'Accept': 'application/json' }
-        });
-        
-        if (response.ok) {
-          data = await response.json();
-        } else {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-      } catch (directError) {
-        const errorMessage = directError instanceof Error ? directError.message : 'Network error';
-        return { error: `Failed to fetch metadata: ${errorMessage}` };
-      }
+      const errorMessage = proxyError instanceof Error ? proxyError.message : 'Network error';
+      return { error: `Failed to fetch metadata: ${errorMessage}` };
     }
-    
-    const sanitized = sanitizeMetadata(data);
-    if (sanitized.error) {
-      return { error: sanitized.error };
-    }
-    
-    return { metadata: sanitized.metadata };
     
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

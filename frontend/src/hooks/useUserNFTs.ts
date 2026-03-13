@@ -12,42 +12,27 @@ interface UserNFT {
 // ERC721 Transfer event ABI
 const TRANSFER_EVENT = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)');
 
-// API-based NFT fetching for comprehensive results
+// API-based NFT fetching via secure Lambda proxy
 async function fetchNFTsViaAPI(
   userAddress: string,
   chainId: number
 ): Promise<UserNFT[]> {
   try {
-    // Alchemy API endpoints by chain
-    const alchemyEndpoints: Record<number, string> = {
-      33139: 'https://apechain-mainnet.g.alchemy.com/nft/v3', // ApeChain
-      137: 'https://polygon-mainnet.g.alchemy.com/nft/v3',   // Polygon
-      1: 'https://eth-mainnet.g.alchemy.com/nft/v3',          // Ethereum
-      42161: 'https://arb-mainnet.g.alchemy.com/nft/v3'       // Arbitrum
-    };
+    // Use Lambda proxy for secure Alchemy API calls
+    const lambdaProxy = 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    const url = `${lambdaProxy}?owner=${encodeURIComponent(userAddress)}&chainId=${chainId}`;
     
-    const endpoint = alchemyEndpoints[chainId];
-    if (!endpoint) {
-      console.log(`No Alchemy endpoint for chain ${chainId}`);
-      return [];
-    }
+    console.log(`Fetching NFTs via Lambda proxy for chain ${chainId}`);
     
-    // Alchemy API key from environment variables
-    const ALCHEMY_API_KEY = process.env.REACT_APP_ALCHEMY_API_KEY;
-    
-    if (!ALCHEMY_API_KEY) {
-      console.warn('REACT_APP_ALCHEMY_API_KEY not configured, skipping API fetch');
-      return [];
-    }
-    
-    const url = `${endpoint}/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${userAddress}&withMetadata=true&pageSize=100`;
-    
-    console.log(`Fetching NFTs via Alchemy API for chain ${chainId}`);
-    
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json'
+      },
+      signal: AbortSignal.timeout(20000) // 20 second timeout for Lambda
+    });
     
     if (!response.ok) {
-      throw new Error(`Alchemy API error: ${response.status}`);
+      throw new Error(`Lambda proxy error: ${response.status}`);
     }
     
     const data = await response.json();
@@ -71,11 +56,11 @@ async function fetchNFTsViaAPI(
       };
     }).filter(nft => nft.contractAddress && nft.tokenId) || [];
     
-    console.log(`Alchemy API: ${data.ownedNfts?.length || 0} raw NFTs, ${nfts.length} processed NFTs`);
+    console.log(`Lambda proxy: ${data.ownedNfts?.length || 0} raw NFTs, ${nfts.length} processed NFTs`);
     return nfts;
     
   } catch (error) {
-    console.error('Alchemy API failed:', error);
+    console.error('Lambda proxy failed:', error);
     return [];
   }
 }
