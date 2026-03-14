@@ -1,45 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAccount, useChainId } from 'wagmi';
 import { useNavigate } from 'react-router-dom';
-import { usePlatformFeeV4, useNFTApprovalStatusV4, useNFTApprovalV4, useCreateRaffleV4 } from '../hooks/useRaffleContractV4';
+import { usePlatformFeeV4, useCreateRaffleV4 } from '../hooks/useRaffleContractV4';
+import { useNFTApprovalManager } from '../hooks/useNFTApprovalManager';
 import { useApeChainSwitching } from '../utils/chainSwitching';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useUserNFTs } from '../hooks/useUserNFTs';
 import ApprovalModal from './ApprovalModal';
 import NFTGrid from './NFTGrid';
+import RaffleForm, { FormData, getInitialFormData, validateAddress } from './RaffleForm';
 
 import toast from 'react-hot-toast';
-import { 
-  sanitizeAddress, 
-  sanitizeTokenId, 
-  sanitizeNumber
-} from '../utils/inputSanitizer';
 import { ErrorHandler } from '../utils/errorHandler';
 
-interface FormData {
-  nftContract: string;
-  tokenId: string;
-  ticketPrice: string;
-  maxTickets: string;
-  duration: string;
-}
-
-// Pure functions moved outside component
-const validateAddress = (address: string): boolean => {
-  return /^0x[a-fA-F0-9]{40}$/.test(address);
-};
-
+// Pure function moved outside component
 const calculateDurationInSeconds = (hours: string): number => {
   return parseInt(hours) * 3600;
 };
-
-const getInitialFormData = (): FormData => ({
-  nftContract: '',
-  tokenId: '',
-  ticketPrice: '0.1',
-  maxTickets: '100',
-  duration: '24'
-});
 
 export default function CreateRafflePage() {
   const { address } = useAccount();
@@ -52,23 +29,25 @@ export default function CreateRafflePage() {
   // Fetch user's NFTs
   const { nfts, loading: nftsLoading } = useUserNFTs(address || '', chainId || 0);
   
-  const [approvalStatus, setApprovalStatus] = useState<boolean | null>(null);
+  // Use the new approval manager
+  const {
+    approvalStatus,
+    isCheckingApproval,
+    currentContract,
+    approvalPending,
+    approvalConfirming,
+    approvalSuccess,
+    approvalError,
+    checkApprovalForContract,
+    approveContract,
+    clearApprovalState
+  } = useNFTApprovalManager();
+  
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   
   const isWrongNetwork = !isApeChain && !isPolygon;
   // Professional wagmi V4 hooks
   const { data: platformFeeData } = usePlatformFeeV4();
-  const { data: approvalData, refetch: refetchApproval } = useNFTApprovalStatusV4(
-    formData.nftContract, 
-    address || ''
-  );
-  const { 
-    approveNFT, 
-    isPending: approvalPending, 
-    isConfirming: approvalConfirming, 
-    isSuccess: approvalSuccess,
-    error: approvalError
-  } = useNFTApprovalV4();
   const {
     createRaffle,
     isPending: createPending,
@@ -79,28 +58,19 @@ export default function CreateRafflePage() {
 
   const platformFee = platformFeeData ? (Number(platformFeeData) / 100).toString() : '5';
 
-  // Update approval status from hook data
-  useEffect(() => {
-    if (approvalData !== undefined) {
-      setApprovalStatus(approvalData as boolean);
-    }
-  }, [approvalData]);
-
-  // Handle approval success
-  useEffect(() => {
-    if (approvalSuccess) {
-      setApprovalStatus(true);
-      toast.success('NFT contract approved successfully!');
-      refetchApproval();
-    }
-  }, [approvalSuccess, refetchApproval]);
-
   // Handle approval errors
   useEffect(() => {
     if (approvalError) {
       ErrorHandler.handleWalletError(approvalError);
     }
   }, [approvalError]);
+  
+  // Check approval when contract changes
+  useEffect(() => {
+    if (formData.nftContract && validateAddress(formData.nftContract)) {
+      checkApprovalForContract(formData.nftContract);
+    }
+  }, [formData.nftContract]); // Removed checkApprovalForContract dependency
 
   // Handle create raffle success - show success state and redirect
   useEffect(() => {
@@ -108,16 +78,16 @@ export default function CreateRafflePage() {
       // Show success message
       toast.success('🎉 Raffle created successfully! Redirecting to browse raffles...');
       
-      // Reset form after a short delay
+      // Reset form and clear approval state after a short delay
       setTimeout(() => {
         setFormData(getInitialFormData());
-        setApprovalStatus(null);
+        clearApprovalState();
         
         // Navigate to browse raffles page
         navigate('/browse');
       }, 2000);
     }
-  }, [createSuccess]);
+  }, [createSuccess, navigate, clearApprovalState]);
 
   // Handle create raffle errors
   useEffect(() => {
@@ -133,7 +103,7 @@ export default function CreateRafflePage() {
     }
 
     await ErrorHandler.withErrorHandling(
-      () => approveNFT(formData.nftContract),
+      () => approveContract(formData.nftContract),
       ErrorHandler.handleWalletError
     );
   };
@@ -171,40 +141,30 @@ export default function CreateRafflePage() {
     );
   };
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
-    let sanitizedValue = value;
-    
-    // Apply field-specific sanitization
-    switch (field) {
-      case 'nftContract':
-        sanitizedValue = sanitizeAddress(value);
-        break;
-      case 'tokenId':
-        sanitizedValue = sanitizeTokenId(value);
-        break;
-      case 'ticketPrice':
-        sanitizedValue = sanitizeNumber(value, 0.001, 1000000);
-        break;
-      case 'maxTickets':
-        sanitizedValue = sanitizeNumber(value, 1, 10000);
-        break;
-      case 'duration':
-        sanitizedValue = value; // Dropdown, already controlled
-        break;
-    }
-    
-    setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
-  };
 
-  const handleNFTSelect = (nft: { contractAddress: string; tokenId: string }) => {
+
+  const handleNFTSelect = useCallback((nft: { contractAddress: string; tokenId: string }) => {
     setFormData(prev => ({
       ...prev,
       nftContract: nft.contractAddress,
       tokenId: nft.tokenId
     }));
-    // Reset approval status when NFT changes
-    setApprovalStatus(null);
-  };
+    // Approval will be checked automatically via useEffect
+  }, []);
+
+  const handleFormChange = useCallback((newFormData: FormData) => {
+    setFormData(prevData => {
+      // Only update if contract actually changed (avoid deep comparison)
+      if (newFormData.nftContract !== prevData.nftContract ||
+          newFormData.tokenId !== prevData.tokenId ||
+          newFormData.ticketPrice !== prevData.ticketPrice ||
+          newFormData.maxTickets !== prevData.maxTickets ||
+          newFormData.duration !== prevData.duration) {
+        return newFormData;
+      }
+      return prevData;
+    });
+  }, []);
 
 
 
@@ -270,87 +230,14 @@ export default function CreateRafflePage() {
           />
         )}
 
-        {/* NFT Details Form */}
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-slate-200 mb-2">
-                NFT Contract Address *
-              </label>
-              <input
-                type="text"
-                value={formData.nftContract}
-                onChange={(e) => handleInputChange('nftContract', e.target.value)}
-                placeholder="0x..."
-                className={`w-full bg-slate-800/80 border ${isApeChain ? 'border-emerald-400/30 focus:border-emerald-400 focus:ring-emerald-400/20' : 'border-blue-400/30 focus:border-blue-400 focus:ring-blue-400/20'} rounded-xl px-4 py-3 text-slate-100 placeholder-slate-400 focus:ring-2 transition-all font-mono backdrop-blur-sm shadow-lg`}
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-semibold text-slate-200 mb-2">
-                Token ID *
-              </label>
-              <input
-                type="text"
-                value={formData.tokenId}
-                onChange={(e) => handleInputChange('tokenId', e.target.value)}
-                placeholder="123"
-                className={`w-full bg-slate-800/80 border ${isApeChain ? 'border-emerald-400/30 focus:border-emerald-400 focus:ring-emerald-400/20' : 'border-blue-400/30 focus:border-blue-400 focus:ring-blue-400/20'} rounded-xl px-4 py-3 text-slate-100 placeholder-slate-400 focus:ring-2 transition-all font-mono backdrop-blur-sm shadow-lg`}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className={`block text-sm font-medium ${isApeChain ? 'text-emerald-200' : 'text-blue-200'} mb-2 font-mono tracking-wider`}>
-                Ticket Price ({nativeCurrency}) *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={formData.ticketPrice}
-                onChange={(e) => handleInputChange('ticketPrice', e.target.value)}
-                placeholder="0.1"
-                className={`w-full bg-gray-800/90 border ${isApeChain ? 'border-emerald-500/30 focus:border-emerald-400 focus:ring-emerald-400' : 'border-blue-500/30 focus:border-blue-400 focus:ring-blue-400'} rounded-lg px-4 py-3 ${isApeChain ? 'text-emerald-100 placeholder-emerald-400/50' : 'text-blue-100 placeholder-blue-400/50'} focus:ring-1 transition-colors font-mono backdrop-blur-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-              />
-            </div>
-            
-            <div>
-              <label className={`block text-sm font-medium ${isApeChain ? 'text-emerald-200' : 'text-blue-200'} mb-2 font-mono tracking-wider`}>
-                Max Tickets *
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="10000"
-                value={formData.maxTickets}
-                onChange={(e) => handleInputChange('maxTickets', e.target.value)}
-                placeholder="100"
-                className={`w-full bg-gray-800/90 border ${isApeChain ? 'border-emerald-500/30 focus:border-emerald-400 focus:ring-emerald-400' : 'border-blue-500/30 focus:border-blue-400 focus:ring-blue-400'} rounded-lg px-4 py-3 ${isApeChain ? 'text-emerald-100 placeholder-emerald-400/50' : 'text-blue-100 placeholder-blue-400/50'} focus:ring-1 transition-colors font-mono backdrop-blur-sm`}
-              />
-            </div>
-            
-            <div>
-              <label className={`block text-sm font-medium ${isApeChain ? 'text-emerald-200' : 'text-blue-200'} mb-2 font-mono tracking-wider`}>
-                Duration *
-              </label>
-              <select
-                value={formData.duration}
-                onChange={(e) => handleInputChange('duration', e.target.value)}
-                className={`w-full bg-gray-800/90 border ${isApeChain ? 'border-emerald-500/30 focus:border-emerald-400 focus:ring-emerald-400' : 'border-blue-500/30 focus:border-blue-400 focus:ring-blue-400'} rounded-lg px-4 py-3 ${isApeChain ? 'text-emerald-100' : 'text-blue-100'} focus:ring-1 transition-colors font-mono backdrop-blur-sm`}
-              >
-                <option value="1">1 HOUR</option>
-                <option value="6">6 HOURS</option>
-                <option value="12">12 HOURS</option>
-                <option value="24">24 HOURS</option>
-                <option value="48">48 HOURS</option>
-                <option value="72">72 HOURS</option>
-                <option value="168">1 WEEK</option>
-              </select>
-            </div>
-          </div>
-        </div>
+        {/* Raffle Form */}
+        <RaffleForm
+          formData={formData}
+          onFormChange={handleFormChange}
+          isApeChain={isApeChain}
+          nativeCurrency={nativeCurrency}
+          disabled={createPending || createConfirming || isSwitching}
+        />
 
 
 
@@ -362,10 +249,13 @@ export default function CreateRafflePage() {
               <div className={`w-4 h-4 sm:w-5 sm:h-5 ${isApeChain ? 'bg-emerald-500/20' : 'bg-blue-500/20'} rounded-lg flex items-center justify-center mr-2`}>
                 <span className={`${isApeChain ? 'text-emerald-400' : 'text-blue-400'} text-xs`}>⚡</span>
               </div>
-              NFT Approval Status
+              NFT Contract Approval Status
+              {currentContract && (
+                <span className="text-xs opacity-75 ml-2">(Contract: {currentContract.slice(0, 6)}...{currentContract.slice(-4)})</span>
+              )}
             </h4>
             
-            {approvalStatus === null ? (
+            {approvalStatus === null || isCheckingApproval ? (
               <div className={`relative flex items-center ${isApeChain ? 'text-emerald-300/70' : 'text-blue-300/70'} text-sm font-mono`}>
                 <div className={`w-4 h-4 border-2 ${isApeChain ? 'border-emerald-400' : 'border-blue-400'} border-t-transparent rounded-full animate-spin mr-2`}></div>
                 Checking approval status...
@@ -373,13 +263,13 @@ export default function CreateRafflePage() {
             ) : approvalStatus ? (
               <div className={`relative flex items-center ${isApeChain ? 'text-emerald-300' : 'text-blue-300'} text-sm font-mono tracking-wide`}>
                 <span className="mr-2">✅</span>
-                NFT Contract Approved • Ready to create raffle
+                Contract Approved • All NFTs from this contract can be used in raffles
               </div>
             ) : (
               <div className="relative space-y-3">
                 <div className="flex items-center text-yellow-400 text-sm font-mono tracking-wide">
                   <span className="mr-2">⚠️</span>
-                  Approval Required • Please approve NFT contract
+                  Contract Approval Required • One-time approval for this NFT contract
                 </div>
                 <div className="space-y-3">
                   <button
@@ -399,9 +289,9 @@ export default function CreateRafflePage() {
                   </button>
                   
                   <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-                    <div className="text-blue-300 text-xs font-medium mb-1">🛡️ Safe & Secure</div>
+                    <div className="text-blue-300 text-xs font-medium mb-1">🛡️ Contract-Level Approval</div>
                     <div className="text-blue-200 text-xs">
-                      This only allows the raffle system to transfer NFTs from this specific contract when you create a raffle. Your other assets remain protected.
+                      This approval allows the raffle system to transfer ANY NFT from this contract when you create raffles. Once approved, you can use any NFT from this contract without re-approving.
                     </div>
                   </div>
                 </div>
