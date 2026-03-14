@@ -122,9 +122,18 @@ describe('CreateRafflePage', () => {
     renderWithRouter(<CreateRafflePage />)
     
     const contractInput = screen.getByPlaceholderText('0x...')
-    fireEvent.change(contractInput, { target: { value: 'invalid-address' } })
     
-    expect(contractInput.value).toBe('')
+    // Test that dangerous characters are removed
+    fireEvent.change(contractInput, { target: { value: 'invalid<script>alert(1)</script>address' } })
+    expect(contractInput.value).toBe('invalidalert(1)address')
+    
+    // Test that normal invalid text is preserved (allows partial typing)
+    fireEvent.change(contractInput, { target: { value: 'invalid-address' } })
+    expect(contractInput.value).toBe('invalid-address')
+    
+    // Test that valid addresses work
+    fireEvent.change(contractInput, { target: { value: '0x1234567890123456789012345678901234567890' } })
+    expect(contractInput.value).toBe('0x1234567890123456789012345678901234567890')
   })
 
   it('validates ticket price is positive', async () => {
