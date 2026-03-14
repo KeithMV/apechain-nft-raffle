@@ -33,14 +33,11 @@ export function sanitizeAddress(address: string): string {
     return '';
   }
   
-  const cleaned = address.trim().toLowerCase();
+  // Just trim whitespace - let user type freely
+  const cleaned = address.trim();
   
-  // Must be valid Ethereum address format
-  if (!/^0x[a-f0-9]{40}$/i.test(cleaned)) {
-    return '';
-  }
-  
-  return cleaned;
+  // Only remove obviously dangerous characters, preserve normal typing
+  return cleaned.replace(/[<>"'&\x00-\x1f\x7f-\x9f]/g, '');
 }
 
 // Address validation function for tests
