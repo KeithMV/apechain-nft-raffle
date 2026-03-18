@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import RaffleCard, { CreatedRaffle } from './RaffleCard';
+import RaffleFilters from './RaffleFilters';
 import { useAllRafflesV4 } from '../hooks/useRafflePositionsV4';
 import { useRaffleActions } from '../hooks/useRaffleActions';
 import { throttle } from '../utils/performance';
@@ -112,40 +113,20 @@ export default function BrowseRaffles() {
       
       <div className="relative z-10">
         <div className={`bg-gradient-to-r ${styles.gradientBg} px-4 sm:px-8 py-6 sm:py-8 border-b ${styles.borderColor}`}>
-          <div className="flex items-center space-x-3 sm:space-x-4">
-            <div className="flex-1">
-              <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent font-sans tracking-tight`}>NFT Raffles</h2>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setShowExpired(!showExpired)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  showExpired 
-                    ? styles.activeButtonStyle
-                    : 'bg-slate-700/50 text-slate-400 border border-slate-600/30 hover:bg-slate-600/50'
-                }`}
-              >
-                {showExpired ? 'Hide Expired' : 'Show Expired'}
-              </button>
-            </div>
+          <div className="flex items-center justify-between">
+            <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent font-sans tracking-tight`}>NFT Raffles</h2>
+            <RaffleFilters
+              showExpired={showExpired}
+              setShowExpired={setShowExpired}
+              activeCount={activeCount}
+              expiredCount={expiredCount}
+              totalRaffles={raffles.length}
+              isApeChain={isApeChain}
+            />
           </div>
         </div>
 
       <div className="p-4 sm:p-8">
-        {raffles.length > 0 && (
-          <div className="mb-6 flex flex-wrap gap-4 text-sm">
-            <div className="bg-emerald-500/10 border border-emerald-400/30 rounded-xl px-4 py-2">
-              <span className="text-emerald-300 font-medium">{activeCount} Active</span>
-            </div>
-            <button
-              onClick={() => setShowExpired(!showExpired)}
-              className="bg-slate-700/50 border border-slate-600/30 hover:bg-slate-600/50 hover:border-slate-500/50 rounded-xl px-4 py-2 transition-all cursor-pointer"
-            >
-              <span className="text-slate-400 hover:text-slate-300 font-medium">{expiredCount} Expired</span>
-            </button>
-          </div>
-        )}
-              
               {filteredRaffles.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-400/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
