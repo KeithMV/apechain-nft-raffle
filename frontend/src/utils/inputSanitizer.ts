@@ -33,11 +33,14 @@ export function sanitizeAddress(address: string): string {
     return '';
   }
   
-  // Just trim whitespace - let user type freely
-  const cleaned = address.trim();
-  
-  // Only remove obviously dangerous characters, preserve normal typing
-  return cleaned.replace(/[<>"'&\x00-\x1f\x7f-\x9f]/g, '');
+  // Remove HTML tags but preserve content for better UX during typing
+  return address
+    .replace(/<\/?script[^>]*>/gi, '') // Remove script tags but keep content
+    .replace(/<[^>]*>/g, '') // Remove other HTML tags
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .replace(/on\w+\s*=/gi, '') // Remove event handlers
+    .replace(/[<>"'&\x00-\x1f\x7f-\x9f]/g, '') // Remove dangerous characters
+    .trim();
 }
 
 // Address validation function for tests
