@@ -7,42 +7,21 @@ import { useUserRafflePositionsV4, useCreatedRafflesV4, useClearRaffleCacheV4 } 
 import { useCancelRaffle } from '../hooks/useCancelRaffle';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { useNetwork } from '../contexts/NetworkContext';
+import { useDashboardStyles } from '../hooks/useDashboardStyles';
 
 // Interfaces moved to hooks file to avoid duplication
 
 export default function RaffleDashboard() {
   const { address } = useAccount();
   const chainId = useChainId();
-  const { theme, nativeCurrency, isApeChain } = useNetwork();
+  const { nativeCurrency, isApeChain } = useNetwork();
+  
+  // Extract all styling logic to custom hook
+  const styles = useDashboardStyles(isApeChain);
   
   const [activeTab, setActiveTab] = useState<'participated' | 'created'>('participated');
   const [showExpired, setShowExpired] = useState(true);
   const [page, setPage] = useState(0);
-  
-  // Network-aware styling
-  const containerBorderColor = isApeChain ? 'border-emerald-500/30' : 'border-blue-500/30';
-  const containerShadowColor = isApeChain ? 'shadow-emerald-500/10' : 'shadow-blue-500/10';
-  const headerBgGradient = isApeChain 
-    ? 'from-emerald-900/20 via-green-900/20 to-teal-900/20' 
-    : 'from-blue-900/20 via-indigo-900/20 to-purple-900/20';
-  const headerBorderColor = isApeChain ? 'border-emerald-500/30' : 'border-blue-500/30';
-  const titleGradient = isApeChain 
-    ? 'from-emerald-400 via-green-400 to-teal-400' 
-    : 'from-blue-400 via-indigo-400 to-purple-400';
-  const gridColor = isApeChain ? 'rgba(16,185,129,0.03)' : 'rgba(59,130,246,0.03)';
-  const tabActiveStyle = isApeChain 
-    ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/50 shadow-emerald-500/25'
-    : 'bg-blue-500/20 text-blue-200 border-blue-400/50 shadow-blue-500/25';
-  const tabHoverStyle = isApeChain
-    ? 'text-emerald-300/70 hover:text-emerald-200 hover:bg-emerald-500/10 hover:border-emerald-400/30'
-    : 'text-blue-300/70 hover:text-blue-200 hover:bg-blue-500/10 hover:border-blue-400/30';
-  const cardBorderColor = isApeChain ? 'border-emerald-500/30' : 'border-blue-500/30';
-  const cardShadowColor = isApeChain ? 'shadow-emerald-500/10' : 'shadow-blue-500/10';
-  const cardBgGradient = isApeChain 
-    ? 'from-emerald-500/5 via-teal-500/5 to-cyan-500/5' 
-    : 'from-blue-500/5 via-indigo-500/5 to-purple-500/5';
-  const textPrimary = isApeChain ? 'text-emerald-300' : 'text-blue-300';
-  const textSecondary = isApeChain ? 'text-emerald-400/70' : 'text-blue-400/70';
   
   const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositionsV4(address);
   const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRafflesV4(address, page);
@@ -156,8 +135,8 @@ export default function RaffleDashboard() {
   // Only show full loading screen if no cached data available
   if (loading && userPositions.length === 0 && createdRaffles.length === 0) {
     return (
-      <div className={`relative bg-gray-900/95 backdrop-blur-xl border ${containerBorderColor} rounded-2xl shadow-2xl ${containerShadowColor} p-8`}>
-        <div className={`absolute inset-0 bg-gradient-to-r ${cardBgGradient} rounded-2xl blur-sm`}></div>
+      <div className={`relative bg-gray-900/95 backdrop-blur-xl border ${styles.containerBorderColor} rounded-2xl shadow-2xl ${styles.containerShadowColor} p-8`}>
+        <div className={`absolute inset-0 bg-gradient-to-r ${styles.cardBgGradient} rounded-2xl blur-sm`}></div>
         <div className="relative flex items-center justify-center py-12">
           <div className={`w-8 h-8 border-2 ${isApeChain ? 'border-emerald-400' : 'border-blue-400'} border-t-transparent rounded-full animate-spin mr-3`}></div>
           <span className={`${isApeChain ? 'text-emerald-200' : 'text-blue-200'} font-mono tracking-wide`}>Loading raffle data...</span>
@@ -169,17 +148,17 @@ export default function RaffleDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className={`relative bg-gray-900/95 backdrop-blur-xl border ${containerBorderColor} rounded-2xl shadow-2xl ${containerShadowColor} overflow-hidden`}>
+      <div className={`relative bg-gray-900/95 backdrop-blur-xl border ${styles.containerBorderColor} rounded-2xl shadow-2xl ${styles.containerShadowColor} overflow-hidden`}>
         {/* Animated background grid */}
         <div className="absolute inset-0 bg-[size:20px_20px]" style={{
-          backgroundImage: `linear-gradient(${gridColor} 1px, transparent 1px), linear-gradient(90deg, ${gridColor} 1px, transparent 1px)`
+          backgroundImage: `linear-gradient(${styles.gridColor} 1px, transparent 1px), linear-gradient(90deg, ${styles.gridColor} 1px, transparent 1px)`
         }}></div>
         
-        <div className={`relative bg-gradient-to-r ${headerBgGradient} px-4 sm:px-8 py-6 sm:py-8 border-b ${headerBorderColor}`}>
+        <div className={`relative bg-gradient-to-r ${styles.headerBgGradient} px-4 sm:px-8 py-6 sm:py-8 border-b ${styles.headerBorderColor}`}>
           <div className="flex items-center space-x-3 sm:space-x-4">
             <div>
               <div className="flex items-center space-x-3">
-                <h2 className={`text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r ${titleGradient} bg-clip-text text-transparent font-mono tracking-wider`}>My Raffle Dashboard</h2>
+                <h2 className={`text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent font-mono tracking-wider`}>My Raffle Dashboard</h2>
                 {loading && (
                   <div className={`w-4 h-4 border-2 ${isApeChain ? 'border-emerald-400' : 'border-blue-400'} border-t-transparent rounded-full animate-spin`}></div>
                 )}
@@ -196,27 +175,27 @@ export default function RaffleDashboard() {
               onClick={() => setActiveTab('participated')}
               className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 overflow-hidden group font-mono tracking-wider ${
                 activeTab === 'participated'
-                  ? tabActiveStyle
-                  : `${tabHoverStyle} border border-transparent`
+                  ? styles.tabActiveStyle
+                  : `${styles.tabHoverStyle} border border-transparent`
               }`}
             >
-              <div className={`absolute inset-0 bg-gradient-to-r ${isApeChain ? 'from-emerald-500/0 via-emerald-500/10 to-emerald-500/0' : 'from-blue-500/0 via-blue-500/10 to-blue-500/0'} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
+              <div className={`absolute inset-0 bg-gradient-to-r ${styles.shimmerGradient} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
               <span className="relative">Participated ({userPositions.length})</span>
             </button>
             <button
               onClick={() => setActiveTab('created')}
               className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 overflow-hidden group font-mono tracking-wider ${
                 activeTab === 'created'
-                  ? tabActiveStyle
-                  : `${tabHoverStyle} border border-transparent`
+                  ? styles.tabActiveStyle
+                  : `${styles.tabHoverStyle} border border-transparent`
               }`}
             >
-              <div className={`absolute inset-0 bg-gradient-to-r ${isApeChain ? 'from-emerald-500/0 via-emerald-500/10 to-emerald-500/0' : 'from-blue-500/0 via-blue-500/10 to-blue-500/0'} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
+              <div className={`absolute inset-0 bg-gradient-to-r ${styles.shimmerGradient} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
               <span className="relative">Created ({createdRaffles.length})</span>
             </button>
             </div>
             <div className="flex items-center space-x-3">
-              <label className={`flex items-center space-x-2 text-sm ${isApeChain ? 'text-emerald-300' : 'text-blue-300'} font-mono`}>
+              <label className={`flex items-center space-x-2 text-sm ${styles.textPrimary} font-mono`}>
                 <input
                   type="checkbox"
                   checked={showExpired}
@@ -234,17 +213,17 @@ export default function RaffleDashboard() {
             <div className="space-y-4">
               {filteredPositions.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className={`relative w-16 h-16 bg-black/80 border ${cardBorderColor} rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm`}>
-                    <div className={`absolute inset-0 bg-gradient-to-r ${cardBgGradient} rounded-2xl blur-sm`}></div>
-                    <span className={`relative ${textPrimary} text-2xl`}>⚡</span>
+                  <div className={`relative w-16 h-16 bg-black/80 border ${styles.cardBorderColor} rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm`}>
+                    <div className={`absolute inset-0 bg-gradient-to-r ${styles.cardBgGradient} rounded-2xl blur-sm`}></div>
+                    <span className={`relative ${styles.textPrimary} text-2xl`}>⚡</span>
                   </div>
-                  <h3 className={`text-lg font-semibold ${textPrimary} mb-2 font-mono tracking-wider`}>No Raffle Participation</h3>
-                  <p className={`${textSecondary} font-mono`}>{showExpired ? "You haven't participated in any raffles yet" : "No active or completed raffles to show"}</p>
+                  <h3 className={`text-lg font-semibold ${styles.textPrimary} mb-2 font-mono tracking-wider`}>No Raffle Participation</h3>
+                  <p className={`${styles.textSecondary} font-mono`}>{showExpired ? "You haven't participated in any raffles yet" : "No active or completed raffles to show"}</p>
                 </div>
               ) : (
                 filteredPositions.map((position) => (
-                <div key={`${position.raffleContract}-${position.raffleId}`} className={`relative bg-black/80 backdrop-blur-xl border ${cardBorderColor} rounded-xl overflow-hidden shadow-lg ${cardShadowColor}`}>
-                  <div className={`absolute inset-0 bg-gradient-to-r ${cardBgGradient} rounded-xl blur-sm`}></div>
+                <div key={`${position.raffleContract}-${position.raffleId}`} className={`relative bg-black/80 backdrop-blur-xl border ${styles.cardBorderColor} rounded-xl overflow-hidden shadow-lg ${styles.cardShadowColor}`}>
+                  <div className={`absolute inset-0 bg-gradient-to-r ${styles.cardBgGradient} rounded-xl blur-sm`}></div>
                   <div className="flex flex-col sm:flex-row">
                     <div className="w-full sm:w-80 h-64 sm:h-80">
                       <BasicNFTImage 
@@ -256,14 +235,14 @@ export default function RaffleDashboard() {
                     </div>
                     <div className="relative flex-1 p-6 z-10">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h4 className={`text-lg font-semibold ${textPrimary} font-mono tracking-wider`}>
+                        <h4 className={`text-lg font-semibold ${styles.textPrimary} font-mono tracking-wider`}>
                           NFT #{position.tokenId}
                         </h4>
                       </div>
                       <div className="mb-3">
-                        <p className={`${textSecondary} text-xs font-mono tracking-wide mb-1`}>NFT Contract:</p>
+                        <p className={`${styles.textSecondary} text-xs font-mono tracking-wide mb-1`}>NFT Contract:</p>
                         <CopyAddress address={position.nftContract} label="NFT Contract" className="mb-2" />
-                        <p className={`${textSecondary} text-xs font-mono tracking-wide mb-1`}>Raffle Contract:</p>
+                        <p className={`${styles.textSecondary} text-xs font-mono tracking-wide mb-1`}>Raffle Contract:</p>
                         <CopyAddress address={position.raffleContract} label="Raffle Contract" />
                       </div>
                       <div className="flex items-center space-x-3 mb-2">
@@ -286,16 +265,16 @@ export default function RaffleDashboard() {
                       
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
                         <div>
-                          <p className={`${textSecondary} font-mono tracking-wide`}>Your Tickets</p>
-                          <p className={`${textPrimary} font-mono tracking-wider`}>{position.userTickets}</p>
+                          <p className={`${styles.textSecondary} font-mono tracking-wide`}>Your Tickets</p>
+                          <p className={`${styles.textPrimary} font-mono tracking-wider`}>{position.userTickets}</p>
                         </div>
                         <div>
-                          <p className={`${textSecondary} font-mono tracking-wide`}>Tickets Sold</p>
-                          <p className={`${textPrimary} font-mono tracking-wider`}>{position.ticketsSold}/{position.maxTickets}</p>
+                          <p className={`${styles.textSecondary} font-mono tracking-wide`}>Tickets Sold</p>
+                          <p className={`${styles.textPrimary} font-mono tracking-wider`}>{position.ticketsSold}/{position.maxTickets}</p>
                         </div>
                         <div>
-                          <p className={`${textSecondary} font-mono tracking-wide`}>Time Remaining</p>
-                          <p className={`${textPrimary} font-mono tracking-wider`}>{formatTimeRemaining(position.endTime)}</p>
+                          <p className={`${styles.textSecondary} font-mono tracking-wide`}>Time Remaining</p>
+                          <p className={`${styles.textPrimary} font-mono tracking-wider`}>{formatTimeRemaining(position.endTime)}</p>
                         </div>
                       </div>
                     </div>
@@ -308,17 +287,17 @@ export default function RaffleDashboard() {
             <div className="space-y-4">
               {filteredRaffles.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className={`relative w-16 h-16 bg-black/80 border ${cardBorderColor} rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm`}>
-                        <div className={`absolute inset-0 bg-gradient-to-r ${cardBgGradient} rounded-2xl blur-sm`}></div>
-                        <span className={`relative ${textPrimary} text-2xl`}>⚡</span>
+                      <div className={`relative w-16 h-16 bg-black/80 border ${styles.cardBorderColor} rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm`}>
+                        <div className={`absolute inset-0 bg-gradient-to-r ${styles.cardBgGradient} rounded-2xl blur-sm`}></div>
+                        <span className={`relative ${styles.textPrimary} text-2xl`}>⚡</span>
                       </div>
-                      <h3 className={`text-lg font-semibold ${textPrimary} mb-2 font-mono tracking-wider`}>No Raffles Created</h3>
-                      <p className={`${textSecondary} font-mono`}>{showExpired ? "You haven't created any raffles yet" : "No active or recent raffles to show"}</p>
+                      <h3 className={`text-lg font-semibold ${styles.textPrimary} mb-2 font-mono tracking-wider`}>No Raffles Created</h3>
+                      <p className={`${styles.textSecondary} font-mono`}>{showExpired ? "You haven't created any raffles yet" : "No active or recent raffles to show"}</p>
                     </div>
                 ) : (
                   filteredRaffles.map((raffle) => (
-                  <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className={`relative bg-black/80 backdrop-blur-xl border ${cardBorderColor} rounded-xl overflow-hidden shadow-lg ${cardShadowColor}`}>
-                    <div className={`absolute inset-0 bg-gradient-to-r ${cardBgGradient} rounded-xl blur-sm`}></div>
+                  <div key={`${raffle.raffleContract}-${raffle.raffleId}`} className={`relative bg-black/80 backdrop-blur-xl border ${styles.cardBorderColor} rounded-xl overflow-hidden shadow-lg ${styles.cardShadowColor}`}>
+                    <div className={`absolute inset-0 bg-gradient-to-r ${styles.cardBgGradient} rounded-xl blur-sm`}></div>
                     <div className="flex flex-col sm:flex-row">
                       <div className="w-full sm:w-80 h-64 sm:h-80">
                         <BasicNFTImage 
@@ -332,14 +311,14 @@ export default function RaffleDashboard() {
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-4 sm:space-y-0">
                           <div className="flex-1">
                             <div className="flex items-center space-x-3 mb-2">
-                              <h4 className={`text-lg font-semibold ${textPrimary} font-mono tracking-wider`}>
+                              <h4 className={`text-lg font-semibold ${styles.textPrimary} font-mono tracking-wider`}>
                                 NFT #{raffle.tokenId}
                               </h4>
                             </div>
                             <div className="mb-3">
-                              <p className={`${textSecondary} text-xs font-mono tracking-wide mb-1`}>NFT Contract:</p>
+                              <p className={`${styles.textSecondary} text-xs font-mono tracking-wide mb-1`}>NFT Contract:</p>
                               <CopyAddress address={raffle.nftContract} label="NFT Contract" className="mb-2" />
-                              <p className={`${textSecondary} text-xs font-mono tracking-wide mb-1`}>Raffle Contract:</p>
+                              <p className={`${styles.textSecondary} text-xs font-mono tracking-wide mb-1`}>Raffle Contract:</p>
                               <CopyAddress address={raffle.raffleContract} label="Raffle Contract" />
                             </div>
                         <div className="flex items-center space-x-3 mb-2">
@@ -357,26 +336,26 @@ export default function RaffleDashboard() {
                         
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                           <div>
-                            <p className={`${textSecondary} font-mono tracking-wide`}>Ticket Price</p>
-                            <p className={`${textPrimary} font-mono tracking-wider`}>{raffle.ticketPrice} {nativeCurrency}</p>
+                            <p className={`${styles.textSecondary} font-mono tracking-wide`}>Ticket Price</p>
+                            <p className={`${styles.textPrimary} font-mono tracking-wider`}>{raffle.ticketPrice} {nativeCurrency}</p>
                           </div>
                           <div>
-                            <p className={`${textSecondary} font-mono tracking-wide`}>Tickets Sold</p>
-                            <p className={`${textPrimary} font-mono tracking-wider`}>{raffle.ticketsSold}/{raffle.maxTickets}</p>
+                            <p className={`${styles.textSecondary} font-mono tracking-wide`}>Tickets Sold</p>
+                            <p className={`${styles.textPrimary} font-mono tracking-wider`}>{raffle.ticketsSold}/{raffle.maxTickets}</p>
                           </div>
                           <div>
-                            <p className={`${textSecondary} font-mono tracking-wide`}>Your Revenue</p>
-                            <p className={`${textPrimary} font-mono tracking-wider`}>{(parseFloat(raffle.ticketPrice) * raffle.ticketsSold * 0.95).toFixed(2)} {nativeCurrency}</p>
+                            <p className={`${styles.textSecondary} font-mono tracking-wide`}>Your Revenue</p>
+                            <p className={`${styles.textPrimary} font-mono tracking-wider`}>{(parseFloat(raffle.ticketPrice) * raffle.ticketsSold * 0.95).toFixed(2)} {nativeCurrency}</p>
                           </div>
                           <div>
-                            <p className={`${textSecondary} font-mono tracking-wide`}>Status</p>
-                            <p className={`${textPrimary} font-mono tracking-wider`}>{formatTimeRemaining(raffle.endTime)}</p>
+                            <p className={`${styles.textSecondary} font-mono tracking-wide`}>Status</p>
+                            <p className={`${styles.textPrimary} font-mono tracking-wider`}>{formatTimeRemaining(raffle.endTime)}</p>
                           </div>
                         </div>
                         
                             {raffle.completed && raffle.winner && (
                               <div className={`mt-3 p-3 ${isApeChain ? 'bg-emerald-500/10 border-emerald-400/20' : 'bg-blue-500/10 border-blue-400/20'} rounded-lg backdrop-blur-sm`}>
-                                <p className={`${textPrimary} text-sm font-mono tracking-wide`}>
+                                <p className={`${styles.textPrimary} text-sm font-mono tracking-wide`}>
                                   ⚡ Winner: {raffle.winner.slice(0, 6)}...{raffle.winner.slice(-4)}
                                 </p>
                               </div>
@@ -417,9 +396,9 @@ export default function RaffleDashboard() {
                   <button
                     onClick={loadMoreRaffles}
                     disabled={loading}
-                    className={`relative bg-gradient-to-r ${isApeChain ? 'from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/25 hover:shadow-emerald-500/40' : 'from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-blue-500/25 hover:shadow-blue-500/40'} disabled:from-gray-600 disabled:to-gray-600 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group`}
+                    className={`relative bg-gradient-to-r ${styles.loadMoreButtonGradient} ${styles.loadMoreButtonHover} disabled:from-gray-600 disabled:to-gray-600 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 shadow-lg ${styles.loadMoreButtonShadow} ${styles.loadMoreButtonShadowHover} transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group`}
                   >
-                    <div className={`absolute inset-0 bg-gradient-to-r ${isApeChain ? 'from-emerald-500/0 via-emerald-500/20 to-emerald-500/0' : 'from-blue-500/0 via-blue-500/20 to-blue-500/0'} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
+                    <div className={`absolute inset-0 bg-gradient-to-r ${styles.shimmerGradient} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
                     {loading ? (
                       <span className="relative flex items-center space-x-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
