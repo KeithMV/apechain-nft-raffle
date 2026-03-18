@@ -1,13 +1,9 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
-import ApeTokenBalance from './ApeTokenBalance';
 import RaffleCard, { CreatedRaffle } from './RaffleCard';
-import toast from 'react-hot-toast';
 import { useAllRafflesV4 } from '../hooks/useRafflePositionsV4';
-import { useBuyTickets } from '../hooks/useRaffleContractV4';
-import { useWinnerSelection } from '../hooks/useWinnerSelection';
-import { throttle, useVirtualScrolling } from '../utils/performance';
-import { V4Status } from './V4Status';
+import { useRaffleActions } from '../hooks/useRaffleActions';
+import { throttle } from '../utils/performance';
 import { useNetwork } from '../contexts/NetworkContext';
 
 
@@ -34,15 +30,22 @@ export default function BrowseRaffles() {
       : 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
   }), [isApeChain]);
   
-  const [ticketQuantities, setTicketQuantities] = useState<{[key: string]: number}>({});
+  // State management
   const [showExpired, setShowExpired] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
-  const [processingRaffles, setProcessingRaffles] = useState<Set<string>>(new Set());
+  const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
   
   const BATCH_SIZE = 10;
   const { raffles, loading, refetch } = useAllRafflesV4(BATCH_SIZE, currentPage * BATCH_SIZE);
-
-  const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
+  
+  // Consolidated raffle actions hook
+  const {
+    processingRaffles,
+    ticketQuantities,
+    handleBuyTickets,
+    handleWinnerSelection,
+    setTicketQuantity
+  } = useRaffleActions(refetch);
 
   useEffect(() => {
     if (raffles.length < BATCH_SIZE) {
@@ -61,114 +64,9 @@ export default function BrowseRaffles() {
 
 
 
-  // Remove unused destructured variables to fix warnings
-  const { buyTickets, isSuccess: buySuccess, error: buyError } = useBuyTickets();
-  const { startWinnerSelection, revealSuccess } = useWinnerSelection();
 
-  // Auto-refresh when winner selection completes
-  useEffect(() => {
-    if (revealSuccess) {
-      // Clear processing state and refetch data
-      setProcessingRaffles(new Set());
-      refetch();
-    }
-  }, [revealSuccess, refetch]);
-
-  // Memoize handlers to prevent recreation on every render
-  const handleBuyTickets = useCallback(async (raffle: CreatedRaffle) => {
-    const quantity = ticketQuantities[raffle.raffleContract] || 1;
-    const availableTickets = raffle.maxTickets - raffle.ticketsSold;
-    
-    if (quantity > availableTickets) {
-      toast.error(`Only ${availableTickets} tickets available`);
-      return;
-    }
-    
-    // Use functional update to avoid dependency on processingRaffles
-    let isProcessing = false;
-    setProcessingRaffles(prev => {
-      isProcessing = prev.has(raffle.raffleContract);
-      return isProcessing ? prev : new Set(prev).add(raffle.raffleContract);
-    });
-    
-    if (isProcessing) return;
-    
-    try {
-      await buyTickets(raffle.raffleContract, quantity, raffle.ticketPrice);
-      // Success handling is done in the useEffect for buySuccess
-    } catch (error) {
-      console.error('Failed to buy tickets:', error);
-      // Error handling is done in the useEffect for buyError
-    } finally {
-      setProcessingRaffles(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(raffle.raffleContract);
-        return newSet;
-      });
-    }
-  }, [ticketQuantities, buyTickets]);
-
-  const handleWinnerSelection = useCallback(async (raffle: CreatedRaffle) => {
-    // Use functional update to avoid dependency on processingRaffles
-    let isProcessing = false;
-    setProcessingRaffles(prev => {
-      isProcessing = prev.has(raffle.raffleContract);
-      return isProcessing ? prev : new Set(prev).add(raffle.raffleContract);
-    });
-    
-    if (isProcessing) return;
-    
-    try {
-      await startWinnerSelection(raffle.raffleContract);
-      // Hook handles cache invalidation automatically
-      setProcessingRaffles(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(raffle.raffleContract);
-        return newSet;
-      });
-    } catch (error) {
-      console.error('Failed to start winner selection:', error);
-      toast.error('Failed to start winner selection. Please try again.');
-      setProcessingRaffles(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(raffle.raffleContract);
-        return newSet;
-      });
-    }
-  }, [startWinnerSelection]);
-
-  // Handle buy success
-  useEffect(() => {
-    if (buySuccess) {
-      setTicketQuantities({});
-      // Immediately refetch data to show updated ticket counts
-      refetch();
-    }
-  }, [buySuccess, refetch]);
-
-  // Handle buy error
-  useEffect(() => {
-    if (buyError) {
-      if (buyError.message?.includes('User rejected')) {
-        toast.error('Transaction cancelled by user');
-      } else {
-        toast.error('Failed to buy tickets');
-      }
-    }
-  }, [buyError]);
-
-  // Optimized ticket quantity setter with throttling
-  const setTicketQuantity = useCallback(
-    (raffleContract: string, quantity: number, maxAvailable: number) => {
-      setTicketQuantities(prev => ({
-        ...prev,
-        [raffleContract]: Math.max(1, Math.min(25, maxAvailable, quantity))
-      }));
-    },
-    []
-  );
   
-  // Throttled version of setTicketQuantity
+  // Throttled version of setTicketQuantity for performance
   const throttledSetTicketQuantity = useMemo(
     () => throttle(setTicketQuantity, 100),
     [setTicketQuantity]
