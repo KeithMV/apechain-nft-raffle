@@ -6,36 +6,18 @@
 import { usePublicClient, useChainId } from 'wagmi';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRaffleDataFetcher, RaffleInfo } from './useRaffleDataFetcher';
+import { useRaffleCacheManager, UserRafflePosition } from './useRaffleCacheManager';
 import { getRaffleFactoryAddress, isV4Available } from '../config/addresses';
 import { RAFFLE_FACTORY_ABI } from '../config/contracts';
-import { processBatch, OptimizedCache, debounce } from '../utils/performance';
+import { processBatch, debounce } from '../utils/performance';
 
 // Type aliases for backward compatibility
 export interface CreatedRaffle extends RaffleInfo {}
 
-interface UserRafflePosition {
-  raffleId: number;
-  raffleContract: string;
-  nftContract: string;
-  tokenId: string;
-  userTickets: number;
-  ticketsSold: number;
-  maxTickets: number;
-  endTime: number;
-  completed: boolean;
-  isActive: boolean;
-  isWinner: boolean;
-  winProbability: number;
-  version: 'v3' | 'v4';
-}
-
-// Optimized cache instances
-const raffleCache = new OptimizedCache<CreatedRaffle[]>(2 * 1024 * 1024, 100, 60000);
-const positionCache = new OptimizedCache<UserRafflePosition[]>(1024 * 1024, 50, 30000);
-
 // Get all raffles from both V3 and V4
 export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
   const dataFetcher = useRaffleDataFetcher();
+  const { raffleCache } = useRaffleCacheManager();
   const [raffles, setRaffles] = useState<CreatedRaffle[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,23 +25,27 @@ export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
   const loadRaffles = useCallback(async () => {
     if (!dataFetcher.isReady) return;
 
+    // Check cache first
+    const cached = raffleCache.get({ limit, offset });
+    if (cached) {
+      setRaffles(cached);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       const fetchedRaffles = await dataFetcher.fetchAllRaffles({ limit, offset });
       setRaffles(fetchedRaffles);
-      
-      // Cache with timestamp to ensure freshness
-      const cacheKey = `all_raffles_v4_${limit}_${offset}_${Date.now()}`;
-      raffleCache.set(cacheKey, fetchedRaffles);
+      raffleCache.set({ limit, offset }, fetchedRaffles);
     } catch (err) {
       console.error('Failed to load raffles:', err);
       setError('Failed to load raffles');
     } finally {
       setLoading(false);
     }
-  }, [dataFetcher, limit, offset]);
+  }, [dataFetcher, raffleCache, limit, offset]);
 
   const debouncedLoadRaffles = useMemo(
     () => debounce(loadRaffles, 300),
@@ -75,23 +61,14 @@ export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
 
 // Clear cache utility - more aggressive clearing
 export function useClearRaffleCacheV4() {
-  return useCallback(() => {
-    raffleCache.clear();
-    positionCache.clear();
-    // Force reload by clearing localStorage cache if any
-    if (typeof window !== 'undefined') {
-      Object.keys(localStorage).forEach(key => {
-        if (key.includes('raffle') || key.includes('cache')) {
-          localStorage.removeItem(key);
-        }
-      });
-    }
-  }, []);
+  const { clearAllCaches } = useRaffleCacheManager();
+  return clearAllCaches;
 }
 // Get user's raffle positions (network-aware)
 export function useUserRafflePositionsV4(userAddress?: string) {
   const publicClient = usePublicClient();
   const chainId = useChainId();
+  const { positionCache } = useRaffleCacheManager();
   const [positions, setPositions] = useState<UserRafflePosition[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,8 +76,8 @@ export function useUserRafflePositionsV4(userAddress?: string) {
   const loadPositions = useCallback(async () => {
     if (!publicClient || !userAddress || !chainId) return;
 
-    const cacheKey = `user_positions_v4_${chainId}_${userAddress}`;
-    const cached = positionCache.get(cacheKey);
+    // Check cache first
+    const cached = positionCache.get({ userAddress, chainId });
     if (cached) {
       setPositions(cached);
       return;
@@ -132,14 +109,14 @@ export function useUserRafflePositionsV4(userAddress?: string) {
       const sortedPositions = uniquePositions.sort((a, b) => b.endTime - a.endTime);
       
       setPositions(sortedPositions);
-      positionCache.set(cacheKey, sortedPositions);
+      positionCache.set({ userAddress, chainId }, sortedPositions);
     } catch (err) {
       console.error('Failed to load user positions:', err);
       setError('Failed to load user positions');
     } finally {
       setLoading(false);
     }
-  }, [publicClient, userAddress, chainId]);
+  }, [publicClient, userAddress, chainId, positionCache]);
 
   useEffect(() => {
     loadPositions();
@@ -269,12 +246,20 @@ async function getUserPositionsFromFactory(
 // Get user's created raffles (network-aware)
 export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
   const dataFetcher = useRaffleDataFetcher();
+  const { createdCache } = useRaffleCacheManager();
   const [raffles, setRaffles] = useState<CreatedRaffle[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadCreatedRaffles = useCallback(async () => {
     if (!dataFetcher.isReady || !userAddress) return;
+
+    // Check cache first
+    const cached = createdCache.get({ userAddress, page });
+    if (cached) {
+      setRaffles(cached);
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -292,13 +277,14 @@ export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
         .sort((a, b) => b.endTime - a.endTime);
       
       setRaffles(createdRaffles);
+      createdCache.set({ userAddress, page }, createdRaffles);
     } catch (err) {
       console.error('Failed to load created raffles:', err);
       setError('Failed to load created raffles');
     } finally {
       setLoading(false);
     }
-  }, [dataFetcher, userAddress, page]);
+  }, [dataFetcher, createdCache, userAddress, page]);
 
   useEffect(() => {
     loadCreatedRaffles();

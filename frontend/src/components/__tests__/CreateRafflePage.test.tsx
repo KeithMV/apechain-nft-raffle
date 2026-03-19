@@ -61,6 +61,22 @@ vi.mock('../../hooks/useUserNFTs', () => ({
   })),
 }))
 
+vi.mock('../../hooks/useNFTApprovalManager', () => ({
+  useNFTApprovalManager: vi.fn(() => ({
+    approvalStatus: null,
+    isCheckingApproval: false,
+    currentContract: '',
+    approvalPending: false,
+    approvalConfirming: false,
+    approvalSuccess: false,
+    approvalError: null,
+    checkApprovalForContract: vi.fn(),
+    approveContract: vi.fn(),
+    clearApprovalState: vi.fn(),
+    allApprovalStates: {}
+  })),
+}))
+
 // Mock components
 vi.mock('../BasicNFTImage', () => ({
   default: ({ contractAddress, tokenId }: any) => (
@@ -123,10 +139,6 @@ describe('CreateRafflePage', () => {
     
     const contractInput = screen.getByPlaceholderText('0x...')
     
-    // Test that dangerous characters are removed
-    fireEvent.change(contractInput, { target: { value: 'invalid<script>alert(1)</script>address' } })
-    expect(contractInput.value).toBe('invalidalert(1)address')
-    
     // Test that normal invalid text is preserved (allows partial typing)
     fireEvent.change(contractInput, { target: { value: 'invalid-address' } })
     expect(contractInput.value).toBe('invalid-address')
@@ -134,6 +146,10 @@ describe('CreateRafflePage', () => {
     // Test that valid addresses work
     fireEvent.change(contractInput, { target: { value: '0x1234567890123456789012345678901234567890' } })
     expect(contractInput.value).toBe('0x1234567890123456789012345678901234567890')
+    
+    // Test that dangerous characters are filtered
+    fireEvent.change(contractInput, { target: { value: 'test<>"&address' } })
+    expect(contractInput.value).toBe('testaddress')
   })
 
   it('validates ticket price is positive', async () => {
