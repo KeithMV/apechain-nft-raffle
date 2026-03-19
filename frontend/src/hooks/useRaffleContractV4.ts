@@ -6,6 +6,7 @@
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { useContractVersionManager } from './useContractVersionManager';
 import { useNFTApprovalTransaction, useRaffleCreationTransaction, useTicketPurchaseTransaction } from './useWeb3TransactionManager';
+import { useContractValidator } from './useContractValidator';
 import { RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
 import { useState } from 'react';
@@ -71,9 +72,16 @@ export function useNFTApprovalStatusV4(nftContract: string, userAddress: string)
 export function useNFTApprovalV4() {
   const chainId = useChainId();
   const { factoryAddress, currentVersion } = useContractVersionManager();
+  const { validateNFTApproval } = useContractValidator();
   const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useNFTApprovalTransaction();
 
   const approveNFT = async (nftContract: string) => {
+    // Validate input
+    const validation = validateNFTApproval(nftContract);
+    if (!validation.isValid) {
+      throw new Error(validation.error);
+    }
+    
     return await executeTransaction({
       address: nftContract as `0x${string}`,
       abi: ERC721_ABI,
@@ -100,6 +108,7 @@ export function useNFTApprovalV4() {
 export function useCreateRaffleV4() {
   const chainId = useChainId();
   const { factoryAddress, currentVersion, rateLimit, rateLimitText } = useContractVersionManager();
+  const { validateRaffleCreation } = useContractValidator();
   const { invalidateAll } = useCacheInvalidation();
   
   const handleSuccess = () => {
@@ -112,18 +121,10 @@ export function useCreateRaffleV4() {
   const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useRaffleCreationTransaction(handleSuccess);
 
   const createRaffle = async (params: CreateRaffleParams) => {
-    // Validate inputs
-    if (!params.ticketPrice || isNaN(parseFloat(params.ticketPrice))) {
-      throw new Error('Invalid ticket price');
-    }
-    if (!params.tokenId || isNaN(parseInt(params.tokenId))) {
-      throw new Error('Invalid token ID');
-    }
-    if (!params.maxTickets || params.maxTickets <= 0) {
-      throw new Error('Invalid max tickets');
-    }
-    if (!params.duration || params.duration <= 0) {
-      throw new Error('Invalid duration');
+    // Validate all inputs
+    const validation = validateRaffleCreation(params);
+    if (!validation.isValid) {
+      throw new Error(validation.error);
     }
     
     const ticketPriceWei = parseEther(params.ticketPrice);
@@ -190,6 +191,7 @@ export function useFactoryPauseStatusV4() {
  * Hook for buying raffle tickets (V4 aware)
  */
 export function useBuyTickets() {
+  const { validateTicketPurchase } = useContractValidator();
   const { invalidateAll } = useCacheInvalidation();
   
   const handleSuccess = () => {
@@ -199,11 +201,10 @@ export function useBuyTickets() {
   const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useTicketPurchaseTransaction();
 
   const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string) => {
-    if (!ticketPrice || isNaN(parseFloat(ticketPrice))) {
-      throw new Error('Invalid ticket price');
-    }
-    if (!quantity || quantity <= 0) {
-      throw new Error('Invalid quantity');
+    // Validate all inputs
+    const validation = validateTicketPurchase({ raffleContract, quantity, ticketPrice });
+    if (!validation.isValid) {
+      throw new Error(validation.error);
     }
     
     const ticketPriceWei = parseEther(ticketPrice);
