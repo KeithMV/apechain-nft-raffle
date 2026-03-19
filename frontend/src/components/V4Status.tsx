@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { useVersionInfo } from '../hooks/useRaffleContractV4';
+import { useContractVersionManager } from '../hooks/useContractVersionManager';
 
 interface V4StatusProps {
   className?: string;
@@ -11,7 +11,7 @@ interface V4StatusProps {
 }
 
 export function V4Status({ className = '', showDetails = false }: V4StatusProps) {
-  const { v4Available, currentVersion, rateLimitText } = useVersionInfo();
+  const { v4Available, currentVersion, rateLimitText } = useContractVersionManager();
   
   if (!showDetails && currentVersion === 'v3') {
     return null; // Don't show anything for V3 unless details requested
@@ -45,7 +45,7 @@ export function V4Status({ className = '', showDetails = false }: V4StatusProps)
  * Rate Limit Info Component
  */
 export function RateLimitInfo() {
-  const { currentVersion, rateLimitText, rateLimit } = useVersionInfo();
+  const { currentVersion, rateLimitText, rateLimit } = useContractVersionManager();
   
   return (
     <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
