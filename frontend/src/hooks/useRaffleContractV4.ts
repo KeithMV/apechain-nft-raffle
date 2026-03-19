@@ -3,14 +3,24 @@
  * Automatically detects and uses V4 when available
  */
 
-import { useWriteContract, useReadContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { useContractVersionManager } from './useContractVersionManager';
 import { useNFTApprovalTransaction, useRaffleCreationTransaction, useTicketPurchaseTransaction } from './useWeb3TransactionManager';
 import { useContractValidator } from './useContractValidator';
-import { RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
+import { RAFFLE_FACTORY_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
+import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { useState } from 'react';
 import { useCacheInvalidation } from './useCacheInvalidation';
+
+// Re-export read hooks for backward compatibility
+export { 
+  usePlatformFeeV4, 
+  useRaffleCounterV4, 
+  useFactoryPauseStatusV4, 
+  useRaffleContractV4, 
+  useNFTApprovalStatusV4 
+} from './useContractReads';
 
 export interface CreateRaffleParams {
   nftContract: string;
@@ -22,49 +32,7 @@ export interface CreateRaffleParams {
 
 
 
-/**
- * Hook for reading platform fee (V4 aware)
- */
-export function usePlatformFeeV4() {
-  const { factoryAddress } = useContractVersionManager();
-  
-  return useReadContract({
-    address: factoryAddress as `0x${string}`,
-    abi: RAFFLE_FACTORY_ABI,
-    functionName: 'platformFee',
-  });
-}
 
-/**
- * Hook for reading raffle counter (V4 aware)
- */
-export function useRaffleCounterV4() {
-  const { factoryAddress } = useContractVersionManager();
-  
-  return useReadContract({
-    address: factoryAddress as `0x${string}`,
-    abi: RAFFLE_FACTORY_ABI,
-    functionName: 'raffleCounter',
-  });
-}
-
-/**
- * Hook for checking NFT approval status (V4 aware)
- */
-export function useNFTApprovalStatusV4(nftContract: string, userAddress: string) {
-  const { factoryAddress } = useContractVersionManager();
-  const isValidAddress = (addr: string) => /^0x[a-fA-F0-9]{40}$/.test(addr);
-  
-  return useReadContract({
-    address: nftContract as `0x${string}`,
-    abi: ERC721_ABI,
-    functionName: 'isApprovedForAll',
-    args: [userAddress as `0x${string}`, factoryAddress as `0x${string}`],
-    query: {
-      enabled: !!(nftContract && userAddress && isValidAddress(nftContract) && isValidAddress(userAddress)),
-    },
-  });
-}
 
 /**
  * Hook for NFT approval transaction (V4 aware)
@@ -157,35 +125,7 @@ export function useCreateRaffleV4() {
   };
 }
 
-/**
- * Hook for reading raffle contract address by ID (V4 aware)
- */
-export function useRaffleContractV4(raffleId: number) {
-  const { factoryAddress } = useContractVersionManager();
-  
-  return useReadContract({
-    address: factoryAddress as `0x${string}`,
-    abi: RAFFLE_FACTORY_ABI,
-    functionName: 'getRaffleContract',
-    args: [BigInt(raffleId)],
-    query: {
-      enabled: raffleId >= 0,
-    },
-  });
-}
 
-/**
- * Hook for checking if factory is paused (V4 aware)
- */
-export function useFactoryPauseStatusV4() {
-  const { factoryAddress } = useContractVersionManager();
-  
-  return useReadContract({
-    address: factoryAddress as `0x${string}`,
-    abi: RAFFLE_FACTORY_ABI,
-    functionName: 'paused',
-  });
-}
 
 /**
  * Hook for buying raffle tickets (V4 aware)
