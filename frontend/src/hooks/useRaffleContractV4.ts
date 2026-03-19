@@ -5,11 +5,11 @@
 
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { useContractVersionManager } from './useContractVersionManager';
+import { useNFTApprovalTransaction, useRaffleCreationTransaction, useTicketPurchaseTransaction } from './useWeb3TransactionManager';
 import { RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useCacheInvalidation } from './useCacheInvalidation';
-import toast from 'react-hot-toast';
 
 export interface CreateRaffleParams {
   nftContract: string;
@@ -71,59 +71,24 @@ export function useNFTApprovalStatusV4(nftContract: string, userAddress: string)
 export function useNFTApprovalV4() {
   const chainId = useChainId();
   const { factoryAddress, currentVersion } = useContractVersionManager();
-  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
-    hash,
-    timeout: 60000, // 60 second timeout
-  });
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  // Handle approval success
-  useEffect(() => {
-    if (isSuccess) {
-      setIsProcessing(false);
-    }
-  }, [isSuccess]);
-
-  // Handle transaction receipt errors or timeouts
-  useEffect(() => {
-    if (receiptError || (hash && !isConfirming && !isSuccess)) {
-      setIsProcessing(false);
-      if (receiptError) {
-        toast.error('Approval confirmation failed. Please try again.');
-      }
-    }
-  }, [receiptError, hash, isConfirming, isSuccess]);
-
-  // Handle transaction errors (including user rejection)
-  useEffect(() => {
-    if (error) {
-      setIsProcessing(false);
-    }
-  }, [error]);
+  const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useNFTApprovalTransaction();
 
   const approveNFT = async (nftContract: string) => {
-    setIsProcessing(true);
-    try {
-      return await writeContractAsync({
-        address: nftContract as `0x${string}`,
-        abi: ERC721_ABI,
-        functionName: 'setApprovalForAll',
-        args: [factoryAddress as `0x${string}`, true],
-        chainId: chainId,
-      });
-    } catch (error) {
-      setIsProcessing(false);
-      throw error;
-    }
+    return await executeTransaction({
+      address: nftContract as `0x${string}`,
+      abi: ERC721_ABI,
+      functionName: 'setApprovalForAll',
+      args: [factoryAddress as `0x${string}`, true],
+      chainId: chainId,
+    });
   };
 
   return {
     approveNFT,
     hash,
     error,
-    isPending: isProcessing,
-    isConfirming: isConfirming && isProcessing,
+    isPending,
+    isConfirming,
     isSuccess,
     version: currentVersion,
   };
@@ -135,52 +100,16 @@ export function useNFTApprovalV4() {
 export function useCreateRaffleV4() {
   const chainId = useChainId();
   const { factoryAddress, currentVersion, rateLimit, rateLimitText } = useContractVersionManager();
-  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
-    hash,
-    timeout: 60000, // 60 second timeout
-  });
   const { invalidateAll } = useCacheInvalidation();
-  const lastSuccessHash = useRef<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  useEffect(() => {
-    if (isSuccess && hash && hash !== lastSuccessHash.current) {
-      lastSuccessHash.current = hash;
-      setIsProcessing(false);
-      const cacheTimeoutId = setTimeout(() => {
-        invalidateAll();
-      }, 500);
-      return () => clearTimeout(cacheTimeoutId);
-    }
-  }, [isSuccess, hash, invalidateAll]);
-
-  useEffect(() => {
-    if (receiptError) {
-      setIsProcessing(false);
-      toast.error('Transaction failed or timed out. Please try again.');
-    }
-    if (hash && !isConfirming && !isSuccess && !receiptError) {
-      const timeoutId = setTimeout(() => {
-        setIsProcessing(false);
-        toast.error('Transaction confirmation timed out. Check wallet or try again.');
-      }, 35000);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [receiptError, hash, isConfirming, isSuccess]);
-
-  useEffect(() => {
-    if (error) {
-      setIsProcessing(false);
-      if (error.message?.includes('User rejected')) {
-        toast.error('Transaction cancelled by user.');
-      } else if (error.message?.includes('insufficient funds')) {
-        toast.error('Insufficient funds for transaction.');
-      } else {
-        toast.error(`Transaction failed: ${error.message || 'Unknown error'}`);
-      }
-    }
-  }, [error]);
+  
+  const handleSuccess = () => {
+    const cacheTimeoutId = setTimeout(() => {
+      invalidateAll();
+    }, 500);
+    return () => clearTimeout(cacheTimeoutId);
+  };
+  
+  const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useRaffleCreationTransaction(handleSuccess);
 
   const createRaffle = async (params: CreateRaffleParams) => {
     // Validate inputs
@@ -197,36 +126,29 @@ export function useCreateRaffleV4() {
       throw new Error('Invalid duration');
     }
     
-    setIsProcessing(true);
     const ticketPriceWei = parseEther(params.ticketPrice);
     
-    try {
-      const result = await writeContractAsync({
-        address: factoryAddress as `0x${string}`,
-        abi: RAFFLE_FACTORY_ABI,
-        functionName: 'createRaffle',
-        args: [
-          params.nftContract as `0x${string}`,
-          BigInt(params.tokenId),
-          ticketPriceWei,
-          BigInt(params.maxTickets),
-          BigInt(params.duration)
-        ],
-        chainId: chainId,
-      });
-      return result;
-    } catch (error: any) {
-      setIsProcessing(false);
-      throw error;
-    }
+    return await executeTransaction({
+      address: factoryAddress as `0x${string}`,
+      abi: RAFFLE_FACTORY_ABI,
+      functionName: 'createRaffle',
+      args: [
+        params.nftContract as `0x${string}`,
+        BigInt(params.tokenId),
+        ticketPriceWei,
+        BigInt(params.maxTickets),
+        BigInt(params.duration)
+      ],
+      chainId: chainId,
+    });
   };
 
   return {
     createRaffle,
     hash,
     error,
-    isPending: isProcessing,
-    isConfirming: isConfirming && isProcessing,
+    isPending,
+    isConfirming,
     isSuccess,
     version: currentVersion,
     rateLimit,
@@ -268,39 +190,13 @@ export function useFactoryPauseStatusV4() {
  * Hook for buying raffle tickets (V4 aware)
  */
 export function useBuyTickets() {
-  const chainId = useChainId();
-  const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
-    hash,
-    timeout: 60000,
-  });
   const { invalidateAll } = useCacheInvalidation();
-  const lastSuccessHash = useRef<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  useEffect(() => {
-    if (isSuccess && hash && hash !== lastSuccessHash.current) {
-      lastSuccessHash.current = hash;
-      setIsProcessing(false);
-      toast.success('Tickets purchased successfully!');
-      invalidateAll();
-    }
-  }, [isSuccess, hash, invalidateAll]);
-
-  useEffect(() => {
-    if (receiptError || (hash && !isConfirming && !isSuccess)) {
-      setIsProcessing(false);
-      if (receiptError) {
-        toast.error('Transaction confirmation failed. Please try again.');
-      }
-    }
-  }, [receiptError, hash, isConfirming, isSuccess]);
-
-  useEffect(() => {
-    if (error) {
-      setIsProcessing(false);
-    }
-  }, [error]);
+  
+  const handleSuccess = () => {
+    invalidateAll();
+  };
+  
+  const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useTicketPurchaseTransaction();
 
   const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string) => {
     if (!ticketPrice || isNaN(parseFloat(ticketPrice))) {
@@ -310,32 +206,24 @@ export function useBuyTickets() {
       throw new Error('Invalid quantity');
     }
     
-    setIsProcessing(true);
     const ticketPriceWei = parseEther(ticketPrice);
     const totalCost = ticketPriceWei * BigInt(quantity);
     
-    try {
-      const result = await writeContractAsync({
-        address: raffleContract as `0x${string}`,
-        abi: RAFFLE_CONTRACT_ABI,
-        functionName: 'buyTickets',
-        args: [BigInt(quantity)],
-        value: totalCost,
-        // Remove chainId parameter - let Wagmi handle it automatically
-      });
-      return result;
-    } catch (error) {
-      setIsProcessing(false);
-      throw error;
-    }
+    return await executeTransaction({
+      address: raffleContract as `0x${string}`,
+      abi: RAFFLE_CONTRACT_ABI,
+      functionName: 'buyTickets',
+      args: [BigInt(quantity)],
+      value: totalCost,
+    });
   };
 
   return {
     buyTickets,
     hash,
     error,
-    isPending: isProcessing,
-    isConfirming: isConfirming && isProcessing,
+    isPending,
+    isConfirming,
     isSuccess,
   };
 }
