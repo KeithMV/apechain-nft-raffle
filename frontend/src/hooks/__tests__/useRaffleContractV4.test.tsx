@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useCreateRaffleV4, useNFTApprovalV4, usePlatformFeeV4, useVersionInfo } from '../useRaffleContractV4'
+import { useCreateRaffleV4, useNFTApprovalV4, usePlatformFeeV4 } from '../useRaffleContractV4'
+import { useContractVersionManager } from '../useContractVersionManager'
 import { ReactNode } from 'react'
 
 // Mock wagmi hooks
@@ -80,9 +81,9 @@ describe('useRaffleContractV4 hooks', () => {
     })
   })
 
-  describe('useVersionInfo', () => {
+  describe('useContractVersionManager', () => {
     it('returns version information', () => {
-      const { result } = renderHook(() => useVersionInfo())
+      const { result } = renderHook(() => useContractVersionManager())
       
       expect(result.current.v4Available).toBe(true)
       expect(result.current.currentVersion).toBe('v4')

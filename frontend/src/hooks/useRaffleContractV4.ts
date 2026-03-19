@@ -4,7 +4,7 @@
  */
 
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
-import { getRaffleFactoryAddress, isV4Available, getRateLimit } from '../config/addresses';
+import { useContractVersionManager } from './useContractVersionManager';
 import { RAFFLE_FACTORY_ABI, RAFFLE_CONTRACT_ABI, ERC721_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
 import { useEffect, useRef, useState } from 'react';
@@ -19,37 +19,13 @@ export interface CreateRaffleParams {
   duration: number;
 }
 
-/**
- * Hook to detect V4 availability and get current version info
- */
-export function useVersionInfo() {
-  const chainId = useChainId();
-  const [v4Available, setV4Available] = useState(false);
-  const [currentVersion, setCurrentVersion] = useState<'v3' | 'v4'>('v3');
-  
-  useEffect(() => {
-    const checkV4 = isV4Available(chainId);
-    setV4Available(checkV4);
-    setCurrentVersion(checkV4 ? 'v4' : 'v3');
-  }, [chainId]);
-  
-  const rateLimit = getRateLimit(currentVersion === 'v4');
-  
-  return {
-    v4Available,
-    currentVersion,
-    rateLimit,
-    rateLimitText: currentVersion === 'v4' ? '10 seconds' : '5 minutes'
-  };
-}
+
 
 /**
  * Hook for reading platform fee (V4 aware)
  */
 export function usePlatformFeeV4() {
-  const chainId = useChainId();
-  const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
+  const { factoryAddress } = useContractVersionManager();
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
@@ -62,9 +38,7 @@ export function usePlatformFeeV4() {
  * Hook for reading raffle counter (V4 aware)
  */
 export function useRaffleCounterV4() {
-  const chainId = useChainId();
-  const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
+  const { factoryAddress } = useContractVersionManager();
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
@@ -77,9 +51,7 @@ export function useRaffleCounterV4() {
  * Hook for checking NFT approval status (V4 aware)
  */
 export function useNFTApprovalStatusV4(nftContract: string, userAddress: string) {
-  const chainId = useChainId();
-  const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
+  const { factoryAddress } = useContractVersionManager();
   const isValidAddress = (addr: string) => /^0x[a-fA-F0-9]{40}$/.test(addr);
   
   return useReadContract({
@@ -98,8 +70,7 @@ export function useNFTApprovalStatusV4(nftContract: string, userAddress: string)
  */
 export function useNFTApprovalV4() {
   const chainId = useChainId();
-  const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
+  const { factoryAddress, currentVersion } = useContractVersionManager();
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
@@ -163,8 +134,7 @@ export function useNFTApprovalV4() {
  */
 export function useCreateRaffleV4() {
   const chainId = useChainId();
-  const { currentVersion, rateLimit } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
+  const { factoryAddress, currentVersion, rateLimit, rateLimitText } = useContractVersionManager();
   const { writeContractAsync, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
@@ -260,7 +230,7 @@ export function useCreateRaffleV4() {
     isSuccess,
     version: currentVersion,
     rateLimit,
-    rateLimitText: currentVersion === 'v4' ? '10 seconds' : '5 minutes'
+    rateLimitText
   };
 }
 
@@ -268,9 +238,7 @@ export function useCreateRaffleV4() {
  * Hook for reading raffle contract address by ID (V4 aware)
  */
 export function useRaffleContractV4(raffleId: number) {
-  const chainId = useChainId();
-  const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
+  const { factoryAddress } = useContractVersionManager();
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
@@ -287,9 +255,7 @@ export function useRaffleContractV4(raffleId: number) {
  * Hook for checking if factory is paused (V4 aware)
  */
 export function useFactoryPauseStatusV4() {
-  const chainId = useChainId();
-  const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
+  const { factoryAddress } = useContractVersionManager();
   
   return useReadContract({
     address: factoryAddress as `0x${string}`,
@@ -379,8 +345,7 @@ export function useBuyTickets() {
  */
 export function useEmergencyPause() {
   const chainId = useChainId();
-  const { currentVersion } = useVersionInfo();
-  const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
+  const { factoryAddress } = useContractVersionManager();
   const { writeContract, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -419,7 +384,7 @@ export function useEmergencyPause() {
  * Rate limit checker hook
  */
 export function useRateLimitChecker(userAddress?: string) {
-  const { currentVersion, rateLimit } = useVersionInfo();
+  const { currentVersion, rateLimit, rateLimitText } = useContractVersionManager();
   const [canCreateRaffle, setCanCreateRaffle] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState(0);
   
@@ -427,7 +392,7 @@ export function useRateLimitChecker(userAddress?: string) {
     canCreateRaffle,
     timeRemaining,
     rateLimit,
-    rateLimitText: currentVersion === 'v4' ? '10 seconds' : '5 minutes',
+    rateLimitText,
     version: currentVersion
   };
 }
