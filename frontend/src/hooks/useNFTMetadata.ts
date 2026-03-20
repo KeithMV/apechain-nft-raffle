@@ -137,8 +137,11 @@ async function fetchNFTMetadata(
       metadataUrl = `https://ipfs.io/ipfs/${ipfsPath}`;
     }
     
-    // Use Lambda proxy for metadata fetching (working API Gateway endpoint)
-    const lambdaProxy = 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    // Use environment-aware Lambda proxy for metadata fetching
+    const lambdaProxy = process.env.REACT_APP_ENV === 'staging' 
+      ? 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/staging/proxy'
+      : 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    
     const proxiedMetadataUrl = `${lambdaProxy}?url=${encodeURIComponent(metadataUrl)}`;
     
     try {

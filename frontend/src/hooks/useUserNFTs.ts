@@ -18,11 +18,15 @@ async function fetchNFTsViaAPI(
   chainId: number
 ): Promise<UserNFT[]> {
   try {
-    // Use Lambda proxy for secure Alchemy API calls
-    const lambdaProxy = 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    // Use environment-aware Lambda proxy endpoint
+    const lambdaProxy = process.env.REACT_APP_ENV === 'staging' 
+      ? 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/staging/proxy'
+      : 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    
     const url = `${lambdaProxy}?owner=${encodeURIComponent(userAddress)}&chainId=${chainId}`;
     
     console.log(`Fetching NFTs via Lambda proxy for chain ${chainId}`);
+    console.log(`Using endpoint: ${lambdaProxy}`);
     
     const response = await fetch(url, {
       headers: {
