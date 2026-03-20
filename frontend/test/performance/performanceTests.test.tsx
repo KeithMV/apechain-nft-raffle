@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { performance } from 'perf_hooks'
 
 // Import performance utilities
-import { performanceMonitor, measureSync, measureAsync } from '../../utils/performance'
+import { performanceMonitor, measureSync, measureAsync } from '../src/utils/performance'
 
 // Mock wagmi for performance testing
 vi.mock('wagmi', () => ({
@@ -277,7 +277,7 @@ describe('Performance Tests', () => {
       const metrics = performanceMonitor.getMetrics('percentile-test')
       
       // 95th percentile should be high due to the outlier
-      expect(metrics.p95).toBeGreaterThan(500)
+      expect(metrics?.p95).toBeGreaterThan(500)
       // But average should be much lower
       expect(metrics?.avg).toBeLessThan(200)
     })
