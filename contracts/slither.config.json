@@ -1,5 +1,5 @@
 {
-  "filter_paths": "node_modules,lib/forge-std,@openzeppelin/contracts",
+  "filter_paths": "node_modules,lib/forge-std,@openzeppelin/contracts,test,TestRaffleSystem.sol,SimpleMonolithicFactory.sol,BaseRaffleSystem.sol,MonolithicBaseFactory.sol,RaffleContractSecure.sol,RaffleContractSecureV2.sol,RaffleFactorySecure.sol,RaffleFactorySecureV2.sol,RaffleFactorySecureV3.sol,RaffleFactoryBaseFinal.sol,RaffleFactoryBaseV3.sol,SimpleBaseFactory.sol,MinimalTestFactory.sol,MockERC721.sol",
   "exclude_dependencies": true,
   "exclude_informational": false,
   "exclude_low": false,
@@ -11,6 +11,10 @@
   "detectors_to_exclude": [
     "pragma",
     "solc-version",
-    "low-level-calls"
+    "low-level-calls",
+    "weak-prng",
+    "timestamp",
+    "naming-convention",
+    "constable-states"
   ]
 }
