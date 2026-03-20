@@ -9,6 +9,7 @@ import { useUserNFTs } from '../hooks/useUserNFTs';
 import ApprovalModal from './ApprovalModal';
 import NFTGrid from './NFTGrid';
 import RaffleForm, { FormData, getInitialFormData, validateAddress } from './RaffleForm';
+import EnvironmentDebugger from './EnvironmentDebugger';
 
 import toast from 'react-hot-toast';
 import { ErrorHandler } from '../utils/errorHandler';
@@ -47,6 +48,7 @@ export default function CreateRafflePage() {
   } = useNFTApprovalManager();
   
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showDebugger, setShowDebugger] = useState(false);
   
   const isWrongNetwork = !isApeChain && !isPolygon;
   // Professional wagmi V4 hooks
@@ -222,6 +224,17 @@ export default function CreateRafflePage() {
       </div>
 
       <div className="relative p-4 sm:p-8 z-10">
+        {/* Debug Button for Staging */}
+        {process.env.REACT_APP_ENV === 'staging' && (
+          <div className="mb-4">
+            <button
+              onClick={() => setShowDebugger(true)}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-mono transition-colors"
+            >
+              🐛 Debug Staging Environment
+            </button>
+          </div>
+        )}
         {/* Network Warning */}
         {isWrongNetwork && (
           <div className="relative bg-red-900/20 border border-red-500/30 rounded-xl p-4 mb-6 backdrop-blur-sm">
@@ -348,6 +361,12 @@ export default function CreateRafflePage() {
             )}
           </button>
         </div>
+        
+        {/* Environment Debugger Modal */}
+        <EnvironmentDebugger
+          isOpen={showDebugger}
+          onClose={() => setShowDebugger(false)}
+        />
         
         {/* Approval Education Modal */}
         <ApprovalModal
