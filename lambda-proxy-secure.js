@@ -154,7 +154,13 @@ function isValidUrl(url) {
             'img.other.page',
             'arweave.net',
             'nftstorage.link',
-            'w3s.link'
+            'w3s.link',
+            // Additional NFT metadata domains
+            'api.other.page',
+            'api.op.xyz',
+            'api2.balloonsballoons.xyz',
+            'metadata.ens.domains',
+            'api.opensea.io'
         ];
         
         const isAllowed = trustedDomains.some(domain => hostname.includes(domain));
