@@ -1,1 +1,38 @@
-/**\n * Home Footer Component\n * Footer section with branding and navigation links\n */\n\nimport React from 'react';\n\nconst HomeFooter: React.FC = () => {\n  return (\n    <footer style={{ \n      background: 'var(--neutral-800)', \n      borderTop: '1px solid var(--neutral-700)',\n      padding: '40px 0'\n    }}>\n      <div className=\"container\">\n        <div className=\"flex justify-between items-center\">\n          <div>\n            <h3 className=\"font-bold text-primary mb-2\">ApeChain Raffles</h3>\n            <p className=\"text-sm text-muted\">Decentralized NFT raffles on ApeChain</p>\n          </div>\n          <div className=\"flex gap-6\">\n            <a href=\"#\" className=\"text-sm text-muted hover:text-primary transition-colors\">\n              Documentation\n            </a>\n            <a href=\"#\" className=\"text-sm text-muted hover:text-primary transition-colors\">\n              Support\n            </a>\n            <a href=\"#\" className=\"text-sm text-muted hover:text-primary transition-colors\">\n              GitHub\n            </a>\n          </div>\n        </div>\n      </div>\n    </footer>\n  );\n};\n\nexport default HomeFooter;
+/**
+ * Home Footer Component
+ * Footer section with branding and navigation links
+ */
+
+import React from 'react';
+
+const HomeFooter: React.FC = () => {
+  return (
+    <footer style={{ 
+      background: 'var(--neutral-800)', 
+      borderTop: '1px solid var(--neutral-700)',
+      padding: '40px 0'
+    }}>
+      <div className="container">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="font-bold text-primary mb-2">ApeChain Raffles</h3>
+            <p className="text-sm text-muted">Decentralized NFT raffles on ApeChain</p>
+          </div>
+          <div className="flex gap-6">
+            <a href="#" className="text-sm text-muted hover:text-primary transition-colors">
+              Documentation
+            </a>
+            <a href="#" className="text-sm text-muted hover:text-primary transition-colors">
+              Support
+            </a>
+            <a href="#" className="text-sm text-muted hover:text-primary transition-colors">
+              GitHub
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default HomeFooter;
