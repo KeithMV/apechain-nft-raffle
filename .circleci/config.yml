@@ -49,7 +49,8 @@ jobs:
           name: Install frontend dependencies
           command: |
             cd frontend
-            yarn install --frozen-lockfile --network-timeout 300000
+            # Temporarily allow lockfile updates during TypeScript transition
+            yarn install --network-timeout 300000
       - save_frontend_cache
       - persist_to_workspace:
           root: .
