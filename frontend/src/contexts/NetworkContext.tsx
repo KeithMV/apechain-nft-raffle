@@ -40,7 +40,7 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
           primary: 'emerald',
           secondary: 'teal', 
           accent: 'cyan',
-          logo: '',
+          logo: '🦍',
           gradient: 'from-emerald-400 via-teal-300 to-cyan-400'
         }
       : isPolygon
@@ -48,15 +48,15 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
           primary: 'purple',
           secondary: 'violet',
           accent: 'indigo', 
-          logo: '',
+          logo: '🔷',
           gradient: 'from-purple-400 via-violet-300 to-indigo-400'
         }
       : {
-          primary: 'blue',
-          secondary: 'indigo',
-          accent: 'purple', 
-          logo: '',
-          gradient: 'from-blue-400 via-indigo-300 to-purple-400'
+          primary: 'emerald',
+          secondary: 'teal',
+          accent: 'cyan', 
+          logo: '🦍',
+          gradient: 'from-emerald-400 via-teal-300 to-cyan-400'
         };
     
     // Set CSS custom properties for dynamic theming
@@ -73,10 +73,11 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
         root.style.setProperty('--network-border', 'rgba(192, 132, 252, 0.3)'); // purple-400/30
         root.style.setProperty('--network-shadow', 'rgba(168, 85, 247, 0.2)'); // purple-500/20
       } else {
-        root.style.setProperty('--network-primary', '#3b82f6'); // blue-500
-        root.style.setProperty('--network-primary-light', '#60a5fa'); // blue-400
-        root.style.setProperty('--network-border', 'rgba(96, 165, 250, 0.3)'); // blue-400/30
-        root.style.setProperty('--network-shadow', 'rgba(59, 130, 246, 0.2)'); // blue-500/20
+        // Default to ApeChain styling for unsupported networks
+        root.style.setProperty('--network-primary', '#10b981'); // emerald-500
+        root.style.setProperty('--network-primary-light', '#34d399'); // emerald-400
+        root.style.setProperty('--network-border', 'rgba(52, 211, 153, 0.3)'); // emerald-400/30
+        root.style.setProperty('--network-shadow', 'rgba(16, 185, 129, 0.2)'); // emerald-500/20
       }
     }
     

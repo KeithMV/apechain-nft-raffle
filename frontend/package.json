@@ -50,7 +50,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:coverage": "vitest --coverage",
+    "test:coverage": "vitest --coverage --run",
     "test:watch": "vitest --watch",
     "eject": "react-scripts eject",
     "install:clean": "rm -rf node_modules yarn.lock && yarn install",

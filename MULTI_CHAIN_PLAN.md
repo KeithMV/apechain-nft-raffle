@@ -12,12 +12,12 @@ Transform ApeChain-only raffle platform into multi-chain platform using hybrid a
 - [ ] Add cross-contamination prevention
 - [ ] Test with existing ApeChain (no breaking changes)
 
-### Phase 2: Base Chain Integration (Week 2)
-- [ ] Deploy raffle contracts to Base testnet
-- [ ] Add Base chain configuration
-- [ ] Implement Base-specific features
+### Phase 2: Polygon Chain Integration (Week 2)
+- [ ] Deploy raffle contracts to Polygon testnet
+- [ ] Add Polygon chain configuration
+- [ ] Implement Polygon-specific features
 - [ ] Test cross-chain switching
-- [ ] Deploy Base mainnet contracts
+- [ ] Deploy Polygon mainnet contracts
 
 ### Phase 3: Polish & Production (Week 3)
 - [ ] Production testing
@@ -27,17 +27,15 @@ Transform ApeChain-only raffle platform into multi-chain platform using hybrid a
 
 ## Target Networks (Priority Order)
 1. **ApeChain** - Current (APE currency)
-2. **Base** - Next (ETH currency, Coinbase L2)
-3. **Polygon** - Future (MATIC currency, massive user base)
-4. **Arbitrum** - Future (ETH currency, high-value users)
-5. **Ethereum** - Future (ETH currency, premium market)
+2. **Polygon** - Next (POL currency, massive user base)
+3. **Arbitrum** - Future (ETH currency, high-value users)
+4. **Ethereum** - Future (ETH currency, premium market)
 
 ## Revenue Projection
 - Current: ApeChain only = 1x market
-- + Base = 3x market potential
-- + Polygon = 6x market potential
-- + Arbitrum = 8x market potential
-- + Ethereum = 15x market potential
+- + Polygon = 4x market potential
+- + Arbitrum = 7x market potential
+- + Ethereum = 12x market potential
 
 ## Technical Approach
 - **Architecture**: Hybrid (shared wallet, isolated chain logic)
@@ -55,7 +53,7 @@ Transform ApeChain-only raffle platform into multi-chain platform using hybrid a
 2. Implement network switching system
 3. Add chain validation and state isolation
 4. Test architecture with ApeChain
-5. Prepare for Base chain integration
+5. Prepare for Polygon chain integration
 
 ---
 *Last Updated: $(date)*

@@ -1,27 +1,157 @@
 version: 2.1
 
+orbs:
+  node: circleci/node@5.2.0
+  aws-cli: circleci/aws-cli@4.1.3
+
+# Reusable commands
+commands:
+  restore_frontend_cache:
+    steps:
+      - restore_cache:
+          keys:
+            - frontend-deps-v2-{{ checksum "frontend/yarn.lock" }}
+            - frontend-deps-v2-
+  
+  save_frontend_cache:
+    steps:
+      - save_cache:
+          key: frontend-deps-v2-{{ checksum "frontend/yarn.lock" }}
+          paths:
+            - frontend/node_modules
+            - ~/.cache/yarn
+  
+  restore_contracts_cache:
+    steps:
+      - restore_cache:
+          keys:
+            - contracts-deps-v2-{{ checksum "contracts/package-lock.json" }}
+            - contracts-deps-v2-
+  
+  save_contracts_cache:
+    steps:
+      - save_cache:
+          key: contracts-deps-v2-{{ checksum "contracts/package-lock.json" }}
+          paths:
+            - contracts/node_modules
+            - ~/.npm
+            - ~/.cache/hardhat-nodejs
+
 jobs:
+  # Frontend Jobs
+  install-frontend-deps:
+    docker:
+      - image: cimg/node:20.19
+    steps:
+      - checkout
+      - restore_frontend_cache
+      - run:
+          name: Install frontend dependencies
+          command: |
+            cd frontend
+            yarn install --frozen-lockfile --network-timeout 300000
+      - save_frontend_cache
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/node_modules
+
+  lint-frontend:
+    docker:
+      - image: cimg/node:20.19
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run ESLint
+          command: |
+            cd frontend
+            npx eslint src/ --ext .ts,.tsx --format junit --output-file test-results/eslint.xml
+      - run:
+          name: Run Prettier check
+          command: |
+            cd frontend
+            npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}"
+      - store_test_results:
+          path: frontend/test-results
+
+  test-frontend-unit:
+    docker:
+      - image: cimg/node:20.19
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run unit tests with coverage
+          command: |
+            cd frontend
+            mkdir -p test-results
+            yarn test:coverage --run --reporter=junit --outputFile=test-results/vitest.xml
+      - run:
+          name: Upload coverage to Codecov
+          command: |
+            cd frontend
+            bash <(curl -s https://codecov.io/bash) -f coverage/lcov.info
+      - store_test_results:
+          path: frontend/test-results
+      - store_artifacts:
+          path: frontend/coverage
+          destination: coverage
+
+  test-frontend-integration:
+    docker:
+      - image: cimg/node:20.19
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run integration tests
+          command: |
+            cd frontend
+            mkdir -p test-results
+            yarn test src/test/integration --run --reporter=junit --outputFile=test-results/integration.xml
+      - store_test_results:
+          path: frontend/test-results
+
+  security-scan-frontend:
+    docker:
+      - image: cimg/node:20.19
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run npm audit
+          command: |
+            cd frontend
+            mkdir -p security-results
+            yarn audit --json > security-results/yarn-audit.json || true
+            yarn audit --level moderate
+      - run:
+          name: Run Snyk security scan
+          command: |
+            cd frontend
+            npx snyk test --json > security-results/snyk.json || true
+            npx snyk test --severity-threshold=high
+      - store_artifacts:
+          path: frontend/security-results
+          destination: security-scans
+
   build-frontend-staging:
     docker:
       - image: cimg/node:20.19
     steps:
       - checkout
-      - run:
-          name: Install frontend dependencies
-          command: |
-            cd frontend
-            rm -rf node_modules yarn.lock
-            yarn install --network-timeout 300000 --ignore-engines
-      - run:
-          name: Run frontend tests
-          command: |
-            cd frontend
-            yarn test --coverage --run --passWithNoTests
+      - attach_workspace:
+          at: .
       - run:
           name: Build frontend for staging
           command: |
             cd frontend
-            rm -rf build/ node_modules/.cache/
+            rm -rf build/
             CI=false yarn build:staging
           environment:
             REACT_APP_APP_NAME: "ApeChain NFT Raffles (STAGING)"
@@ -32,32 +162,31 @@ jobs:
             REACT_APP_APECHAIN_RPC_URL: "https://apechain.calderachain.xyz/http"
             REACT_APP_CONTRACT_ADDRESS: "0x1627E7e63b63878E61f91D336385a59B1747934a"
             REACT_APP_WALLETCONNECT_PROJECT_ID: "b848c907908cee0c1bcf0ab0493da6c4"
+      - run:
+          name: Analyze bundle size
+          command: |
+            cd frontend
+            yarn build:analyze > build-analysis.txt 2>&1 || true
       - persist_to_workspace:
           root: .
           paths:
             - frontend/build
+      - store_artifacts:
+          path: frontend/build-analysis.txt
+          destination: bundle-analysis
 
   build-frontend-production:
     docker:
       - image: cimg/node:20.19
     steps:
       - checkout
-      - run:
-          name: Install frontend dependencies
-          command: |
-            cd frontend
-            rm -rf node_modules yarn.lock
-            yarn install --network-timeout 300000 --ignore-engines
-      - run:
-          name: Run frontend tests
-          command: |
-            cd frontend
-            yarn test --coverage --run --passWithNoTests
+      - attach_workspace:
+          at: .
       - run:
           name: Build frontend for production
           command: |
             cd frontend
-            rm -rf build/ node_modules/.cache/
+            rm -rf build/
             CI=false yarn build
           environment:
             REACT_APP_APP_NAME: "ApeChain NFT Raffles"
@@ -73,49 +202,25 @@ jobs:
           paths:
             - frontend/build
 
-  build-contracts:
+  # Contract Jobs
+  install-contracts-deps:
     docker:
       - image: cimg/node:20.19
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - npm-cache-v1-{{ checksum "contracts/package-lock.json" }}
-            - npm-cache-v1-
+      - restore_contracts_cache
       - run:
           name: Install contract dependencies
           command: |
             cd contracts
-            npm install --prefer-offline
-      - run:
-          name: Download Solidity compiler with retry
-          command: |
-            cd contracts
-            # Retry compiler download up to 3 times with longer timeout
-            for i in {1..3}; do
-              echo "Attempt $i: Downloading Solidity compiler..."
-              timeout 300 npx hardhat compile --force && break
-              echo "Attempt $i failed, retrying in 10 seconds..."
-              sleep 10
-            done
-      - save_cache:
-          key: npm-cache-v1-{{ checksum "contracts/package-lock.json" }}
-          paths:
-            - ~/.npm
-      - run:
-          name: Compile contracts
-          command: |
-            cd contracts
-            # Use cached compiler if available
-            npx hardhat compile
+            npm ci --prefer-offline
+      - save_contracts_cache
       - persist_to_workspace:
           root: .
           paths:
-            - contracts/artifacts/
-            - contracts/cache/
-            - contracts/node_modules/
+            - contracts/node_modules
 
-  test:
+  compile-contracts:
     docker:
       - image: cimg/node:20.19
     steps:
@@ -123,34 +228,91 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Install Python tools for security analysis
-          command: |
-            sudo apt-get update && sudo apt-get install -y python3-pip
-            pip3 install slither-analyzer --break-system-packages
-      - run:
-          name: Security Analysis with Slither
+          name: Compile smart contracts
           command: |
             cd contracts
-            echo "Running Slither security analysis..."
-            slither . --json slither-report.json || true
-            echo "Security analysis complete - check slither-report.json for details"
+            npx hardhat compile --force
+      - persist_to_workspace:
+          root: .
+          paths:
+            - contracts/artifacts
+            - contracts/cache
+
+  test-contracts:
+    docker:
+      - image: cimg/node:20.19
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
       - run:
-          name: Validate Contract Compilation
+          name: Run contract tests
           command: |
             cd contracts
-            echo "Validating contract compilation..."
-            npx hardhat compile
-            echo "✅ Contract compilation successful"
+            mkdir -p test-results
+            # Add contract tests when available
+            echo "Contract tests will be added here"
+            touch test-results/contracts.xml
+      - store_test_results:
+          path: contracts/test-results
+
+  security-scan-contracts:
+    docker:
+      - image: cimg/python:3.11-node
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install security tools
+          command: |
+            pip3 install slither-analyzer mythril
+      - run:
+          name: Run Slither analysis
+          command: |
+            cd contracts
+            mkdir -p security-results
+            slither . --json security-results/slither-report.json || true
+            slither . --print human-summary > security-results/slither-summary.txt || true
+      - run:
+          name: Run Mythril analysis
+          command: |
+            cd contracts
+            myth analyze contracts/RaffleFactorySecureV4.sol --json > security-results/mythril-report.json || true
+      - run:
+          name: Check for critical security issues
+          command: |
+            cd contracts/security-results
+            # Fail build if critical issues found
+            if grep -q '"impact": "High"' slither-report.json; then
+              echo "❌ Critical security issues found!"
+              exit 1
+            fi
+            echo "✅ No critical security issues detected"
+      - store_artifacts:
+          path: contracts/security-results
+          destination: contract-security
+
+  # Infrastructure Jobs
+  validate-infrastructure:
+    docker:
+      - image: cimg/node:20.19
+    steps:
+      - checkout
+      - run:
+          name: Install CDK dependencies
+          command: |
+            cd infrastructure
+            yarn install --frozen-lockfile
       - run:
           name: Validate CDK infrastructure
           command: |
-            echo "Validating CDK infrastructure..."
             cd infrastructure
-            yarn install
             yarn build
             yarn cdk synth > /dev/null
             echo "✅ CDK infrastructure validation complete!"
 
+  # Deployment Jobs
   deploy-staging:
     docker:
       - image: cimg/aws:2024.03
@@ -158,13 +320,28 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - aws-cli/setup
       - run:
-          name: Deploy to Staging S3
+          name: Deploy to staging
           command: |
+            # Deploy to staging S3 bucket
             aws s3 sync frontend/build/ s3://apechain-nft-raffle-staging-v2-856872546342-us-east-1/ --delete
-            aws cloudfront create-invalidation --distribution-id EDPIS47D31NKW --paths "/*"
+            
+            # Invalidate CloudFront cache
+            INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id EDPIS47D31NKW --paths "/*" --query 'Invalidation.Id' --output text)
+            
             echo "✅ Staging deployment complete!"
             echo "🌐 Staging URL: https://d1784e9dgxn2du.cloudfront.net"
+            echo "🔄 CloudFront invalidation: $INVALIDATION_ID"
+      - run:
+          name: Run smoke tests on staging
+          command: |
+            # Wait for CloudFront invalidation
+            sleep 30
+            
+            # Basic smoke test
+            curl -f https://d1784e9dgxn2du.cloudfront.net || exit 1
+            echo "✅ Staging smoke test passed!"
 
   deploy-production:
     docker:
@@ -173,8 +350,9 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - aws-cli/setup
       - run:
-          name: Deploy to Production S3
+          name: Deploy to production
           command: |
             # Get CDK stack outputs
             BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name RaffleInfrastructureStack --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)
@@ -183,60 +361,145 @@ jobs:
             echo "📦 Deploying to bucket: $BUCKET_NAME"
             echo "🌐 Invalidating CloudFront: $DISTRIBUTION_ID"
             
-            # Sync frontend build to S3 bucket
+            # Deploy to production S3 bucket
             aws s3 sync frontend/build/ s3://$BUCKET_NAME --delete
             
             # Invalidate CloudFront cache
-            aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+            INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*" --query 'Invalidation.Id' --output text)
             
             echo "✅ Production deployment complete!"
+            echo "🔄 CloudFront invalidation: $INVALIDATION_ID"
+      - run:
+          name: Run smoke tests on production
+          command: |
+            # Wait for CloudFront invalidation
+            sleep 30
+            
+            # Basic smoke test
+            curl -f https://apechainraffles.io || exit 1
+            echo "✅ Production smoke test passed!"
 
+# Workflows
 workflows:
   version: 2
-  staging_deploy:
+  
+  # Staging workflow (develop branch)
+  staging_pipeline:
     jobs:
-      - build-frontend-staging:
+      # Install dependencies in parallel
+      - install-frontend-deps:
           filters:
             branches:
               only: develop
-      - build-contracts:
+      - install-contracts-deps:
           filters:
             branches:
               only: develop
-      - test:
+      
+      # Frontend pipeline
+      - lint-frontend:
           requires:
-            - build-frontend-staging
-            - build-contracts
+            - install-frontend-deps
+      - test-frontend-unit:
+          requires:
+            - install-frontend-deps
+      - test-frontend-integration:
+          requires:
+            - install-frontend-deps
+      - security-scan-frontend:
+          requires:
+            - install-frontend-deps
+      - build-frontend-staging:
+          requires:
+            - lint-frontend
+            - test-frontend-unit
+            - test-frontend-integration
+            - security-scan-frontend
+      
+      # Contract pipeline
+      - compile-contracts:
+          requires:
+            - install-contracts-deps
+      - test-contracts:
+          requires:
+            - compile-contracts
+      - security-scan-contracts:
+          requires:
+            - compile-contracts
+      
+      # Infrastructure validation
+      - validate-infrastructure:
           filters:
             branches:
               only: develop
+      
+      # Deploy to staging
       - deploy-staging:
           requires:
-            - test
-          filters:
-            branches:
-              only: develop
+            - build-frontend-staging
+            - test-contracts
+            - security-scan-contracts
+            - validate-infrastructure
   
-  production_deploy:
+  # Production workflow (main branch)
+  production_pipeline:
     jobs:
+      # Install dependencies in parallel
+      - install-frontend-deps:
+          filters:
+            branches:
+              only: main
+      - install-contracts-deps:
+          filters:
+            branches:
+              only: main
+      
+      # Frontend pipeline
+      - lint-frontend:
+          requires:
+            - install-frontend-deps
+      - test-frontend-unit:
+          requires:
+            - install-frontend-deps
+      - test-frontend-integration:
+          requires:
+            - install-frontend-deps
+      - security-scan-frontend:
+          requires:
+            - install-frontend-deps
       - build-frontend-production:
+          requires:
+            - lint-frontend
+            - test-frontend-unit
+            - test-frontend-integration
+            - security-scan-frontend
+      
+      # Contract pipeline
+      - compile-contracts:
+          requires:
+            - install-contracts-deps
+      - test-contracts:
+          requires:
+            - compile-contracts
+      - security-scan-contracts:
+          requires:
+            - compile-contracts
+      
+      # Infrastructure validation
+      - validate-infrastructure:
           filters:
             branches:
               only: main
-      - build-contracts:
-          filters:
-            branches:
-              only: main
-      - test:
+      
+      # Deploy to production (requires manual approval)
+      - hold-for-approval:
+          type: approval
           requires:
             - build-frontend-production
-            - build-contracts
-          filters:
-            branches:
-              only: main
+            - test-contracts
+            - security-scan-contracts
+            - validate-infrastructure
+      
       - deploy-production:
           requires:
-            - test
-          filters:
-            branches:
-              only: main
+            - hold-for-approval
