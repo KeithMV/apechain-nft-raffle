@@ -50,9 +50,3 @@ export type { ValidationRule } from './rules';
 
 // Convenience re-exports for backward compatibility
 export { ValidationRules as defaultValidationRules } from './rules';
-
-// Legacy SecurityUtils class for backward compatibility
-export class SecurityUtils {
-  static validateAddress = validateAddress;
-  static sanitizeString = sanitizeString;
-}
