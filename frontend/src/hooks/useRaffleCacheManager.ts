@@ -51,21 +51,21 @@ export function useRaffleCacheManager() {
 
   // Initialize cache instances with memoization
   const caches = useMemo(() => ({
-    raffles: new OptimizedCache<RaffleInfo[]>(
-      CACHE_CONFIGS.raffles.maxSize,
-      CACHE_CONFIGS.raffles.maxItems,
-      CACHE_CONFIGS.raffles.ttl
-    ),
-    positions: new OptimizedCache<UserRafflePosition[]>(
-      CACHE_CONFIGS.positions.maxSize,
-      CACHE_CONFIGS.positions.maxItems,
-      CACHE_CONFIGS.positions.ttl
-    ),
-    created: new OptimizedCache<RaffleInfo[]>(
-      CACHE_CONFIGS.created.maxSize,
-      CACHE_CONFIGS.created.maxItems,
-      CACHE_CONFIGS.created.ttl
-    )
+    raffles: new OptimizedCache<RaffleInfo[]>({
+      maxSize: CACHE_CONFIGS.raffles.maxSize,
+      maxItems: CACHE_CONFIGS.raffles.maxItems,
+      ttl: CACHE_CONFIGS.raffles.ttl
+    }),
+    positions: new OptimizedCache<UserRafflePosition[]>({
+      maxSize: CACHE_CONFIGS.positions.maxSize,
+      maxItems: CACHE_CONFIGS.positions.maxItems,
+      ttl: CACHE_CONFIGS.positions.ttl
+    }),
+    created: new OptimizedCache<RaffleInfo[]>({
+      maxSize: CACHE_CONFIGS.created.maxSize,
+      maxItems: CACHE_CONFIGS.created.maxItems,
+      ttl: CACHE_CONFIGS.created.ttl
+    })
   }), []);
 
   // Generate standardized cache keys
@@ -131,14 +131,16 @@ export function useRaffleCacheManager() {
     caches.positions.clear();
     caches.created.clear();
     
-    // Clear localStorage cache entries
+    // Clear localStorage cache entries (including legacy V3 caches)
     if (typeof window !== 'undefined') {
       Object.keys(localStorage).forEach(key => {
-        if (key.includes('raffle') || key.includes('cache')) {
+        if (key.includes('raffle') || key.includes('cache') || key.includes('user_positions') || key.includes('created_raffles')) {
           localStorage.removeItem(key);
         }
       });
     }
+    
+    console.log('All raffle caches cleared (V3 and V4)');
   }, [caches]);
 
   // Clear cache for specific chain

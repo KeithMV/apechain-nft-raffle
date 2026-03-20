@@ -76,8 +76,7 @@ export function useRaffleDataFetcher() {
             return { index: i, contract: null };
           }
         },
-        5,
-        10
+        { batchSize: 5, delay: 10 }
       );
       
       // Filter out failed contracts while maintaining index mapping
@@ -118,8 +117,7 @@ export function useRaffleDataFetcher() {
             return { ...contractResult, raffleInfo: null };
           }
         },
-        3,
-        20
+        { batchSize: 3, delay: 20 }
       );
       
       // Process valid results with correct index mapping

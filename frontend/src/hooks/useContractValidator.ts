@@ -24,6 +24,12 @@ export interface TicketPurchaseParams {
   ticketPrice: string;
 }
 
+export interface WinnerSelectionParams {
+  raffleContract: string;
+  commitHash?: string;
+  nonce?: bigint;
+}
+
 export function useContractValidator() {
   // Validate Ethereum address format
   const validateAddress = useMemo(() => {
@@ -191,6 +197,34 @@ export function useContractValidator() {
     };
   }, [validateAddress]);
 
+  // Validate winner selection parameters
+  const validateWinnerSelection = useMemo(() => {
+    return (params: WinnerSelectionParams): ValidationResult => {
+      // Validate raffle contract address
+      const raffleContractResult = validateAddress(params.raffleContract, 'raffle contract address');
+      if (!raffleContractResult.isValid) {
+        return raffleContractResult;
+      }
+      
+      // Validate commit hash if provided
+      if (params.commitHash) {
+        const commitHashRegex = /^0x[a-fA-F0-9]{64}$/;
+        if (!commitHashRegex.test(params.commitHash)) {
+          return { isValid: false, error: 'Invalid commit hash format' };
+        }
+      }
+      
+      // Validate nonce if provided
+      if (params.nonce !== undefined) {
+        if (typeof params.nonce !== 'bigint' || params.nonce < 0n) {
+          return { isValid: false, error: 'Invalid nonce value' };
+        }
+      }
+      
+      return { isValid: true };
+    };
+  }, [validateAddress]);
+
   return {
     // Individual validators
     validateAddress,
@@ -202,7 +236,8 @@ export function useContractValidator() {
     // Composite validators
     validateRaffleCreation,
     validateTicketPurchase,
-    validateNFTApproval
+    validateNFTApproval,
+    validateWinnerSelection
   };
 }
 

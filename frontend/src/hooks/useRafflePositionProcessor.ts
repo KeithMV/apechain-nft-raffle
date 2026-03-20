@@ -201,8 +201,7 @@ export function useRafflePositionProcessor() {
             return null;
           }
         },
-        concurrency,
-        batchSize
+        { batchSize, maxConcurrent: concurrency }
       );
       
       // Process results into user positions

@@ -6,8 +6,25 @@
 // Primary Hooks
 export { useNFTMetadata } from './useNFTMetadata';
 export { useUserNFTs } from './useUserNFTs';
-export { useRaffleContract } from './useRaffleContract';
-export { useUserRafflePositions, useCreatedRaffles } from './useRafflePositions';
+
+// V4 Contract Hooks (Modern Architecture)
+export { 
+  useNFTApprovalV4, 
+  useCreateRaffleV4, 
+  useBuyTickets, 
+  useCommitRandomnessV4, 
+  useRevealWinnerV4, 
+  useEmergencyWinnerV4,
+  useEmergencyPause,
+  useRateLimitChecker
+} from './useRaffleContractV4';
+
+// V4 Position Hooks
+export { 
+  useUserRafflePositionsV4, 
+  useCreatedRafflesV4, 
+  useAllRafflesV4 
+} from './useRafflePositionsV4';
 
 // Specialized Hooks
 export { useWinnerSelection } from './useWinnerSelection';

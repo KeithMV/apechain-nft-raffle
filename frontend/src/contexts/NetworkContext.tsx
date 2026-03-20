@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useChainId } from 'wagmi';
-import { getNetworkConfig, getContracts } from '../config/addresses';
+import { getNetworkConfig } from '../config/networks';
+import { getContracts } from '../config/addresses';
 import { CHAIN_IDS } from '../constants/chains';
 
 interface NetworkTheme {
