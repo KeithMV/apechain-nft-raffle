@@ -26,5 +26,11 @@
   },
   "include": [
     "src"
+  ],
+  "exclude": [
+    "test/**/*",
+    "**/*.test.*",
+    "**/*.spec.*",
+    "node_modules"
   ]
 }
