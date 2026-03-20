@@ -229,15 +229,16 @@ jobs:
             # Clean previous builds
             rm -rf build/
             
-            # Set environment variables
+            # Set environment variables from .env.staging file
             export REACT_APP_APP_NAME="ApeChain NFT Raffles (STAGING)"
-            export REACT_APP_APP_URL="https://staging.apechainraffles.io"
+            export REACT_APP_APP_URL="https://d1784e9dgxn2du.cloudfront.net"
             export REACT_APP_ENV="staging"
             export REACT_APP_NETWORK="apechain"
             export REACT_APP_CHAIN_ID="33139"
             export REACT_APP_APECHAIN_RPC_URL="https://apechain.calderachain.xyz/http"
             export REACT_APP_CONTRACT_ADDRESS="0x1627E7e63b63878E61f91D336385a59B1747934a"
             export REACT_APP_WALLETCONNECT_PROJECT_ID="b848c907908cee0c1bcf0ab0493da6c4"
+            export REACT_APP_ENABLE_LOGGING="true"
             export CI=false
             export GENERATE_SOURCEMAP=false
             export NODE_ENV=production
