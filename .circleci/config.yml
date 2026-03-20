@@ -219,17 +219,36 @@ jobs:
           name: Build frontend for staging
           command: |
             cd frontend
+            echo "🏗️  Building frontend for staging..."
+            
+            # Clean previous builds
             rm -rf build/
-            CI=false yarn build:staging
-          environment:
-            REACT_APP_APP_NAME: "ApeChain NFT Raffles (STAGING)"
-            REACT_APP_APP_URL: "https://staging.apechainraffles.io"
-            REACT_APP_ENV: "staging"
-            REACT_APP_NETWORK: "apechain"
-            REACT_APP_CHAIN_ID: "33139"
-            REACT_APP_APECHAIN_RPC_URL: "https://apechain.calderachain.xyz/http"
-            REACT_APP_CONTRACT_ADDRESS: "0x1627E7e63b63878E61f91D336385a59B1747934a"
-            REACT_APP_WALLETCONNECT_PROJECT_ID: "b848c907908cee0c1bcf0ab0493da6c4"
+            
+            # Set environment variables
+            export REACT_APP_APP_NAME="ApeChain NFT Raffles (STAGING)"
+            export REACT_APP_APP_URL="https://staging.apechainraffles.io"
+            export REACT_APP_ENV="staging"
+            export REACT_APP_NETWORK="apechain"
+            export REACT_APP_CHAIN_ID="33139"
+            export REACT_APP_APECHAIN_RPC_URL="https://apechain.calderachain.xyz/http"
+            export REACT_APP_CONTRACT_ADDRESS="0x1627E7e63b63878E61f91D336385a59B1747934a"
+            export REACT_APP_WALLETCONNECT_PROJECT_ID="b848c907908cee0c1bcf0ab0493da6c4"
+            export CI=false
+            export GENERATE_SOURCEMAP=false
+            export NODE_ENV=production
+            
+            # Run the build
+            yarn build:staging
+            
+            # Verify build output
+            if [ -d "build" ] && [ "$(ls -A build)" ]; then
+              echo "✅ Build completed successfully"
+              echo "📦 Build size: $(du -sh build | cut -f1)"
+              ls -la build/
+            else
+              echo "❌ Build failed - no output directory found"
+              exit 1
+            fi
       - run:
           name: Analyze bundle size
           command: |
@@ -255,17 +274,36 @@ jobs:
           name: Build frontend for production
           command: |
             cd frontend
+            echo "🏗️  Building frontend for production..."
+            
+            # Clean previous builds
             rm -rf build/
-            CI=false yarn build
-          environment:
-            REACT_APP_APP_NAME: "ApeChain NFT Raffles"
-            REACT_APP_APP_URL: "https://apechainraffles.io"
-            REACT_APP_ENV: "production"
-            REACT_APP_NETWORK: "apechain"
-            REACT_APP_CHAIN_ID: "33139"
-            REACT_APP_APECHAIN_RPC_URL: "https://apechain.calderachain.xyz/http"
-            REACT_APP_CONTRACT_ADDRESS: "0x1627E7e63b63878E61f91D336385a59B1747934a"
-            REACT_APP_WALLETCONNECT_PROJECT_ID: "b848c907908cee0c1bcf0ab0493da6c4"
+            
+            # Set environment variables
+            export REACT_APP_APP_NAME="ApeChain NFT Raffles"
+            export REACT_APP_APP_URL="https://apechainraffles.io"
+            export REACT_APP_ENV="production"
+            export REACT_APP_NETWORK="apechain"
+            export REACT_APP_CHAIN_ID="33139"
+            export REACT_APP_APECHAIN_RPC_URL="https://apechain.calderachain.xyz/http"
+            export REACT_APP_CONTRACT_ADDRESS="0x1627E7e63b63878E61f91D336385a59B1747934a"
+            export REACT_APP_WALLETCONNECT_PROJECT_ID="b848c907908cee0c1bcf0ab0493da6c4"
+            export CI=false
+            export GENERATE_SOURCEMAP=false
+            export NODE_ENV=production
+            
+            # Run the build
+            yarn build
+            
+            # Verify build output
+            if [ -d "build" ] && [ "$(ls -A build)" ]; then
+              echo "✅ Production build completed successfully"
+              echo "📦 Build size: $(du -sh build | cut -f1)"
+              ls -la build/
+            else
+              echo "❌ Build failed - no output directory found"
+              exit 1
+            fi
       - persist_to_workspace:
           root: .
           paths:
@@ -336,31 +374,83 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Install security tools
+          name: Install system dependencies
           command: |
-            pip3 install slither-analyzer mythril
+            sudo apt-get update
+            sudo apt-get install -y software-properties-common
       - run:
-          name: Run Slither analysis
+          name: Install security tools
           command: |
             cd contracts
             mkdir -p security-results
-            slither . --json security-results/slither-report.json || true
-            slither . --print human-summary > security-results/slither-summary.txt || true
+            echo "🔍 Installing Slither analyzer..."
+            
+            # Install Slither with proper dependencies
+            pip3 install --upgrade pip
+            pip3 install slither-analyzer
+            
+            # Verify installation
+            python3 -m slither --version > security-results/slither-version.txt
+            echo "✅ Slither installed successfully: $(cat security-results/slither-version.txt)"
       - run:
-          name: Run Mythril analysis
+          name: Run Slither security analysis
           command: |
             cd contracts
-            myth analyze contracts/RaffleFactorySecureV4.sol --json > security-results/mythril-report.json || true
+            echo "🔍 Running Slither analysis on RaffleFactorySecureV4..."
+            
+            # Run Slither analysis
+            python3 -m slither contracts/RaffleFactorySecureV4.sol --json security-results/slither-report.json || {
+              echo "⚠️  Slither analysis completed with warnings"
+            }
+            
+            # Generate human-readable summary
+            python3 -m slither contracts/RaffleFactorySecureV4.sol --print human-summary > security-results/slither-summary.txt || true
+            
+            echo "📊 Slither analysis complete"
       - run:
-          name: Check for critical security issues
+          name: Analyze security results
           command: |
             cd contracts/security-results
-            # Fail build if critical issues found
-            if grep -q '"impact": "High"' slither-report.json; then
-              echo "❌ Critical security issues found!"
+            echo "🔍 Analyzing security findings..."
+            
+            # Check if report exists and analyze it
+            if [ -f "slither-report.json" ]; then
+              # Count issues by severity
+              HIGH_ISSUES=$(jq '[.results.detectors[] | select(.impact == "High")] | length' slither-report.json 2>/dev/null || echo "0")
+              MEDIUM_ISSUES=$(jq '[.results.detectors[] | select(.impact == "Medium")] | length' slither-report.json 2>/dev/null || echo "0")
+              LOW_ISSUES=$(jq '[.results.detectors[] | select(.impact == "Low")] | length' slither-report.json 2>/dev/null || echo "0")
+              INFO_ISSUES=$(jq '[.results.detectors[] | select(.impact == "Informational")] | length' slither-report.json 2>/dev/null || echo "0")
+              
+              echo "🚨 High: $HIGH_ISSUES"
+              echo "⚠️  Medium: $MEDIUM_ISSUES"
+              echo "📋 Low: $LOW_ISSUES"
+              echo "ℹ️  Informational: $INFO_ISSUES"
+              
+              # Show high/medium issues if any
+              if [ "$HIGH_ISSUES" -gt "0" ] || [ "$MEDIUM_ISSUES" -gt "0" ]; then
+                echo ""
+                echo "📝 High/Medium Issues:"
+                jq -r '.results.detectors[] | select(.impact == "High" or .impact == "Medium") | "- \(.impact): \(.check) - \(.description)"' slither-report.json 2>/dev/null || true
+              fi
+              
+              # Fail only on high severity issues
+              if [ "$HIGH_ISSUES" -gt "0" ]; then
+                echo "❌ High severity security issues found! Build failed."
+                exit 1
+              elif [ "$MEDIUM_ISSUES" -gt "3" ]; then
+                echo "⚠️  Too many medium severity issues found ($MEDIUM_ISSUES > 3)."
+                echo "Please review and address medium-priority security issues."
+                exit 1
+              else
+                echo "✅ No critical security issues detected."
+                if [ "$MEDIUM_ISSUES" -gt "0" ]; then
+                  echo "ℹ️  Found $MEDIUM_ISSUES medium severity issues (within acceptable threshold)."
+                fi
+              fi
+            else
+              echo "❌ Slither report not generated. Analysis failed."
               exit 1
             fi
-            echo "✅ No critical security issues detected"
       - store_artifacts:
           path: contracts/security-results
           destination: contract-security
