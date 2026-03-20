@@ -1,16 +1,14 @@
 /**
- * V4 Contract Hooks with Version Detection
- * Automatically detects and uses V4 when available
+ * V4 Contract Hooks - Clean Architecture
+ * Focused transaction hooks with extracted concerns
  */
 
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { useContractVersionManager } from './useContractVersionManager';
 import { useNFTApprovalTransaction, useRaffleCreationTransaction, useTicketPurchaseTransaction } from './useWeb3TransactionManager';
 import { useContractValidator } from './useContractValidator';
-import { RAFFLE_FACTORY_ABI, ERC721_ABI } from '../config/contracts';
+import { RAFFLE_FACTORY_ABI, ERC721_ABI, RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
-import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
-import { useState } from 'react';
 import { useCacheInvalidation } from './useCacheInvalidation';
 
 // Re-export read hooks for backward compatibility
@@ -29,10 +27,6 @@ export interface CreateRaffleParams {
   maxTickets: number;
   duration: number;
 }
-
-
-
-
 
 /**
  * Hook for NFT approval transaction (V4 aware)
@@ -80,10 +74,7 @@ export function useCreateRaffleV4() {
   const { invalidateAll } = useCacheInvalidation();
   
   const handleSuccess = () => {
-    const cacheTimeoutId = setTimeout(() => {
-      invalidateAll();
-    }, 500);
-    return () => clearTimeout(cacheTimeoutId);
+    setTimeout(() => invalidateAll(), 500);
   };
   
   const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useRaffleCreationTransaction(handleSuccess);
@@ -124,9 +115,6 @@ export function useCreateRaffleV4() {
     rateLimitText
   };
 }
-
-
-
 /**
  * Hook for buying raffle tickets (V4 aware)
  */
@@ -134,9 +122,7 @@ export function useBuyTickets() {
   const { validateTicketPurchase } = useContractValidator();
   const { invalidateAll } = useCacheInvalidation();
   
-  const handleSuccess = () => {
-    invalidateAll();
-  };
+  const handleSuccess = () => invalidateAll();
   
   const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useTicketPurchaseTransaction();
 
@@ -210,16 +196,15 @@ export function useEmergencyPause() {
 }
 
 /**
- * Rate limit checker hook
+ * Rate limit checker hook (stub implementation)
  */
 export function useRateLimitChecker(userAddress?: string) {
   const { currentVersion, rateLimit, rateLimitText } = useContractVersionManager();
-  const [canCreateRaffle, setCanCreateRaffle] = useState(true);
-  const [timeRemaining, setTimeRemaining] = useState(0);
   
+  // TODO: Implement actual rate limiting logic
   return {
-    canCreateRaffle,
-    timeRemaining,
+    canCreateRaffle: true,
+    timeRemaining: 0,
     rateLimit,
     rateLimitText,
     version: currentVersion
