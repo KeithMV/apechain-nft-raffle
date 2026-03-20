@@ -189,17 +189,17 @@ export default function CreateRafflePage() {
 
 
 
-  const containerBorderColor = isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30';
-  const containerShadowColor = isApeChain ? 'shadow-emerald-500/20' : 'shadow-blue-500/20';
+  const containerBorderColor = isApeChain ? 'border-emerald-400/30' : 'border-purple-400/30';
+  const containerShadowColor = isApeChain ? 'shadow-emerald-500/20' : 'shadow-purple-500/20';
   const headerBgGradient = isApeChain 
     ? 'from-emerald-500/10 via-teal-500/10 to-cyan-500/10' 
-    : 'from-blue-500/10 via-indigo-500/10 to-purple-500/10';
-  const headerBorderColor = isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30';
+    : 'from-purple-500/10 via-violet-500/10 to-indigo-500/10';
+  const headerBorderColor = isApeChain ? 'border-emerald-400/30' : 'border-purple-400/30';
   const titleGradient = isApeChain 
     ? 'from-emerald-400 via-teal-300 to-cyan-400' 
-    : 'from-blue-400 via-indigo-300 to-purple-400';
-  const patternColor = isApeChain ? 'rgba(16,185,129,0.1)' : 'rgba(59,130,246,0.1)';
-  const gridColor = isApeChain ? 'rgba(16,185,129,0.05)' : 'rgba(59,130,246,0.05)';
+    : 'from-purple-400 via-violet-300 to-indigo-400';
+  const patternColor = isApeChain ? 'rgba(16,185,129,0.1)' : 'rgba(168,85,247,0.1)';
+  const gridColor = isApeChain ? 'rgba(16,185,129,0.05)' : 'rgba(168,85,247,0.05)';
 
   return (
     <div className={`relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border ${containerBorderColor} rounded-3xl shadow-2xl ${containerShadowColor} overflow-hidden`}>
@@ -264,11 +264,11 @@ export default function CreateRafflePage() {
 
         {/* Approval Section */}
         {formData.nftContract && (
-          <div className={`relative bg-gray-800/90 backdrop-blur-xl border ${isApeChain ? 'border-emerald-500/30 shadow-emerald-500/10' : 'border-blue-500/30 shadow-blue-500/10'} rounded-xl p-4 sm:p-6 mt-6 shadow-lg`}>
-            <div className={`absolute inset-0 bg-gradient-to-r ${isApeChain ? 'from-emerald-500/5 via-teal-500/5 to-cyan-500/5' : 'from-blue-500/5 via-indigo-500/5 to-purple-500/5'} rounded-xl blur-sm animate-pulse`}></div>
-            <h4 className={`relative font-semibold ${isApeChain ? 'text-emerald-200' : 'text-blue-200'} mb-3 flex items-center text-sm sm:text-base font-mono tracking-wider`}>
-              <div className={`w-4 h-4 sm:w-5 sm:h-5 ${isApeChain ? 'bg-emerald-500/20' : 'bg-blue-500/20'} rounded-lg flex items-center justify-center mr-2`}>
-                <span className={`${isApeChain ? 'text-emerald-400' : 'text-blue-400'} text-xs`}>⚡</span>
+          <div className={`relative bg-gray-800/90 backdrop-blur-xl border ${isApeChain ? 'border-emerald-500/30 shadow-emerald-500/10' : 'border-purple-500/30 shadow-purple-500/10'} rounded-xl p-4 sm:p-6 mt-6 shadow-lg`}>
+            <div className={`absolute inset-0 bg-gradient-to-r ${isApeChain ? 'from-emerald-500/5 via-teal-500/5 to-cyan-500/5' : 'from-purple-500/5 via-violet-500/5 to-indigo-500/5'} rounded-xl blur-sm animate-pulse`}></div>
+            <h4 className={`relative font-semibold ${isApeChain ? 'text-emerald-200' : 'text-purple-200'} mb-3 flex items-center text-sm sm:text-base font-mono tracking-wider`}>
+              <div className={`w-4 h-4 sm:w-5 sm:h-5 ${isApeChain ? 'bg-emerald-500/20' : 'bg-purple-500/20'} rounded-lg flex items-center justify-center mr-2`}>
+                <span className={`${isApeChain ? 'text-emerald-400' : 'text-purple-400'} text-xs`}>⚡</span>
               </div>
               NFT Contract Approval Status
               {currentContract && (
@@ -277,12 +277,12 @@ export default function CreateRafflePage() {
             </h4>
             
             {approvalStatus === null || isCheckingApproval ? (
-              <div className={`relative flex items-center ${isApeChain ? 'text-emerald-300/70' : 'text-blue-300/70'} text-sm font-mono`}>
-                <div className={`w-4 h-4 border-2 ${isApeChain ? 'border-emerald-400' : 'border-blue-400'} border-t-transparent rounded-full animate-spin mr-2`}></div>
+              <div className={`relative flex items-center ${isApeChain ? 'text-emerald-300/70' : 'text-purple-300/70'} text-sm font-mono`}>
+                <div className={`w-4 h-4 border-2 ${isApeChain ? 'border-emerald-400' : 'border-purple-400'} border-t-transparent rounded-full animate-spin mr-2`}></div>
                 Checking approval status...
               </div>
             ) : approvalStatus ? (
-              <div className={`relative flex items-center ${isApeChain ? 'text-emerald-300' : 'text-blue-300'} text-sm font-mono tracking-wide`}>
+              <div className={`relative flex items-center ${isApeChain ? 'text-emerald-300' : 'text-purple-300'} text-sm font-mono tracking-wide`}>
                 <span className="mr-2">✅</span>
                 Contract Approved • All NFTs from this contract can be used in raffles
               </div>
@@ -296,9 +296,9 @@ export default function CreateRafflePage() {
                   <button
                     onClick={() => setShowApprovalModal(true)}
                     disabled={approvalPending || approvalConfirming}
-                    className={`relative bg-gradient-to-r ${isApeChain ? 'from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500' : 'from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'} text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group`}
+                    className={`relative bg-gradient-to-r ${isApeChain ? 'from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500' : 'from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500'} text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group`}
                   >
-                    <div className={`absolute inset-0 bg-gradient-to-r ${isApeChain ? 'from-emerald-500/0 via-emerald-500/20 to-emerald-500/0' : 'from-blue-500/0 via-blue-500/20 to-blue-500/0'} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
+                    <div className={`absolute inset-0 bg-gradient-to-r ${isApeChain ? 'from-emerald-500/0 via-emerald-500/20 to-emerald-500/0' : 'from-purple-500/0 via-purple-500/20 to-purple-500/0'} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
                     {approvalPending || approvalConfirming ? (
                       <span className="relative flex items-center">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
@@ -309,9 +309,9 @@ export default function CreateRafflePage() {
                     )}
                   </button>
                   
-                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-                    <div className="text-blue-300 text-xs font-medium mb-1">🛡️ Contract-Level Approval</div>
-                    <div className="text-blue-200 text-xs">
+                  <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
+                    <div className="text-purple-300 text-xs font-medium mb-1">🛡️ Contract-Level Approval</div>
+                    <div className="text-purple-200 text-xs">
                       This approval allows the raffle system to transfer ANY NFT from this contract when you create raffles. Once approved, you can use any NFT from this contract without re-approving.
                     </div>
                   </div>
@@ -326,7 +326,7 @@ export default function CreateRafflePage() {
           <button
             onClick={handleCreateRaffle}
             disabled={createPending || createConfirming || isSwitching || (!isWrongNetwork && (!formData.nftContract || !formData.tokenId || approvalStatus !== true))}
-            className={`relative flex-1 bg-gradient-to-r ${isApeChain ? 'from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 shadow-emerald-500/25 hover:shadow-emerald-500/40' : 'from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 shadow-blue-500/25 hover:shadow-blue-500/40'} text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group`}
+            className={`relative flex-1 bg-gradient-to-r ${isApeChain ? 'from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 shadow-emerald-500/25 hover:shadow-emerald-500/40' : 'from-purple-600 via-violet-600 to-indigo-600 hover:from-purple-500 hover:via-violet-500 hover:to-indigo-500 shadow-purple-500/25 hover:shadow-purple-500/40'} text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-mono tracking-wider overflow-hidden group`}
           >
             <div className={`absolute inset-0 bg-gradient-to-r ${isApeChain ? 'from-emerald-500/0 via-emerald-500/20 to-emerald-500/0' : 'from-blue-500/0 via-blue-500/20 to-blue-500/0'} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
             {isSwitching ? (

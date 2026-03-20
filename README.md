@@ -1,6 +1,6 @@
 # ApeChain NFT Raffle Platform
 
-A decentralized NFT raffle platform supporting multiple blockchains, starting with ApeChain and Base networks.
+A decentralized NFT raffle platform built for ApeChain with Polygon support.
 
 ## 🚀 Features
 

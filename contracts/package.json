@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "test:coverage": "npx hardhat coverage",
     "deploy": "npx hardhat run scripts/deploy.js --network apechain",
     "deploy-secure": "npx hardhat run scripts/deploy-secure.js --network apechain",
     "deploy-secure-v2": "npx hardhat run scripts/deploy-secure-v2.js --network apechain",
@@ -19,6 +21,9 @@
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
+    "chai": "^4.3.10",
     "hardhat": "^2.28.4"
   },
   "dependencies": {

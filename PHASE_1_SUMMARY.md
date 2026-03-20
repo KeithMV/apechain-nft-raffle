@@ -5,13 +5,13 @@
 ### Network Context Provider
 - Created `NetworkContext` with network-specific data
 - Provides theme, currency, explorer URL, contracts per network
-- Detects ApeChain vs Base automatically using `useChainId()`
+- Detects ApeChain vs Polygon automatically using `useChainId()`
 - Integrated into App.tsx root level
 
 ### Network Detection Logic
 ```typescript
 const isApeChain = chainId === 33139 || chainId === 33111;
-const isBase = chainId === 8453 || chainId === 84532;
+const isPolygon = chainId === 137;
 ```
 
 ### Theme System
@@ -45,7 +45,7 @@ const isBase = chainId === 8453 || chainId === 84532;
 import { useNetwork } from '../contexts/NetworkContext';
 
 const MyComponent = () => {
-  const { theme, nativeCurrency, networkName, isApeChain, isBase } = useNetwork();
+  const { theme, nativeCurrency, networkName, isApeChain, isPolygon } = useNetwork();
   
   return (
     <div className={`text-${theme.primary}-400`}>

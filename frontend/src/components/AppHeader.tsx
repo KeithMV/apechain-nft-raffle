@@ -34,10 +34,10 @@ const NavigationLink: React.FC<NavigationLinkProps> = ({ to, children, currentPa
   
   const navActiveStyle = isApeChain 
     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50'
-    : 'bg-blue-500/20 text-blue-300 border border-blue-400/50';
+    : 'bg-purple-500/20 text-purple-300 border border-purple-400/50';
   const navHoverStyle = isApeChain
     ? 'text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-400/30'
-    : 'text-slate-300 hover:text-blue-300 hover:bg-blue-500/10 border border-transparent hover:border-blue-400/30';
+    : 'text-slate-300 hover:text-purple-300 hover:bg-purple-500/10 border border-transparent hover:border-purple-400/30';
 
   return (
     <Link
@@ -58,7 +58,7 @@ export const AppHeader: React.FC = () => {
   const currentPage = location.pathname.slice(1) || 'browse';
   
   // Network-aware header styling
-  const headerBorderColor = isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30';
+  const headerBorderColor = isApeChain ? 'border-emerald-400/30' : 'border-purple-400/30';
   
   return (
     <header className={`relative bg-slate-900/95 backdrop-blur-xl border-b ${headerBorderColor} shadow-2xl z-10`}>

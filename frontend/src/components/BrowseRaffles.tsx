@@ -19,17 +19,17 @@ export default function BrowseRaffles() {
   
   // Memoize network-aware styling to prevent recalculation
   const styles = useMemo(() => ({
-    borderColor: isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30',
-    shadowColor: isApeChain ? 'shadow-emerald-500/20' : 'shadow-blue-500/20',
+    borderColor: isApeChain ? 'border-emerald-400/30' : 'border-purple-400/30',
+    shadowColor: isApeChain ? 'shadow-emerald-500/20' : 'shadow-purple-500/20',
     gradientBg: isApeChain 
       ? 'from-emerald-500/10 via-teal-500/10 to-cyan-500/10'
-      : 'from-blue-500/10 via-indigo-500/10 to-purple-500/10',
+      : 'from-purple-500/10 via-violet-500/10 to-indigo-500/10',
     titleGradient: isApeChain
       ? 'from-emerald-400 via-teal-300 to-cyan-400'
-      : 'from-blue-400 via-indigo-300 to-purple-400',
+      : 'from-purple-400 via-violet-300 to-indigo-400',
     activeButtonStyle: isApeChain
       ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
-      : 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
+      : 'bg-purple-500/20 text-purple-300 border border-purple-400/30'
   }), [isApeChain]);
   
   // State management
