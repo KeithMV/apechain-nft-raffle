@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { WalletConnection } from '../../components/WalletConnection'
+import { WalletConnection } from '@/components/WalletConnection'
 
 // Mock wagmi hooks with simple return values
 vi.mock('wagmi', () => ({
@@ -15,7 +15,7 @@ vi.mock('@web3modal/wagmi/react', () => ({
   createWeb3Modal: vi.fn(),
 }))
 
-vi.mock('../../config/wagmi', () => ({
+vi.mock('@/config/wagmi', () => ({
   apeChain: { id: 33139 },
 }))
 

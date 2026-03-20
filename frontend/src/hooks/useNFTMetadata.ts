@@ -6,7 +6,7 @@
 import { usePublicClient } from 'wagmi';
 import { useQuery } from '@tanstack/react-query';
 import { OptimizedCache } from '../utils/performance';
-import { SecurityUtils } from '../utils/security';
+import { sanitizeString, validateAddress } from '../utils/security';
 
 interface NFTMetadata {
   name?: string;
@@ -71,14 +71,14 @@ function sanitizeMetadata(data: any): { metadata?: NFTMetadata; error?: string }
   
   try {
     const metadata: NFTMetadata = {
-      name: typeof data.name === 'string' ? SecurityUtils.sanitizeString(data.name, 100) : undefined,
-      description: typeof data.description === 'string' ? SecurityUtils.sanitizeString(data.description, 1000) : undefined,
+      name: typeof data.name === 'string' ? sanitizeString(data.name) : undefined,
+      description: typeof data.description === 'string' ? sanitizeString(data.description) : undefined,
       image: typeof data.image === 'string' ? data.image.slice(0, 500) : undefined,
       attributes: Array.isArray(data.attributes) ? 
         data.attributes.slice(0, 50).map((attr: any) => ({
-          trait_type: typeof attr.trait_type === 'string' ? SecurityUtils.sanitizeString(attr.trait_type, 50) : '',
+          trait_type: typeof attr.trait_type === 'string' ? sanitizeString(attr.trait_type) : '',
           value: typeof attr.value === 'string' || typeof attr.value === 'number' ? 
-            SecurityUtils.sanitizeString(String(attr.value), 100) : ''
+            sanitizeString(String(attr.value)) : ''
         })) : undefined
     };
     
@@ -99,7 +99,7 @@ async function fetchNFTMetadata(
     return { error: 'Invalid contract address or token ID' };
   }
   
-  if (!SecurityUtils.validateAddress(contractAddress)) {
+  if (!validateAddress(contractAddress)) {
     return { error: 'Invalid contract address format' };
   }
   
