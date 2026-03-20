@@ -30,7 +30,7 @@ export default function EnvironmentDebugger({ isOpen, onClose }: EnvironmentDebu
       const factoryAddress = getRaffleFactoryAddress(chainId, true);
       
       // Test RPC connectivity
-      let rpcTest = null;
+      let rpcTest: any;
       try {
         const blockNumber = await publicClient?.getBlockNumber();
         rpcTest = { success: true, blockNumber: blockNumber?.toString() };
@@ -39,7 +39,7 @@ export default function EnvironmentDebugger({ isOpen, onClose }: EnvironmentDebu
       }
       
       // Test contract existence
-      let contractTest = null;
+      let contractTest: any;
       try {
         const code = await publicClient?.getBytecode({ address: factoryAddress as `0x${string}` });
         contractTest = { 
