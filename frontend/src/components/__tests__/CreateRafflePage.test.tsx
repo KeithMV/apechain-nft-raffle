@@ -94,6 +94,7 @@ import { useAccount, useChainId, useSwitchChain, usePublicClient } from 'wagmi'
 import { useRaffleContractV4, usePlatformFeeV4, useNFTApprovalStatusV4, useNFTApprovalV4, useCreateRaffleV4 } from '../../hooks/useRaffleContractV4'
 import { useNFTMetadata } from '../../hooks/useNFTMetadata'
 import { useUserNFTs } from '../../hooks/useUserNFTs'
+import { useNFTApprovalManager } from '../../hooks/useNFTApprovalManager'
 
 describe('CreateRafflePage', () => {
   const mockAddress = '0x1234567890123456789012345678901234567890'
@@ -171,7 +172,20 @@ describe('CreateRafflePage', () => {
   })
 
   it('shows approval button when NFT needs approval', async () => {
-    vi.mocked(useNFTApprovalStatusV4).mockReturnValue({ data: false, refetch: vi.fn() } as any)
+    // Mock the approval manager to return needs approval state
+    vi.mocked(useNFTApprovalManager).mockReturnValue({
+      approvalStatus: false, // Contract needs approval
+      isCheckingApproval: false,
+      currentContract: '0x1234567890123456789012345678901234567890',
+      approvalPending: false,
+      approvalConfirming: false,
+      approvalSuccess: false,
+      approvalError: null,
+      checkApprovalForContract: vi.fn(),
+      approveContract: vi.fn(),
+      clearApprovalState: vi.fn(),
+      allApprovalStates: {}
+    })
 
     renderWithRouter(<CreateRafflePage />)
     
@@ -179,8 +193,9 @@ describe('CreateRafflePage', () => {
     fireEvent.change(contractInput, { target: { value: '0x1234567890123456789012345678901234567890' } })
     
     await waitFor(() => {
+      // Look for the approval button text that actually exists in the component
       expect(screen.getByText('Approve NFT Contract')).toBeInTheDocument()
-    })
+    }, { timeout: 2000 })
   })
 
   it('shows processing state during raffle creation', () => {
@@ -194,7 +209,21 @@ describe('CreateRafflePage', () => {
   it('calls createRaffle when form is submitted with valid data', async () => {
     const mockCreateRaffle = vi.fn()
     vi.mocked(useCreateRaffleV4).mockReturnValue({ createRaffle: mockCreateRaffle, isPending: false, isSuccess: false } as any)
-    vi.mocked(useNFTApprovalStatusV4).mockReturnValue({ data: true, refetch: vi.fn() } as any)
+    
+    // Mock approval manager to show contract is approved
+    vi.mocked(useNFTApprovalManager).mockReturnValue({
+      approvalStatus: true, // Contract is approved
+      isCheckingApproval: false,
+      currentContract: '0x1234567890123456789012345678901234567890',
+      approvalPending: false,
+      approvalConfirming: false,
+      approvalSuccess: false,
+      approvalError: null,
+      checkApprovalForContract: vi.fn(),
+      approveContract: vi.fn(),
+      clearApprovalState: vi.fn(),
+      allApprovalStates: {}
+    })
 
     renderWithRouter(<CreateRafflePage />)
     
