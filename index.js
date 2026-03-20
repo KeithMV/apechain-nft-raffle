@@ -6,10 +6,19 @@ exports.handler = async (event) => {
     console.log('Event:', JSON.stringify(event, null, 2));
     
     const imageUrl = event.queryStringParameters?.url;
+    const owner = event.queryStringParameters?.owner;
+    const chainId = event.queryStringParameters?.chainId;
     const environment = process.env.ENVIRONMENT || 'production';
     
     console.log('Environment:', environment);
     
+    // Handle NFT ownership queries (Alchemy API integration)
+    if (owner && chainId) {
+        console.log('🔍 NFT ownership query:', { owner, chainId });
+        return createErrorResponse(501, 'NFT ownership API not yet implemented', null, null, 'This endpoint will be implemented with Alchemy API integration');
+    }
+    
+    // Handle image proxy requests
     if (!imageUrl) {
         console.log('❌ Missing URL parameter');
         return createErrorResponse(400, 'Missing url parameter');
@@ -154,7 +163,13 @@ function isValidUrl(url) {
             'img.other.page',
             'arweave.net',
             'nftstorage.link',
-            'w3s.link'
+            'w3s.link',
+            // Additional NFT metadata domains
+            'api.other.page',
+            'api.op.xyz',
+            'api2.balloonsballoons.xyz',
+            'metadata.ens.domains',
+            'api.opensea.io'
         ];
         
         const isAllowed = trustedDomains.some(domain => hostname.includes(domain));

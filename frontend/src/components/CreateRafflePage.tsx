@@ -223,18 +223,19 @@ export default function CreateRafflePage() {
         </div>
       </div>
 
+      {/* Debug Button for Staging - Outside main container */}
+      {process.env.REACT_APP_ENV === 'staging' && (
+        <div className="absolute top-4 right-4 z-20">
+          <button
+            onClick={() => setShowDebugger(true)}
+            className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-mono transition-colors shadow-lg"
+          >
+            🐛 Debug
+          </button>
+        </div>
+      )}
+      
       <div className="relative p-4 sm:p-8 z-10">
-        {/* Debug Button for Staging */}
-        {process.env.REACT_APP_ENV === 'staging' && (
-          <div className="mb-4">
-            <button
-              onClick={() => setShowDebugger(true)}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-mono transition-colors"
-            >
-              🐛 Debug Staging Environment
-            </button>
-          </div>
-        )}
         {/* Network Warning */}
         {isWrongNetwork && (
           <div className="relative bg-red-900/20 border border-red-500/30 rounded-xl p-4 mb-6 backdrop-blur-sm">
