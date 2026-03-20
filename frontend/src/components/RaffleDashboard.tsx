@@ -8,6 +8,8 @@ import { useCancelRaffle } from '../hooks/useCancelRaffle';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useDashboardStyles } from '../hooks/useDashboardStyles';
+// Phase 10: Performance monitoring for dashboard operations
+import { performanceMonitor, measureSync, debounce } from '../utils/performance';
 
 // Interfaces moved to hooks file to avoid duplication
 
@@ -67,13 +69,17 @@ export default function RaffleDashboard() {
   const loading = positionsLoading || rafflesLoading;
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
 
-  // Memoized filtered data for performance
+  // Memoized filtered data for performance with monitoring
   const filteredPositions = useMemo(() => {
-    return showExpired ? userPositions : userPositions.filter(p => p.isActive || p.completed);
+    return measureSync('dashboard-position-filtering', () => {
+      return showExpired ? userPositions : userPositions.filter(p => p.isActive || p.completed);
+    });
   }, [showExpired, userPositions]);
 
   const filteredRaffles = useMemo(() => {
-    return showExpired ? createdRaffles : createdRaffles.filter(r => r.isActive || (Date.now() / 1000 - r.endTime < 86400));
+    return measureSync('dashboard-raffle-filtering', () => {
+      return showExpired ? createdRaffles : createdRaffles.filter(r => r.isActive || (Date.now() / 1000 - r.endTime < 86400));
+    });
   }, [showExpired, createdRaffles]);
 
   useEffect(() => {

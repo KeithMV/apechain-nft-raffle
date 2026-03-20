@@ -12,6 +12,9 @@ import RaffleForm, { FormData, getInitialFormData, validateAddress } from './Raf
 
 import toast from 'react-hot-toast';
 import { ErrorHandler } from '../utils/errorHandler';
+// Phase 10: Performance Implementation
+import { debounce, performanceMonitor, measureAsync } from '../utils/performance';
+import { sanitizeAddress } from '../utils/security';
 
 // Pure function moved outside component
 const calculateDurationInSeconds = (hours: string): number => {
@@ -65,12 +68,23 @@ export default function CreateRafflePage() {
     }
   }, [approvalError]);
   
-  // Check approval when contract changes
+  // Check approval when contract changes - Phase 10: Debounced validation
+  const debouncedCheckApproval = useCallback(
+    debounce((contract: string) => {
+      if (contract && validateAddress(contract)) {
+        measureAsync('approval-check', () => 
+          checkApprovalForContract(sanitizeAddress(contract))
+        );
+      }
+    }, 500),
+    [checkApprovalForContract]
+  );
+
   useEffect(() => {
-    if (formData.nftContract && validateAddress(formData.nftContract)) {
-      checkApprovalForContract(formData.nftContract);
+    if (formData.nftContract) {
+      debouncedCheckApproval(formData.nftContract);
     }
-  }, [formData.nftContract]); // Removed checkApprovalForContract dependency
+  }, [formData.nftContract, debouncedCheckApproval]);
 
   // Handle create raffle success - show success state and redirect
   useEffect(() => {
@@ -111,34 +125,41 @@ export default function CreateRafflePage() {
   const handleCreateRaffle = async () => {
     if (createPending || createConfirming) return;
     
-    if (isWrongNetwork) {
-      ErrorHandler.handleValidationError('network', 'Wrong network - please switch to ApeChain');
-      return;
-    }
-
-    if (approvalStatus !== true) {
-      ErrorHandler.handleValidationError('NFT approval', 'Contract not approved');
-      return;
-    }
-
-    // Validate form data
-    if (!formData.nftContract || !formData.tokenId || !formData.ticketPrice || !formData.maxTickets) {
-      ErrorHandler.handleValidationError('form data', 'All fields are required');
-      return;
-    }
-
-    const durationInSeconds = calculateDurationInSeconds(formData.duration);
+    // Phase 10: Performance monitoring for raffle creation
+    const endTiming = performanceMonitor.startTiming('raffle-creation');
     
-    await ErrorHandler.withErrorHandling(
-      () => createRaffle({
-        nftContract: formData.nftContract,
-        tokenId: formData.tokenId,
-        ticketPrice: formData.ticketPrice,
-        maxTickets: parseInt(formData.maxTickets),
-        duration: durationInSeconds
-      }),
-      ErrorHandler.handleContractError
-    );
+    try {
+      if (isWrongNetwork) {
+        ErrorHandler.handleValidationError('network', 'Wrong network - please switch to ApeChain');
+        return;
+      }
+
+      if (approvalStatus !== true) {
+        ErrorHandler.handleValidationError('NFT approval', 'Contract not approved');
+        return;
+      }
+
+      // Validate form data
+      if (!formData.nftContract || !formData.tokenId || !formData.ticketPrice || !formData.maxTickets) {
+        ErrorHandler.handleValidationError('form data', 'All fields are required');
+        return;
+      }
+
+      const durationInSeconds = calculateDurationInSeconds(formData.duration);
+      
+      await ErrorHandler.withErrorHandling(
+        () => createRaffle({
+          nftContract: sanitizeAddress(formData.nftContract),
+          tokenId: formData.tokenId,
+          ticketPrice: formData.ticketPrice,
+          maxTickets: parseInt(formData.maxTickets),
+          duration: durationInSeconds
+        }),
+        ErrorHandler.handleContractError
+      );
+    } finally {
+      endTiming();
+    }
   };
 
 
