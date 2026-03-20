@@ -1,199 +1,71 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { WalletConnection } from './WalletConnection';
-import BasicNFTImage from './BasicNFTImage';
+import HomeNavigation from './HomeNavigation';
+import HomeHeroSection from './HomeHeroSection';
+import HomeStatsSection from './HomeStatsSection';
+import HomeRaffleCard, { HomeRaffleCardProps } from './HomeRaffleCard';
+import HomeFooter from './HomeFooter';
 import '../styles/professional-theme.css';
-
-interface RaffleCardProps {
-  id: number;
-  nftName: string;
-  nftContract: string;
-  tokenId: string;
-  ticketPrice: string;
-  ticketsSold: number;
-  maxTickets: number;
-  timeRemaining: string;
-  creator: string;
-}
-
-const RaffleCard: React.FC<RaffleCardProps> = ({
-  nftName,
-  nftContract,
-  tokenId,
-  ticketPrice,
-  ticketsSold,
-  maxTickets,
-  timeRemaining,
-  creator
-}) => {
-  const progress = (ticketsSold / maxTickets) * 100;
-  
-  return (
-    <div className="card">
-      <div className="mb-4">
-        <BasicNFTImage 
-          contractAddress={nftContract}
-          tokenId={tokenId}
-          className="w-full h-48 rounded-lg"
-          size="lg"
-        />
-      </div>
-      
-      <div className="card-header">
-        <h3 className="card-title">{nftName}</h3>
-        <p className="card-subtitle">by {creator.slice(0, 6)}...{creator.slice(-4)}</p>
-      </div>
-      
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <p className="text-sm text-muted">Ticket Price</p>
-          <p className="text-lg font-semibold text-primary">{ticketPrice} APE</p>
-        </div>
-        <div className="text-right">
-          <p className="text-sm text-muted">Time Left</p>
-          <p className="text-lg font-semibold text-accent">{timeRemaining}</p>
-        </div>
-      </div>
-      
-      <div className="mb-4">
-        <div className="flex justify-between text-sm mb-2">
-          <span className="text-muted">Progress</span>
-          <span className="font-medium">{ticketsSold}/{maxTickets} tickets</span>
-        </div>
-        <div className="w-full bg-neutral-700 rounded-full h-2">
-          <div 
-            className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-      
-      <div className="flex gap-4">
-        <button className="btn-primary flex-1">
-          Buy Tickets
-        </button>
-        <button className="btn-secondary">
-          View Details
-        </button>
-      </div>
-    </div>
-  );
-};
+// Phase 11: Performance monitoring for component extraction
+import { measureSync } from '../utils/performance';
 
 const ProfessionalRaffleHome: React.FC = () => {
   const { isConnected } = useAccount();
-  const [activeRaffles, setActiveRaffles] = useState<RaffleCardProps[]>([]);
+  const [activeRaffles, setActiveRaffles] = useState<HomeRaffleCardProps[]>([]);
 
-  // Mock data for demonstration
+  // Mock data for demonstration - Phase 11: Performance monitored
   useEffect(() => {
-    const mockRaffles: RaffleCardProps[] = [
-      {
-        id: 1,
-        nftName: "Bored Ape #1234",
-        nftContract: "0x6f2A21A8B9CF699d7D3A713a9d7cFbB9E9760f97",
-        tokenId: "1234",
-        ticketPrice: "0.1",
-        ticketsSold: 45,
-        maxTickets: 100,
-        timeRemaining: "2d 14h",
-        creator: "0x1234567890abcdef1234567890abcdef12345678"
-      },
-      {
-        id: 2,
-        nftName: "CryptoPunk #5678",
-        nftContract: "0xDe970C730cD7056B654b12366ADEE48d21ea2c23",
-        tokenId: "5678",
-        ticketPrice: "0.05",
-        ticketsSold: 78,
-        maxTickets: 150,
-        timeRemaining: "1d 8h",
-        creator: "0xabcdef1234567890abcdef1234567890abcdef12"
-      },
-      {
-        id: 3,
-        nftName: "Azuki #9999",
-        nftContract: "0x75f511bd8D4Ba4Ad48060E59F189B12810509228",
-        tokenId: "9999",
-        ticketPrice: "0.25",
-        ticketsSold: 12,
-        maxTickets: 50,
-        timeRemaining: "5d 2h",
-        creator: "0x9876543210fedcba9876543210fedcba98765432"
-      }
-    ];
+    const mockRaffles = measureSync('home-mock-data-generation', () => {
+      return [
+        {
+          id: 1,
+          nftName: "Bored Ape #1234",
+          nftContract: "0x6f2A21A8B9CF699d7D3A713a9d7cFbB9E9760f97",
+          tokenId: "1234",
+          ticketPrice: "0.1",
+          ticketsSold: 45,
+          maxTickets: 100,
+          timeRemaining: "2d 14h",
+          creator: "0x1234567890abcdef1234567890abcdef12345678"
+        },
+        {
+          id: 2,
+          nftName: "CryptoPunk #5678",
+          nftContract: "0xDe970C730cD7056B654b12366ADEE48d21ea2c23",
+          tokenId: "5678",
+          ticketPrice: "0.05",
+          ticketsSold: 78,
+          maxTickets: 150,
+          timeRemaining: "1d 8h",
+          creator: "0xabcdef1234567890abcdef1234567890abcdef12"
+        },
+        {
+          id: 3,
+          nftName: "Azuki #9999",
+          nftContract: "0x75f511bd8D4Ba4Ad48060E59F189B12810509228",
+          tokenId: "9999",
+          ticketPrice: "0.25",
+          ticketsSold: 12,
+          maxTickets: 50,
+          timeRemaining: "5d 2h",
+          creator: "0x9876543210fedcba9876543210fedcba98765432"
+        }
+      ];
+    });
     setActiveRaffles(mockRaffles);
   }, []);
 
   return (
     <div style={{ backgroundColor: 'var(--neutral-900)', minHeight: '100vh' }}>
-      {/* Navigation */}
-      <nav style={{ 
-        background: 'var(--neutral-800)', 
-        borderBottom: '1px solid var(--neutral-700)',
-        height: 'var(--nav-height)'
-      }}>
-        <div className="container flex items-center justify-between" style={{ height: '100%' }}>
-          <div className="flex items-center gap-6">
-            <h1 className="text-xl font-bold text-primary">ApeChain Raffles</h1>
-            <div className="flex gap-4">
-              <a href="#" className="text-sm font-medium text-neutral-300 hover:text-primary transition-colors">
-                Active Raffles
-              </a>
-              <a href="#" className="text-sm font-medium text-neutral-300 hover:text-primary transition-colors">
-                Create Raffle
-              </a>
-              <a href="#" className="text-sm font-medium text-neutral-300 hover:text-primary transition-colors">
-                My Raffles
-              </a>
-            </div>
-          </div>
-          <WalletConnection />
-        </div>
-      </nav>
+      {/* Navigation - Phase 11: Extracted component */}
+      <HomeNavigation />
 
-      {/* Hero Section */}
-      <section className="container" style={{ paddingTop: '80px', paddingBottom: '80px' }}>
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold mb-4" style={{ fontSize: '48px', lineHeight: '1.1' }}>
-            Decentralized NFT Raffles
-          </h2>
-          <p className="text-lg text-muted max-w-2xl mx-auto">
-            Create and participate in provably fair NFT raffles on ApeChain. 
-            Powered by smart contracts with transparent randomness.
-          </p>
-        </div>
-        
-        <div className="flex justify-center gap-4">
-          <button className="btn-primary" style={{ padding: '16px 32px', fontSize: '16px' }}>
-            Browse Raffles
-          </button>
-          <button className="btn-secondary" style={{ padding: '16px 32px', fontSize: '16px' }}>
-            Create Raffle
-          </button>
-        </div>
-      </section>
+      {/* Hero Section - Phase 11: Extracted component */}
+      <HomeHeroSection />
 
-      {/* Stats Section */}
-      <section className="container mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="card text-center">
-            <h3 className="text-2xl font-bold text-primary mb-2">127</h3>
-            <p className="text-sm text-muted">Active Raffles</p>
-          </div>
-          <div className="card text-center">
-            <h3 className="text-2xl font-bold text-accent mb-2">2,450</h3>
-            <p className="text-sm text-muted">Total Participants</p>
-          </div>
-          <div className="card text-center">
-            <h3 className="text-2xl font-bold text-primary mb-2">890</h3>
-            <p className="text-sm text-muted">NFTs Raffled</p>
-          </div>
-          <div className="card text-center">
-            <h3 className="text-2xl font-bold text-accent mb-2">15,670</h3>
-            <p className="text-sm text-muted">APE Volume</p>
-          </div>
-        </div>
-      </section>
+      {/* Stats Section - Phase 11: Extracted component */}
+      <HomeStatsSection />
 
       {/* Active Raffles */}
       <section className="container" style={{ paddingBottom: '80px' }}>
@@ -216,38 +88,14 @@ const ProfessionalRaffleHome: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {activeRaffles.map((raffle) => (
-              <RaffleCard key={raffle.id} {...raffle} />
+              <HomeRaffleCard key={raffle.id} {...raffle} />
             ))}
           </div>
         )}
       </section>
 
-      {/* Footer */}
-      <footer style={{ 
-        background: 'var(--neutral-800)', 
-        borderTop: '1px solid var(--neutral-700)',
-        padding: '40px 0'
-      }}>
-        <div className="container">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="font-bold text-primary mb-2">ApeChain Raffles</h3>
-              <p className="text-sm text-muted">Decentralized NFT raffles on ApeChain</p>
-            </div>
-            <div className="flex gap-6">
-              <a href="#" className="text-sm text-muted hover:text-primary transition-colors">
-                Documentation
-              </a>
-              <a href="#" className="text-sm text-muted hover:text-primary transition-colors">
-                Support
-              </a>
-              <a href="#" className="text-sm text-muted hover:text-primary transition-colors">
-                GitHub
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* Footer - Phase 11: Extracted component */}
+      <HomeFooter />
     </div>
   );
 };
