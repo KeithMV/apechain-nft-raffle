@@ -91,7 +91,7 @@ describe('Performance Tests', () => {
       const errorOperation = () => {
         return measureSync('error-operation', () => {
           throw new Error('Test error')
-        })
+        }) as never
       }
 
       expect(() => errorOperation()).toThrow('Test error')
@@ -156,7 +156,7 @@ describe('Performance Tests', () => {
         return { data: '1000', isLoading: false }
       })
 
-      const result = await measureAsync('contract-read', mockReadContract)
+      const result = await measureAsync('contract-read', mockReadContract) as { data: string; isLoading: boolean }
       
       expect(result.data).toBe('1000')
       
@@ -172,7 +172,7 @@ describe('Performance Tests', () => {
         return { hash: '0xabc123' }
       })
 
-      const result = await measureAsync('contract-write', mockWriteContract)
+      const result = await measureAsync('contract-write', mockWriteContract) as { hash: string }
       
       expect(result.hash).toBe('0xabc123')
       
@@ -187,7 +187,7 @@ describe('Performance Tests', () => {
 
       const results = await measureAsync('batch-operations', async () => {
         return Promise.all(batchOperations.map(op => op()))
-      })
+      }) as string[]
 
       expect(results).toHaveLength(5)
       expect(results[0]).toBe('result-0')
@@ -244,13 +244,13 @@ describe('Performance Tests', () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       
       // Simulate slow operation
-      measureSync('slow-operation', () => {
+      const result = measureSync('slow-operation', () => {
         const start = performance.now()
         while (performance.now() - start < 200) {
           // Busy wait for 200ms
         }
         return 'result'
-      })
+      }) as string
       
       // Should warn about slow operation
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -265,13 +265,13 @@ describe('Performance Tests', () => {
       const times = [10, 20, 30, 40, 50, 60, 70, 80, 90, 1000] // One outlier
       
       times.forEach((time, i) => {
-        measureSync('percentile-test', () => {
+        const result = measureSync('percentile-test', () => {
           const start = performance.now()
           while (performance.now() - start < time) {
             // Busy wait
           }
           return i
-        })
+        }) as number
       })
       
       const metrics = performanceMonitor.getMetrics('percentile-test')
