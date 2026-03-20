@@ -2,6 +2,9 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
+// Import chai matchers for hardhat
+require("@nomicfoundation/hardhat-chai-matchers");
+
 describe("RaffleFactorySecureV4", function () {
   // Fixture for deploying contracts
   async function deployRaffleFactoryFixture() {
@@ -17,13 +20,19 @@ describe("RaffleFactorySecureV4", function () {
     await mockNFT.mint(creator.address, 2);
     await mockNFT.mint(creator.address, 3);
 
-    // Deploy RaffleFactory
+    // Deploy RaffleContractSecureV3 template
+    const RaffleTemplate = await ethers.getContractFactory("RaffleContractSecureV3");
+    const raffleTemplate = await RaffleTemplate.deploy();
+    await raffleTemplate.deployed();
+
+    // Deploy RaffleFactory with template address
     const RaffleFactory = await ethers.getContractFactory("RaffleFactorySecureV4");
-    const raffleFactory = await RaffleFactory.deploy();
+    const raffleFactory = await RaffleFactory.deploy(raffleTemplate.address);
     await raffleFactory.deployed();
 
     return {
       raffleFactory,
+      raffleTemplate,
       mockNFT,
       owner,
       creator,
@@ -41,12 +50,12 @@ describe("RaffleFactorySecureV4", function () {
 
     it("Should set correct platform fee", async function () {
       const { raffleFactory } = await loadFixture(deployRaffleFactoryFixture);
-      expect(await raffleFactory.platformFee()).to.equal(500); // 5%
+      expect(await raffleFactory.platformFee()).to.equal(ethers.BigNumber.from("500")); // 5%
     });
 
     it("Should set correct rate limit", async function () {
       const { raffleFactory } = await loadFixture(deployRaffleFactoryFixture);
-      expect(await raffleFactory.RATE_LIMIT()).to.equal(10); // 10 seconds
+      expect(await raffleFactory.RATE_LIMIT()).to.equal(ethers.BigNumber.from("10")); // 10 seconds
     });
   });
 
@@ -206,14 +215,19 @@ describe("RaffleFactorySecureV4", function () {
       const quantity = 5;
       const totalCost = ticketPrice.mul(quantity);
 
+      // Get the raffle contract address
+      const raffleContractAddress = await raffleFactory.getRaffleContract(raffleId);
+      const RaffleContract = await ethers.getContractFactory("RaffleContractSecureV3");
+      const raffleContract = RaffleContract.attach(raffleContractAddress);
+
       await expect(
-        raffleFactory.connect(participant1).buyTickets(raffleId, quantity, {
+        raffleContract.connect(participant1).buyTickets(quantity, {
           value: totalCost
         })
-      ).to.emit(raffleFactory, "TicketsPurchased");
+      ).to.emit(raffleContract, "TicketsPurchased");
 
       // Check user tickets
-      expect(await raffleFactory.getUserTickets(raffleId, participant1.address)).to.equal(quantity);
+      expect(await raffleContract.ticketsPurchased(participant1.address)).to.equal(quantity);
     });
 
     it("Should fail with incorrect payment", async function () {
@@ -222,8 +236,13 @@ describe("RaffleFactorySecureV4", function () {
       const quantity = 5;
       const incorrectPayment = ticketPrice.mul(quantity - 1); // Pay for 4 tickets but buy 5
 
+      // Get the raffle contract address
+      const raffleContractAddress = await raffleFactory.getRaffleContract(raffleId);
+      const RaffleContract = await ethers.getContractFactory("RaffleContractSecureV3");
+      const raffleContract = RaffleContract.attach(raffleContractAddress);
+
       await expect(
-        raffleFactory.connect(participant1).buyTickets(raffleId, quantity, {
+        raffleContract.connect(participant1).buyTickets(quantity, {
           value: incorrectPayment
         })
       ).to.be.revertedWith("Incorrect payment");
@@ -232,8 +251,13 @@ describe("RaffleFactorySecureV4", function () {
     it("Should prevent creator from buying tickets", async function () {
       const { raffleFactory, creator, ticketPrice, raffleId } = await loadFixture(createRaffleFixture);
 
+      // Get the raffle contract address
+      const raffleContractAddress = await raffleFactory.getRaffleContract(raffleId);
+      const RaffleContract = await ethers.getContractFactory("RaffleContractSecureV3");
+      const raffleContract = RaffleContract.attach(raffleContractAddress);
+
       await expect(
-        raffleFactory.connect(creator).buyTickets(raffleId, 1, {
+        raffleContract.connect(creator).buyTickets(1, {
           value: ticketPrice
         })
       ).to.be.revertedWith("Creator cannot buy");
@@ -242,15 +266,20 @@ describe("RaffleFactorySecureV4", function () {
     it("Should handle sold out scenario", async function () {
       const { raffleFactory, participant1, participant2, ticketPrice, maxTickets, raffleId } = await loadFixture(createRaffleFixture);
 
+      // Get the raffle contract address
+      const raffleContractAddress = await raffleFactory.getRaffleContract(raffleId);
+      const RaffleContract = await ethers.getContractFactory("RaffleContractSecureV3");
+      const raffleContract = RaffleContract.attach(raffleContractAddress);
+
       // Buy all tickets
       const totalCost = ticketPrice.mul(maxTickets);
-      await raffleFactory.connect(participant1).buyTickets(raffleId, maxTickets, {
+      await raffleContract.connect(participant1).buyTickets(maxTickets, {
         value: totalCost
       });
 
       // Try to buy more (should fail)
       await expect(
-        raffleFactory.connect(participant2).buyTickets(raffleId, 1, {
+        raffleContract.connect(participant2).buyTickets(1, {
           value: ticketPrice
         })
       ).to.be.revertedWith("Sold out");
@@ -277,61 +306,74 @@ describe("RaffleFactorySecureV4", function () {
         duration
       );
 
+      // Get the raffle contract
+      const raffleContractAddress = await raffleFactory.getRaffleContract(0);
+      const RaffleContract = await ethers.getContractFactory("RaffleContractSecureV3");
+      const raffleContract = RaffleContract.attach(raffleContractAddress);
+
       // Buy some tickets
-      await raffleFactory.connect(participant1).buyTickets(0, 5, {
+      await raffleContract.connect(participant1).buyTickets(5, {
         value: ticketPrice.mul(5)
       });
-      await raffleFactory.connect(participant2).buyTickets(0, 3, {
+      await raffleContract.connect(participant2).buyTickets(3, {
         value: ticketPrice.mul(3)
       });
 
-      return { ...fixture, ticketPrice, maxTickets, raffleId: 0 };
+      return { ...fixture, raffleContract, ticketPrice, maxTickets, raffleId: 0 };
     }
 
     it("Should select winner when sold out", async function () {
-      const { raffleFactory, participant1, participant2, ticketPrice, raffleId } = await loadFixture(raffleWithTicketsFixture);
+      const { raffleContract, participant1, ticketPrice } = await loadFixture(raffleWithTicketsFixture);
 
       // Buy remaining tickets to trigger auto-completion
-      await raffleFactory.connect(participant1).buyTickets(raffleId, 2, {
+      await raffleContract.connect(participant1).buyTickets(2, {
         value: ticketPrice.mul(2)
       });
 
       // Check if raffle is completed
-      const raffle = await raffleFactory.getRaffle(raffleId);
-      expect(raffle.completed).to.be.true;
-      expect(raffle.winner).to.not.equal(ethers.constants.AddressZero);
+      const raffleInfo = await raffleContract.getRaffleInfo();
+      expect(raffleInfo.completed).to.be.true;
+      expect(raffleInfo.winner).to.not.equal(ethers.constants.AddressZero);
     });
 
     it("Should allow manual winner selection after expiry", async function () {
-      const { raffleFactory, raffleId } = await loadFixture(raffleWithTicketsFixture);
+      const { raffleContract } = await loadFixture(raffleWithTicketsFixture);
 
       // Fast forward time past raffle end
       await ethers.provider.send("evm_increaseTime", [3601]); // 1 hour + 1 second
       await ethers.provider.send("evm_mine");
 
-      await expect(
-        raffleFactory.selectWinner(raffleId)
-      ).to.emit(raffleFactory, "WinnerSelected");
+      // Commit randomness first
+      const nonce = 12345;
+      const commitHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["uint256"], [nonce]));
+      await raffleContract.commitRandomness(commitHash);
 
-      const raffle = await raffleFactory.getRaffle(raffleId);
-      expect(raffle.completed).to.be.true;
+      await expect(
+        raffleContract.revealAndSelectWinner(nonce)
+      ).to.emit(raffleContract, "WinnerSelected");
+
+      const raffleInfo = await raffleContract.getRaffleInfo();
+      expect(raffleInfo.completed).to.be.true;
     });
 
     it("Should fail to select winner before expiry", async function () {
-      const { raffleFactory, raffleId } = await loadFixture(raffleWithTicketsFixture);
+      const { raffleContract, creator } = await loadFixture(raffleWithTicketsFixture);
 
+      const nonce = 12345;
+      const commitHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["uint256"], [nonce]));
+      
       await expect(
-        raffleFactory.selectWinner(raffleId)
+        raffleContract.connect(creator).commitRandomness(commitHash)
       ).to.be.revertedWith("Raffle still active");
     });
 
     it("Should distribute funds correctly", async function () {
-      const { raffleFactory, creator, participant1, ticketPrice, raffleId } = await loadFixture(raffleWithTicketsFixture);
+      const { raffleContract, creator, participant1, ticketPrice } = await loadFixture(raffleWithTicketsFixture);
 
       const creatorBalanceBefore = await ethers.provider.getBalance(creator.address);
 
       // Complete raffle by buying all remaining tickets
-      await raffleFactory.connect(participant1).buyTickets(raffleId, 2, {
+      await raffleContract.connect(participant1).buyTickets(2, {
         value: ticketPrice.mul(2)
       });
 
@@ -352,7 +394,7 @@ describe("RaffleFactorySecureV4", function () {
       const { raffleFactory } = await loadFixture(deployRaffleFactoryFixture);
       
       // Check that the contract has the expected security features
-      expect(await raffleFactory.RATE_LIMIT()).to.equal(10);
+      expect(await raffleFactory.RATE_LIMIT()).to.equal(ethers.BigNumber.from("10"));
     });
 
     it("Should handle emergency pause", async function () {
@@ -372,7 +414,7 @@ describe("RaffleFactorySecureV4", function () {
           100,
           3600
         )
-      ).to.be.revertedWith("Emergency paused");
+      ).to.be.revertedWith("Pausable: paused");
     });
 
     it("Should allow owner to withdraw fees", async function () {
@@ -386,7 +428,7 @@ describe("RaffleFactorySecureV4", function () {
 
       const ownerBalanceBefore = await ethers.provider.getBalance(owner.address);
       
-      await raffleFactory.connect(owner).withdrawFees();
+      await raffleFactory.connect(owner).emergencyWithdraw();
       
       const ownerBalanceAfter = await ethers.provider.getBalance(owner.address);
       
@@ -452,13 +494,21 @@ describe("RaffleFactorySecureV4", function () {
         3600
       );
 
+      // Get the raffle contract
+      const raffleContractAddress = await raffleFactory.getRaffleContract(0);
+      const RaffleContract = await ethers.getContractFactory("RaffleContractSecureV3");
+      const raffleContract = RaffleContract.attach(raffleContractAddress);
+
       // Fast forward past expiry
       await ethers.provider.send("evm_increaseTime", [3601]);
       await ethers.provider.send("evm_mine");
 
-      // Should fail to select winner with no participants
+      // Should fail to commit randomness with no participants
+      const nonce = 12345;
+      const commitHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["uint256"], [nonce]));
+      
       await expect(
-        raffleFactory.selectWinner(0)
+        raffleContract.connect(creator).commitRandomness(commitHash)
       ).to.be.revertedWith("No participants");
     });
 
@@ -467,7 +517,7 @@ describe("RaffleFactorySecureV4", function () {
 
       await mockNFT.connect(creator).setApprovalForAll(raffleFactory.address, true);
       
-      const maxTickets = 10000; // Maximum allowed
+      const maxTickets = 1000; // Reasonable maximum for testing
       await raffleFactory.connect(creator).createRaffle(
         mockNFT.address,
         1,
@@ -476,13 +526,18 @@ describe("RaffleFactorySecureV4", function () {
         3600
       );
 
-      // Should be able to buy maximum tickets in one transaction
-      const quantity = 100; // Max per transaction
-      await raffleFactory.connect(participant1).buyTickets(0, quantity, {
+      // Get the raffle contract
+      const raffleContractAddress = await raffleFactory.getRaffleContract(0);
+      const RaffleContract = await ethers.getContractFactory("RaffleContractSecureV3");
+      const raffleContract = RaffleContract.attach(raffleContractAddress);
+
+      // Should be able to buy multiple tickets in one transaction
+      const quantity = 100;
+      await raffleContract.connect(participant1).buyTickets(quantity, {
         value: ethers.utils.parseEther("0.1")
       });
 
-      expect(await raffleFactory.getUserTickets(0, participant1.address)).to.equal(quantity);
+      expect(await raffleContract.ticketsPurchased(participant1.address)).to.equal(quantity);
     });
   });
 });

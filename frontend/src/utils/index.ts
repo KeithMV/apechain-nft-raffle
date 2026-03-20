@@ -23,4 +23,4 @@ export { sanitizeForLog, safeLog, safeError } from './logSanitizer';
 
 // Deprecated - use modular imports instead
 // These will be removed in a future version
-export { SecurityUtils } from './security';
+// export { SecurityUtils } from './security'; // Removed - use individual functions
