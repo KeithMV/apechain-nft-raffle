@@ -621,8 +621,8 @@ jobs:
 workflows:
   version: 2
   
-  # Staging workflow (develop branch)
-  staging_pipeline:
+  # Development workflow (develop branch)
+  development_pipeline:
     jobs:
       # Install dependencies in parallel
       - install-frontend-deps:
@@ -670,6 +670,56 @@ workflows:
           filters:
             branches:
               only: develop
+  
+  # Staging workflow (staging branch)
+  staging_pipeline:
+    jobs:
+      # Install dependencies in parallel
+      - install-frontend-deps:
+          filters:
+            branches:
+              only: staging
+      - install-contracts-deps:
+          filters:
+            branches:
+              only: staging
+      
+      # Frontend pipeline
+      - lint-frontend:
+          requires:
+            - install-frontend-deps
+      - test-frontend-unit:
+          requires:
+            - install-frontend-deps
+      - test-frontend-integration:
+          requires:
+            - install-frontend-deps
+      - security-scan-frontend:
+          requires:
+            - install-frontend-deps
+      - build-frontend-staging:
+          requires:
+            - lint-frontend
+            - test-frontend-unit
+            - test-frontend-integration
+            - security-scan-frontend
+      
+      # Contract pipeline
+      - compile-contracts:
+          requires:
+            - install-contracts-deps
+      - test-contracts:
+          requires:
+            - compile-contracts
+      - security-scan-contracts:
+          requires:
+            - compile-contracts
+      
+      # Infrastructure validation
+      - validate-infrastructure:
+          filters:
+            branches:
+              only: staging
       
       # Deploy to staging
       - deploy-staging:
