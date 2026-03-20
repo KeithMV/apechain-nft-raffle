@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAccount, useChainId } from 'wagmi';
-import { NETWORK_CONFIGS } from '../config/addresses';
+import { NETWORK_CONFIGS } from '../config/networks';
 import { CHAIN_IDS } from '../constants/chains';
 
 export default function NetworkStatus() {

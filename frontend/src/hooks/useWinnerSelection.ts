@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'react';
 import { WinnerSelectionService } from '../services/winnerSelectionService';
-import { useCommitRandomness, useRevealWinner, useEmergencyWinner } from './useRaffleContract';
+import { useCommitRandomnessV4, useRevealWinnerV4, useEmergencyWinnerV4 } from './useRaffleContractV4';
 import toast from 'react-hot-toast';
 
 export function useWinnerSelection() {
   const [commitData, setCommitData] = useState<{ nonce: bigint; commitHash: string } | null>(null);
   
-  const { commitRandomness, isPending: commitPending, isSuccess: commitSuccess } = useCommitRandomness();
-  const { revealAndSelectWinner, isPending: revealPending, isSuccess: revealSuccess } = useRevealWinner();
-  const { emergencySelectWinner, isPending: emergencyPending } = useEmergencyWinner();
+  const { commitRandomness, isPending: commitPending, isSuccess: commitSuccess } = useCommitRandomnessV4();
+  const { revealAndSelectWinner, isPending: revealPending, isSuccess: revealSuccess } = useRevealWinnerV4();
+  const { emergencySelectWinner, isPending: emergencyPending } = useEmergencyWinnerV4();
 
   const startWinnerSelection = useCallback(async (raffleContract: string) => {
     try {

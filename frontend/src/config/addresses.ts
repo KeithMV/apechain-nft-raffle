@@ -1,42 +1,12 @@
-import { config as envConfig } from './environment';
-
 /**
- * Centralized Contract Addresses Configuration for ApeCoin NFT Raffle System
+ * Contract Addresses Configuration
+ * Centralized contract address management with validation
  */
 
-const NETWORK_CONFIGS = {
-  31337: { // Hardhat localhost
-    chainId: 31337,
-    rpcUrl: 'http://127.0.0.1:8545',
-    name: 'Hardhat',
-    explorerUrl: 'http://localhost:8545',
-    nativeCurrency: 'ETH'
-  },
-  33111: { // ApeChain Curtis Testnet
-    chainId: 33111,
-    rpcUrl: 'https://curtis.rpc.caldera.xyz/http',
-    name: 'ApeChain Curtis',
-    explorerUrl: 'https://curtis.explorer.caldera.xyz',
-    nativeCurrency: 'APE'
-  },
-  33139: { // ApeChain
-    chainId: 33139,
-    rpcUrl: 'https://apechain.calderachain.xyz/http',
-    name: 'ApeChain',
-    explorerUrl: 'https://apescan.io',
-    nativeCurrency: 'APE'
-  },
-  137: { // Polygon Mainnet
-    chainId: 137,
-    rpcUrl: 'https://polygon-mainnet.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78',
-    name: 'Polygon',
-    explorerUrl: 'https://polygonscan.com',
-    nativeCurrency: 'POL'
-  },
+import type { ContractAddresses, ChainValidation, VersionConfig, ContractVersion } from '../contracts/types';
+import { getCurrentChainId, getNetworkConfig, DEFAULT_CHAIN_ID } from './networks';
 
-} as const;
-
-const CONTRACT_ADDRESSES = {
+const CONTRACT_ADDRESSES: Record<number, ContractAddresses> = {
   31337: { // Hardhat localhost
     RAFFLE_FACTORY: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
     RAFFLE_FACTORY_V4: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
@@ -59,8 +29,7 @@ const CONTRACT_ADDRESSES = {
     RAFFLE_FACTORY: "0x5854AF7c836275c55469350a114F62a1609c4A42",
     RAFFLE_FACTORY_V4: "0x5854AF7c836275c55469350a114F62a1609c4A42",
     RAFFLE_TEMPLATE: "0xC7b41b9749724260B4264B90555c9417d66D655A"
-  },
-
+  }
 } as const;
 
 const PROTOCOL_INFO = {
@@ -71,59 +40,30 @@ const PROTOCOL_INFO = {
   v4Features: ['10-second rate limit', '5% default fee', 'Faster raffle creation']
 } as const;
 
-function getCurrentChainId(): number {
-  // Always prioritize wallet's actual chain ID
-  if (typeof window !== 'undefined' && window.ethereum) {
-    const chainId = window.ethereum.chainId;
-    if (chainId) {
-      // Handle both string (hex) and number types
-      if (typeof chainId === 'string') {
-        return parseInt(chainId, 16);
-      } else if (typeof chainId === 'number') {
-        return chainId;
-      }
-    }
-  }
-  
-  // Default to ApeChain only as last resort
-  return 33139;
-}
-
-function getNetworkConfig(chainId?: number) {
+/**
+ * Get contract addresses for a chain
+ */
+export function getContracts(chainId?: number): ContractAddresses {
   try {
     const currentChainId = chainId || getCurrentChainId();
-    const config = NETWORK_CONFIGS[currentChainId as keyof typeof NETWORK_CONFIGS];
-    
-    if (!config) {
-      // Fallback to ApeChain for unsupported networks
-      return NETWORK_CONFIGS[33139];
-    }
-    
-    return config;
-  } catch (error) {
-    // Safe fallback to ApeChain on error
-    return NETWORK_CONFIGS[33139];
-  }
-}
-
-function getContracts(chainId?: number) {
-  try {
-    const currentChainId = chainId || getCurrentChainId();
-    const contracts = CONTRACT_ADDRESSES[currentChainId as keyof typeof CONTRACT_ADDRESSES];
+    const contracts = CONTRACT_ADDRESSES[currentChainId];
     
     if (!contracts) {
       // Fallback to ApeChain for unconfigured chains
-      return CONTRACT_ADDRESSES[33139];
+      return CONTRACT_ADDRESSES[DEFAULT_CHAIN_ID];
     }
     
     return contracts;
   } catch (error) {
     // Safe fallback to ApeChain on error
-    return CONTRACT_ADDRESSES[33139];
+    return CONTRACT_ADDRESSES[DEFAULT_CHAIN_ID];
   }
 }
 
-function getRaffleFactoryAddress(chainId?: number, useV4?: boolean): string {
+/**
+ * Get raffle factory address with version support
+ */
+export function getRaffleFactoryAddress(chainId?: number, useV4?: boolean): string {
   try {
     const contracts = getContracts(chainId);
     
@@ -145,11 +85,14 @@ function getRaffleFactoryAddress(chainId?: number, useV4?: boolean): string {
     return address;
   } catch (error) {
     // Return ApeChain address as safe fallback
-    return CONTRACT_ADDRESSES[33139].RAFFLE_FACTORY;
+    return CONTRACT_ADDRESSES[DEFAULT_CHAIN_ID].RAFFLE_FACTORY;
   }
 }
 
-function getRaffleTemplateAddress(chainId?: number): string {
+/**
+ * Get raffle template address
+ */
+export function getRaffleTemplateAddress(chainId?: number): string {
   try {
     const address = getContracts(chainId).RAFFLE_TEMPLATE;
     
@@ -160,29 +103,29 @@ function getRaffleTemplateAddress(chainId?: number): string {
     return address;
   } catch (error) {
     // Return ApeChain address as safe fallback
-    return CONTRACT_ADDRESSES[33139].RAFFLE_TEMPLATE;
+    return CONTRACT_ADDRESSES[DEFAULT_CHAIN_ID].RAFFLE_TEMPLATE;
   }
 }
 
 /**
- * Validates contract configuration for a given chain
- * Useful for debugging and client setup
+ * Validate contract configuration for a chain
  */
-function validateChainConfig(chainId: number): { isValid: boolean; errors: string[] } {
+export function validateChainConfig(chainId: number): ChainValidation {
   const errors: string[] = [];
   
   try {
     // Check if network is supported
-    if (!NETWORK_CONFIGS[chainId as keyof typeof NETWORK_CONFIGS]) {
+    const networkConfig = getNetworkConfig(chainId);
+    if (!networkConfig) {
       errors.push(`Unsupported network: ${chainId}`);
     }
     
     // Check if contracts are configured
-    const contracts = CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES];
+    const contracts = CONTRACT_ADDRESSES[chainId];
     if (!contracts) {
       errors.push(`No contract addresses configured for chain ${chainId}`);
     } else {
-      // Check for empty string addresses (invalid) - improved validation
+      // Check for empty string addresses (invalid)
       const factoryAddr = contracts.RAFFLE_FACTORY;
       const templateAddr = contracts.RAFFLE_TEMPLATE;
       
@@ -207,7 +150,7 @@ function validateChainConfig(chainId: number): { isValid: boolean; errors: strin
 /**
  * Check if V4 is available and configured
  */
-function isV4Available(chainId?: number): boolean {
+export function isV4Available(chainId?: number): boolean {
   try {
     const contracts = getContracts(chainId);
     const v4Address = contracts.RAFFLE_FACTORY_V4;
@@ -218,30 +161,29 @@ function isV4Available(chainId?: number): boolean {
 }
 
 /**
- * Get rate limit for current version
+ * Get rate limit for contract version
  */
-function getRateLimit(useV4?: boolean): number {
+export function getRateLimit(useV4?: boolean): number {
   return useV4 ? 10 : 300; // 10 seconds for V4, 5 minutes for V3
 }
 
-// Legacy exports for backward compatibility
-const NETWORK_CONFIG = NETWORK_CONFIGS[33139];
-const RAFFLE_FACTORY_ADDRESS = getRaffleFactoryAddress(undefined, true); // Use V4 by default
-const RAFFLE_TEMPLATE_ADDRESS = getRaffleTemplateAddress();
+/**
+ * Get version configuration
+ */
+export function getVersionConfig(chainId?: number, useV4?: boolean): VersionConfig {
+  const version: ContractVersion = useV4 ? 'v4' : 'v3';
+  const rateLimit = getRateLimit(useV4);
+  const address = getRaffleFactoryAddress(chainId, useV4);
+  
+  return {
+    version,
+    rateLimit,
+    features: useV4 ? [...PROTOCOL_INFO.v4Features] : ['5-minute rate limit', 'Standard fees'],
+    address
+  };
+}
 
-export {
-  NETWORK_CONFIGS,
-  NETWORK_CONFIG,
-  CONTRACT_ADDRESSES,
-  PROTOCOL_INFO,
-  getCurrentChainId,
-  getNetworkConfig,
-  getContracts,
-  getRaffleFactoryAddress,
-  getRaffleTemplateAddress,
-  validateChainConfig,
-  isV4Available,
-  getRateLimit,
-  RAFFLE_FACTORY_ADDRESS,
-  RAFFLE_TEMPLATE_ADDRESS
-};
+// Legacy exports for backward compatibility
+export const RAFFLE_FACTORY_ADDRESS = getRaffleFactoryAddress(undefined, true); // Use V4 by default
+export const RAFFLE_TEMPLATE_ADDRESS = getRaffleTemplateAddress();
+export { PROTOCOL_INFO, CONTRACT_ADDRESSES };

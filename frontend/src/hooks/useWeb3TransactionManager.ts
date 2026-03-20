@@ -153,3 +153,35 @@ export function useTicketPurchaseTransaction() {
   });
 }
 
+/**
+ * Hook for winner selection commit transactions
+ */
+export function useWinnerCommitTransaction() {
+  return useWeb3TransactionManager({
+    successMessage: 'Winner selection process started!',
+    timeout: 60000
+  });
+}
+
+/**
+ * Hook for winner reveal transactions
+ */
+export function useWinnerRevealTransaction(onSuccess?: (hash: string) => void) {
+  return useWeb3TransactionManager({
+    successMessage: 'Winner selected successfully!',
+    onSuccess,
+    timeout: 60000
+  });
+}
+
+/**
+ * Hook for emergency winner selection transactions
+ */
+export function useEmergencyWinnerTransaction(onSuccess?: (hash: string) => void) {
+  return useWeb3TransactionManager({
+    successMessage: 'Winner selected successfully!',
+    onSuccess,
+    timeout: 60000
+  });
+}
+

@@ -5,7 +5,7 @@
 
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { useContractVersionManager } from './useContractVersionManager';
-import { useNFTApprovalTransaction, useRaffleCreationTransaction, useTicketPurchaseTransaction } from './useWeb3TransactionManager';
+import { useNFTApprovalTransaction, useRaffleCreationTransaction, useTicketPurchaseTransaction, useWinnerCommitTransaction, useWinnerRevealTransaction, useEmergencyWinnerTransaction } from './useWeb3TransactionManager';
 import { useContractValidator } from './useContractValidator';
 import { RAFFLE_FACTORY_ABI, ERC721_ABI, RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
@@ -208,5 +208,108 @@ export function useRateLimitChecker(userAddress?: string) {
     rateLimit,
     rateLimitText,
     version: currentVersion
+  };
+}
+
+/**
+ * Hook for committing randomness (winner selection step 1) - V4 aware
+ */
+export function useCommitRandomnessV4() {
+  const { validateWinnerSelection } = useContractValidator();
+  const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useWinnerCommitTransaction();
+
+  const commitRandomness = async (raffleContract: string, commitHash: string) => {
+    // Validate inputs
+    const validation = validateWinnerSelection({ raffleContract, commitHash });
+    if (!validation.isValid) {
+      throw new Error(validation.error);
+    }
+
+    return await executeTransaction({
+      address: raffleContract as `0x${string}`,
+      abi: RAFFLE_CONTRACT_ABI,
+      functionName: 'commitRandomness',
+      args: [commitHash as `0x${string}`],
+    });
+  };
+
+  return {
+    commitRandomness,
+    hash,
+    error,
+    isPending,
+    isConfirming,
+    isSuccess,
+  };
+}
+
+/**
+ * Hook for revealing randomness and selecting winner (step 2) - V4 aware
+ */
+export function useRevealWinnerV4() {
+  const { validateWinnerSelection } = useContractValidator();
+  const { invalidateAll } = useCacheInvalidation();
+  
+  const handleSuccess = () => invalidateAll();
+  
+  const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useWinnerRevealTransaction(handleSuccess);
+
+  const revealAndSelectWinner = async (raffleContract: string, nonce: bigint) => {
+    // Validate inputs
+    const validation = validateWinnerSelection({ raffleContract, nonce });
+    if (!validation.isValid) {
+      throw new Error(validation.error);
+    }
+
+    return await executeTransaction({
+      address: raffleContract as `0x${string}`,
+      abi: RAFFLE_CONTRACT_ABI,
+      functionName: 'revealAndSelectWinner',
+      args: [nonce],
+    });
+  };
+
+  return {
+    revealAndSelectWinner,
+    hash,
+    error,
+    isPending,
+    isConfirming,
+    isSuccess,
+  };
+}
+
+/**
+ * Hook for emergency winner selection (if reveal deadline passes) - V4 aware
+ */
+export function useEmergencyWinnerV4() {
+  const { validateWinnerSelection } = useContractValidator();
+  const { invalidateAll } = useCacheInvalidation();
+  
+  const handleSuccess = () => invalidateAll();
+  
+  const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useEmergencyWinnerTransaction(handleSuccess);
+
+  const emergencySelectWinner = async (raffleContract: string) => {
+    // Validate inputs
+    const validation = validateWinnerSelection({ raffleContract });
+    if (!validation.isValid) {
+      throw new Error(validation.error);
+    }
+
+    return await executeTransaction({
+      address: raffleContract as `0x${string}`,
+      abi: RAFFLE_CONTRACT_ABI,
+      functionName: 'emergencySelectWinner',
+    });
+  };
+
+  return {
+    emergencySelectWinner,
+    hash,
+    error,
+    isPending,
+    isConfirming,
+    isSuccess,
   };
 }

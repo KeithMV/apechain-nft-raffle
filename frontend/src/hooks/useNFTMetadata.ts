@@ -20,7 +20,11 @@ interface NFTMetadata {
 }
 
 // Optimized cache for NFT metadata
-const metadataCache = new OptimizedCache<NFTMetadata>(5 * 1024 * 1024, 500, 900000); // 5MB, 500 items, 15min TTL
+const metadataCache = new OptimizedCache<NFTMetadata>({ 
+  maxSize: 5 * 1024 * 1024, 
+  maxItems: 500, 
+  ttl: 900000 
+}); // 5MB, 500 items, 15min TTL
 
 function validateMetadataUrl(url: string): { valid: boolean; error?: string } {
   if (!url || typeof url !== 'string') {

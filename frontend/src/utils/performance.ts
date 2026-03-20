@@ -1,9 +1,16 @@
 /**
  * Performance Optimization Utilities
- * Critical performance helpers for Phase 3 optimization
+ * Modular performance helpers organized by functionality
  */
 
-// Debounce utility for expensive operations
+// =============================================================================
+// DEBOUNCE AND THROTTLE UTILITIES
+// =============================================================================
+
+/**
+ * Debounce utility for expensive operations
+ * Delays execution until after wait time has elapsed since last call
+ */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -15,7 +22,10 @@ export function debounce<T extends (...args: any[]) => any>(
   };
 }
 
-// Throttle utility for high-frequency events
+/**
+ * Throttle utility for high-frequency events
+ * Limits execution to once per limit period
+ */
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
   limit: number
@@ -30,13 +40,26 @@ export function throttle<T extends (...args: any[]) => any>(
   };
 }
 
-// Memory-efficient batch processor
+// =============================================================================
+// BATCH PROCESSING UTILITIES
+// =============================================================================
+
+export interface BatchOptions {
+  batchSize?: number;
+  delay?: number;
+  maxConcurrent?: number;
+}
+
+/**
+ * Memory-efficient batch processor
+ * Process items in batches to avoid memory issues
+ */
 export async function processBatch<T, R>(
   items: T[],
   processor: (item: T) => Promise<R>,
-  batchSize: number = 5,
-  delay: number = 0
+  options: BatchOptions = {}
 ): Promise<R[]> {
+  const { batchSize = 5, delay = 0 } = options;
   const results: R[] = [];
   
   for (let i = 0; i < items.length; i += batchSize) {
@@ -52,7 +75,47 @@ export async function processBatch<T, R>(
   return results;
 }
 
-// Optimized cache with size limits and TTL
+/**
+ * Process items with concurrency control
+ */
+export async function processConcurrent<T, R>(
+  items: T[],
+  processor: (item: T) => Promise<R>,
+  maxConcurrent: number = 3
+): Promise<R[]> {
+  const results: R[] = [];
+  const executing: Promise<void>[] = [];
+  
+  for (const item of items) {
+    const promise = processor(item).then(result => {
+      results.push(result);
+    });
+    
+    executing.push(promise);
+    
+    if (executing.length >= maxConcurrent) {
+      await Promise.race(executing);
+      executing.splice(executing.findIndex(p => p === promise), 1);
+    }
+  }
+  
+  await Promise.all(executing);
+  return results;
+}
+
+// =============================================================================
+// CACHE UTILITIES
+// =============================================================================
+
+export interface CacheOptions {
+  maxSize?: number;
+  maxItems?: number;
+  ttl?: number;
+}
+
+/**
+ * Optimized cache with size limits and TTL
+ */
 export class OptimizedCache<T> {
   private cache = new Map<string, { data: T; timestamp: number; size: number }>();
   private maxSize: number;
@@ -60,10 +123,10 @@ export class OptimizedCache<T> {
   private ttl: number;
   private currentSize = 0;
 
-  constructor(maxSize: number = 5 * 1024 * 1024, maxItems: number = 1000, ttl: number = 300000) {
-    this.maxSize = maxSize;
-    this.maxItems = maxItems;
-    this.ttl = ttl;
+  constructor(options: CacheOptions = {}) {
+    this.maxSize = options.maxSize ?? 5 * 1024 * 1024; // 5MB default
+    this.maxItems = options.maxItems ?? 1000;
+    this.ttl = options.ttl ?? 300000; // 5 minutes default
   }
 
   set(key: string, data: T): void {
@@ -98,6 +161,30 @@ export class OptimizedCache<T> {
     return entry.data;
   }
 
+  has(key: string): boolean {
+    return this.get(key) !== null;
+  }
+
+  delete(key: string): boolean {
+    const entry = this.cache.get(key);
+    if (entry) {
+      this.cache.delete(key);
+      this.currentSize -= entry.size;
+      return true;
+    }
+    return false;
+  }
+
+  clear(): void {
+    this.cache.clear();
+    this.currentSize = 0;
+  }
+
+  size(): number {
+    this.cleanup();
+    return this.cache.size;
+  }
+
   private cleanup(): void {
     const now = Date.now();
     for (const [key, entry] of this.cache.entries()) {
@@ -118,11 +205,6 @@ export class OptimizedCache<T> {
     }
   }
 
-  clear(): void {
-    this.cache.clear();
-    this.currentSize = 0;
-  }
-
   private estimateSize(data: T): number {
     try {
       return JSON.stringify(data).length * 2; // Rough estimate
@@ -132,13 +214,27 @@ export class OptimizedCache<T> {
   }
 }
 
-// Virtual scrolling helper for large lists
+// =============================================================================
+// VIRTUAL SCROLLING UTILITIES
+// =============================================================================
+
+export interface VirtualScrollResult {
+  startIndex: number;
+  endIndex: number;
+  visibleItems: number;
+  offsetY: number;
+  totalHeight: number;
+}
+
+/**
+ * Virtual scrolling helper for large lists
+ */
 export function useVirtualScrolling(
   itemCount: number,
   itemHeight: number,
   containerHeight: number,
   scrollTop: number
-) {
+): VirtualScrollResult {
   const visibleCount = Math.ceil(containerHeight / itemHeight) + 2;
   const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - 1);
   const endIndex = Math.min(itemCount, startIndex + visibleCount);
@@ -152,16 +248,42 @@ export function useVirtualScrolling(
   };
 }
 
-// Image preloader with priority queue
+// =============================================================================
+// IMAGE PRELOADER UTILITIES
+// =============================================================================
+
+export interface PreloadItem {
+  src: string;
+  priority: number;
+}
+
+/**
+ * Image preloader with priority queue
+ */
 export class ImagePreloader {
-  private queue: Array<{ src: string; priority: number }> = [];
+  private queue: PreloadItem[] = [];
   private loading = new Set<string>();
   private loaded = new Set<string>();
-  private maxConcurrent = 3;
+  private failed = new Set<string>();
+  private maxConcurrent: number;
+  private timeout: number;
+
+  constructor(maxConcurrent: number = 3, timeout: number = 10000) {
+    this.maxConcurrent = maxConcurrent;
+    this.timeout = timeout;
+  }
 
   preload(src: string, priority: number = 0): Promise<void> {
-    if (this.loaded.has(src) || this.loading.has(src)) {
+    if (this.loaded.has(src)) {
       return Promise.resolve();
+    }
+    
+    if (this.failed.has(src)) {
+      return Promise.reject(new Error(`Image previously failed to load: ${src}`));
+    }
+    
+    if (this.loading.has(src)) {
+      return this.waitForLoad(src);
     }
 
     return new Promise((resolve, reject) => {
@@ -169,14 +291,7 @@ export class ImagePreloader {
       this.queue.sort((a, b) => b.priority - a.priority);
       this.processQueue();
       
-      const checkLoaded = () => {
-        if (this.loaded.has(src)) {
-          resolve();
-        } else {
-          setTimeout(checkLoaded, 100);
-        }
-      };
-      checkLoaded();
+      this.waitForLoad(src).then(resolve).catch(reject);
     });
   }
 
@@ -194,7 +309,8 @@ export class ImagePreloader {
       await this.loadImage(item.src);
       this.loaded.add(item.src);
     } catch (error) {
-      console.warn(`Failed to preload image: ${item.src}`);
+      this.failed.add(item.src);
+      console.warn(`Failed to preload image: ${item.src}`, error);
     } finally {
       this.loading.delete(item.src);
       this.processQueue();
@@ -203,23 +319,63 @@ export class ImagePreloader {
 
   private loadImage(src: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      try {
-        const img = new Image();
-        img.onload = () => resolve();
-        img.onerror = (error) => {
-          reject(new Error(`Failed to load image: ${src} - ${error}`));
-        };
-        img.src = src;
-      } catch (error) {
-        reject(new Error(`Image creation failed: ${error}`));
-      }
+      const img = new Image();
+      const timeoutId = setTimeout(() => {
+        reject(new Error(`Image load timeout: ${src}`));
+      }, this.timeout);
+
+      img.onload = () => {
+        clearTimeout(timeoutId);
+        resolve();
+      };
+      
+      img.onerror = (error) => {
+        clearTimeout(timeoutId);
+        reject(new Error(`Failed to load image: ${src} - ${error}`));
+      };
+      
+      img.src = src;
+    });
+  }
+
+  private waitForLoad(src: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const checkStatus = () => {
+        if (this.loaded.has(src)) {
+          resolve();
+        } else if (this.failed.has(src)) {
+          reject(new Error(`Image failed to load: ${src}`));
+        } else {
+          setTimeout(checkStatus, 100);
+        }
+      };
+      checkStatus();
     });
   }
 }
 
-// Performance monitoring
+// =============================================================================
+// PERFORMANCE MONITORING UTILITIES
+// =============================================================================
+
+export interface PerformanceStats {
+  avg: number;
+  min: number;
+  max: number;
+  count: number;
+  p95?: number;
+}
+
+/**
+ * Performance monitoring
+ */
 export class PerformanceMonitor {
   private metrics = new Map<string, number[]>();
+  private maxSamples: number;
+
+  constructor(maxSamples: number = 100) {
+    this.maxSamples = maxSamples;
+  }
 
   startTiming(label: string): () => void {
     const start = performance.now();
@@ -236,21 +392,33 @@ export class PerformanceMonitor {
     const values = this.metrics.get(label)!;
     values.push(value);
     
-    // Keep only last 100 measurements
-    if (values.length > 100) {
+    // Keep only last N measurements
+    if (values.length > this.maxSamples) {
       values.shift();
     }
   }
 
-  getStats(label: string) {
+  getStats(label: string): PerformanceStats | null {
     const values = this.metrics.get(label) || [];
     if (values.length === 0) return null;
     
+    const sorted = [...values].sort((a, b) => a - b);
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
     const min = Math.min(...values);
     const max = Math.max(...values);
+    const p95Index = Math.ceil(sorted.length * 0.95) - 1;
     
-    return { avg, min, max, count: values.length };
+    return { 
+      avg, 
+      min, 
+      max, 
+      count: values.length,
+      p95: sorted[Math.max(0, p95Index)]
+    };
+  }
+
+  clear(): void {
+    this.metrics.clear();
   }
 }
 
