@@ -33,7 +33,7 @@
     "react-router-dom": "^7.10.1",
     "react-scripts": "^5.0.1",
     "tailwindcss": "^3.3.6",
-    "typescript": "^5.1.6",
+    "typescript": "^5.9.3",
     "viem": "^2.41.2",
     "wagmi": "2.12.7",
     "web-vitals": "^5.1.0"
@@ -42,10 +42,10 @@
     "start": "react-scripts start",
     "start:dev": "REACT_APP_ENV=development HOST=0.0.0.0 PUBLIC_URL=http://$(node scripts/get-local-ip.js):3000 react-scripts start",
     "start:staging": "REACT_APP_ENV=staging HOST=0.0.0.0 PUBLIC_URL=http://$(node scripts/get-local-ip.js):3000 react-scripts start",
-    "build": "GENERATE_SOURCEMAP=false craco build",
+    "build": "NODE_ENV=production GENERATE_SOURCEMAP=false CI=false craco build",
     "build:dev": "REACT_APP_ENV=development craco build",
-    "build:staging": "NODE_ENV=production REACT_APP_ENV=staging GENERATE_SOURCEMAP=false craco build",
-    "build:production": "REACT_APP_ENV=production GENERATE_SOURCEMAP=false craco build",
+    "build:staging": "NODE_ENV=production REACT_APP_ENV=staging GENERATE_SOURCEMAP=false CI=false craco build",
+    "build:production": "NODE_ENV=production REACT_APP_ENV=production GENERATE_SOURCEMAP=false CI=false craco build",
     "build:analyze": "yarn build && node webpack-bundle-analyzer.js",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -89,7 +89,7 @@
     "eslint": "^8.57.0",
     "jsdom": "^27.4.0",
     "prettier": "^3.7.4",
-    "typescript": "^5.1.6",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.16",
     "webpack-bundle-analyzer": "^5.0.1",
     "webpack-dev-server": "4.15.1"
@@ -100,6 +100,6 @@
     "nth-check": ">=2.0.1",
     "webpack-dev-server": "4.15.1",
     "postcss": ">=8.4.31",
-    "typescript": "^5.1.6"
+    "typescript": "^5.9.3"
   }
 }
