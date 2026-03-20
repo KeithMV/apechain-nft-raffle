@@ -408,17 +408,29 @@ jobs:
             cd contracts
             echo "🔍 Running Slither analysis on Hardhat project..."
             
-            # Verify contracts are compiled
+            # Ensure contracts are compiled with Hardhat
+            echo "📦 Compiling contracts with Hardhat..."
+            yarn compile --force
+            
+            # Verify compilation artifacts exist
             if [ ! -d "artifacts" ] || [ ! -f "artifacts/contracts/RaffleFactorySecureV4.sol/RaffleFactorySecureV4.json" ]; then
-              echo "❌ Contracts not compiled. Running compilation..."
-              yarn compile
+              echo "❌ Contract compilation failed"
+              exit 1
             fi
             
-            # Run Slither on the entire Hardhat project (better dependency resolution)
-            echo "Running: python3 -m slither . --config-file slither.config.json --json security-results/slither-report.json"
+            echo "✅ Contracts compiled successfully"
+            
+            # Temporarily rename foundry.toml to force Slither to use Hardhat
+            if [ -f "foundry.toml" ]; then
+              mv foundry.toml foundry.toml.tmp
+              echo "📝 Temporarily renamed foundry.toml to force Hardhat usage"
+            fi
+            
+            # Run Slither with Hardhat (no compilation needed since we compiled above)
+            echo "Running: python3 -m slither . --hardhat-ignore-compile --config-file slither.config.json --json security-results/slither-report.json"
             
             # Run Slither with proper error handling
-            if python3 -m slither . --config-file slither.config.json --json security-results/slither-report.json 2>&1 | tee security-results/slither-output.log; then
+            if python3 -m slither . --hardhat-ignore-compile --config-file slither.config.json --json security-results/slither-report.json 2>&1 | tee security-results/slither-output.log; then
               echo "✅ Slither analysis completed successfully"
             else
               SLITHER_EXIT_CODE=$?
@@ -430,13 +442,23 @@ jobs:
                 echo "📊 Valid Slither report generated despite non-zero exit code"
               else
                 echo "❌ No valid report generated, treating as failure"
+                # Restore foundry.toml before exiting
+                if [ -f "foundry.toml.tmp" ]; then
+                  mv foundry.toml.tmp foundry.toml
+                fi
                 exit 1
               fi
             fi
             
+            # Restore foundry.toml
+            if [ -f "foundry.toml.tmp" ]; then
+              mv foundry.toml.tmp foundry.toml
+              echo "📝 Restored foundry.toml"
+            fi
+            
             # Generate human-readable summary for main contracts only
             echo "Generating summary for RaffleFactorySecureV4..."
-            python3 -m slither contracts/RaffleFactorySecureV4.sol --print human-summary > security-results/slither-summary.txt 2>&1 || {
+            python3 -m slither contracts/RaffleFactorySecureV4.sol --hardhat-ignore-compile --print human-summary > security-results/slither-summary.txt 2>&1 || {
               echo "⚠️ Could not generate human summary, continuing with JSON report"
             }
             
