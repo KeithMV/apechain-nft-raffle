@@ -4,7 +4,8 @@ import RaffleCard, { CreatedRaffle } from './RaffleCard';
 import RaffleFilters from './RaffleFilters';
 import { useAllRafflesV4 } from '../hooks/useRafflePositionsV4';
 import { useRaffleActions } from '../hooks/useRaffleActions';
-import { throttle } from '../utils/performance';
+// Phase 10: Enhanced performance utilities
+import { throttle, performanceMonitor, measureSync, useVirtualScrolling } from '../utils/performance';
 import { useNetwork } from '../contexts/NetworkContext';
 
 
@@ -73,25 +74,27 @@ export default function BrowseRaffles() {
     [setTicketQuantity]
   );
   
-  // Optimized filtered raffles with better memoization
+  // Optimized filtered raffles with better memoization and performance monitoring
   const { filteredRaffles, activeCount, expiredCount } = useMemo(() => {
-    let active = 0;
-    let expired = 0;
-    const filtered: CreatedRaffle[] = [];
-    
-    for (const raffle of raffles) {
-      if (raffle.isActive) {
-        active++;
-        filtered.push(raffle);
-      } else {
-        expired++;
-        if (showExpired) {
+    return measureSync('raffle-filtering', () => {
+      let active = 0;
+      let expired = 0;
+      const filtered: CreatedRaffle[] = [];
+      
+      for (const raffle of raffles) {
+        if (raffle.isActive) {
+          active++;
           filtered.push(raffle);
+        } else {
+          expired++;
+          if (showExpired) {
+            filtered.push(raffle);
+          }
         }
       }
-    }
-    
-    return { filteredRaffles: filtered, activeCount: active, expiredCount: expired };
+      
+      return { filteredRaffles: filtered, activeCount: active, expiredCount: expired };
+    });
   }, [raffles, showExpired]);
 
   if (loading) {
