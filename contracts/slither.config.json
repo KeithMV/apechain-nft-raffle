@@ -1,9 +1,5 @@
 {
-  "filter_paths": [
-    "node_modules",
-    "lib/forge-std",
-    "@openzeppelin/contracts"
-  ],
+  "filter_paths": "node_modules,lib/forge-std,@openzeppelin/contracts",
   "exclude_dependencies": true,
   "exclude_informational": false,
   "exclude_low": false,
