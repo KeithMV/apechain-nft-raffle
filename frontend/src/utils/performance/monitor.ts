@@ -139,12 +139,13 @@ export class PerformanceMonitor {
   }
 
   // Add getMetrics method for backward compatibility
-  getMetrics(label: string): { count: number; average: number; p95?: number } | null {
+  getMetrics(label: string): { count: number; avg: number; average: number; p95?: number } | null {
     const stats = this.getStats(label);
     if (!stats) return null;
     return {
       count: stats.count,
-      average: stats.avg,
+      avg: stats.avg,
+      average: stats.avg, // For backward compatibility
       p95: stats.p95
     };
   }
