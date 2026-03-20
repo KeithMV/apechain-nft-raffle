@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNFTMetadata } from '../hooks/useNFTMetadata';
 import { SimpleImageProxy } from '../services/SimpleImageProxy';
-import ImageDebugger from './ImageDebugger';
 
 interface BasicNFTImageProps {
   contractAddress: string;
@@ -9,7 +8,6 @@ interface BasicNFTImageProps {
   className?: string;
   showName?: boolean;
   size?: 'sm' | 'md' | 'lg';
-  enableDebug?: boolean; // New prop for debugging
 }
 
 export default function BasicNFTImage({ 
@@ -17,13 +15,10 @@ export default function BasicNFTImage({
   tokenId, 
   className = '', 
   showName = false,
-  size = 'md',
-  enableDebug = process.env.NODE_ENV === 'development' // Enable debug in development
+  size = 'md'
 }: BasicNFTImageProps) {
   const { metadata, loading } = useNFTMetadata(contractAddress, tokenId);
   const [imageError, setImageError] = useState(false);
-  const [showDebugger, setShowDebugger] = useState(false);
-
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
 
   const imageUrls = SimpleImageProxy.getFallbackUrls(metadata?.image || '');
@@ -89,31 +84,12 @@ export default function BasicNFTImage({
         onError={handleImageError}
       />
       
-      {/* Debug button - only show if debugging is enabled and there are image issues */}
-      {enableDebug && (imageError || currentUrlIndex > 0) && (
-        <button
-          onClick={() => setShowDebugger(true)}
-          className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition-colors"
-          title="Debug image loading issues"
-        >
-          🐛 Debug
-        </button>
-      )}
-      
       {showName && metadata?.name && (
         <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-2">
           <p className="text-white text-sm truncate">
             {metadata.name}
           </p>
         </div>
-      )}
-      
-      {/* Image Debugger Modal */}
-      {showDebugger && metadata?.image && (
-        <ImageDebugger
-          imageUrl={metadata.image}
-          onClose={() => setShowDebugger(false)}
-        />
       )}
     </div>
   );
