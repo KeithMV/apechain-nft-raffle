@@ -13,8 +13,6 @@ import RaffleForm, { FormData, getInitialFormData, validateAddress } from './Raf
 
 import toast from 'react-hot-toast';
 import { ErrorHandler } from '../utils/errorHandler';
-// Phase 10: Performance Implementation
-import { debounce, performanceMonitor, measureAsync } from '../utils/performance';
 import { sanitizeAddress } from '../utils/security';
 
 // Pure function moved outside component
@@ -70,23 +68,18 @@ export default function CreateRafflePage() {
     }
   }, [approvalError]);
   
-  // Check approval when contract changes - Phase 10: Debounced validation
-  const debouncedCheckApproval = useCallback(
-    debounce((contract: string) => {
-      if (contract && validateAddress(contract)) {
-        measureAsync('approval-check', () => 
-          checkApprovalForContract(sanitizeAddress(contract))
-        );
-      }
-    }, 500),
-    [checkApprovalForContract]
-  );
+  // Check approval when contract changes
+  const checkApproval = useCallback((contract: string) => {
+    if (contract && validateAddress(contract)) {
+      checkApprovalForContract(sanitizeAddress(contract));
+    }
+  }, [checkApprovalForContract]);
 
   useEffect(() => {
     if (formData.nftContract) {
-      debouncedCheckApproval(formData.nftContract);
+      checkApproval(formData.nftContract);
     }
-  }, [formData.nftContract, debouncedCheckApproval]);
+  }, [formData.nftContract, checkApproval]);
 
   // Handle create raffle success - show success state and redirect
   useEffect(() => {
@@ -127,9 +120,6 @@ export default function CreateRafflePage() {
   const handleCreateRaffle = async () => {
     if (createPending || createConfirming) return;
     
-    // Phase 10: Performance monitoring for raffle creation
-    const endTiming = performanceMonitor.startTiming('raffle-creation');
-    
     try {
       if (isWrongNetwork) {
         ErrorHandler.handleValidationError('network', 'Wrong network - please switch to ApeChain');
@@ -159,8 +149,8 @@ export default function CreateRafflePage() {
         }),
         ErrorHandler.handleContractError
       );
-    } finally {
-      endTiming();
+    } catch (error) {
+      ErrorHandler.handleContractError(error);
     }
   };
 
