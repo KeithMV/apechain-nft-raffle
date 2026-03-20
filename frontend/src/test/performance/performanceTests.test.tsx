@@ -48,7 +48,7 @@ import React from 'react'
 describe('Performance Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    performanceMonitor.reset()
+    performanceMonitor.clear() // Use clear() instead of reset()
   })
 
   describe('Performance Monitoring', () => {
@@ -62,8 +62,8 @@ describe('Performance Tests', () => {
       
       // Check that performance was measured
       const metrics = performanceMonitor.getMetrics('heavy-computation')
-      expect(metrics.count).toBeGreaterThan(0)
-      expect(metrics.average).toBeGreaterThan(0)
+      expect(metrics?.count).toBeGreaterThan(0)
+      expect(metrics?.avg).toBeGreaterThan(0)
     })
 
     it('should track asynchronous operations', async () => {
@@ -83,8 +83,8 @@ describe('Performance Tests', () => {
       
       // Check that async performance was measured
       const metrics = performanceMonitor.getMetrics('async-operation')
-      expect(metrics.count).toBeGreaterThan(0)
-      expect(metrics.average).toBeGreaterThan(90) // Should be around 100ms
+      expect(metrics?.count).toBeGreaterThan(0)
+      expect(metrics?.avg).toBeGreaterThan(90) // Should be around 100ms
     })
 
     it('should handle performance monitoring errors gracefully', () => {
@@ -98,7 +98,7 @@ describe('Performance Tests', () => {
       
       // Performance monitoring should still record the attempt
       const metrics = performanceMonitor.getMetrics('error-operation')
-      expect(metrics.count).toBeGreaterThan(0)
+      expect(metrics?.count).toBeGreaterThan(0)
     })
   })
 
@@ -161,8 +161,8 @@ describe('Performance Tests', () => {
       expect(result.data).toBe('1000')
       
       const metrics = performanceMonitor.getMetrics('contract-read')
-      expect(metrics.average).toBeGreaterThan(40) // Should be around 50ms
-      expect(metrics.average).toBeLessThan(100) // But not too slow
+      expect(metrics?.avg).toBeGreaterThan(40) // Should be around 50ms
+      expect(metrics?.avg).toBeLessThan(100) // But not too slow
     })
 
     it('should measure contract write performance', async () => {
@@ -177,7 +177,7 @@ describe('Performance Tests', () => {
       expect(result.hash).toBe('0xabc123')
       
       const metrics = performanceMonitor.getMetrics('contract-write')
-      expect(metrics.average).toBeGreaterThan(180) // Should be around 200ms
+      expect(metrics?.avg).toBeGreaterThan(180) // Should be around 200ms
     })
 
     it('should track batch operations performance', async () => {
@@ -194,7 +194,7 @@ describe('Performance Tests', () => {
       
       const metrics = performanceMonitor.getMetrics('batch-operations')
       // Batch should be faster than sequential (parallel execution)
-      expect(metrics.average).toBeLessThan(100) // Should be around 20ms due to parallelism
+      expect(metrics?.avg).toBeLessThan(100) // Should be around 20ms due to parallelism
     })
   })
 
@@ -279,7 +279,7 @@ describe('Performance Tests', () => {
       // 95th percentile should be high due to the outlier
       expect(metrics.p95).toBeGreaterThan(500)
       // But average should be much lower
-      expect(metrics.average).toBeLessThan(200)
+      expect(metrics?.avg).toBeLessThan(200)
     })
   })
 
