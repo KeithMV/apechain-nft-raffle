@@ -133,6 +133,32 @@ export class PerformanceMonitor {
     }
   }
 
+  // Alias for clear() for backward compatibility
+  reset(label?: string): void {
+    this.clear(label);
+  }
+
+  // Add getMetrics method for backward compatibility
+  getMetrics(label: string): { count: number; average: number; p95?: number } | null {
+    const stats = this.getStats(label);
+    if (!stats) return null;
+    return {
+      count: stats.count,
+      average: stats.avg,
+      p95: stats.p95
+    };
+  }
+
+  // Add getMemoryUsage method
+  getMemoryUsage(): { used: number; total: number; limit: number } {
+    const memory = getMemoryInfo();
+    return {
+      used: memory.usedJSHeapSize || 0,
+      total: memory.totalJSHeapSize || 0,
+      limit: memory.jsHeapSizeLimit || 0
+    };
+  }
+
   export(): { metrics: Record<string, PerformanceStats>; entries: PerformanceEntry[] } {
     return {
       metrics: this.getAllStats(),
