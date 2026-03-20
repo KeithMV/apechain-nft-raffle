@@ -78,10 +78,16 @@ export class SimpleImageProxy {
   // New method for debugging image loading issues
   static async testImageUrl(url: string): Promise<{ success: boolean; error?: string; status?: number }> {
     try {
+      // Create timeout controller for broader compatibility
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
       const response = await fetch(url, { 
         method: 'HEAD',
-        signal: AbortSignal.timeout(5000)
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       return {
         success: response.ok,

@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { SimpleImageProxy } from '../services/SimpleImageProxy';
 
+interface TestResult {
+  url: string;
+  success: boolean;
+  error?: string;
+  status?: number;
+  loadTime?: number;
+}
+
 interface ImageDebuggerProps {
   imageUrl: string;
   onClose: () => void;
 }
 
 export default function ImageDebugger({ imageUrl, onClose }: ImageDebuggerProps) {
-  const [testResults, setTestResults] = useState<Array<{
-    url: string;
-    success: boolean;
-    error?: string;
-    status?: number;
-    loadTime?: number;
-  }>>([]);
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [testing, setTesting] = useState(false);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export default function ImageDebugger({ imageUrl, onClose }: ImageDebuggerProps)
   const testImageUrls = async () => {
     setTesting(true);
     const fallbackUrls = SimpleImageProxy.getFallbackUrls(imageUrl);
-    const results = [];
+    const results: TestResult[] = [];
 
     for (const url of fallbackUrls) {
       const startTime = Date.now();
