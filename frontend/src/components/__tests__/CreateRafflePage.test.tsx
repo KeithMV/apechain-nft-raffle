@@ -77,7 +77,58 @@ vi.mock('../../hooks/useNFTApprovalManager', () => ({
   })),
 }))
 
-// Mock components
+// Mock RaffleForm component to properly handle form changes
+vi.mock('../RaffleForm', () => ({
+  default: ({ formData, onFormChange, isApeChain, nativeCurrency, disabled }: any) => {
+    const handleInputChange = (field: string, value: string) => {
+      onFormChange({
+        ...formData,
+        [field]: value
+      })
+    }
+    
+    return (
+      <div data-testid="raffle-form">
+        <input 
+          placeholder="0x..." 
+          value={formData.nftContract || ''}
+          onChange={(e) => handleInputChange('nftContract', e.target.value)}
+        />
+        <input 
+          placeholder="123" 
+          value={formData.tokenId || ''}
+          onChange={(e) => handleInputChange('tokenId', e.target.value)}
+        />
+        <input 
+          placeholder="0.1" 
+          value={formData.ticketPrice || ''}
+          onChange={(e) => handleInputChange('ticketPrice', e.target.value)}
+        />
+        <input 
+          placeholder="100" 
+          value={formData.maxTickets || ''}
+          onChange={(e) => handleInputChange('maxTickets', e.target.value)}
+        />
+      </div>
+    )
+  },
+  getInitialFormData: () => ({
+    nftContract: '',
+    tokenId: '',
+    ticketPrice: '',
+    maxTickets: '',
+    duration: '24'
+  }),
+  validateAddress: (address: string) => /^0x[a-fA-F0-9]{40}$/.test(address)
+}));
+
+// Mock ApprovalModal
+vi.mock('../ApprovalModal', () => ({
+  default: ({ isOpen, onClose, onApprove }: any) => 
+    isOpen ? <div data-testid="approval-modal">Approval Modal</div> : null
+}));
+
+// Mock other components
 vi.mock('../BasicNFTImage', () => ({
   default: ({ contractAddress, tokenId }: any) => (
     <div data-testid="nft-preview">{contractAddress}-{tokenId}</div>
@@ -184,7 +235,14 @@ describe('CreateRafflePage', () => {
       checkApprovalForContract: vi.fn(),
       approveContract: vi.fn(),
       clearApprovalState: vi.fn(),
-      allApprovalStates: {}
+      allApprovalStates: {
+        '0x1234567890123456789012345678901234567890': {
+          status: false,
+          isChecking: false,
+          contract: '0x1234567890123456789012345678901234567890',
+          lastChecked: Date.now()
+        }
+      }
     })
 
     renderWithRouter(<CreateRafflePage />)
@@ -192,8 +250,14 @@ describe('CreateRafflePage', () => {
     const contractInput = screen.getByPlaceholderText('0x...')
     fireEvent.change(contractInput, { target: { value: '0x1234567890123456789012345678901234567890' } })
     
+    // Wait for the component to process the contract address
     await waitFor(() => {
-      // Look for the approval button text that actually exists in the component
+      // First check if the approval section is rendered
+      expect(screen.getByText('NFT Contract Approval Status')).toBeInTheDocument()
+    }, { timeout: 2000 })
+    
+    // Then check for the approval button
+    await waitFor(() => {
       expect(screen.getByText('Approve NFT Contract')).toBeInTheDocument()
     }, { timeout: 2000 })
   })
