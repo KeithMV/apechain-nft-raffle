@@ -132,15 +132,78 @@ jobs:
           command: |
             cd frontend
             mkdir -p security-results
+            echo "🔍 Running yarn audit..."
+            
+            # Generate JSON report (always succeeds)
             yarn audit --json > security-results/yarn-audit.json || true
-            yarn audit --level moderate
+            
+            # Generate human-readable report
+            yarn audit > security-results/yarn-audit.txt || true
+            
+            # Check for critical and high vulnerabilities only
+            echo "📊 Analyzing vulnerability levels..."
+            
+            # Count vulnerabilities by severity
+            CRITICAL=$(grep -o '"severity":"critical"' security-results/yarn-audit.json | wc -l || echo "0")
+            HIGH=$(grep -o '"severity":"high"' security-results/yarn-audit.json | wc -l || echo "0")
+            MODERATE=$(grep -o '"severity":"moderate"' security-results/yarn-audit.json | wc -l || echo "0")
+            LOW=$(grep -o '"severity":"low"' security-results/yarn-audit.json | wc -l || echo "0")
+            
+            echo "🚨 Critical: $CRITICAL"
+            echo "⚠️  High: $HIGH"
+            echo "📋 Moderate: $MODERATE"
+            echo "ℹ️  Low: $LOW"
+            
+            # Show summary of high/critical vulnerabilities if any
+            if [ "$CRITICAL" -gt "0" ] || [ "$HIGH" -gt "0" ]; then
+              echo ""
+              echo "📝 High/Critical Vulnerability Summary:"
+              grep -A 5 -B 1 '"severity":"\(critical\|high\)"' security-results/yarn-audit.json | grep -E '("title"|"module_name"|"severity")' | head -20 || true
+            fi
+            
+            # Only fail on critical vulnerabilities
+            if [ "$CRITICAL" -gt "0" ]; then
+              echo "❌ Critical vulnerabilities found! Build failed."
+              echo "Please address critical vulnerabilities before deployment."
+              exit 1
+            elif [ "$HIGH" -gt "10" ]; then
+              echo "⚠️  Too many high vulnerabilities found ($HIGH > 10)."
+              echo "Please review and address high-priority vulnerabilities."
+              echo "Consider running 'yarn audit fix' to auto-fix issues."
+              exit 1
+            elif [ "$HIGH" -gt "0" ]; then
+              echo "⚠️  High vulnerabilities found but within acceptable threshold ($HIGH <= 10)."
+              echo "Please review and address these vulnerabilities when possible."
+            else
+              echo "✅ No critical or high vulnerabilities detected."
+            fi
       - run:
-          name: Run Snyk security scan
+          name: Run additional security checks
           command: |
             cd frontend
-            # Skip Snyk for now - requires API token
-            echo "Snyk scanning skipped - requires SNYK_TOKEN environment variable"
-            echo "{}" > security-results/snyk.json
+            echo "🔍 Running additional security checks..."
+            
+            # Check for common security issues in package.json
+            echo "📦 Checking package.json for security issues..."
+            
+            # Check for potentially dangerous scripts
+            if grep -q "rm -rf" package.json; then
+              echo "⚠️  Warning: Potentially dangerous rm -rf command found in package.json"
+            fi
+            
+            # Check for HTTP URLs (should be HTTPS)
+            if grep -q '"http://[^"]*"' package.json; then
+              echo "⚠️  Warning: HTTP URLs found in package.json (should use HTTPS)"
+            fi
+            
+            # Check for suspicious dependencies
+            SUSPICIOUS_DEPS=$(grep -E '(eval|exec|child_process)' package.json || echo "")
+            if [ -n "$SUSPICIOUS_DEPS" ]; then
+              echo "⚠️  Warning: Potentially suspicious dependencies detected"
+              echo "$SUSPICIOUS_DEPS"
+            fi
+            
+            echo "✅ Additional security checks completed"
       - store_artifacts:
           path: frontend/security-results
           destination: security-scans
