@@ -25,13 +25,13 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - contracts-deps-v2-{{ checksum "contracts/package-lock.json" }}
-            - contracts-deps-v2-
+            - contracts-deps-v3-{{ checksum "contracts/package-lock.json" }}
+            - contracts-deps-v3-
   
   save_contracts_cache:
     steps:
       - save_cache:
-          key: contracts-deps-v2-{{ checksum "contracts/package-lock.json" }}
+          key: contracts-deps-v3-{{ checksum "contracts/package-lock.json" }}
           paths:
             - contracts/node_modules
             - ~/.npm
@@ -219,7 +219,7 @@ jobs:
           name: Install contract dependencies
           command: |
             cd contracts
-            npm ci --prefer-offline
+            npm ci --prefer-offline --legacy-peer-deps
       - save_contracts_cache
       - persist_to_workspace:
           root: .
