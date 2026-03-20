@@ -1,1 +1,245 @@
-import React, { useState, useEffect } from 'react';\nimport { useAccount, useChainId, usePublicClient } from 'wagmi';\nimport { getRaffleFactoryAddress, getContracts } from '../config/addresses';\nimport { getNetworkConfig } from '../config/networks';\n\ninterface EnvironmentDebuggerProps {\n  isOpen: boolean;\n  onClose: () => void;\n}\n\nexport default function EnvironmentDebugger({ isOpen, onClose }: EnvironmentDebuggerProps) {\n  const { address, isConnected } = useAccount();\n  const chainId = useChainId();\n  const publicClient = usePublicClient();\n  const [debugInfo, setDebugInfo] = useState<any>(null);\n  const [testing, setTesting] = useState(false);\n\n  useEffect(() => {\n    if (isOpen) {\n      collectDebugInfo();\n    }\n  }, [isOpen, chainId, address]);\n\n  const collectDebugInfo = async () => {\n    setTesting(true);\n    \n    try {\n      const networkConfig = getNetworkConfig(chainId);\n      const contracts = getContracts(chainId);\n      const factoryAddress = getRaffleFactoryAddress(chainId, true);\n      \n      // Test RPC connectivity\n      let rpcTest = null;\n      try {\n        const blockNumber = await publicClient?.getBlockNumber();\n        rpcTest = { success: true, blockNumber: blockNumber?.toString() };\n      } catch (error) {\n        rpcTest = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };\n      }\n      \n      // Test contract existence\n      let contractTest = null;\n      try {\n        const code = await publicClient?.getBytecode({ address: factoryAddress as `0x${string}` });\n        contractTest = { \n          success: !!code && code !== '0x', \n          hasCode: !!code && code !== '0x',\n          codeLength: code?.length || 0\n        };\n      } catch (error) {\n        contractTest = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };\n      }\n      \n      setDebugInfo({\n        environment: {\n          REACT_APP_ENV: process.env.REACT_APP_ENV,\n          REACT_APP_NETWORK: process.env.REACT_APP_NETWORK,\n          REACT_APP_CHAIN_ID: process.env.REACT_APP_CHAIN_ID,\n          REACT_APP_APECHAIN_RPC_URL: process.env.REACT_APP_APECHAIN_RPC_URL,\n          REACT_APP_CONTRACT_ADDRESS: process.env.REACT_APP_CONTRACT_ADDRESS,\n          REACT_APP_APP_URL: process.env.REACT_APP_APP_URL,\n          REACT_APP_ENABLE_LOGGING: process.env.REACT_APP_ENABLE_LOGGING,\n          NODE_ENV: process.env.NODE_ENV\n        },\n        wallet: {\n          connected: isConnected,\n          address: address,\n          chainId: chainId\n        },\n        network: {\n          configured: networkConfig,\n          expectedChainId: 33139,\n          chainIdMatch: chainId === 33139\n        },\n        contracts: {\n          configured: contracts,\n          factoryAddress,\n          factoryV4Available: !!contracts.RAFFLE_FACTORY_V4\n        },\n        tests: {\n          rpc: rpcTest,\n          contract: contractTest\n        },\n        timestamp: new Date().toISOString()\n      });\n    } catch (error) {\n      setDebugInfo({\n        error: error instanceof Error ? error.message : 'Unknown error',\n        timestamp: new Date().toISOString()\n      });\n    }\n    \n    setTesting(false);\n  };\n\n  if (!isOpen) return null;\n\n  return (\n    <div className=\"fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4\">\n      <div className=\"bg-slate-800 rounded-xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto\">\n        <div className=\"flex justify-between items-center mb-4\">\n          <h2 className=\"text-xl font-bold text-white\">Staging Environment Debugger</h2>\n          <button\n            onClick={onClose}\n            className=\"text-gray-400 hover:text-white text-2xl\"\n          >\n            ×\n          </button>\n        </div>\n\n        {testing ? (\n          <div className=\"text-center py-8\">\n            <div className=\"w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto mb-4\"></div>\n            <p className=\"text-gray-400\">Collecting debug information...</p>\n          </div>\n        ) : debugInfo ? (\n          <div className=\"space-y-6\">\n            {/* Environment Variables */}\n            <div>\n              <h3 className=\"text-lg font-semibold text-emerald-400 mb-3\">Environment Variables</h3>\n              <div className=\"bg-slate-900 p-4 rounded-lg\">\n                <pre className=\"text-sm text-gray-300 overflow-x-auto\">\n                  {JSON.stringify(debugInfo.environment, null, 2)}\n                </pre>\n              </div>\n            </div>\n\n            {/* Wallet Status */}\n            <div>\n              <h3 className=\"text-lg font-semibold text-blue-400 mb-3\">Wallet Status</h3>\n              <div className=\"bg-slate-900 p-4 rounded-lg\">\n                <div className=\"grid grid-cols-1 md:grid-cols-3 gap-4 text-sm\">\n                  <div>\n                    <span className=\"text-gray-400\">Connected:</span>\n                    <span className={`ml-2 ${debugInfo.wallet.connected ? 'text-green-400' : 'text-red-400'}`}>\n                      {debugInfo.wallet.connected ? '✅ Yes' : '❌ No'}\n                    </span>\n                  </div>\n                  <div>\n                    <span className=\"text-gray-400\">Address:</span>\n                    <span className=\"ml-2 text-white font-mono text-xs\">\n                      {debugInfo.wallet.address || 'Not connected'}\n                    </span>\n                  </div>\n                  <div>\n                    <span className=\"text-gray-400\">Chain ID:</span>\n                    <span className={`ml-2 ${debugInfo.network.chainIdMatch ? 'text-green-400' : 'text-red-400'}`}>\n                      {debugInfo.wallet.chainId} {debugInfo.network.chainIdMatch ? '✅' : '❌'}\n                    </span>\n                  </div>\n                </div>\n              </div>\n            </div>\n\n            {/* Network Configuration */}\n            <div>\n              <h3 className=\"text-lg font-semibold text-purple-400 mb-3\">Network Configuration</h3>\n              <div className=\"bg-slate-900 p-4 rounded-lg\">\n                <pre className=\"text-sm text-gray-300 overflow-x-auto\">\n                  {JSON.stringify(debugInfo.network, null, 2)}\n                </pre>\n              </div>\n            </div>\n\n            {/* Contract Configuration */}\n            <div>\n              <h3 className=\"text-lg font-semibold text-yellow-400 mb-3\">Contract Configuration</h3>\n              <div className=\"bg-slate-900 p-4 rounded-lg\">\n                <pre className=\"text-sm text-gray-300 overflow-x-auto\">\n                  {JSON.stringify(debugInfo.contracts, null, 2)}\n                </pre>\n              </div>\n            </div>\n\n            {/* Test Results */}\n            <div>\n              <h3 className=\"text-lg font-semibold text-red-400 mb-3\">Connectivity Tests</h3>\n              <div className=\"bg-slate-900 p-4 rounded-lg space-y-4\">\n                <div>\n                  <h4 className=\"font-semibold text-white mb-2\">RPC Connection Test</h4>\n                  <div className={`p-3 rounded ${debugInfo.tests.rpc?.success ? 'bg-green-900/30 border border-green-500/30' : 'bg-red-900/30 border border-red-500/30'}`}>\n                    <div className=\"flex items-center gap-2\">\n                      <span>{debugInfo.tests.rpc?.success ? '✅' : '❌'}</span>\n                      <span className=\"text-white\">\n                        {debugInfo.tests.rpc?.success ? \n                          `Connected - Block: ${debugInfo.tests.rpc.blockNumber}` : \n                          'Connection Failed'\n                        }\n                      </span>\n                    </div>\n                    {debugInfo.tests.rpc?.error && (\n                      <div className=\"text-red-400 text-sm mt-2\">\n                        Error: {debugInfo.tests.rpc.error}\n                      </div>\n                    )}\n                  </div>\n                </div>\n\n                <div>\n                  <h4 className=\"font-semibold text-white mb-2\">Contract Existence Test</h4>\n                  <div className={`p-3 rounded ${debugInfo.tests.contract?.success ? 'bg-green-900/30 border border-green-500/30' : 'bg-red-900/30 border border-red-500/30'}`}>\n                    <div className=\"flex items-center gap-2\">\n                      <span>{debugInfo.tests.contract?.success ? '✅' : '❌'}</span>\n                      <span className=\"text-white\">\n                        {debugInfo.tests.contract?.success ? \n                          `Contract Found - Code Length: ${debugInfo.tests.contract.codeLength}` : \n                          'Contract Not Found'\n                        }\n                      </span>\n                    </div>\n                    {debugInfo.tests.contract?.error && (\n                      <div className=\"text-red-400 text-sm mt-2\">\n                        Error: {debugInfo.tests.contract.error}\n                      </div>\n                    )}\n                  </div>\n                </div>\n              </div>\n            </div>\n          </div>\n        ) : (\n          <div className=\"text-center py-8\">\n            <p className=\"text-gray-400\">No debug information available</p>\n          </div>\n        )}\n\n        <div className=\"mt-6 flex justify-end gap-3\">\n          <button\n            onClick={collectDebugInfo}\n            disabled={testing}\n            className=\"px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 text-white rounded-lg transition-colors\"\n          >\n            {testing ? 'Testing...' : 'Refresh Debug Info'}\n          </button>\n          <button\n            onClick={onClose}\n            className=\"px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors\"\n          >\n            Close\n          </button>\n        </div>\n      </div>\n    </div>\n  );\n}
+import React, { useState, useEffect } from 'react';
+import { useAccount, useChainId, usePublicClient } from 'wagmi';
+import { getRaffleFactoryAddress, getContracts } from '../config/addresses';
+import { getNetworkConfig } from '../config/networks';
+
+interface EnvironmentDebuggerProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function EnvironmentDebugger({ isOpen, onClose }: EnvironmentDebuggerProps) {
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const publicClient = usePublicClient();
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [testing, setTesting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      collectDebugInfo();
+    }
+  }, [isOpen, chainId, address]);
+
+  const collectDebugInfo = async () => {
+    setTesting(true);
+    
+    try {
+      const networkConfig = getNetworkConfig(chainId);
+      const contracts = getContracts(chainId);
+      const factoryAddress = getRaffleFactoryAddress(chainId, true);
+      
+      // Test RPC connectivity
+      let rpcTest = null;
+      try {
+        const blockNumber = await publicClient?.getBlockNumber();
+        rpcTest = { success: true, blockNumber: blockNumber?.toString() };
+      } catch (error) {
+        rpcTest = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+      
+      // Test contract existence
+      let contractTest = null;
+      try {
+        const code = await publicClient?.getBytecode({ address: factoryAddress as `0x${string}` });
+        contractTest = { 
+          success: !!code && code !== '0x', 
+          hasCode: !!code && code !== '0x',
+          codeLength: code?.length || 0
+        };
+      } catch (error) {
+        contractTest = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+      
+      setDebugInfo({
+        environment: {
+          REACT_APP_ENV: process.env.REACT_APP_ENV,
+          REACT_APP_NETWORK: process.env.REACT_APP_NETWORK,
+          REACT_APP_CHAIN_ID: process.env.REACT_APP_CHAIN_ID,
+          REACT_APP_APECHAIN_RPC_URL: process.env.REACT_APP_APECHAIN_RPC_URL,
+          REACT_APP_CONTRACT_ADDRESS: process.env.REACT_APP_CONTRACT_ADDRESS,
+          REACT_APP_APP_URL: process.env.REACT_APP_APP_URL,
+          REACT_APP_ENABLE_LOGGING: process.env.REACT_APP_ENABLE_LOGGING,
+          NODE_ENV: process.env.NODE_ENV
+        },
+        wallet: {
+          connected: isConnected,
+          address: address,
+          chainId: chainId
+        },
+        network: {
+          configured: networkConfig,
+          expectedChainId: 33139,
+          chainIdMatch: chainId === 33139
+        },
+        contracts: {
+          configured: contracts,
+          factoryAddress,
+          factoryV4Available: !!contracts.RAFFLE_FACTORY_V4
+        },
+        tests: {
+          rpc: rpcTest,
+          contract: contractTest
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      setDebugInfo({
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    setTesting(false);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-800 rounded-xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-white">Staging Environment Debugger</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        {testing ? (
+          <div className="text-center py-8">
+            <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-400">Collecting debug information...</p>
+          </div>
+        ) : debugInfo ? (
+          <div className="space-y-6">
+            {/* Environment Variables */}
+            <div>
+              <h3 className="text-lg font-semibold text-emerald-400 mb-3">Environment Variables</h3>
+              <div className="bg-slate-900 p-4 rounded-lg">
+                <pre className="text-sm text-gray-300 overflow-x-auto">
+                  {JSON.stringify(debugInfo.environment, null, 2)}
+                </pre>
+              </div>
+            </div>
+
+            {/* Wallet Status */}
+            <div>
+              <h3 className="text-lg font-semibold text-blue-400 mb-3">Wallet Status</h3>
+              <div className="bg-slate-900 p-4 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-400">Connected:</span>
+                    <span className={`ml-2 ${debugInfo.wallet.connected ? 'text-green-400' : 'text-red-400'}`}>
+                      {debugInfo.wallet.connected ? '✓ Yes' : '✗ No'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Address:</span>
+                    <span className="ml-2 text-white font-mono text-xs">
+                      {debugInfo.wallet.address || 'Not connected'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Chain ID:</span>
+                    <span className={`ml-2 ${debugInfo.network.chainIdMatch ? 'text-green-400' : 'text-red-400'}`}>
+                      {debugInfo.wallet.chainId} {debugInfo.network.chainIdMatch ? '✓' : '✗'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Network Configuration */}
+            <div>
+              <h3 className="text-lg font-semibold text-purple-400 mb-3">Network Configuration</h3>
+              <div className="bg-slate-900 p-4 rounded-lg">
+                <pre className="text-sm text-gray-300 overflow-x-auto">
+                  {JSON.stringify(debugInfo.network, null, 2)}
+                </pre>
+              </div>
+            </div>
+
+            {/* Contract Configuration */}
+            <div>
+              <h3 className="text-lg font-semibold text-yellow-400 mb-3">Contract Configuration</h3>
+              <div className="bg-slate-900 p-4 rounded-lg">
+                <pre className="text-sm text-gray-300 overflow-x-auto">
+                  {JSON.stringify(debugInfo.contracts, null, 2)}
+                </pre>
+              </div>
+            </div>
+
+            {/* Test Results */}
+            <div>
+              <h3 className="text-lg font-semibold text-red-400 mb-3">Connectivity Tests</h3>
+              <div className="bg-slate-900 p-4 rounded-lg space-y-4">
+                <div>
+                  <h4 className="font-semibold text-white mb-2">RPC Connection Test</h4>
+                  <div className={`p-3 rounded ${debugInfo.tests.rpc?.success ? 'bg-green-900/30 border border-green-500/30' : 'bg-red-900/30 border border-red-500/30'}`}>
+                    <div className="flex items-center gap-2">
+                      <span>{debugInfo.tests.rpc?.success ? '✓' : '✗'}</span>
+                      <span className="text-white">
+                        {debugInfo.tests.rpc?.success ? 
+                          `Connected - Block: ${debugInfo.tests.rpc.blockNumber}` : 
+                          'Connection Failed'
+                        }
+                      </span>
+                    </div>
+                    {debugInfo.tests.rpc?.error && (
+                      <div className="text-red-400 text-sm mt-2">
+                        Error: {debugInfo.tests.rpc.error}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-white mb-2">Contract Existence Test</h4>
+                  <div className={`p-3 rounded ${debugInfo.tests.contract?.success ? 'bg-green-900/30 border border-green-500/30' : 'bg-red-900/30 border border-red-500/30'}`}>
+                    <div className="flex items-center gap-2">
+                      <span>{debugInfo.tests.contract?.success ? '✓' : '✗'}</span>
+                      <span className="text-white">
+                        {debugInfo.tests.contract?.success ? 
+                          `Contract Found - Code Length: ${debugInfo.tests.contract.codeLength}` : 
+                          'Contract Not Found'
+                        }
+                      </span>
+                    </div>
+                    {debugInfo.tests.contract?.error && (
+                      <div className="text-red-400 text-sm mt-2">
+                        Error: {debugInfo.tests.contract.error}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-400">No debug information available</p>
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            onClick={collectDebugInfo}
+            disabled={testing}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
+          >
+            {testing ? 'Testing...' : 'Refresh Debug Info'}
+          </button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
