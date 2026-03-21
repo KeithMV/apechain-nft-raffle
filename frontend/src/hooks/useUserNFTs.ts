@@ -31,8 +31,9 @@ async function fetchNFTsViaAPI(
     
     const url = `${lambdaProxy}?owner=${encodeURIComponent(userAddress)}&chainId=${chainId}`;
     
-    console.log(`Fetching NFTs via Lambda proxy for chain ${chainId}`);
-    console.log(`Using endpoint: ${lambdaProxy}`);
+    const chainName = chainId === 137 ? 'Polygon' : chainId === 33139 ? 'ApeChain' : `Chain ${chainId}`;
+    console.log(`🔍 Fetching NFTs via Lambda proxy for ${chainName} (${chainId})`);
+    console.log(`📡 Using endpoint: ${lambdaProxy}`);
     
     const response = await fetch(url, {
       headers: {
@@ -42,7 +43,7 @@ async function fetchNFTsViaAPI(
     });
     
     if (!response.ok) {
-      console.error(`Lambda proxy error: ${response.status}`);
+      console.error(`❌ Lambda proxy error for ${chainName}: ${response.status}`);
       throw new Error(`Lambda proxy error: ${response.status}`);
     }
     
@@ -50,11 +51,12 @@ async function fetchNFTsViaAPI(
     
     // Transform Lambda response to our format
     const nfts: UserNFT[] = (data.nfts || data.ownedNfts)?.map((nft: any) => {
-      console.log('Processing NFT:', {
+      console.log(`🖼️ Processing NFT on ${chainName}:`, {
         contract: nft.contractAddress,
         tokenId: nft.tokenId,
         name: nft.name,
-        hasImage: !!nft.image
+        hasImage: !!nft.image,
+        imageUrl: nft.image ? nft.image.substring(0, 50) + '...' : 'none'
       });
       
       return {
@@ -65,11 +67,12 @@ async function fetchNFTsViaAPI(
       };
     }).filter(nft => nft.contractAddress && nft.tokenId) || [];
     
-    console.log(`Lambda proxy: ${(data.nfts || data.ownedNfts)?.length || 0} raw NFTs, ${nfts.length} processed NFTs`);
+    console.log(`✅ Lambda proxy result for ${chainName}: ${(data.nfts || data.ownedNfts)?.length || 0} raw NFTs, ${nfts.length} processed NFTs, ${nfts.filter(n => n.image).length} with images`);
     return nfts;
     
   } catch (error) {
-    console.error('Lambda proxy failed:', error);
+    const chainName = chainId === 137 ? 'Polygon' : chainId === 33139 ? 'ApeChain' : `Chain ${chainId}`;
+    console.error(`💥 Lambda proxy failed for ${chainName}:`, error);
     return [];
   }
 }
