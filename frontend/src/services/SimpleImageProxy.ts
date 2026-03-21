@@ -53,7 +53,18 @@ export class SimpleImageProxy {
         urls.push(`${gateway}${path}`);
       });
       
-      // 3. Backup proxy with IPFS (TERTIARY)
+      // 3. Additional IPFS gateways for Polygon compatibility
+      const additionalGateways = [
+        'https://ipfs.moralis.io/ipfs/',
+        'https://cf-ipfs.com/ipfs/',
+        'https://ipfs.infura.io/ipfs/'
+      ];
+      additionalGateways.forEach((gateway) => {
+        urls.push(`${this.LAMBDA_PROXY}?url=${encodeURIComponent(`${gateway}${path}`)}`);
+        urls.push(`${gateway}${path}`);
+      });
+      
+      // 4. Backup proxy with IPFS (TERTIARY)
       const primaryGateway = `${this.IPFS_GATEWAYS[0]}${path}`;
       urls.push(`${this.BACKUP_PROXY}${encodeURIComponent(primaryGateway)}`);
       
@@ -64,7 +75,9 @@ export class SimpleImageProxy {
       // 2. Direct URL for CORS-enabled sources (SECONDARY)
       if (originalUrl.includes('img.op.xyz') || 
           originalUrl.includes('img.other.page') ||
-          originalUrl.includes('arweave.net')) {
+          originalUrl.includes('arweave.net') ||
+          originalUrl.includes('polygon-metadata.s3.amazonaws.com') ||
+          originalUrl.includes('assets.polygon.technology')) {
         urls.push(originalUrl);
       }
       

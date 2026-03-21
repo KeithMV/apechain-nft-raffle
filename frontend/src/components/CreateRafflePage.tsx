@@ -84,8 +84,10 @@ export default function CreateRafflePage() {
   // Handle create raffle success - show success state and redirect
   useEffect(() => {
     if (createSuccess) {
-      // Show success message
-      toast.success('🎉 Raffle created successfully! Redirecting to browse raffles...');
+      console.log('✅ Raffle created successfully on chain:', chainId, networkName);
+      
+      // Show success message with chain info
+      toast.success(`🎉 Raffle created successfully on ${networkName}! Redirecting...`);
       
       // Reset form and clear approval state after a short delay
       setTimeout(() => {
@@ -93,10 +95,11 @@ export default function CreateRafflePage() {
         clearApprovalState();
         
         // Navigate to browse raffles page
-        navigate('/browse');
+        console.log('🔄 Redirecting to browse raffles...');
+        navigate('/browse', { replace: true });
       }, 2000);
     }
-  }, [createSuccess, navigate, clearApprovalState]);
+  }, [createSuccess, navigate, clearApprovalState, chainId, networkName]);
 
   // Handle create raffle errors
   useEffect(() => {

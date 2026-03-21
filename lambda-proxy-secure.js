@@ -169,7 +169,15 @@ function isValidUrl(url) {
             'api.op.xyz',
             'api2.balloonsballoons.xyz',
             'metadata.ens.domains',
-            'api.opensea.io'
+            'api.opensea.io',
+            // Polygon-specific domains
+            'polygon-metadata.s3.amazonaws.com',
+            'assets.polygon.technology',
+            'ipfs.moralis.io',
+            'gateway.ipfs.io',
+            // Additional IPFS gateways
+            'cf-ipfs.com',
+            'ipfs.infura.io'
         ];
         
         const isAllowed = trustedDomains.some(domain => hostname.includes(domain));
@@ -223,10 +231,11 @@ async function handleNFTOwnershipQuery(owner, chainId, environment) {
         return createErrorResponse(400, `Unsupported chain ID: ${chainId}`);
     }
     
+    console.log(`📡 Fetching NFTs for chain ${chainId} (${chainId === 137 ? 'Polygon' : chainId === 33139 ? 'ApeChain' : 'Other'})`);
     const url = `${endpoint}/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&withMetadata=true&pageSize=100`;
     
     try {
-        console.log('📡 Fetching NFTs from Alchemy:', { owner, chainId });
+        console.log('📡 Fetching NFTs from Alchemy:', { owner, chainId, endpoint: endpoint.split('/').slice(0, 3).join('/') + '/...' });
         
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
@@ -252,22 +261,34 @@ async function handleNFTOwnershipQuery(owner, chainId, environment) {
         }
         
         const data = await response.json();
-        console.log('✅ Alchemy response:', { totalCount: data.totalCount, returned: data.ownedNfts?.length });
+        console.log(`✅ Alchemy response for chain ${chainId}:`, { totalCount: data.totalCount, returned: data.ownedNfts?.length });
         
         // Transform Alchemy response to match our expected format
-        const nfts = (data.ownedNfts || []).map(nft => ({
-            contractAddress: nft.contract.address,
-            tokenId: nft.tokenId,
-            name: nft.title || nft.name || `NFT #${nft.tokenId}`,
-            description: nft.description || '',
-            image: nft.media?.[0]?.gateway || nft.media?.[0]?.raw || '',
-            metadata: {
-                name: nft.title || nft.name,
-                description: nft.description,
-                image: nft.media?.[0]?.gateway || nft.media?.[0]?.raw,
-                attributes: nft.rawMetadata?.attributes || []
+        const nfts = (data.ownedNfts || []).map(nft => {
+            // Enhanced image URL processing for different chains
+            let imageUrl = nft.media?.[0]?.gateway || nft.media?.[0]?.raw || '';
+            
+            // Special handling for Polygon NFTs with common metadata issues
+            if (chainId === 137 && !imageUrl && nft.rawMetadata?.image) {
+                imageUrl = nft.rawMetadata.image;
             }
-        }));
+            
+            return {
+                contractAddress: nft.contract.address,
+                tokenId: nft.tokenId,
+                name: nft.title || nft.name || `NFT #${nft.tokenId}`,
+                description: nft.description || '',
+                image: imageUrl,
+                metadata: {
+                    name: nft.title || nft.name,
+                    description: nft.description,
+                    image: imageUrl,
+                    attributes: nft.rawMetadata?.attributes || []
+                }
+            };
+        });
+        
+        console.log(`🖼️ Processed ${nfts.length} NFTs for chain ${chainId}, ${nfts.filter(n => n.image).length} with images`);
         
         return {
             statusCode: 200,
