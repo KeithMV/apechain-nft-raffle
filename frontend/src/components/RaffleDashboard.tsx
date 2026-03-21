@@ -4,7 +4,7 @@ import ParticipatedRaffleCard from './ParticipatedRaffleCard';
 import CreatedRaffleCard from './CreatedRaffleCard';
 import toast from 'react-hot-toast';
 import { useUserRafflePositionsV4, useCreatedRafflesV4, useClearRaffleCacheV4 } from '../hooks/useRafflePositionsV4';
-import { useCancelRaffle } from '../hooks/useCancelRaffle';
+import { useCancelRaffleV4 } from '../hooks/useRaffleContractV4';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useDashboardStyles } from '../hooks/useDashboardStyles';
@@ -29,7 +29,7 @@ export default function RaffleDashboard() {
   const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRafflesV4(address, page);
   const clearCache = useClearRaffleCacheV4();
   
-  const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffle();
+  const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffleV4();
   const { emergencyReveal, isPending: isSelectingWinner, revealSuccess: winnerSelected } = useWinnerSelection();
   const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
   const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
