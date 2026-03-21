@@ -36,31 +36,30 @@ async function fetchNFTsViaAPI(
     });
     
     if (!response.ok) {
+      console.error(`Lambda proxy error: ${response.status}`);
       throw new Error(`Lambda proxy error: ${response.status}`);
     }
     
     const data = await response.json();
     
-    // Transform Alchemy response to our format
-    const nfts: UserNFT[] = data.ownedNfts?.map((nft: any) => {
+    // Transform Lambda response to our format
+    const nfts: UserNFT[] = (data.nfts || data.ownedNfts)?.map((nft: any) => {
       console.log('Processing NFT:', {
-        contract: nft.contract?.address,
+        contract: nft.contractAddress,
         tokenId: nft.tokenId,
-        title: nft.title,
         name: nft.name,
-        hasMedia: !!nft.media?.length,
-        hasMetadata: !!nft.metadata
+        hasImage: !!nft.image
       });
       
       return {
-        contractAddress: nft.contract.address,
+        contractAddress: nft.contractAddress,
         tokenId: nft.tokenId,
-        name: nft.title || nft.name || `NFT #${nft.tokenId}`,
-        image: nft.media?.[0]?.gateway || nft.metadata?.image
+        name: nft.name || `NFT #${nft.tokenId}`,
+        image: nft.image
       };
     }).filter(nft => nft.contractAddress && nft.tokenId) || [];
     
-    console.log(`Lambda proxy: ${data.ownedNfts?.length || 0} raw NFTs, ${nfts.length} processed NFTs`);
+    console.log(`Lambda proxy: ${(data.nfts || data.ownedNfts)?.length || 0} raw NFTs, ${nfts.length} processed NFTs`);
     return nfts;
     
   } catch (error) {
