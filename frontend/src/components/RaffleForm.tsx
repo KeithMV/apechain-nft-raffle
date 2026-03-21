@@ -60,7 +60,7 @@ export default function RaffleForm({
         sanitizedValue = sanitizeNumber(value, 1, 10000);
         break;
       case 'duration':
-        // Validate duration is within contract limits (1-720 hours = 30 days max)
+        // Validate duration is within contract limits (1-720 hours)
         const durationNum = parseInt(value);
         if (isNaN(durationNum) || durationNum < 1 || durationNum > 720) {
           sanitizedValue = '24'; // Default to 24 hours if invalid
@@ -197,7 +197,7 @@ export default function RaffleForm({
             <option value="72">72 HOURS</option>
             <option value="168">1 WEEK</option>
             <option value="336">2 WEEKS</option>
-            <option value="720">30 DAYS (MAX)</option>
+            <option value="720">1 MONTH</option>
           </select>
         </div>
       </div>
