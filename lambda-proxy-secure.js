@@ -15,7 +15,7 @@ exports.handler = async (event) => {
     // Handle NFT ownership queries (Alchemy API integration)
     if (owner && chainId) {
         console.log('🔍 NFT ownership query:', { owner, chainId });
-        return createErrorResponse(501, 'NFT ownership API not yet implemented', null, null, 'This endpoint will be implemented with Alchemy API integration');
+        return await handleNFTOwnershipQuery(owner, chainId, environment);
     }
     
     // Handle image proxy requests
@@ -199,6 +199,106 @@ function createCorsHeaders(environment, contentType = 'application/json') {
         'Access-Control-Allow-Headers': 'Content-Type',
         'Cache-Control': contentType.includes('image') ? 'public, max-age=86400' : 'public, max-age=3600'
     };
+}
+
+// Handle NFT ownership queries using Alchemy API
+async function handleNFTOwnershipQuery(owner, chainId, environment) {
+    const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
+    
+    if (!ALCHEMY_API_KEY) {
+        console.log('❌ Missing ALCHEMY_API_KEY environment variable');
+        return createErrorResponse(500, 'Alchemy API not configured');
+    }
+    
+    const ALCHEMY_ENDPOINTS = {
+        33139: 'https://apechain-mainnet.g.alchemy.com/nft/v3', // ApeChain
+        137: 'https://polygon-mainnet.g.alchemy.com/nft/v3',   // Polygon
+        1: 'https://eth-mainnet.g.alchemy.com/nft/v3',          // Ethereum
+        42161: 'https://arb-mainnet.g.alchemy.com/nft/v3'       // Arbitrum
+    };
+    
+    const endpoint = ALCHEMY_ENDPOINTS[chainId];
+    if (!endpoint) {
+        console.log('❌ Unsupported chain ID:', chainId);
+        return createErrorResponse(400, `Unsupported chain ID: ${chainId}`);
+    }
+    
+    const url = `${endpoint}/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&withMetadata=true&pageSize=100`;
+    
+    try {
+        console.log('📡 Fetching NFTs from Alchemy:', { owner, chainId });
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            console.log('⏰ Alchemy request timeout after 10 seconds');
+            controller.abort();
+        }, 10000);
+        
+        const response = await fetch(url, {
+            headers: {
+                'Accept': 'application/json',
+                'User-Agent': `ApeChain-NFT-Raffle/2.0 (${environment})`
+            },
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            console.log('❌ Alchemy API error:', response.status, response.statusText);
+            const errorText = await response.text();
+            console.log('Error details:', errorText);
+            return createErrorResponse(response.status, `Alchemy API error: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ Alchemy response:', { totalCount: data.totalCount, returned: data.ownedNfts?.length });
+        
+        // Transform Alchemy response to match our expected format
+        const nfts = (data.ownedNfts || []).map(nft => ({
+            contractAddress: nft.contract.address,
+            tokenId: nft.tokenId,
+            name: nft.title || nft.name || `NFT #${nft.tokenId}`,
+            description: nft.description || '',
+            image: nft.media?.[0]?.gateway || nft.media?.[0]?.raw || '',
+            metadata: {
+                name: nft.title || nft.name,
+                description: nft.description,
+                image: nft.media?.[0]?.gateway || nft.media?.[0]?.raw,
+                attributes: nft.rawMetadata?.attributes || []
+            }
+        }));
+        
+        return {
+            statusCode: 200,
+            headers: createCorsHeaders(environment),
+            body: JSON.stringify({
+                success: true,
+                totalCount: data.totalCount || 0,
+                nfts: nfts,
+                chainId: parseInt(chainId),
+                owner: owner,
+                source: 'alchemy',
+                timestamp: new Date().toISOString()
+            })
+        };
+        
+    } catch (error) {
+        console.error('💥 Alchemy API error:', error);
+        
+        let errorMessage = 'NFT query failed';
+        let statusCode = 500;
+        
+        if (error.name === 'AbortError') {
+            errorMessage = 'Alchemy API timeout (10 seconds)';
+            statusCode = 408;
+        } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            errorMessage = 'Alchemy API connection failed';
+            statusCode = 502;
+        }
+        
+        return createErrorResponse(statusCode, errorMessage, null, null, error.message);
+    }
 }
 
 // Standardized error response

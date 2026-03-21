@@ -388,8 +388,8 @@ export const ValidationRules = {
   duration: {
     required: true,
     min: 1,
-    max: 168,
-    message: 'Duration must be between 1 and 168 hours'
+    max: 8760,
+    message: 'Duration must be between 1 and 8760 hours (1 year max)'
   },
   email: {
     required: true,
