@@ -10,6 +10,22 @@ vi.mock('wagmi', () => ({
   useReadContract: vi.fn(() => ({ data: null, isLoading: false })),
   useWriteContract: vi.fn(() => ({ writeContract: vi.fn(), isPending: false })),
   useWaitForTransactionReceipt: vi.fn(() => ({ isLoading: false, isSuccess: false })),
+  usePublicClient: vi.fn(() => ({})),
+  WagmiProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+
+// Mock @tanstack/react-query
+vi.mock('@tanstack/react-query', () => ({
+  useQuery: vi.fn(() => ({ data: [], isLoading: false, error: null })),
+  useQueryClient: vi.fn(() => ({
+    invalidateQueries: vi.fn(),
+    clear: vi.fn(),
+  })),
+  QueryClient: vi.fn().mockImplementation(() => ({
+    invalidateQueries: vi.fn(),
+    clear: vi.fn(),
+  })),
+  QueryClientProvider: ({ children }: { children: React.ReactNode }) => children,
 }))
 
 // Mock localStorage

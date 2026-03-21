@@ -20,7 +20,7 @@ vi.mock('viem/utils', () => ({
 }))
 
 // Mock config
-vi.mock('../config/addresses', () => ({
+vi.mock('../../config/addresses', () => ({
   getRaffleFactoryAddress: vi.fn(() => '0x1234567890123456789012345678901234567890'),
   isV4Available: vi.fn(() => true),
   getRateLimit: vi.fn(() => 10),
@@ -35,7 +35,7 @@ vi.mock('react-hot-toast', () => ({
 }))
 
 // Mock cache invalidation
-vi.mock('./useCacheInvalidation', () => ({
+vi.mock('../useCacheInvalidation', () => ({
   useCacheInvalidation: vi.fn(() => ({ invalidateAll: vi.fn() })),
 }))
 
@@ -47,17 +47,12 @@ describe('useRaffleContractV4 hooks', () => {
   let queryClient: QueryClient
 
   const createWrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <div>{children}</div>
   )
 
   beforeEach(() => {
     vi.clearAllMocks()
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: { retry: false },
-        mutations: { retry: false },
-      },
-    })
+    // Don't create a new QueryClient, use the mocked one
     
     vi.mocked(useWriteContract).mockReturnValue({
       writeContractAsync: mockWriteContract,
@@ -120,7 +115,7 @@ describe('useRaffleContractV4 hooks', () => {
         tokenId: '123',
         ticketPrice: '0.1',
         maxTickets: 100,
-        duration: 24,
+        duration: 3600, // Use seconds instead of hours
       }
       
       await act(async () => {
