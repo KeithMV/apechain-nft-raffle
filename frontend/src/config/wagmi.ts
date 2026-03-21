@@ -27,7 +27,7 @@ export const apeChain = defineChain({
   testnet: false, // Both staging and production use mainnet
 });
 
-// Polygon chain - explicitly defined to ensure proper MetaMask compatibility
+// Polygon chain - Multi-RPC configuration with rate limiting protection
 export const polygonChain = defineChain({
   id: 137,
   name: 'Polygon',
@@ -38,7 +38,23 @@ export const polygonChain = defineChain({
   },
   rpcUrls: {
     default: {
-      http: ['https://polygon-mainnet.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78'],
+      http: [
+        'https://polygon-mainnet.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78',
+        'https://polygon-rpc.com',
+        'https://rpc.ankr.com/polygon',
+        'https://polygon.llamarpc.com',
+        'https://polygon-mainnet.public.blastapi.io',
+        'https://polygon.blockpi.network/v1/rpc/public',
+        'https://rpc-mainnet.matic.quiknode.pro'
+      ],
+    },
+    public: {
+      http: [
+        'https://polygon-rpc.com',
+        'https://rpc.ankr.com/polygon',
+        'https://polygon.llamarpc.com',
+        'https://polygon-mainnet.public.blastapi.io'
+      ],
     },
   },
   blockExplorers: {
@@ -60,15 +76,24 @@ const metadata = {
   icons: [`${process.env.REACT_APP_APP_URL || 'http://localhost:3000'}/favicon.ico`]
 };
 
-// Create wagmi config with multi-chain support
+// Create wagmi config with multi-chain support and anti-rate-limiting optimizations
 export const config = defaultWagmiConfig({
   chains: [apeChain, polygonChain],
   projectId,
   metadata,
   ssr: false,
-  syncConnectedChain: true, // This works locally, keep it
+  syncConnectedChain: true,
   enableEIP6963: true,
   enableCoinbase: true,
+  // Critical: Batch configuration to reduce RPC calls
+  batch: {
+    multicall: {
+      batchSize: 1024 * 200, // 200KB batch size
+      wait: 32, // 32ms wait time for better batching
+    },
+  },
+  // Critical: Reduce polling to prevent rate limiting
+  pollingInterval: 15000, // 15 seconds instead of default 4 seconds
 });
 
 // Create Web3Modal with mobile-optimized settings

@@ -11,6 +11,7 @@ import { useContractValidator } from './useContractValidator';
 import { RAFFLE_FACTORY_ABI, ERC721_ABI, RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
 import { useCacheInvalidation } from './useCacheInvalidation';
+import { MultiChainErrorHandler } from '../utils/multiChainErrorHandler';
 
 // Re-export read hooks for backward compatibility
 export { 
@@ -120,6 +121,7 @@ export function useCreateRaffleV4() {
  * Hook for buying raffle tickets (V4 aware)
  */
 export function useBuyTickets() {
+  const chainId = useChainId();
   const { validateTicketPurchase } = useContractValidator();
   const { invalidateAll } = useCacheInvalidation();
   
@@ -128,22 +130,24 @@ export function useBuyTickets() {
   const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useTicketPurchaseTransaction();
 
   const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string) => {
-    // Validate all inputs
-    const validation = validateTicketPurchase({ raffleContract, quantity, ticketPrice });
-    if (!validation.isValid) {
-      throw new Error(validation.error);
-    }
-    
-    const ticketPriceWei = parseEther(ticketPrice);
-    const totalCost = ticketPriceWei * BigInt(quantity);
-    
-    return await executeTransaction({
-      address: raffleContract as `0x${string}`,
-      abi: RAFFLE_CONTRACT_ABI,
-      functionName: 'buyTickets',
-      args: [BigInt(quantity)],
-      value: totalCost,
-    });
+    return await MultiChainErrorHandler.withRetry(async () => {
+      // Validate all inputs
+      const validation = validateTicketPurchase({ raffleContract, quantity, ticketPrice });
+      if (!validation.isValid) {
+        throw new Error(validation.error);
+      }
+      
+      const ticketPriceWei = parseEther(ticketPrice);
+      const totalCost = ticketPriceWei * BigInt(quantity);
+      
+      return await executeTransaction({
+        address: raffleContract as `0x${string}`,
+        abi: RAFFLE_CONTRACT_ABI,
+        functionName: 'buyTickets',
+        args: [BigInt(quantity)],
+        value: totalCost,
+      });
+    }, chainId, 3, 2000); // 3 retries with 2s delay
   };
 
   return {

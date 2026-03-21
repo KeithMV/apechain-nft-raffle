@@ -12,15 +12,28 @@ import { suppressWalletConnectErrors } from '../utils/walletCleanup';
 import { suppressWeb3ModalWarnings } from '../utils/suppressWarnings';
 import '../utils/consoleSecure'; // Auto-enables production console security
 
-// Optimized QueryClient configuration
+// Optimized QueryClient configuration with chain-specific settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: (failureCount, error) => {
+        // Don't retry on 429 rate limit errors
+        if (error?.message?.includes('429') || error?.message?.includes('Too Many Requests')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 10 * 60 * 1000, // 10 minutes for Polygon
+      gcTime: 20 * 60 * 1000, // 20 minutes
+      // Add network-specific timeouts
+      networkMode: 'online',
+    },
+    mutations: {
+      retry: 1,
+      retryDelay: 2000,
     },
   },
 });
