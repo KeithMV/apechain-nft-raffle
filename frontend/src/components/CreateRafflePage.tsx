@@ -131,13 +131,62 @@ export default function CreateRafflePage() {
         return;
       }
 
-      // Validate form data
+      // Validate form data more thoroughly
       if (!formData.nftContract || !formData.tokenId || !formData.ticketPrice || !formData.maxTickets) {
         ErrorHandler.handleValidationError('form data', 'All fields are required');
         return;
       }
+      
+      // Validate NFT contract address format
+      if (!validateAddress(formData.nftContract)) {
+        ErrorHandler.handleValidationError('NFT contract', 'Invalid contract address format');
+        return;
+      }
+      
+      // Validate token ID is a positive number
+      const tokenIdNum = parseInt(formData.tokenId);
+      if (isNaN(tokenIdNum) || tokenIdNum < 0) {
+        ErrorHandler.handleValidationError('token ID', 'Token ID must be a positive number');
+        return;
+      }
 
-      const durationInSeconds = calculateDurationInSeconds(formData.duration);
+      const durationInHours = parseInt(formData.duration);
+      const durationInSeconds = durationInHours * 3600; // Convert hours to seconds for contract
+      
+      // Debug logging to see what values we're passing
+      console.log('🔍 Creating raffle with parameters:', {
+        nftContract: formData.nftContract,
+        tokenId: formData.tokenId,
+        ticketPrice: formData.ticketPrice,
+        maxTickets: formData.maxTickets,
+        duration: formData.duration,
+        durationInHours,
+        durationInSeconds,
+        contractMinSeconds: 3600,
+        contractMaxSeconds: 2592000,
+        approvalStatus,
+        userAddress: address,
+        chainId,
+        factoryAddress: '0x1627E7e63b63878E61f91D336385a59B1747934a'
+      });
+      
+      console.log('🔍 Contract call arguments:', {
+        arg0_nftContract: sanitizeAddress(formData.nftContract),
+        arg1_tokenId: formData.tokenId,
+        arg2_ticketPriceWei: `${formData.ticketPrice} ETH`,
+        arg3_maxTickets: parseInt(formData.maxTickets),
+        arg4_durationSeconds: durationInSeconds
+      });
+      
+      // Validate duration is within contract limits (contract expects seconds)
+      if (durationInSeconds < 3600) {
+        ErrorHandler.handleValidationError('duration', `Duration ${formData.duration} hours (${durationInSeconds}s) is below minimum of 1 hour (3600s)`);
+        return;
+      }
+      if (durationInSeconds > 2592000) {
+        ErrorHandler.handleValidationError('duration', `Duration ${formData.duration} hours (${durationInSeconds}s) exceeds maximum of 30 days (2592000s)`);
+        return;
+      }
       
       await ErrorHandler.withErrorHandling(
         () => createRaffle({
@@ -145,7 +194,7 @@ export default function CreateRafflePage() {
           tokenId: formData.tokenId,
           ticketPrice: formData.ticketPrice,
           maxTickets: parseInt(formData.maxTickets),
-          duration: durationInSeconds
+          duration: durationInSeconds // Pass seconds to contract
         }),
         ErrorHandler.handleContractError
       );

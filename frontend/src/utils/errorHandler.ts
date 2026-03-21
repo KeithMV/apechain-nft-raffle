@@ -49,12 +49,68 @@ export class ErrorHandler {
   static handleContractError = (error: any): AppError => {
     const appError = ErrorHandler.createError('CONTRACT_ERROR', 'Contract operation failed', error);
     
-    if (error?.message?.includes('execution reverted')) {
-      appError.message = 'Transaction failed - contract rejected';
+    // Extract detailed revert reason with comprehensive logging
+    let revertReason = '';
+    
+    console.log('🔍 Full Contract Error Analysis:', {
+      error,
+      errorType: typeof error,
+      errorConstructor: error?.constructor?.name,
+      message: error?.message,
+      reason: error?.reason,
+      cause: error?.cause,
+      data: error?.data,
+      code: error?.code,
+      details: error?.details,
+      shortMessage: error?.shortMessage,
+      version: error?.version,
+      stack: error?.stack?.split('\n').slice(0, 5)
+    });
+    
+    // Try multiple extraction methods
+    if (error?.cause?.reason) {
+      revertReason = error.cause.reason;
+      console.log('✅ Found revert reason in cause.reason:', revertReason);
+    } else if (error?.reason) {
+      revertReason = error.reason;
+      console.log('✅ Found revert reason in reason:', revertReason);
+    } else if (error?.shortMessage) {
+      revertReason = error.shortMessage;
+      console.log('✅ Found revert reason in shortMessage:', revertReason);
+    } else if (error?.details) {
+      revertReason = error.details;
+      console.log('✅ Found revert reason in details:', revertReason);
+    } else if (error?.message) {
+      // Try to extract revert reason from message
+      const revertMatch = error.message.match(/reverted with reason string '([^']+)'/);
+      const customErrorMatch = error.message.match(/reverted with custom error '([^']+)'/);
+      const panicMatch = error.message.match(/reverted with panic code ([0-9x]+)/);
+      
+      if (revertMatch) {
+        revertReason = revertMatch[1];
+        console.log('✅ Extracted revert reason from message:', revertReason);
+      } else if (customErrorMatch) {
+        revertReason = `Custom error: ${customErrorMatch[1]}`;
+        console.log('✅ Extracted custom error from message:', revertReason);
+      } else if (panicMatch) {
+        revertReason = `Panic code: ${panicMatch[1]}`;
+        console.log('✅ Extracted panic code from message:', revertReason);
+      } else if (error.message.includes('execution reverted')) {
+        revertReason = 'Transaction reverted (no reason provided)';
+        console.log('⚠️ Generic revert detected');
+      }
+    }
+    
+    if (revertReason) {
+      appError.message = `Contract rejected: ${revertReason}`;
+    } else if (error?.message?.includes('execution reverted')) {
+      appError.message = 'Transaction failed - contract rejected (no specific reason)';
     } else if (error?.message?.includes('gas')) {
       appError.message = 'Transaction failed - insufficient gas';
     } else if (error?.message?.includes('Rate limit exceeded')) {
       appError.message = 'Please wait before creating another raffle (rate limit)';
+    } else if (error?.message?.includes('user rejected')) {
+      appError.message = 'Transaction cancelled by user';
     }
     
     ErrorHandler.logError(appError);

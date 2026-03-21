@@ -3,6 +3,7 @@
  * Focused transaction hooks with extracted concerns
  */
 
+import React from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { useContractVersionManager } from './useContractVersionManager';
 import { useNFTApprovalTransaction, useRaffleCreationTransaction, useTicketPurchaseTransaction, useWinnerCommitTransaction, useWinnerRevealTransaction, useEmergencyWinnerTransaction } from './useWeb3TransactionManager';
@@ -271,6 +272,51 @@ export function useRevealWinnerV4() {
 
   return {
     revealAndSelectWinner,
+    hash,
+    error,
+    isPending,
+    isConfirming,
+    isSuccess,
+  };
+}
+
+/**
+ * Hook for cancelling raffle (V4 aware)
+ */
+export function useCancelRaffleV4() {
+  const { validateWinnerSelection } = useContractValidator();
+  const { invalidateAll } = useCacheInvalidation();
+  const chainId = useChainId();
+  
+  const { writeContract, data: hash, error, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  // Handle success with cache invalidation
+  React.useEffect(() => {
+    if (isSuccess) {
+      setTimeout(() => invalidateAll(), 500);
+    }
+  }, [isSuccess, invalidateAll]);
+
+  const cancelRaffle = async (raffleContract: string) => {
+    // Validate inputs
+    const validation = validateWinnerSelection({ raffleContract });
+    if (!validation.isValid) {
+      throw new Error(validation.error);
+    }
+
+    return writeContract({
+      address: raffleContract as `0x${string}`,
+      abi: RAFFLE_CONTRACT_ABI,
+      functionName: 'cancelRaffle',
+      chainId: chainId,
+    });
+  };
+
+  return {
+    cancelRaffle,
     hash,
     error,
     isPending,

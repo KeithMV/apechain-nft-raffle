@@ -155,8 +155,8 @@ export function useContractValidator() {
         return maxTicketsResult;
       }
       
-      // Validate duration (in hours)
-      const durationResult = validatePositiveInteger(params.duration, 'duration', { min: 1, max: 8760 }); // max 1 year
+      // Validate duration (in seconds) - contract accepts 3600-2592000 seconds (1 hour - 30 days)
+      const durationResult = validatePositiveInteger(params.duration, 'duration', { min: 3600, max: 2592000 }); // 1 hour to 30 days in seconds
       if (!durationResult.isValid) {
         return durationResult;
       }
