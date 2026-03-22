@@ -12,9 +12,6 @@ export {
   useNFTApprovalV4, 
   useCreateRaffleV4, 
   useBuyTickets, 
-  useCommitRandomnessV4, 
-  useRevealWinnerV4, 
-  useEmergencyWinnerV4,
   useEmergencyPause,
   useRateLimitChecker
 } from './useRaffleContractV4';

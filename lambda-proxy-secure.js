@@ -177,7 +177,21 @@ function isValidUrl(url) {
             'gateway.ipfs.io',
             // Additional IPFS gateways
             'cf-ipfs.com',
-            'ipfs.infura.io'
+            'ipfs.infura.io',
+            // Pinata domains (all subdomains)
+            'mypinata.cloud',
+            'pinata.cloud',
+            'gateway.pinata.cloud',
+            // Common Polygon NFT platforms
+            'opensea.io',
+            'looksrare.org',
+            'rarible.com',
+            'foundation.app',
+            'superrare.com',
+            // Additional metadata services
+            'metadata.buildship.xyz',
+            'api.reservoir.tools',
+            'metadata.degods.com'
         ];
         
         const isAllowed = trustedDomains.some(domain => hostname.includes(domain));

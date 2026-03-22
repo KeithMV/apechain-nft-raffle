@@ -1,17 +1,19 @@
 import { useState, useCallback } from 'react';
 import { WinnerSelectionService } from '../services/winnerSelectionService';
-import { useCommitRandomnessV4, useRevealWinnerV4, useEmergencyWinnerV4 } from './useRaffleContractV4';
+import { useOptimizedSelectWinner } from './useOptimizedTransactionManager';
+import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import toast from 'react-hot-toast';
 
 export function useWinnerSelection() {
   const [commitData, setCommitData] = useState<{ nonce: bigint; commitHash: string } | null>(null);
+  const [currentPhase, setCurrentPhase] = useState<'idle' | 'committing' | 'revealing' | 'emergency'>('idle');
   
-  const { commitRandomness, isPending: commitPending, isSuccess: commitSuccess } = useCommitRandomnessV4();
-  const { revealAndSelectWinner, isPending: revealPending, isSuccess: revealSuccess } = useRevealWinnerV4();
-  const { emergencySelectWinner, isPending: emergencyPending } = useEmergencyWinnerV4();
+  const transactionManager = useOptimizedSelectWinner();
 
   const startWinnerSelection = useCallback(async (raffleContract: string) => {
     try {
+      setCurrentPhase('committing');
+      
       // Generate secure commit-reveal data
       const { nonce, commitHash } = WinnerSelectionService.generateCommitReveal();
       
@@ -19,59 +21,91 @@ export function useWinnerSelection() {
       WinnerSelectionService.storeCommitData(raffleContract, nonce);
       setCommitData({ nonce, commitHash });
       
-      // Commit to blockchain
-      await commitRandomness(raffleContract, commitHash);
+      // Commit to blockchain using optimized transaction manager
+      await transactionManager.executeTransaction({
+        address: raffleContract as `0x${string}`,
+        abi: RAFFLE_CONTRACT_ABI,
+        functionName: 'commitRandomness',
+        args: [commitHash as `0x${string}`],
+      });
       
-      // Toast is handled by useCommitRandomness hook
+      setCurrentPhase('idle');
       return { nonce, commitHash };
     } catch (error) {
+      setCurrentPhase('idle');
       toast.error('Failed to start winner selection');
       throw error;
     }
-  }, [commitRandomness]);
+  }, [transactionManager]);
 
   const revealWinner = useCallback(async (raffleContract: string) => {
     try {
+      setCurrentPhase('revealing');
+      
       const storedNonce = WinnerSelectionService.getStoredNonce(raffleContract);
       if (!storedNonce) {
         throw new Error('No stored nonce found');
       }
 
-      await revealAndSelectWinner(raffleContract, storedNonce);
+      await transactionManager.executeTransaction({
+        address: raffleContract as `0x${string}`,
+        abi: RAFFLE_CONTRACT_ABI,
+        functionName: 'revealAndSelectWinner',
+        args: [storedNonce],
+      });
       
       // Clean up stored data
       WinnerSelectionService.clearCommitData(raffleContract);
       setCommitData(null);
+      setCurrentPhase('idle');
       
-      // Toast is handled by useRevealWinner hook
       return storedNonce;
     } catch (error) {
+      setCurrentPhase('idle');
       toast.error('Failed to reveal winner');
       throw error;
     }
-  }, [revealAndSelectWinner]);
+  }, [transactionManager]);
 
   const emergencyReveal = useCallback(async (raffleContract: string) => {
     try {
-      await emergencySelectWinner(raffleContract);
+      setCurrentPhase('emergency');
+      console.log('🏆 [WINNER] Starting emergency winner selection for:', raffleContract);
+      
+      await transactionManager.executeTransaction({
+        address: raffleContract as `0x${string}`,
+        abi: RAFFLE_CONTRACT_ABI,
+        functionName: 'emergencySelectWinner',
+      });
+      
+      console.log('✅ [WINNER] Emergency winner selection completed successfully');
       
       // Clean up stored data
       WinnerSelectionService.clearCommitData(raffleContract);
       setCommitData(null);
-      // Success toast is handled by useEmergencyWinner hook
+      setCurrentPhase('idle');
     } catch (error) {
+      console.error('❌ [WINNER] Emergency winner selection failed:', error);
+      setCurrentPhase('idle');
       toast.error('Failed to select winner');
       throw error;
     }
-  }, [emergencySelectWinner]);
+  }, [transactionManager]);
 
   return {
     startWinnerSelection,
     revealWinner,
     emergencyReveal,
     commitData,
-    isPending: commitPending || revealPending || emergencyPending,
-    commitSuccess,
-    revealSuccess,
+    isPending: transactionManager.isPending,
+    isConfirming: transactionManager.isConfirming,
+    isSuccess: transactionManager.isSuccess,
+    hash: transactionManager.hash,
+    error: transactionManager.error,
+    retryTransaction: transactionManager.retryTransaction,
+    // Legacy compatibility
+    commitSuccess: transactionManager.isSuccess && currentPhase === 'committing',
+    revealSuccess: transactionManager.isSuccess && currentPhase === 'revealing',
+    currentPhase,
   };
 }

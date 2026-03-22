@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAccount, useChainId } from 'wagmi';
 import ParticipatedRaffleCard from './ParticipatedRaffleCard';
 import CreatedRaffleCard from './CreatedRaffleCard';
 import toast from 'react-hot-toast';
 import { useUserRafflePositionsV4, useCreatedRafflesV4, useClearRaffleCacheV4 } from '../hooks/useRafflePositionsV4';
-import { useCancelRaffleV4 } from '../hooks/useRaffleContractV4';
+import { useOptimizedCancelRaffle } from '../hooks/useOptimizedCancelRaffle';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useDashboardStyles } from '../hooks/useDashboardStyles';
@@ -29,42 +29,83 @@ export default function RaffleDashboard() {
   const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRafflesV4(address, page);
   const clearCache = useClearRaffleCacheV4();
   
-  const { cancelRaffle, isPending: isCancelling, isSuccess: cancelSuccess } = useCancelRaffleV4();
-  const { emergencyReveal, isPending: isSelectingWinner, revealSuccess: winnerSelected } = useWinnerSelection();
+  const cancelRaffleHook = useOptimizedCancelRaffle();
+  const { emergencyReveal, isPending: isSelectingWinner, isSuccess: winnerSelected, hash: winnerHash, error: winnerError } = useWinnerSelection();
   const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
   const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
   
-  // Force refresh when network changes
+  // Force refresh when network changes - use useRef to track previous chainId
+  const prevChainIdRef = useRef<number | undefined>(undefined);
+  
   useEffect(() => {
-    console.log('🔄 Network changed, clearing cache and refreshing dashboard data for chainId:', chainId);
-    clearCache(); // Clear cache first
-    setTimeout(() => {
-      refetchPositions();
-      refetchCreatedRaffles();
-    }, 100); // Small delay to ensure cache is cleared
-    setPage(0); // Reset pagination
-  }, [chainId, refetchPositions, refetchCreatedRaffles, clearCache]);
+    // Only run if chainId actually changed
+    if (prevChainIdRef.current !== undefined && prevChainIdRef.current !== chainId) {
+      console.log('🔄 Network changed, clearing cache and refreshing dashboard data for chainId:', chainId);
+      clearCache(); // Clear cache first
+      setTimeout(() => {
+        refetchPositions();
+        refetchCreatedRaffles();
+      }, 100); // Small delay to ensure cache is cleared
+      setPage(0); // Reset pagination
+    }
+    prevChainIdRef.current = chainId;
+  }, [chainId, clearCache, refetchPositions, refetchCreatedRaffles]);
   
   // Auto-refresh when raffle is cancelled
   useEffect(() => {
-    if (cancelSuccess) {
+    if (cancelRaffleHook.isSuccess) {
+      console.log('✅ [CANCEL] Raffle cancelled successfully, updating UI immediately');
       setCancellingRaffle(null);
+      
+      // Dismiss loading toast and show success
+      toast.success('🎉 Raffle cancelled successfully!', {
+        id: `cancel-${cancellingRaffle}`,
+        duration: 3000,
+      });
+      
+      // Immediate refetch for instant UI update
       refetchPositions();
       refetchCreatedRaffles();
     }
-  }, [cancelSuccess, refetchPositions, refetchCreatedRaffles]);
+  }, [cancelRaffleHook.isSuccess, cancellingRaffle, refetchPositions, refetchCreatedRaffles]);
 
-  // Periodic refresh when transactions are pending (for mobile compatibility)
+  // Faster refresh when transactions are pending (optimized for winner selection)
   useEffect(() => {
     if (selectingWinnerFor || cancellingRaffle) {
+      // More frequent updates for winner selection
+      const refreshInterval = selectingWinnerFor ? 1500 : 3000; // 1.5s for winner selection, 3s for cancel
+      
       const interval = setInterval(() => {
+        console.log('🔄 [REFRESH] Periodic refresh during transaction processing');
         refetchPositions();
         refetchCreatedRaffles();
-      }, 3000); // Refresh every 3 seconds when processing
+      }, refreshInterval);
       
       return () => clearInterval(interval);
     }
   }, [selectingWinnerFor, cancellingRaffle, refetchPositions, refetchCreatedRaffles]);
+  
+
+
+  // Handle winner selection errors
+  useEffect(() => {
+    if (winnerError && selectingWinnerFor) {
+      toast.error('Winner selection failed', {
+        id: `winner-${selectingWinnerFor}`,
+      });
+      setSelectingWinnerFor(null);
+    }
+  }, [winnerError, selectingWinnerFor]);
+  
+  // Handle cancel raffle errors
+  useEffect(() => {
+    if (cancelRaffleHook.error && cancellingRaffle) {
+      toast.error('Raffle cancellation failed', {
+        id: `cancel-${cancellingRaffle}`,
+      });
+      setCancellingRaffle(null);
+    }
+  }, [cancelRaffleHook.error, cancellingRaffle]);
   
   const loading = positionsLoading || rafflesLoading;
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
@@ -109,34 +150,76 @@ export default function RaffleDashboard() {
 
   const handleSelectWinner = useCallback(async (raffleContract: string) => {
     setSelectingWinnerFor(raffleContract);
+    
+    console.log('🏆 [WINNER] Starting winner selection for raffle:', raffleContract);
+    
+    // Show simple loading toast
+    toast.loading('🎯 Selecting winner...', {
+      id: `winner-${raffleContract}`,
+      duration: Infinity, // Keep until we dismiss it
+    });
+    
     try {
       await emergencyReveal(raffleContract);
-      // Toast is handled by useWinnerSelection hook - don't add another one
+      console.log('✅ [WINNER] Winner selection initiated successfully');
     } catch (error) {
+      console.error('❌ [WINNER] Winner selection failed:', error);
+      toast.error('Failed to select winner', {
+        id: `winner-${raffleContract}`,
+      });
       setSelectingWinnerFor(null);
     }
   }, [emergencyReveal]);
 
   const handleCancelRaffle = useCallback(async (raffleContract: string) => {
     setCancellingRaffle(raffleContract);
+    
+    console.log('💫 [CANCEL] Starting raffle cancellation for:', raffleContract);
+    
+    // Show simple loading toast
+    toast.loading('💫 Cancelling raffle...', {
+      id: `cancel-${raffleContract}`,
+      duration: Infinity, // Keep until we dismiss it
+    });
+    
     try {
-      await cancelRaffle(raffleContract);
-      toast.success('Raffle cancelled successfully!');
+      await cancelRaffleHook.cancelRaffle(raffleContract);
+      console.log('✅ [CANCEL] Raffle cancellation initiated successfully');
     } catch (error) {
+      console.error('❌ [CANCEL] Raffle cancellation failed:', error);
+      toast.error('Failed to cancel raffle', {
+        id: `cancel-${raffleContract}`,
+      });
       setCancellingRaffle(null);
-      // Error already handled in hook
     }
-  }, [cancelRaffle]);
+  }, [cancelRaffleHook.cancelRaffle]);
 
-  // Reset button state and refresh data when winner is selected
+  // Immediate refresh when winner is selected - optimized for speed
   useEffect(() => {
-    if (winnerSelected) {
+    if (winnerSelected && selectingWinnerFor) {
+      console.log('✅ [WINNER] Winner selected successfully, updating UI immediately');
+      
+      // Dismiss loading toast and show success
+      toast.success('🏆 Winner selected successfully!', {
+        id: `winner-${selectingWinnerFor}`,
+        duration: 4000,
+      });
+      
+      if (winnerHash) {
+        toast.success(`Transaction: ${winnerHash.slice(0, 10)}...`, {
+          duration: 3000,
+          icon: '🔗',
+        });
+      }
+      
+      // Clear the selecting state immediately
       setSelectingWinnerFor(null);
-      // Immediate refetch for better UX
+      
+      // Immediate refetch for instant UI update
       refetchPositions();
       refetchCreatedRaffles();
     }
-  }, [winnerSelected, refetchPositions, refetchCreatedRaffles]);
+  }, [winnerSelected, selectingWinnerFor, winnerHash, refetchPositions, refetchCreatedRaffles]);
 
   // Only show full loading screen if no cached data available
   if (loading && userPositions.length === 0 && createdRaffles.length === 0) {
@@ -152,7 +235,8 @@ export default function RaffleDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
       {/* Header */}
       <div className={`relative bg-gray-900/95 backdrop-blur-xl border ${styles.containerBorderColor} rounded-2xl shadow-2xl ${styles.containerShadowColor} overflow-hidden`}>
         {/* Animated background grid */}
@@ -290,6 +374,7 @@ export default function RaffleDashboard() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
