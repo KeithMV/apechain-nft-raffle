@@ -30,4 +30,4 @@ export { useApeBalance, useApeDecimals, useApeSymbol, apeTokenUtils } from './us
 
 // Utility Hooks
 export { useAutoRefresh } from './useAutoRefresh';
-export { useCacheInvalidation } from './useCacheInvalidation';
+export { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
