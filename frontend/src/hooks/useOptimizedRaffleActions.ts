@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useOptimizedBuyTickets, useOptimizedSelectWinner } from './useOptimizedTransactionManager';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
+import { parseEther } from 'viem';
 import toast from 'react-hot-toast';
 import { CreatedRaffle } from '../components/RaffleCard';
 
@@ -91,6 +92,13 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     addProcessingRaffle(raffle.raffleContract);
     
     try {
+      // Convert ticket price to wei and calculate total value
+      const ticketPriceWei = typeof raffle.ticketPrice === 'string' 
+        ? parseEther(raffle.ticketPrice)
+        : BigInt(raffle.ticketPrice);
+      
+      const totalValue = ticketPriceWei * BigInt(quantity);
+      
       // Use optimized transaction manager with contract call
       await buyTicketsManager.executeTransaction({
         address: raffle.raffleContract as `0x${string}`,
@@ -103,7 +111,7 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
         }],
         functionName: 'buyTickets',
         args: [BigInt(quantity)],
-        value: BigInt(raffle.ticketPrice) * BigInt(quantity)
+        value: totalValue
       });
       
       // Success handling is done in useEffect
