@@ -75,7 +75,11 @@ export function Web3ErrorBoundary({ children }: { children: ReactNode }) {
               Reload
             </button>
             <button
-              onClick={() => window.ethereum?.request({ method: 'eth_requestAccounts' })}
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.ethereum && window.ethereum.request) {
+                  window.ethereum.request({ method: 'eth_requestAccounts' }).catch(console.error);
+                }
+              }}
               className="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
               Reconnect Wallet
