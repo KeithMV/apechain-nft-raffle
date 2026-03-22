@@ -7,7 +7,7 @@ import React, { useEffect } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createWeb3Modal } from '@web3modal/wagmi/react';
-import { config, apeChain, polygonChain, isMobile, getWalletConfig } from '../config/wagmiUnified';
+import { config, apeChain, polygonChain, getDeviceType, getWalletConfig } from '../config/wagmiUnified';
 import { transactionQueryClient } from '../utils/transactionQueryClient';
 import { NetworkProvider } from '../contexts/NetworkContext';
 import { suppressWalletConnectErrors } from '../utils/walletCleanup';
@@ -24,6 +24,7 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   useEffect(() => {
     const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
     const walletConfig = getWalletConfig();
+    const isMobile = getDeviceType() === 'mobile';
     
     console.log(`🔧 [UNIFIED] Initializing Web3Modal for ${isMobile ? 'mobile' : 'desktop'} device`);
     
@@ -51,6 +52,8 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   }, []); // Remove dependencies to prevent re-initialization
   
   useEffect(() => {
+    const isMobile = getDeviceType() === 'mobile';
+    
     // Suppress WalletConnect console errors
     suppressWalletConnectErrors();
     

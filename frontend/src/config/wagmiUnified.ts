@@ -56,13 +56,6 @@ export const polygonChain = defineChain({
   },
 });
 
-// Device detection utility
-const getDeviceType = () => {
-  if (typeof window === 'undefined') return 'desktop';
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-    ? 'mobile' : 'desktop';
-};
-
 // WalletConnect project ID
 const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
 
@@ -74,12 +67,17 @@ const metadata = {
   icons: [`${process.env.REACT_APP_APP_URL || 'http://localhost:3000'}/favicon.ico`]
 };
 
+// Device detection utility (runtime)
+export const getDeviceType = () => {
+  if (typeof window === 'undefined') return 'desktop';
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+    ? 'mobile' : 'desktop';
+};
+
 // Device-adaptive configuration function
 const createAdaptiveConfig = () => {
-  const deviceType = getDeviceType();
-  const isMobile = deviceType === 'mobile';
-  
-  console.log(`🔧 [UNIFIED CONFIG] Creating ${deviceType} configuration`);
+  // Always create desktop config - device detection will happen in Web3Modal setup
+  console.log('🔧 [UNIFIED CONFIG] Creating unified configuration for all devices');
   
   return defaultWagmiConfig({
     chains: [apeChain, polygonChain],
@@ -88,48 +86,48 @@ const createAdaptiveConfig = () => {
     ssr: false,
     syncConnectedChain: true,
     enableEIP6963: true,
-    enableCoinbase: !isMobile, // Disable Coinbase on mobile only
+    enableCoinbase: true, // Enable for all devices, Web3Modal will handle appropriately
     
-    // Adaptive batch configuration
+    // Standard batch configuration
     batch: {
       multicall: {
-        batchSize: isMobile ? 1024 * 100 : 1024 * 200, // 100KB mobile, 200KB desktop
-        wait: isMobile ? 50 : 32, // Longer wait for mobile networks
+        batchSize: 1024 * 200, // 200KB standard
+        wait: 32, // Standard wait time
       },
     },
     
-    // Adaptive polling interval
-    pollingInterval: isMobile ? 30000 : 15000, // 30s mobile, 15s desktop
+    // Standard polling interval
+    pollingInterval: 15000, // 15s standard
   });
 };
 
 // Export single unified config
 export const config = createAdaptiveConfig();
 
-// Export device type for Web3Modal configuration
-export const deviceType = getDeviceType();
-export const isMobile = deviceType === 'mobile';
-
-// Export wallet configuration for Web3Modal
-export const getWalletConfig = () => ({
-  featuredWalletIds: isMobile ? [
-    WALLET_IDS.METAMASK,
-    WALLET_IDS.TRUST_WALLET,
-    WALLET_IDS.RAINBOW,
-  ] : [
-    WALLET_IDS.METAMASK,
-    WALLET_IDS.RAINBOW,
-    WALLET_IDS.TRUST_WALLET,
-  ],
+// Export wallet configuration for Web3Modal (runtime detection)
+export const getWalletConfig = () => {
+  const isMobile = getDeviceType() === 'mobile';
   
-  includeWalletIds: [
-    WALLET_IDS.METAMASK,
-    WALLET_IDS.TRUST_WALLET,
-    WALLET_IDS.RAINBOW,
-  ],
-  
-  excludeWalletIds: isMobile ? [
-    WALLET_IDS.COINBASE,
-    WALLET_IDS.LEDGER,
-  ] : [],
-});
+  return {
+    featuredWalletIds: isMobile ? [
+      WALLET_IDS.METAMASK,
+      WALLET_IDS.TRUST_WALLET,
+      WALLET_IDS.RAINBOW,
+    ] : [
+      WALLET_IDS.METAMASK,
+      WALLET_IDS.RAINBOW,
+      WALLET_IDS.TRUST_WALLET,
+    ],
+    
+    includeWalletIds: [
+      WALLET_IDS.METAMASK,
+      WALLET_IDS.TRUST_WALLET,
+      WALLET_IDS.RAINBOW,
+    ],
+    
+    excludeWalletIds: isMobile ? [
+      WALLET_IDS.COINBASE,
+      WALLET_IDS.LEDGER,
+    ] : [],
+  };
+};
