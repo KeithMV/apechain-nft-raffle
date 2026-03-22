@@ -28,6 +28,5 @@ export { default as WalletInfo } from './WalletInfo';
 export { default as ApeTokenBalance } from './ApeTokenBalance';
 export { default as MobileBanner } from './MobileBanner';
 
-// Custom Wallet Components
-export { default as CustomWalletModal } from './CustomWalletModal';
-export { default as CustomWalletConnection } from './CustomWalletConnection';
+// Wallet Components
+// Note: Using WalletConnection.tsx as the unified wallet component

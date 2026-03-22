@@ -96,33 +96,4 @@ export const config = defaultWagmiConfig({
   pollingInterval: 15000, // 15 seconds instead of default 4 seconds
 });
 
-// Create Web3Modal with mobile-optimized settings
-createWeb3Modal({
-  wagmiConfig: config,
-  projectId,
-  enableAnalytics: false,
-  enableOnramp: false,
-  enableSwaps: false,
-  themeMode: 'dark',
-  // Mobile-optimized wallet selection
-  featuredWalletIds: [
-    WALLET_IDS.METAMASK,
-    WALLET_IDS.RAINBOW,
-    WALLET_IDS.TRUST_WALLET,
-  ],
-  includeWalletIds: [
-    WALLET_IDS.METAMASK,
-    WALLET_IDS.RAINBOW,
-    WALLET_IDS.TRUST_WALLET,
-  ],
-  excludeWalletIds: [
-    WALLET_IDS.COINBASE,
-    WALLET_IDS.LEDGER,
-  ],
-  allWallets: 'HIDE',
-  defaultChain: apeChain,
-  chainImages: {
-    [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
-    [polygonChain.id]: 'https://polygon.technology/favicon.ico'
-  }
-});
+// Note: Web3Modal is created dynamically in AppProviders.tsx

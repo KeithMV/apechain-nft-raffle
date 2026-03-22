@@ -1,12 +1,12 @@
 /**
- * V4 Contract Hooks - Clean Architecture
- * Focused transaction hooks with extracted concerns
+ * V4 Contract Hooks - Optimized for Performance
+ * High-performance transaction hooks with adaptive configurations
  */
 
 import React from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { useContractVersionManager } from './useContractVersionManager';
-import { useNFTApprovalTransaction, useRaffleCreationTransaction, useTicketPurchaseTransaction, useWinnerCommitTransaction, useWinnerRevealTransaction, useEmergencyWinnerTransaction } from './useWeb3TransactionManager';
+import { useOptimizedBuyTickets, useOptimizedSelectWinner, useOptimizedCreateRaffle, useOptimizedCancelRaffle } from './useOptimizedTransactionManager';
 import { useContractValidator } from './useContractValidator';
 import { RAFFLE_FACTORY_ABI, ERC721_ABI, RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
@@ -31,13 +31,13 @@ export interface CreateRaffleParams {
 }
 
 /**
- * Hook for NFT approval transaction (V4 aware)
+ * Hook for NFT approval transaction (Optimized V4)
  */
 export function useNFTApprovalV4() {
   const chainId = useChainId();
   const { factoryAddress, currentVersion } = useContractVersionManager();
   const { validateNFTApproval } = useContractValidator();
-  const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useNFTApprovalTransaction();
+  const transactionManager = useOptimizedCreateRaffle(); // Use create raffle manager for approvals
 
   const approveNFT = async (nftContract: string) => {
     // Validate input
@@ -46,7 +46,7 @@ export function useNFTApprovalV4() {
       throw new Error(validation.error);
     }
     
-    return await executeTransaction({
+    return await transactionManager.executeTransaction({
       address: nftContract as `0x${string}`,
       abi: ERC721_ABI,
       functionName: 'setApprovalForAll',
@@ -57,29 +57,29 @@ export function useNFTApprovalV4() {
 
   return {
     approveNFT,
-    hash,
-    error,
-    isPending,
-    isConfirming,
-    isSuccess,
+    hash: transactionManager.hash,
+    error: transactionManager.error,
+    isPending: transactionManager.isPending,
+    isConfirming: transactionManager.isConfirming,
+    isSuccess: transactionManager.isSuccess,
     version: currentVersion,
   };
 }
 
 /**
- * Hook for creating raffle with V4 support and rate limit awareness
+ * Hook for creating raffle with V4 support and optimized performance
  */
 export function useCreateRaffleV4() {
   const chainId = useChainId();
   const { factoryAddress, currentVersion, rateLimit, rateLimitText } = useContractVersionManager();
   const { validateRaffleCreation } = useContractValidator();
-  const { invalidateAll } = useCacheInvalidation();
+  const { invalidateRaffleData } = useCacheInvalidation();
   
   const handleSuccess = () => {
-    setTimeout(() => invalidateAll(), 500);
+    setTimeout(() => invalidateRaffleData(), 500);
   };
   
-  const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useRaffleCreationTransaction(handleSuccess);
+  const transactionManager = useOptimizedCreateRaffle(handleSuccess);
 
   const createRaffle = async (params: CreateRaffleParams) => {
     // Validate all inputs
@@ -90,7 +90,7 @@ export function useCreateRaffleV4() {
     
     const ticketPriceWei = parseEther(params.ticketPrice);
     
-    return await executeTransaction({
+    return await transactionManager.executeTransaction({
       address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'createRaffle',
@@ -107,56 +107,98 @@ export function useCreateRaffleV4() {
 
   return {
     createRaffle,
-    hash,
-    error,
-    isPending,
-    isConfirming,
-    isSuccess,
+    hash: transactionManager.hash,
+    error: transactionManager.error,
+    isPending: transactionManager.isPending,
+    isConfirming: transactionManager.isConfirming,
+    isSuccess: transactionManager.isSuccess,
     version: currentVersion,
     rateLimit,
     rateLimitText
   };
 }
 /**
- * Hook for buying raffle tickets (V4 aware)
+ * Hook for buying raffle tickets (Optimized V4)
  */
 export function useBuyTickets() {
   const chainId = useChainId();
   const { validateTicketPurchase } = useContractValidator();
-  const { invalidateAll } = useCacheInvalidation();
+  const { invalidateRaffleData } = useCacheInvalidation();
   
-  const handleSuccess = () => invalidateAll();
+  const handleSuccess = () => invalidateRaffleData();
   
-  const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useTicketPurchaseTransaction();
+  const transactionManager = useOptimizedBuyTickets();
 
-  const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string) => {
-    return await MultiChainErrorHandler.withRetry(async () => {
-      // Validate all inputs
-      const validation = validateTicketPurchase({ raffleContract, quantity, ticketPrice });
-      if (!validation.isValid) {
-        throw new Error(validation.error);
-      }
-      
-      const ticketPriceWei = parseEther(ticketPrice);
-      const totalCost = ticketPriceWei * BigInt(quantity);
-      
-      return await executeTransaction({
-        address: raffleContract as `0x${string}`,
-        abi: RAFFLE_CONTRACT_ABI,
-        functionName: 'buyTickets',
-        args: [BigInt(quantity)],
-        value: totalCost,
-      });
-    }, chainId, 3, 2000); // 3 retries with 2s delay
+  const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string, userAddress?: string) => {
+    // Validate all inputs
+    const validation = validateTicketPurchase({ raffleContract, quantity, ticketPrice });
+    if (!validation.isValid) {
+      throw new Error(validation.error);
+    }
+    
+    const ticketPriceWei = parseEther(ticketPrice);
+    const totalCost = ticketPriceWei * BigInt(quantity);
+    
+    // Calculate optimistic data for better UX
+    const optimisticData = {
+      raffleId: raffleContract,
+      userAddress,
+      expectedTicketCount: quantity, // This would need to be current + quantity in real implementation
+    };
+    
+    return await transactionManager.executeTransaction({
+      address: raffleContract as `0x${string}`,
+      abi: RAFFLE_CONTRACT_ABI,
+      functionName: 'buyTickets',
+      args: [BigInt(quantity)],
+      value: totalCost,
+    });
   };
 
   return {
     buyTickets,
-    hash,
-    error,
-    isPending,
-    isConfirming,
-    isSuccess,
+    hash: transactionManager.hash,
+    error: transactionManager.error,
+    isPending: transactionManager.isPending,
+    isConfirming: transactionManager.isConfirming,
+    isSuccess: transactionManager.isSuccess,
+    retryTransaction: transactionManager.retryTransaction,
+  };
+}
+
+/**
+ * Hook for cancelling raffle (Optimized V4)
+ */
+export function useCancelRaffleV4() {
+  const chainId = useChainId();
+  const { invalidateRaffleData } = useCacheInvalidation();
+  
+  const handleSuccess = () => invalidateRaffleData();
+  
+  const transactionManager = useOptimizedCancelRaffle();
+
+  const cancelRaffle = async (raffleContract: string) => {
+    // Simple validation
+    if (!raffleContract || !/^0x[a-fA-F0-9]{40}$/.test(raffleContract)) {
+      throw new Error('Invalid raffle contract address');
+    }
+    
+    return await transactionManager.executeTransaction({
+      address: raffleContract as `0x${string}`,
+      abi: RAFFLE_CONTRACT_ABI,
+      functionName: 'cancelRaffle',
+      chainId: chainId,
+    });
+  };
+
+  return {
+    cancelRaffle,
+    hash: transactionManager.hash,
+    error: transactionManager.error,
+    isPending: transactionManager.isPending,
+    isConfirming: transactionManager.isConfirming,
+    isSuccess: transactionManager.isSuccess,
+    retryTransaction: transactionManager.retryTransaction,
   };
 }
 
@@ -213,153 +255,5 @@ export function useRateLimitChecker(userAddress?: string) {
     rateLimit,
     rateLimitText,
     version: currentVersion
-  };
-}
-
-/**
- * Hook for committing randomness (winner selection step 1) - V4 aware
- */
-export function useCommitRandomnessV4() {
-  const { validateWinnerSelection } = useContractValidator();
-  const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useWinnerCommitTransaction();
-
-  const commitRandomness = async (raffleContract: string, commitHash: string) => {
-    // Validate inputs
-    const validation = validateWinnerSelection({ raffleContract, commitHash });
-    if (!validation.isValid) {
-      throw new Error(validation.error);
-    }
-
-    return await executeTransaction({
-      address: raffleContract as `0x${string}`,
-      abi: RAFFLE_CONTRACT_ABI,
-      functionName: 'commitRandomness',
-      args: [commitHash as `0x${string}`],
-    });
-  };
-
-  return {
-    commitRandomness,
-    hash,
-    error,
-    isPending,
-    isConfirming,
-    isSuccess,
-  };
-}
-
-/**
- * Hook for revealing randomness and selecting winner (step 2) - V4 aware
- */
-export function useRevealWinnerV4() {
-  const { validateWinnerSelection } = useContractValidator();
-  const { invalidateAll } = useCacheInvalidation();
-  
-  const handleSuccess = () => invalidateAll();
-  
-  const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useWinnerRevealTransaction(handleSuccess);
-
-  const revealAndSelectWinner = async (raffleContract: string, nonce: bigint) => {
-    // Validate inputs
-    const validation = validateWinnerSelection({ raffleContract, nonce });
-    if (!validation.isValid) {
-      throw new Error(validation.error);
-    }
-
-    return await executeTransaction({
-      address: raffleContract as `0x${string}`,
-      abi: RAFFLE_CONTRACT_ABI,
-      functionName: 'revealAndSelectWinner',
-      args: [nonce],
-    });
-  };
-
-  return {
-    revealAndSelectWinner,
-    hash,
-    error,
-    isPending,
-    isConfirming,
-    isSuccess,
-  };
-}
-
-/**
- * Hook for cancelling raffle (V4 aware)
- */
-export function useCancelRaffleV4() {
-  const { validateWinnerSelection } = useContractValidator();
-  const { invalidateAll } = useCacheInvalidation();
-  const chainId = useChainId();
-  
-  const { writeContract, data: hash, error, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
-
-  // Handle success with cache invalidation
-  React.useEffect(() => {
-    if (isSuccess) {
-      setTimeout(() => invalidateAll(), 500);
-    }
-  }, [isSuccess, invalidateAll]);
-
-  const cancelRaffle = async (raffleContract: string) => {
-    // Validate inputs
-    const validation = validateWinnerSelection({ raffleContract });
-    if (!validation.isValid) {
-      throw new Error(validation.error);
-    }
-
-    return writeContract({
-      address: raffleContract as `0x${string}`,
-      abi: RAFFLE_CONTRACT_ABI,
-      functionName: 'cancelRaffle',
-      chainId: chainId,
-    });
-  };
-
-  return {
-    cancelRaffle,
-    hash,
-    error,
-    isPending,
-    isConfirming,
-    isSuccess,
-  };
-}
-
-/**
- * Hook for emergency winner selection (if reveal deadline passes) - V4 aware
- */
-export function useEmergencyWinnerV4() {
-  const { validateWinnerSelection } = useContractValidator();
-  const { invalidateAll } = useCacheInvalidation();
-  
-  const handleSuccess = () => invalidateAll();
-  
-  const { hash, error, isPending, isConfirming, isSuccess, executeTransaction } = useEmergencyWinnerTransaction(handleSuccess);
-
-  const emergencySelectWinner = async (raffleContract: string) => {
-    // Validate inputs
-    const validation = validateWinnerSelection({ raffleContract });
-    if (!validation.isValid) {
-      throw new Error(validation.error);
-    }
-
-    return await executeTransaction({
-      address: raffleContract as `0x${string}`,
-      abi: RAFFLE_CONTRACT_ABI,
-      functionName: 'emergencySelectWinner',
-    });
-  };
-
-  return {
-    emergencySelectWinner,
-    hash,
-    error,
-    isPending,
-    isConfirming,
-    isSuccess,
   };
 }
