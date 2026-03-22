@@ -40,6 +40,17 @@ export default function BrowseRaffles() {
   const BATCH_SIZE = 10;
   const { raffles, loading, refetch } = useAllRafflesV4(BATCH_SIZE, currentPage * BATCH_SIZE);
   
+  // Listen for cache invalidation events to trigger refetch
+  useEffect(() => {
+    const handleCacheInvalidated = () => {
+      console.log('🔄 [BROWSE] Cache invalidated, refetching data...');
+      refetch();
+    };
+    
+    window.addEventListener('cache-invalidated', handleCacheInvalidated);
+    return () => window.removeEventListener('cache-invalidated', handleCacheInvalidated);
+  }, [refetch]);
+  
   // Consolidated optimized raffle actions hook - simplified without progress tracking
   const {
     processingRaffles,

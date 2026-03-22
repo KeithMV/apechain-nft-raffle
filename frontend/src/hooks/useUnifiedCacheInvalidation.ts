@@ -108,10 +108,21 @@ export function useUnifiedCacheInvalidation() {
     queryClient.invalidateQueries({ queryKey: ['raffles'] });
     queryClient.invalidateQueries({ queryKey: ['user-positions'] });
     queryClient.invalidateQueries({ queryKey: ['created-raffles'] });
+    queryClient.invalidateQueries({ queryKey: ['all-raffles'] });
+    
+    // Also invalidate any React Query queries that might exist
+    queryClient.invalidateQueries({ queryKey: ['raffles-v4'] });
+    queryClient.invalidateQueries({ queryKey: ['positions-v4'] });
+    queryClient.invalidateQueries({ queryKey: ['created-v4'] });
     
     if (raffleContract) {
       queryClient.invalidateQueries({ queryKey: ['raffle', raffleContract] });
     }
+    
+    // Dispatch custom event to trigger refetch in components using custom cache
+    window.dispatchEvent(new CustomEvent('cache-invalidated', { 
+      detail: { raffleContract, timestamp: Date.now() } 
+    }));
   }, [queryClient, clearAllCaches]);
 
   // Emergency cache reset (use sparingly)
