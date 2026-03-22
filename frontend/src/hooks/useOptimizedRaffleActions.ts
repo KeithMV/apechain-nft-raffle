@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useOptimizedBuyTickets, useOptimizedSelectWinner } from './useOptimizedTransactionManager';
+import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import toast from 'react-hot-toast';
 import { CreatedRaffle } from '../components/RaffleCard';
 
@@ -29,6 +30,9 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
   // Optimized transaction managers - no progress system needed
   const buyTicketsManager = useOptimizedBuyTickets();
   const winnerSelectionManager = useOptimizedSelectWinner();
+  
+  // Unified cache invalidation
+  const { quickInvalidate } = useUnifiedCacheInvalidation();
 
   // Helper functions
   const addProcessingRaffle = useCallback((raffleContract: string) => {
@@ -160,6 +164,9 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
       removeProcessingRaffle(currentRaffleContract);
       clearTicketQuantities();
       
+      // Quick cache invalidation for immediate UI feedback
+      quickInvalidate(currentRaffleContract);
+      
       // Refetch data to show updated ticket counts
       refetch();
     }
@@ -168,7 +175,8 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     currentRaffleContract,
     refetch, 
     clearTicketQuantities,
-    removeProcessingRaffle
+    removeProcessingRaffle,
+    quickInvalidate
   ]);
 
   // Effect: Handle buy tickets error
@@ -183,13 +191,18 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     if (winnerSelectionManager.isSuccess && currentRaffleContract) {
       // Clear processing states and refetch data
       removeProcessingRaffle(currentRaffleContract);
+      
+      // Quick cache invalidation for immediate UI feedback
+      quickInvalidate(currentRaffleContract);
+      
       refetch();
     }
   }, [
     winnerSelectionManager.isSuccess, 
     currentRaffleContract,
     refetch,
-    removeProcessingRaffle
+    removeProcessingRaffle,
+    quickInvalidate
   ]);
 
   // Effect: Handle winner selection error

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import toast from 'react-hot-toast';
 import { getProgressiveTimeout, optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
+import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 
 export interface OptimizedTransactionConfig {
   transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle';
@@ -49,6 +50,9 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastContractCall, setLastContractCall] = useState<any>(null);
   
+  // Unified cache invalidation
+  const { invalidateAfterTransaction, quickInvalidate } = useUnifiedCacheInvalidation();
+  
   const timeout = getProgressiveTimeout(transactionType, attempt);
   
   const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
@@ -81,10 +85,13 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       lastSuccessHash.current = hash;
       setIsProcessing(false);
       
-      // Invalidate relevant queries
-      if (optimisticData?.raffleId) {
-        optimisticUpdateHelpers.invalidateTransactionQueries(transactionQueryClient, optimisticData.raffleId);
-      }
+      // Unified cache invalidation for immediate frontend updates
+      invalidateAfterTransaction({
+        raffleContract: optimisticData?.raffleId,
+        userAddress: optimisticData?.userAddress,
+        transactionType,
+        immediate: true
+      });
       
       if (enableToasts && successMessage) {
         toast.success(successMessage);
@@ -96,7 +103,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       
       setAttempt(0); // Reset attempt counter on success
     }
-  }, [isSuccess, hash, successMessage, onSuccess, enableToasts, optimisticData]);
+  }, [isSuccess, hash, successMessage, onSuccess, enableToasts, optimisticData, transactionType, invalidateAfterTransaction]);
 
   // Handle transaction errors with smart retry logic
   useEffect(() => {

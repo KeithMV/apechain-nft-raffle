@@ -1,25 +1,33 @@
 import { useCallback } from 'react';
 import { parseAbi } from 'viem';
 import { useOptimizedTransactionManager } from './useOptimizedTransactionManager';
-import { useCacheInvalidation } from './useCacheInvalidation';
+import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 
 const RAFFLE_ABI = parseAbi([
   'function cancelRaffle() external',
 ]);
 
 export function useOptimizedCancelRaffle() {
-  const { invalidateRaffleData } = useCacheInvalidation();
+  const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
   
-  const handleSuccess = useCallback(() => {
-    invalidateRaffleData();
-  }, [invalidateRaffleData]);
+  const handleSuccess = useCallback((hash: string, raffleAddress: string) => {
+    // Use unified cache invalidation for immediate frontend updates
+    invalidateAfterTransaction({
+      raffleContract: raffleAddress,
+      transactionType: 'cancel-raffle',
+      immediate: true
+    });
+  }, [invalidateAfterTransaction]);
   
   const transactionManager = useOptimizedTransactionManager({
-    transactionType: 'cancel-raffle', // Use correct transaction type
+    transactionType: 'cancel-raffle',
     successMessage: '', // Disable built-in toast - we'll handle it in dashboard
-    onSuccess: handleSuccess,
     enableToasts: false, // Disable all built-in toasts
     enableOptimisticUpdates: false,
+    onSuccess: (hash) => {
+      // We'll handle success in the component that calls cancelRaffle
+      console.log('✅ [CANCEL] Transaction confirmed with hash:', hash);
+    },
   });
 
   const cancelRaffle = useCallback(async (raffleAddress: string) => {
@@ -28,12 +36,19 @@ export function useOptimizedCancelRaffle() {
       throw new Error('Invalid raffle address');
     }
     
-    return await transactionManager.executeTransaction({
+    const result = await transactionManager.executeTransaction({
       address: raffleAddress as `0x${string}`,
       abi: RAFFLE_ABI,
       functionName: 'cancelRaffle',
     });
-  }, [transactionManager]);
+    
+    // Handle success with unified cache invalidation
+    if (result) {
+      handleSuccess(result, raffleAddress);
+    }
+    
+    return result;
+  }, [transactionManager, handleSuccess]);
 
   return {
     cancelRaffle,
