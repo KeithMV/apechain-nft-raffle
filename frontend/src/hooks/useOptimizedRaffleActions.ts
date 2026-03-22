@@ -1,7 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useBuyTickets } from './useRaffleContractV4';
-import { useWinnerSelection } from './useWinnerSelection';
-import { useTransactionProgress } from '../components/TransactionProgress';
+import { useOptimizedBuyTickets, useOptimizedSelectWinner } from './useOptimizedTransactionManager';
 import toast from 'react-hot-toast';
 import { CreatedRaffle } from '../components/RaffleCard';
 
@@ -20,18 +18,6 @@ export interface RaffleActionsHandlers {
 export interface UseOptimizedRaffleActionsReturn extends RaffleActionsState, RaffleActionsHandlers {
   isProcessing: (raffleContract: string) => boolean;
   refetchData: () => void;
-  // Progress UI state
-  progressState: {
-    isVisible: boolean;
-    transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle';
-    hash?: string;
-    error?: Error | null;
-  };
-  progressHandlers: {
-    showProgress: (type: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle') => void;
-    showError: (error: Error) => void;
-    hideProgress: () => void;
-  };
 }
 
 export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaffleActionsReturn {
@@ -40,12 +26,9 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
   const [ticketQuantities, setTicketQuantities] = useState<{ [key: string]: number }>({});
   const [currentRaffleContract, setCurrentRaffleContract] = useState<string | null>(null);
 
-  // Progress UI management
-  const progressManager = useTransactionProgress();
-
-  // Web3 hooks with optimized transaction managers
-  const buyTicketsHook = useBuyTickets();
-  const winnerSelectionHook = useWinnerSelection();
+  // Optimized transaction managers - no progress system needed
+  const buyTicketsManager = useOptimizedBuyTickets();
+  const winnerSelectionManager = useOptimizedSelectWinner();
 
   // Helper functions
   const addProcessingRaffle = useCallback((raffleContract: string) => {
@@ -84,7 +67,7 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     setTicketQuantities({});
   }, []);
 
-  // Optimized buy tickets handler with progress tracking
+  // Optimized buy tickets handler - simplified without progress tracking
   const handleBuyTickets = useCallback(async (raffle: CreatedRaffle) => {
     const quantity = ticketQuantities[raffle.raffleContract] || 1;
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
@@ -100,146 +83,121 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
       return;
     }
     
-    // Start processing and show progress
+    // Start processing
     addProcessingRaffle(raffle.raffleContract);
-    progressManager.showProgress('buy-tickets');
     
     try {
-      await buyTicketsHook.buyTickets(
-        raffle.raffleContract, 
-        quantity, 
-        raffle.ticketPrice,
-        // Pass user address for optimistic updates if available
-        undefined // We'll get this from wagmi context
-      );
+      // Use optimized transaction manager with contract call
+      await buyTicketsManager.executeTransaction({
+        address: raffle.raffleContract as `0x${string}`,
+        abi: [{
+          name: 'buyTickets',
+          type: 'function',
+          stateMutability: 'payable',
+          inputs: [{ name: 'quantity', type: 'uint256' }],
+          outputs: []
+        }],
+        functionName: 'buyTickets',
+        args: [BigInt(quantity)],
+        value: BigInt(raffle.ticketPrice) * BigInt(quantity)
+      });
       
       // Success handling is done in useEffect
     } catch (error) {
       console.error('Failed to buy tickets:', error);
-      progressManager.showError(error as Error);
       removeProcessingRaffle(raffle.raffleContract);
-      
-      // Hide progress after 3 seconds
-      setTimeout(() => {
-        progressManager.hideProgress();
-      }, 3000);
     }
   }, [
     ticketQuantities, 
-    buyTicketsHook.buyTickets, 
+    buyTicketsManager.executeTransaction, 
     isProcessing, 
     addProcessingRaffle, 
-    removeProcessingRaffle,
-    progressManager
+    removeProcessingRaffle
   ]);
 
-  // Optimized winner selection handler with progress tracking
+  // Optimized winner selection handler - simplified without progress tracking
   const handleWinnerSelection = useCallback(async (raffle: CreatedRaffle) => {
     // Check if already processing
     if (isProcessing(raffle.raffleContract)) {
       return;
     }
     
-    // Start processing and show progress
+    // Start processing
     addProcessingRaffle(raffle.raffleContract);
-    progressManager.showProgress('select-winner');
     
     try {
-      await winnerSelectionHook.startWinnerSelection(raffle.raffleContract);
+      // Use optimized transaction manager with emergency reveal
+      await winnerSelectionManager.executeTransaction({
+        address: raffle.raffleContract as `0x${string}`,
+        abi: [{
+          name: 'emergencyReveal',
+          type: 'function',
+          stateMutability: 'nonpayable',
+          inputs: [],
+          outputs: []
+        }],
+        functionName: 'emergencyReveal'
+      });
+      
       // Success handling is done in useEffect
     } catch (error) {
       console.error('Failed to start winner selection:', error);
-      progressManager.showError(error as Error);
       removeProcessingRaffle(raffle.raffleContract);
-      
-      // Hide progress after 3 seconds
-      setTimeout(() => {
-        progressManager.hideProgress();
-      }, 3000);
     }
   }, [
-    winnerSelectionHook.startWinnerSelection, 
+    winnerSelectionManager.executeTransaction, 
     isProcessing, 
     addProcessingRaffle, 
-    removeProcessingRaffle,
-    progressManager
+    removeProcessingRaffle
   ]);
 
 
 
-  // Effect: Track winner selection progress
+  // Effect: Handle buy tickets success
   useEffect(() => {
-    if (winnerSelectionHook.commitSuccess || winnerSelectionHook.revealSuccess) {
-      // Winner selection is a two-step process, show simple feedback
-      if (winnerSelectionHook.commitSuccess) {
-        toast.success('Commit phase completed');
-      }
-    }
-  }, [winnerSelectionHook.commitSuccess, winnerSelectionHook.revealSuccess]);
-
-  // Effect: Handle buy success
-  useEffect(() => {
-    if (buyTicketsHook.isSuccess && currentRaffleContract) {
-      // Show success
-      toast.success('Tickets purchased successfully!');
-      
+    if (buyTicketsManager.isSuccess && currentRaffleContract) {
       // Clear processing states and ticket quantities
       removeProcessingRaffle(currentRaffleContract);
       clearTicketQuantities();
       
       // Refetch data to show updated ticket counts
       refetch();
-      
-      // Hide progress after 2 seconds
-      setTimeout(() => {
-        progressManager.hideProgress();
-      }, 2000);
     }
   }, [
-    buyTicketsHook.isSuccess, 
-    buyTicketsHook.hash,
+    buyTicketsManager.isSuccess, 
     currentRaffleContract,
     refetch, 
     clearTicketQuantities,
-    removeProcessingRaffle,
-    progressManager
+    removeProcessingRaffle
   ]);
 
-  // Effect: Handle buy error
+  // Effect: Handle buy tickets error
   useEffect(() => {
-    if (buyTicketsHook.error && currentRaffleContract) {
-      progressManager.showError(buyTicketsHook.error);
+    if (buyTicketsManager.error && currentRaffleContract) {
       removeProcessingRaffle(currentRaffleContract);
-      
-      // Hide progress after 3 seconds
-      setTimeout(() => {
-        progressManager.hideProgress();
-      }, 3000);
     }
-  }, [buyTicketsHook.error, currentRaffleContract, removeProcessingRaffle, progressManager]);
+  }, [buyTicketsManager.error, currentRaffleContract, removeProcessingRaffle]);
 
   // Effect: Handle winner selection success
   useEffect(() => {
-    if (winnerSelectionHook.revealSuccess && currentRaffleContract) {
-      // Show success
-      toast.success('Winner selected successfully!');
-      
+    if (winnerSelectionManager.isSuccess && currentRaffleContract) {
       // Clear processing states and refetch data
       removeProcessingRaffle(currentRaffleContract);
       refetch();
-      
-      // Hide progress after 2 seconds
-      setTimeout(() => {
-        progressManager.hideProgress();
-      }, 2000);
     }
   }, [
-    winnerSelectionHook.revealSuccess, 
+    winnerSelectionManager.isSuccess, 
     currentRaffleContract,
     refetch,
-    removeProcessingRaffle,
-    progressManager
+    removeProcessingRaffle
   ]);
+
+  // Effect: Handle winner selection error
+  useEffect(() => {
+    if (winnerSelectionManager.error && currentRaffleContract) {
+      removeProcessingRaffle(currentRaffleContract);
+    }
+  }, [winnerSelectionManager.error, currentRaffleContract, removeProcessingRaffle]);
 
   return {
     // State
@@ -255,18 +213,5 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     // Utilities
     isProcessing,
     refetchData: refetch,
-    
-    // Progress UI state and handlers
-    progressState: {
-      isVisible: progressManager.isVisible,
-      transactionType: progressManager.transactionType,
-      hash: progressManager.hash,
-      error: progressManager.error,
-    },
-    progressHandlers: {
-      showProgress: progressManager.showProgress,
-      showError: progressManager.showError,
-      hideProgress: progressManager.hideProgress,
-    },
   };
 }

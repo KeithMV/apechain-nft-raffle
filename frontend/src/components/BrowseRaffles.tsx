@@ -2,11 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import RaffleCard, { CreatedRaffle } from './RaffleCard';
 import RaffleFilters from './RaffleFilters';
-import { TransactionProgress } from './TransactionProgress';
 import { useAllRafflesV4 } from '../hooks/useRafflePositionsV4';
 import { useOptimizedRaffleActions } from '../hooks/useOptimizedRaffleActions';
 // Phase 10: Enhanced performance utilities
-import { throttle, performanceMonitor, measureSync, useVirtualScrolling } from '../utils/performance';
+import { throttle, measureSync } from '../utils/performance';
 import { useNetwork } from '../contexts/NetworkContext';
 
 
@@ -41,15 +40,13 @@ export default function BrowseRaffles() {
   const BATCH_SIZE = 10;
   const { raffles, loading, refetch } = useAllRafflesV4(BATCH_SIZE, currentPage * BATCH_SIZE);
   
-  // Consolidated optimized raffle actions hook with progress tracking
+  // Consolidated optimized raffle actions hook - simplified without progress tracking
   const {
     processingRaffles,
     ticketQuantities,
     handleBuyTickets,
     handleWinnerSelection,
-    setTicketQuantity,
-    progressState,
-    progressHandlers
+    setTicketQuantity
   } = useOptimizedRaffleActions(refetch);
 
   useEffect(() => {
@@ -114,20 +111,6 @@ export default function BrowseRaffles() {
 
   return (
     <>
-      {/* Transaction Progress Modal */}
-      <TransactionProgress
-        isVisible={progressState.isVisible}
-        transactionType={progressState.transactionType}
-        hash={progressState.hash}
-        error={progressState.error}
-        onCancel={progressHandlers.hideProgress}
-        onRetry={async () => {
-          // Retry logic would need to be implemented based on the transaction type
-          // For now, just hide the progress
-          progressHandlers.hideProgress();
-        }}
-      />
-      
       <div className={`relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border ${styles.borderColor} rounded-3xl shadow-2xl ${styles.shadowColor} overflow-hidden`}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(16,185,129,0.1),transparent_50%)] animate-pulse"></div>
       <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(-45deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:30px_30px]"></div>

@@ -39,7 +39,7 @@ export function WalletConnection() {
   // Mobile connection detection and recovery
   useEffect(() => {
     const detectConnection = () => {
-      if (!isConnected && window.ethereum?.selectedAddress) {
+      if (!isConnected && window.ethereum && (window.ethereum as any).selectedAddress) {
         window.dispatchEvent(new Event('focus'));
       }
     };

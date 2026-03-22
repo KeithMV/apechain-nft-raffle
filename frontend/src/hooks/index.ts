@@ -25,7 +25,7 @@ export {
 
 // Specialized Hooks
 export { useWinnerSelection } from './useWinnerSelection';
-export { useCancelRaffle } from './useCancelRaffle';
+export { useOptimizedCancelRaffle } from './useOptimizedCancelRaffle';
 export { useApeBalance, useApeDecimals, useApeSymbol, apeTokenUtils } from './useApeToken';
 
 // Utility Hooks
