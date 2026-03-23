@@ -30,5 +30,5 @@ echo "🔄 Invalidating CloudFront cache..."
 aws cloudfront create-invalidation --distribution-id EH7R5RBQF66DL --paths "/*"
 
 echo "✅ Deployment complete!"
-echo "🌐 Live URL: https://d3mce6qq270l98.cloudfront.net"
+echo "🌐 Live URL: https://web3raffles.io"
 echo "⏱️ Cache invalidation may take 1-2 minutes to propagate globally"
