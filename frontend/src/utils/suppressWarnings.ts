@@ -2,6 +2,7 @@
 export const suppressWeb3ModalWarnings = () => {
   const originalWarn = console.warn;
   const originalLog = console.log;
+  const originalError = console.error;
   
   console.warn = (...args) => {
     const message = args.join(' ');
@@ -17,6 +18,22 @@ export const suppressWeb3ModalWarnings = () => {
     }
     
     originalWarn.apply(console, args);
+  };
+  
+  console.error = (...args) => {
+    const message = args.join(' ');
+    
+    // Suppress Web3Modal API errors (400 status codes)
+    if (message.includes('HTTP status code: 400') ||
+        message.includes('searchWalletByIds') ||
+        message.includes('FetchUtil.get') ||
+        message.includes('HTTP request failed') && message.includes('Status: 401') ||
+        message.includes('polygon-rpc.com') ||
+        message.includes('API key disabled')) {
+      return;
+    }
+    
+    originalError.apply(console, args);
   };
   
   // Suppress vendor logging in production
