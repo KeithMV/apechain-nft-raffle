@@ -7,10 +7,10 @@ set -e
 
 echo "🚀 Deploying ApeChain NFT Raffle to STAGING..."
 
-# Ensure we're on develop branch
+# Ensure we're on staging branch
 CURRENT_BRANCH=$(git branch --show-current)
-if [ "$CURRENT_BRANCH" != "develop" ]; then
-  echo "❌ Must be on develop branch for staging deployment"
+if [ "$CURRENT_BRANCH" != "staging" ]; then
+  echo "❌ Must be on staging branch for staging deployment"
   echo "Current branch: $CURRENT_BRANCH"
   exit 1
 fi
@@ -38,8 +38,8 @@ echo "🔄 Invalidating Staging CloudFront cache..."
 aws cloudfront create-invalidation --distribution-id E2OQG8N4GFFTXI --paths "/*"
 
 echo "✅ Staging deployment complete!"
-echo "🌐 Staging URL: https://d2v74bfsjdq40l.cloudfront.net"
+echo "🌐 Staging URL: https://d1784e9dgxn2du.cloudfront.net"
 echo "⏱️ Cache invalidation may take 1-2 minutes to propagate globally"
 echo ""
 echo "🔍 Environment: STAGING (testnet 33111)"
-echo "📋 To promote to production: merge develop → main"
+echo "📋 To promote to production: merge staging → main"

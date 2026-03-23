@@ -2,7 +2,7 @@ name: Deploy to Staging
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ staging ]
   workflow_dispatch:
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
         CI=false yarn build:staging
       env:
         REACT_APP_APP_NAME: "ApeChain NFT Raffles (STAGING)"
-        REACT_APP_APP_URL: "https://staging.apechainraffles.io"
+        REACT_APP_APP_URL: "https://d1784e9dgxn2du.cloudfront.net"
         REACT_APP_ENV: "staging"
         REACT_APP_ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
       
@@ -47,5 +47,5 @@ jobs:
     - name: Staging deployment complete
       run: |
         echo "✅ Staging deployment complete!"
-        echo "🌐 Staging URL: https://staging.apechainraffles.io"
+        echo "🌐 Staging URL: https://d1784e9dgxn2du.cloudfront.net"
         echo "⏱️ Cache invalidation may take 1-2 minutes to propagate"
