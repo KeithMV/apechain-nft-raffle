@@ -26,7 +26,7 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Polygon chain - unified RPC configuration
+// Polygon chain - unified RPC configuration (removed problematic endpoints)
 export const polygonChain = defineChain({
   id: 137,
   name: 'Polygon',
@@ -39,7 +39,6 @@ export const polygonChain = defineChain({
     default: {
       http: [
         'https://polygon-mainnet.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78',
-        'https://polygon-rpc.com',
         'https://rpc.ankr.com/polygon',
         'https://polygon.llamarpc.com',
         'https://polygon-mainnet.public.blastapi.io',

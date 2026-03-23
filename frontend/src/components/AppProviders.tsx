@@ -28,27 +28,32 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
     
     console.log(`🔧 [UNIFIED] Initializing Web3Modal for ${isMobile ? 'mobile' : 'desktop'} device`);
     
-    createWeb3Modal({
-      wagmiConfig: config,
-      projectId,
-      enableAnalytics: false,
-      enableOnramp: false,
-      enableSwaps: false,
-      themeMode: 'dark',
-      
-      // Device-adaptive wallet configuration
-      featuredWalletIds: walletConfig.featuredWalletIds,
-      includeWalletIds: walletConfig.includeWalletIds,
-      excludeWalletIds: walletConfig.excludeWalletIds,
-      
-      allWallets: 'HIDE',
-      defaultChain: apeChain,
-      
-      chainImages: {
-        [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
-        [polygonChain.id]: 'https://polygon.technology/favicon.ico'
-      }
-    });
+    try {
+      createWeb3Modal({
+        wagmiConfig: config,
+        projectId,
+        enableAnalytics: false,
+        enableOnramp: false,
+        enableSwaps: false,
+        themeMode: 'dark',
+        
+        // Device-adaptive wallet configuration
+        featuredWalletIds: walletConfig.featuredWalletIds,
+        includeWalletIds: walletConfig.includeWalletIds,
+        excludeWalletIds: walletConfig.excludeWalletIds,
+        
+        allWallets: 'HIDE',
+        defaultChain: apeChain,
+        
+        chainImages: {
+          [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
+          [polygonChain.id]: 'https://polygon.technology/favicon.ico'
+        }
+      });
+    } catch (error) {
+      console.warn('🔧 [UNIFIED] Web3Modal initialization had non-critical errors, continuing...');
+      // Don't throw - Web3Modal will still work even with some API failures
+    }
   }, []); // Remove dependencies to prevent re-initialization
   
   useEffect(() => {
