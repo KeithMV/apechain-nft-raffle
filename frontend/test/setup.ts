@@ -51,23 +51,6 @@ vi.mock('@web3modal/wagmi/react', () => ({
   createWeb3Modal: vi.fn(),
 }))
 
-// Mock mobile connection manager
-vi.mock('../src/hooks/useMobileConnectionManager', () => ({
-  useMobileConnectionManager: vi.fn(() => ({
-    isMobileDevice: false,
-    isConnecting: false,
-    connectionAttempts: 0,
-    hasWebSocketError: false,
-    canRetry: true,
-  })),
-  getMobileConnectionDiagnostics: vi.fn(() => ({
-    isIOS: false,
-    isAndroid: false,
-    onLine: true,
-    connectionType: 'wifi',
-  })),
-}))
-
 // Mock mobile safe wagmi config
 vi.mock('../src/config/mobileSafeWagmi', () => ({
   getDeviceSettings: vi.fn(() => ({
