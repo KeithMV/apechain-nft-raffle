@@ -1,11 +1,10 @@
 /**
  * Unified Cache Invalidation System
- * Coordinates React Query cache and custom cache systems for real-time frontend updates
+ * Coordinates React Query cache and localStorage cleanup for real-time frontend updates
  */
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { useRaffleCacheManager } from './useRaffleCacheManager';
 import { optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
 
 export interface CacheInvalidationOptions {
@@ -20,7 +19,18 @@ export interface CacheInvalidationOptions {
  */
 export function useUnifiedCacheInvalidation() {
   const queryClient = useQueryClient();
-  const { clearAllCaches, clearChainCache } = useRaffleCacheManager();
+  
+  // Clear localStorage cache entries
+  const clearAllCaches = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('raffle') || key.includes('cache') || key.includes('user_positions') || key.includes('created_raffles')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
+    console.log('🧹 [CACHE] All localStorage caches cleared');
+  }, []);
 
   // Comprehensive cache invalidation for transaction completion
   const invalidateAfterTransaction = useCallback(async (options: CacheInvalidationOptions = {}) => {
@@ -95,7 +105,7 @@ export function useUnifiedCacheInvalidation() {
     } catch (error) {
       console.error('❌ [CACHE] Cache invalidation failed:', error);
     }
-  }, [queryClient, clearAllCaches, clearChainCache]);
+  }, [queryClient, clearAllCaches]);
 
   // Quick invalidation for immediate UI feedback
   const quickInvalidate = useCallback((raffleContract?: string) => {
