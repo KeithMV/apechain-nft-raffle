@@ -104,27 +104,25 @@ const createAdaptiveConfig = () => {
 // Export single unified config
 export const config = createAdaptiveConfig();
 
-// Export wallet configuration for Web3Modal (runtime detection)
 export const getWalletConfig = () => {
   const isMobile = getDeviceType() === 'mobile';
   
   return {
+    // For desktop, don't specify featuredWalletIds to let Web3Modal show all available wallets
     featuredWalletIds: isMobile ? [
       WALLET_IDS.METAMASK,
       WALLET_IDS.TRUST_WALLET,
       WALLET_IDS.RAINBOW,
-    ] : [
-      WALLET_IDS.METAMASK,
-      WALLET_IDS.RAINBOW,
-      WALLET_IDS.TRUST_WALLET,
-    ],
+    ] : undefined, // Let Web3Modal auto-detect on desktop
     
-    includeWalletIds: [
+    // Don't restrict wallet IDs on desktop
+    includeWalletIds: isMobile ? [
       WALLET_IDS.METAMASK,
       WALLET_IDS.TRUST_WALLET,
       WALLET_IDS.RAINBOW,
-    ],
+    ] : undefined,
     
+    // Only exclude problematic wallets on mobile
     excludeWalletIds: isMobile ? [
       WALLET_IDS.COINBASE,
       WALLET_IDS.LEDGER,
