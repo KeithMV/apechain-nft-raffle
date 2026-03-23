@@ -5,7 +5,7 @@
 
 import { useCallback } from 'react';
 import { usePublicClient } from 'wagmi';
-import { UserRafflePosition } from './useRaffleCacheManager';
+import { UserRafflePosition } from '../types/raffle';
 import { RAFFLE_FACTORY_ABI } from '../config/contracts';
 import { processBatch } from '../utils/performance';
 

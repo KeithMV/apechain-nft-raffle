@@ -18,8 +18,8 @@ vi.mock('../../config/addresses', () => ({
 }))
 
 // Mock cache invalidation
-vi.mock('../useCacheInvalidation', () => ({
-  useCacheInvalidation: vi.fn(() => ({ invalidateAll: vi.fn() })),
+vi.mock('../useUnifiedCacheInvalidation', () => ({
+  useUnifiedCacheInvalidation: vi.fn(() => ({ invalidateAfterTransaction: vi.fn() })),
 }))
 
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi'

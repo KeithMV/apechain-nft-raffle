@@ -10,7 +10,7 @@ import { useOptimizedBuyTickets, useOptimizedSelectWinner, useOptimizedCreateRaf
 import { useContractValidator } from './useContractValidator';
 import { RAFFLE_FACTORY_ABI, ERC721_ABI, RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
-import { useCacheInvalidation } from './useCacheInvalidation';
+import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { MultiChainErrorHandler } from '../utils/multiChainErrorHandler';
 
 // Re-export read hooks for backward compatibility
@@ -73,10 +73,10 @@ export function useCreateRaffleV4() {
   const chainId = useChainId();
   const { factoryAddress, currentVersion, rateLimit, rateLimitText } = useContractVersionManager();
   const { validateRaffleCreation } = useContractValidator();
-  const { invalidateRaffleData } = useCacheInvalidation();
+  const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
   
   const handleSuccess = () => {
-    setTimeout(() => invalidateRaffleData(), 500);
+    setTimeout(() => invalidateAfterTransaction({ transactionType: 'create-raffle' }), 500);
   };
   
   const transactionManager = useOptimizedCreateRaffle(handleSuccess);
@@ -123,9 +123,9 @@ export function useCreateRaffleV4() {
 export function useBuyTickets() {
   const chainId = useChainId();
   const { validateTicketPurchase } = useContractValidator();
-  const { invalidateRaffleData } = useCacheInvalidation();
+  const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
   
-  const handleSuccess = () => invalidateRaffleData();
+  const handleSuccess = () => invalidateAfterTransaction({ transactionType: 'buy-tickets' });
   
   const transactionManager = useOptimizedBuyTickets();
 
@@ -171,9 +171,9 @@ export function useBuyTickets() {
  */
 export function useCancelRaffleV4() {
   const chainId = useChainId();
-  const { invalidateRaffleData } = useCacheInvalidation();
+  const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
   
-  const handleSuccess = () => invalidateRaffleData();
+  const handleSuccess = () => invalidateAfterTransaction({ transactionType: 'cancel-raffle' });
   
   const transactionManager = useOptimizedCancelRaffle();
 
