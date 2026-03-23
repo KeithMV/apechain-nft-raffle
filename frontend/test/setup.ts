@@ -24,11 +24,15 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: vi.fn(() => ({
     invalidateQueries: vi.fn(),
     clear: vi.fn(),
+    setQueryData: vi.fn(),
   })),
-  QueryClient: vi.fn().mockImplementation(() => ({
-    invalidateQueries: vi.fn(),
-    clear: vi.fn(),
-  })),
+  QueryClient: vi.fn().mockImplementation(function() {
+    this.invalidateQueries = vi.fn();
+    this.clear = vi.fn();
+    this.setQueryData = vi.fn();
+    this.getQueryData = vi.fn();
+    return this;
+  }),
   QueryClientProvider: ({ children }: { children: React.ReactNode }) => children,
 }))
 
@@ -61,6 +65,15 @@ vi.mock('../src/hooks/useMobileConnectionManager', () => ({
     isAndroid: false,
     onLine: true,
     connectionType: 'wifi',
+  })),
+}))
+
+// Mock mobile safe wagmi config
+vi.mock('../src/config/mobileSafeWagmi', () => ({
+  getDeviceSettings: vi.fn(() => ({
+    isMobile: false,
+    staleTime: 30000,
+    pollingInterval: 15000,
   })),
 }))
 
