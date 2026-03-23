@@ -18,10 +18,11 @@ export interface CreatedRaffle extends RaffleInfo {}
 
 // Get all raffles from both V3 and V4
 export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
+  const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
 
   const { data: raffles, isLoading: loading, error, refetch } = useQuery({
-    queryKey: ['raffles-v4', limit, offset],
+    queryKey: ['raffles-v4', chainId, limit, offset],
     queryFn: () => dataFetcher.fetchAllRaffles({ limit, offset }),
     enabled: dataFetcher.isReady,
     staleTime: 30000, // 30 seconds

@@ -14,12 +14,11 @@ interface RpcEndpoint {
 }
 
 const POLYGON_RPCS: RpcEndpoint[] = [
-  { url: 'https://polygon-mainnet.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78', priority: 1 },
-  { url: 'https://polygon-rpc.com', priority: 2 },
-  { url: 'https://rpc.ankr.com/polygon', priority: 3 },
-  { url: 'https://polygon.llamarpc.com', priority: 4 },
-  { url: 'https://polygon-mainnet.public.blastapi.io', priority: 5 },
-  { url: 'https://polygon.blockpi.network/v1/rpc/public', priority: 6 },
+  { url: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY || 'demo'}`, priority: 1 },
+  { url: 'https://rpc.ankr.com/polygon', priority: 2 },
+  { url: 'https://polygon.llamarpc.com', priority: 3 },
+  { url: 'https://polygon-mainnet.public.blastapi.io', priority: 4 },
+  { url: 'https://polygon.blockpi.network/v1/rpc/public', priority: 5 },
 ];
 
 const APECHAIN_RPCS: RpcEndpoint[] = [
