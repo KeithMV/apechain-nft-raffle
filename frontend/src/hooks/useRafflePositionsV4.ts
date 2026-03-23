@@ -6,11 +6,12 @@
 import { useChainId } from 'wagmi';
 import { useCallback, useMemo } from 'react';
 import { useRaffleDataFetcher, RaffleInfo } from './useRaffleDataFetcher';
-import { useRaffleCacheManager } from './useRaffleCacheManager';
+import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { useRafflePositionProcessor } from './useRafflePositionProcessor';
 import { useAsyncCachedLoader } from './useAsyncCachedLoader';
 import { getRaffleFactoryAddress, isV4Available } from '../config/addresses';
 import { debounce } from '../utils/performance';
+import { useQuery } from '@tanstack/react-query';
 
 // Type aliases for backward compatibility
 export interface CreatedRaffle extends RaffleInfo {}
@@ -18,18 +19,13 @@ export interface CreatedRaffle extends RaffleInfo {}
 // Get all raffles from both V3 and V4
 export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
   const dataFetcher = useRaffleDataFetcher();
-  const { raffleCache } = useRaffleCacheManager();
 
-  const fetchRaffles = useCallback(async () => {
-    return await dataFetcher.fetchAllRaffles({ limit, offset });
-  }, [dataFetcher, limit, offset]);
-
-  const { data: raffles, loading, error, refetch } = useAsyncCachedLoader({
-    cache: raffleCache,
-    cacheParams: { limit, offset },
-    fetchFn: fetchRaffles,
-    shouldLoad: dataFetcher.isReady,
-    dependencies: []
+  const { data: raffles, isLoading: loading, error, refetch } = useQuery({
+    queryKey: ['raffles-v4', limit, offset],
+    queryFn: () => dataFetcher.fetchAllRaffles({ limit, offset }),
+    enabled: dataFetcher.isReady,
+    staleTime: 30000, // 30 seconds
+    gcTime: 60000, // 1 minute
   });
 
   const debouncedRefetch = useMemo(
@@ -45,40 +41,37 @@ export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
   };
 }
 
-// Clear cache utility - more aggressive clearing
+// Clear cache utility - using unified system
 export function useClearRaffleCacheV4() {
-  const { clearAllCaches } = useRaffleCacheManager();
-  return clearAllCaches;
+  const { quickInvalidate } = useUnifiedCacheInvalidation();
+  return quickInvalidate;
 }
 // Get user's raffle positions (network-aware)
 export function useUserRafflePositionsV4(userAddress?: string) {
   const chainId = useChainId();
-  const { positionCache } = useRaffleCacheManager();
   const { getCombinedUserPositions } = useRafflePositionProcessor();
 
-  const fetchPositions = useCallback(async () => {
-    if (!userAddress || !chainId) throw new Error('Missing required parameters');
+  const { data: positions, isLoading: loading, error, refetch } = useQuery({
+    queryKey: ['positions-v4', userAddress, chainId],
+    queryFn: async () => {
+      if (!userAddress || !chainId) throw new Error('Missing required parameters');
 
-    // Build factory list based on available versions
-    const factories: Array<{ address: string; version: 'v3' | 'v4' }> = [];
-    
-    if (isV4Available(chainId)) {
-      const v4Address = getRaffleFactoryAddress(chainId, true);
-      factories.push({ address: v4Address, version: 'v4' as const });
-    }
-    
-    const v3Address = getRaffleFactoryAddress(chainId, false);
-    factories.push({ address: v3Address, version: 'v3' as const });
-    
-    return await getCombinedUserPositions(factories, userAddress);
-  }, [userAddress, chainId, getCombinedUserPositions]);
-
-  const { data: positions, loading, error, refetch } = useAsyncCachedLoader({
-    cache: positionCache,
-    cacheParams: { userAddress, chainId },
-    fetchFn: fetchPositions,
-    shouldLoad: Boolean(userAddress && chainId),
-    dependencies: []
+      // Build factory list based on available versions
+      const factories: Array<{ address: string; version: 'v3' | 'v4' }> = [];
+      
+      if (isV4Available(chainId)) {
+        const v4Address = getRaffleFactoryAddress(chainId, true);
+        factories.push({ address: v4Address, version: 'v4' as const });
+      }
+      
+      const v3Address = getRaffleFactoryAddress(chainId, false);
+      factories.push({ address: v3Address, version: 'v3' as const });
+      
+      return await getCombinedUserPositions(factories, userAddress);
+    },
+    enabled: Boolean(userAddress && chainId),
+    staleTime: 15000, // 15 seconds - positions change frequently
+    gcTime: 30000, // 30 seconds
   });
 
   return { 
@@ -93,31 +86,28 @@ export function useUserRafflePositionsV4(userAddress?: string) {
 // Get user's created raffles (network-aware)
 export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
   const dataFetcher = useRaffleDataFetcher();
-  const { createdCache } = useRaffleCacheManager();
 
-  const fetchCreatedRaffles = useCallback(async () => {
-    if (!dataFetcher.isReady || !userAddress) {
-      throw new Error('Missing required parameters');
-    }
+  const { data: raffles, isLoading: loading, error, refetch } = useQuery({
+    queryKey: ['created-v4', userAddress, page],
+    queryFn: async () => {
+      if (!dataFetcher.isReady || !userAddress) {
+        throw new Error('Missing required parameters');
+      }
 
-    // Fetch more raffles to filter by creator
-    const allRaffles = await dataFetcher.fetchAllRaffles({ 
-      limit: 50, 
-      offset: page * 20 
-    });
-    
-    // Filter by creator and sort by creation time (newest first)
-    return allRaffles
-      .filter(r => r.creator.toLowerCase() === userAddress.toLowerCase())
-      .sort((a, b) => b.endTime - a.endTime);
-  }, [dataFetcher, userAddress, page]);
-
-  const { data: raffles, loading, error, refetch } = useAsyncCachedLoader({
-    cache: createdCache,
-    cacheParams: { userAddress, page },
-    fetchFn: fetchCreatedRaffles,
-    shouldLoad: Boolean(dataFetcher.isReady && userAddress),
-    dependencies: []
+      // Fetch more raffles to filter by creator
+      const allRaffles = await dataFetcher.fetchAllRaffles({ 
+        limit: 50, 
+        offset: page * 20 
+      });
+      
+      // Filter by creator and sort by creation time (newest first)
+      return allRaffles
+        .filter(r => r.creator.toLowerCase() === userAddress.toLowerCase())
+        .sort((a, b) => b.endTime - a.endTime);
+    },
+    enabled: Boolean(dataFetcher.isReady && userAddress),
+    staleTime: 45000, // 45 seconds - created raffles change less frequently
+    gcTime: 90000, // 1.5 minutes
   });
 
   return { 
