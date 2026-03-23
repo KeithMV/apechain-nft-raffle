@@ -30,6 +30,7 @@ jobs:
         REACT_APP_APP_NAME: "ApeChain NFT Raffles (STAGING)"
         REACT_APP_APP_URL: "https://staging.apechainraffles.io"
         REACT_APP_ENV: "staging"
+        REACT_APP_ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
       
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
