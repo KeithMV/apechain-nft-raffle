@@ -149,6 +149,18 @@ export default function RaffleDashboard() {
   }, []);
 
   const handleSelectWinner = useCallback(async (raffleContract: string) => {
+    // SECURITY: Validate and sanitize input
+    if (!raffleContract || typeof raffleContract !== 'string') {
+      console.error('Invalid raffle contract address');
+      return;
+    }
+    
+    // Validate Ethereum address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(raffleContract)) {
+      console.error('Invalid Ethereum address format');
+      return;
+    }
+    
     setSelectingWinnerFor(raffleContract);
     
     console.log('🏆 [WINNER] Starting winner selection for raffle:', raffleContract);

@@ -40,6 +40,15 @@ export function useNFTApprovalV4() {
   const transactionManager = useOptimizedCreateRaffle(); // Use create raffle manager for approvals
 
   const approveNFT = async (nftContract: string) => {
+    // SECURITY: Validate and sanitize input
+    if (!nftContract || typeof nftContract !== 'string') {
+      throw new Error('Invalid NFT contract address');
+    }
+    
+    if (!/^0x[a-fA-F0-9]{40}$/.test(nftContract)) {
+      throw new Error('Invalid Ethereum address format');
+    }
+    
     // Validate input
     const validation = validateNFTApproval(nftContract);
     if (!validation.isValid) {
@@ -82,6 +91,31 @@ export function useCreateRaffleV4() {
   const transactionManager = useOptimizedCreateRaffle(handleSuccess);
 
   const createRaffle = async (params: CreateRaffleParams) => {
+    // SECURITY: Validate and sanitize all inputs
+    if (!params || typeof params !== 'object') {
+      throw new Error('Invalid raffle parameters');
+    }
+    
+    if (!params.nftContract || !/^0x[a-fA-F0-9]{40}$/.test(params.nftContract)) {
+      throw new Error('Invalid NFT contract address');
+    }
+    
+    if (!params.tokenId || !/^\d+$/.test(params.tokenId.toString())) {
+      throw new Error('Invalid token ID');
+    }
+    
+    if (!params.ticketPrice || typeof params.ticketPrice !== 'string' || parseFloat(params.ticketPrice) <= 0) {
+      throw new Error('Invalid ticket price');
+    }
+    
+    if (!params.maxTickets || typeof params.maxTickets !== 'number' || params.maxTickets <= 0 || params.maxTickets > 10000) {
+      throw new Error('Invalid max tickets (must be 1-10000)');
+    }
+    
+    if (!params.duration || typeof params.duration !== 'number' || params.duration <= 0) {
+      throw new Error('Invalid duration');
+    }
+    
     // Validate all inputs
     const validation = validateRaffleCreation(params);
     if (!validation.isValid) {
@@ -130,6 +164,23 @@ export function useBuyTickets() {
   const transactionManager = useOptimizedBuyTickets();
 
   const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string, userAddress?: string) => {
+    // SECURITY: Validate and sanitize all inputs
+    if (!raffleContract || typeof raffleContract !== 'string' || !/^0x[a-fA-F0-9]{40}$/.test(raffleContract)) {
+      throw new Error('Invalid raffle contract address');
+    }
+    
+    if (!quantity || typeof quantity !== 'number' || quantity < 1 || quantity > 25 || !Number.isInteger(quantity)) {
+      throw new Error('Invalid ticket quantity (must be 1-25)');
+    }
+    
+    if (!ticketPrice || typeof ticketPrice !== 'string' || parseFloat(ticketPrice) <= 0) {
+      throw new Error('Invalid ticket price');
+    }
+    
+    if (userAddress && !/^0x[a-fA-F0-9]{40}$/.test(userAddress)) {
+      throw new Error('Invalid user address format');
+    }
+    
     // Validate all inputs
     const validation = validateTicketPurchase({ raffleContract, quantity, ticketPrice });
     if (!validation.isValid) {
@@ -178,9 +229,20 @@ export function useCancelRaffleV4() {
   const transactionManager = useOptimizedCancelRaffle();
 
   const cancelRaffle = async (raffleContract: string) => {
-    // Simple validation
-    if (!raffleContract || !/^0x[a-fA-F0-9]{40}$/.test(raffleContract)) {
+    // SECURITY: Comprehensive input validation and sanitization
+    if (!raffleContract || typeof raffleContract !== 'string') {
       throw new Error('Invalid raffle contract address');
+    }
+    
+    // Validate Ethereum address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(raffleContract)) {
+      throw new Error('Invalid Ethereum address format');
+    }
+    
+    // Additional security: ensure it's not a system address
+    const systemAddresses = ['0x0000000000000000000000000000000000000000'];
+    if (systemAddresses.includes(raffleContract.toLowerCase())) {
+      throw new Error('Cannot cancel system contracts');
     }
     
     return await transactionManager.executeTransaction({

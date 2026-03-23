@@ -74,10 +74,26 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
 
   // Optimized buy tickets handler - simplified without progress tracking
   const handleBuyTickets = useCallback(async (raffle: CreatedRaffle) => {
+    // SECURITY: Validate and sanitize inputs
+    if (!raffle || typeof raffle !== 'object') {
+      toast.error('Invalid raffle data');
+      return;
+    }
+    
+    if (!raffle.raffleContract || !/^0x[a-fA-F0-9]{40}$/.test(raffle.raffleContract)) {
+      toast.error('Invalid raffle contract address');
+      return;
+    }
+    
     const quantity = ticketQuantities[raffle.raffleContract] || 1;
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
     
-    // Validation
+    // Validation with sanitized inputs
+    if (typeof quantity !== 'number' || quantity < 1 || quantity > 25) {
+      toast.error('Invalid ticket quantity');
+      return;
+    }
+    
     if (quantity > availableTickets) {
       toast.error(`Only ${availableTickets} tickets available`);
       return;

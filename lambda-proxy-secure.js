@@ -155,43 +155,117 @@ function isValidUrl(url) {
         
         // Allowlist trusted domains for NFT/IPFS content
         const trustedDomains = [
+            // IPFS Gateways
             'ipfs.io',
             'gateway.pinata.cloud',
             'dweb.link',
             'cloudflare-ipfs.com',
-            'img.op.xyz',
-            'img.other.page',
-            'arweave.net',
-            'nftstorage.link',
-            'w3s.link',
-            // Additional NFT metadata domains
-            'api.other.page',
-            'api.op.xyz',
-            'api2.balloonsballoons.xyz',
-            'metadata.ens.domains',
-            'api.opensea.io',
-            // Polygon-specific domains
-            'polygon-metadata.s3.amazonaws.com',
-            'assets.polygon.technology',
-            'ipfs.moralis.io',
             'gateway.ipfs.io',
-            // Additional IPFS gateways
             'cf-ipfs.com',
             'ipfs.infura.io',
+            'ipfs.moralis.io',
+            'nftstorage.link',
+            'w3s.link',
+            
             // Pinata domains (all subdomains)
             'mypinata.cloud',
             'pinata.cloud',
             'gateway.pinata.cloud',
-            // Common Polygon NFT platforms
+            
+            // Arweave
+            'arweave.net',
+            
+            // NFT Platform APIs - Major Providers
+            'cdn-api.niftykit.com',
+            'api.niftykit.com',
+            'niftykit.com',
+            'metadata.niftykit.com',
+            'api.thirdweb.com',
+            'metadata.thirdweb.com',
+            'thirdweb.com',
+            'api.manifold.xyz',
+            'metadata.manifold.xyz',
+            'manifold.xyz',
+            'api.async.art',
+            'metadata.async.art',
+            'async.art',
+            
+            // Major NFT Marketplaces
+            'api.opensea.io',
             'opensea.io',
+            'metadata.opensea.io',
             'looksrare.org',
+            'api.looksrare.org',
             'rarible.com',
+            'api.rarible.org',
             'foundation.app',
+            'api.foundation.app',
+            'metadata.foundation.app',
             'superrare.com',
+            'api.superrare.com',
+            
+            // Storage & CDN Providers
+            'storageapi.fleek.co',
+            'gateway.fleek.co',
+            'fleek.co',
+            'storage.googleapis.com',
+            'firebasestorage.googleapis.com',
+            
+            // Polygon-specific domains
+            'polygon-metadata.s3.amazonaws.com',
+            'assets.polygon.technology',
+            'api.polygonscan.com',
+            'metadata.polygonscan.com',
+            
+            // Ethereum/Multi-chain
+            'img.op.xyz',
+            'img.other.page',
+            'api.other.page',
+            'api.op.xyz',
+            'api2.balloonsballoons.xyz',
+            'metadata.ens.domains',
+            
             // Additional metadata services
             'metadata.buildship.xyz',
+            'buildship.xyz',
             'api.reservoir.tools',
-            'metadata.degods.com'
+            'reservoir.tools',
+            'metadata.degods.com',
+            'degods.com',
+            
+            // Common NFT Infrastructure
+            'api.center.app',
+            'center.app',
+            'api.zora.co',
+            'zora.co',
+            'metadata.zora.co',
+            'api.highlight.xyz',
+            'highlight.xyz',
+            'metadata.highlight.xyz',
+            
+            // Additional IPFS/Decentralized Storage
+            'gateway.lighthouse.storage',
+            'lighthouse.storage',
+            'api.web3.storage',
+            'web3.storage',
+            'dweb.link',
+            
+            // AWS S3 buckets commonly used for NFT metadata
+            's3.amazonaws.com',
+            's3.us-east-1.amazonaws.com',
+            's3.us-west-2.amazonaws.com',
+            's3.eu-west-1.amazonaws.com',
+            
+            // Cloudflare domains for NFT projects
+            'imagedelivery.net',
+            'cdn.discordapp.com',
+            
+            // Additional NFT platforms
+            'api.artblocks.io',
+            'artblocks.io',
+            'metadata.artblocks.io',
+            'api.async.art',
+            'metadata.async.art'
         ];
         
         const isAllowed = trustedDomains.some(domain => hostname.includes(domain));
