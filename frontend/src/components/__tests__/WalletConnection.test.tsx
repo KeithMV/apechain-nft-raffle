@@ -2,38 +2,51 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { WalletConnection } from '../WalletConnection'
 
-// Mock wagmi hooks at module level with simple return values
-vi.mock('wagmi', () => ({
-  useAccount: vi.fn(),
-  useDisconnect: vi.fn(),
-  useChainId: vi.fn(),
-  useSwitchChain: vi.fn(),
-}))
-
+// Mock @web3modal/wagmi/react
 vi.mock('@web3modal/wagmi/react', () => ({
   useWeb3Modal: vi.fn(),
   createWeb3Modal: vi.fn(),
 }))
 
-vi.mock('../config/wagmi', () => ({
-  apeChain: { id: 33139 },
+// Mock mobile connection manager
+vi.mock('../../hooks/useMobileConnectionManager', () => ({
+  useMobileConnectionManager: vi.fn(() => ({
+    isMobileDevice: false,
+    isConnecting: false,
+    connectionAttempts: 0,
+    hasWebSocketError: false,
+    canRetry: true,
+  })),
+  getMobileConnectionDiagnostics: vi.fn(() => ({
+    isIOS: false,
+    isAndroid: false,
+    onLine: true,
+    connectionType: 'wifi',
+  })),
 }))
 
-import { useAccount, useDisconnect, useChainId, useSwitchChain } from 'wagmi'
+// Mock config
+vi.mock('../../config/environment', () => ({
+  config: {
+    environment: 'development',
+    chainId: 33139,
+    enableLogging: true,
+  },
+}))
+
+import { useAccount, useDisconnect, useChainId } from 'wagmi'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 
 describe('WalletConnection', () => {
   const mockOpen = vi.fn()
   const mockDisconnect = vi.fn()
-  const mockSwitchChain = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
     
-    // Simple module-level mocks focused on behavior
+    // Use global mocks from setup.ts
     vi.mocked(useWeb3Modal).mockReturnValue({ open: mockOpen, close: vi.fn() } as any)
     vi.mocked(useDisconnect).mockReturnValue({ disconnect: mockDisconnect } as any)
-    vi.mocked(useSwitchChain).mockReturnValue({ switchChain: mockSwitchChain } as any)
     vi.mocked(useChainId).mockReturnValue(33139)
   })
 

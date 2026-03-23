@@ -5,15 +5,6 @@ import { useCreateRaffleV4, useNFTApprovalV4, usePlatformFeeV4 } from '../useRaf
 import { useContractVersionManager } from '../useContractVersionManager'
 import { ReactNode } from 'react'
 
-// Mock wagmi hooks
-vi.mock('wagmi', () => ({
-  useAccount: vi.fn(),
-  useChainId: vi.fn(() => 33139),
-  useWriteContract: vi.fn(),
-  useWaitForTransactionReceipt: vi.fn(),
-  useReadContract: vi.fn(),
-}))
-
 // Mock viem
 vi.mock('viem/utils', () => ({
   parseEther: vi.fn((value) => BigInt(value.replace('.', '') + '0'.repeat(18 - value.split('.')[1]?.length || 0))),
@@ -24,14 +15,6 @@ vi.mock('../../config/addresses', () => ({
   getRaffleFactoryAddress: vi.fn(() => '0x1234567890123456789012345678901234567890'),
   isV4Available: vi.fn(() => true),
   getRateLimit: vi.fn(() => 10),
-}))
-
-// Mock toast
-vi.mock('react-hot-toast', () => ({
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
 }))
 
 // Mock cache invalidation

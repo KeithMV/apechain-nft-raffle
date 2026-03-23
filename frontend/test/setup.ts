@@ -41,6 +41,29 @@ vi.mock('react-hot-toast', () => ({
   },
 }))
 
+// Mock @web3modal/wagmi/react
+vi.mock('@web3modal/wagmi/react', () => ({
+  useWeb3Modal: vi.fn(() => ({ open: vi.fn(), close: vi.fn() })),
+  createWeb3Modal: vi.fn(),
+}))
+
+// Mock mobile connection manager
+vi.mock('../src/hooks/useMobileConnectionManager', () => ({
+  useMobileConnectionManager: vi.fn(() => ({
+    isMobileDevice: false,
+    isConnecting: false,
+    connectionAttempts: 0,
+    hasWebSocketError: false,
+    canRetry: true,
+  })),
+  getMobileConnectionDiagnostics: vi.fn(() => ({
+    isIOS: false,
+    isAndroid: false,
+    onLine: true,
+    connectionType: 'wifi',
+  })),
+}))
+
 // Mock localStorage
 const localStorageMock = {
   getItem: vi.fn(),
