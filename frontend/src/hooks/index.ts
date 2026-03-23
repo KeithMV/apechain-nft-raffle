@@ -29,5 +29,5 @@ export { useOptimizedRaffleActions } from './useOptimizedRaffleActions';
 export { useApeBalance, useApeDecimals, useApeSymbol, apeTokenUtils } from './useApeToken';
 
 // Utility Hooks
-export { useAutoRefresh } from './useAutoRefresh';
+export { useRaffleDataFetcher } from './useRaffleDataFetcher';
 export { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
