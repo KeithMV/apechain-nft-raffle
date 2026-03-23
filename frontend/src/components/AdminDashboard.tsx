@@ -21,17 +21,7 @@ const validatedAdmins = ADMIN_ADDRESSES.filter(addr =>
 export default function AdminDashboard() {
   const { address, isConnecting, isReconnecting } = useAccount();
 
-  // Handle connection states
-  if (isConnecting || isReconnecting) {
-    return (
-      <div className="relative bg-gray-900/95 backdrop-blur-xl border border-red-500/30 rounded-2xl p-8 text-center">
-        <h2 className="text-xl font-bold text-red-300 mb-4 font-mono">Admin Dashboard</h2>
-        <p className="text-red-400/70 font-mono">Connecting wallet...</p>
-      </div>
-    );
-  }
-
-  // Check admin authorization
+  // Check admin authorization - must be called before any early returns
   const isAdmin = useMemo(() => {
     if (!address) return false;
     
@@ -44,6 +34,16 @@ export default function AdminDashboard() {
       return false;
     }
   }, [address]);
+
+  // Handle connection states
+  if (isConnecting || isReconnecting) {
+    return (
+      <div className="relative bg-gray-900/95 backdrop-blur-xl border border-red-500/30 rounded-2xl p-8 text-center">
+        <h2 className="text-xl font-bold text-red-300 mb-4 font-mono">Admin Dashboard</h2>
+        <p className="text-red-400/70 font-mono">Connecting wallet...</p>
+      </div>
+    );
+  }
 
   if (!address) {
     return (

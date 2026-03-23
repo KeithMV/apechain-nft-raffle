@@ -11,6 +11,15 @@ export function useWinnerSelection() {
   const transactionManager = useOptimizedSelectWinner();
 
   const startWinnerSelection = useCallback(async (raffleContract: string) => {
+    // SECURITY: Validate and sanitize input
+    if (!raffleContract || typeof raffleContract !== 'string') {
+      throw new Error('Invalid raffle contract address');
+    }
+    
+    if (!/^0x[a-fA-F0-9]{40}$/.test(raffleContract)) {
+      throw new Error('Invalid Ethereum address format');
+    }
+    
     try {
       setCurrentPhase('committing');
       
@@ -39,6 +48,15 @@ export function useWinnerSelection() {
   }, [transactionManager]);
 
   const revealWinner = useCallback(async (raffleContract: string) => {
+    // SECURITY: Validate and sanitize input
+    if (!raffleContract || typeof raffleContract !== 'string') {
+      throw new Error('Invalid raffle contract address');
+    }
+    
+    if (!/^0x[a-fA-F0-9]{40}$/.test(raffleContract)) {
+      throw new Error('Invalid Ethereum address format');
+    }
+    
     try {
       setCurrentPhase('revealing');
       
@@ -68,6 +86,15 @@ export function useWinnerSelection() {
   }, [transactionManager]);
 
   const emergencyReveal = useCallback(async (raffleContract: string) => {
+    // SECURITY: Validate and sanitize input
+    if (!raffleContract || typeof raffleContract !== 'string') {
+      throw new Error('Invalid raffle contract address');
+    }
+    
+    if (!/^0x[a-fA-F0-9]{40}$/.test(raffleContract)) {
+      throw new Error('Invalid Ethereum address format');
+    }
+    
     try {
       setCurrentPhase('emergency');
       console.log('🏆 [WINNER] Starting emergency winner selection for:', raffleContract);
