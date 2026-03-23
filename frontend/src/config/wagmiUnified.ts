@@ -38,7 +38,7 @@ export const polygonChain = defineChain({
   rpcUrls: {
     default: {
       http: [
-        'https://polygon-mainnet.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78',
+        'https://polygon-mainnet.g.alchemy.com/v2/' + (process.env.REACT_APP_ALCHEMY_API_KEY || 'demo'),
         'https://rpc.ankr.com/polygon',
         'https://polygon.llamarpc.com',
         'https://polygon-mainnet.public.blastapi.io',

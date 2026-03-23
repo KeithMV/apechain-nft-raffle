@@ -29,7 +29,10 @@ export const suppressWeb3ModalWarnings = () => {
         message.includes('FetchUtil.get') ||
         message.includes('HTTP request failed') && message.includes('Status: 401') ||
         message.includes('polygon-rpc.com') ||
-        message.includes('API key disabled')) {
+        message.includes('API key disabled') ||
+        message.includes('CORS policy') ||
+        message.includes('walletconnect.org') ||
+        message.includes('Failed to load resource')) {
       return;
     }
     
