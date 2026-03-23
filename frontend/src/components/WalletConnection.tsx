@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useAccount, useDisconnect, useChainId } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { config as envConfig } from '../config/environment';
-import { useMobileConnectionManager, getMobileConnectionDiagnostics } from '../hooks/useMobileConnectionManager';
 import toast from 'react-hot-toast';
 
 // Pure functions moved outside component
@@ -18,43 +17,78 @@ const hasEthereumWallet = (): boolean => {
   return !!window.ethereum;
 };
 
+// Mobile diagnostics helper
+const getMobileConnectionDiagnostics = () => {
+  const userAgent = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+  const isAndroid = /Android/.test(userAgent);
+  
+  return {
+    userAgent,
+    isIOS,
+    isAndroid,
+    isMobile: isIOS || isAndroid,
+    hasEthereum: typeof window !== 'undefined' && !!window.ethereum,
+    connectionType: (navigator as any).connection?.effectiveType || 'unknown',
+    onLine: navigator.onLine,
+  };
+};
+
 export function WalletConnection() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { open } = useWeb3Modal();
   
-  // Mobile connection management (for error monitoring only)
-  const {
-    isMobileDevice,
-    isConnecting: mobileConnecting,
-    connectionAttempts,
-    hasWebSocketError,
-    canRetry
-  } = useMobileConnectionManager();
-  
+  // Simplified mobile connection state
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [diagnostics, setDiagnostics] = useState<any>(null);
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
+  const [hasWebSocketError, setHasWebSocketError] = useState(false);
+  const connectionState = useRef({ lastConnectionTime: 0 });
+  
+  const isMobile = isMobileDevice();
+  const canRetry = connectionAttempts < 3;
 
-  // Mobile connection detection and recovery
+  // Mobile WebSocket error monitoring
   useEffect(() => {
-    const detectConnection = () => {
-      if (!isConnected && window.ethereum && (window.ethereum as any).selectedAddress) {
-        window.dispatchEvent(new Event('focus'));
+    if (!isMobile) return;
+    
+    const handleWebSocketError = (event: any) => {
+      console.warn('🔌 [MOBILE] WebSocket error detected:', event);
+      setHasWebSocketError(true);
+      
+      if (isConnected) {
+        setTimeout(() => {
+          disconnect();
+          setTimeout(() => {
+            toast.error('Connection lost. Please reconnect your wallet.');
+          }, 2000);
+        }, 1000);
       }
     };
     
-    window.addEventListener('focus', detectConnection);
-    return () => window.removeEventListener('focus', detectConnection);
-  }, [isConnected]);
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      const message = args.join(' ');
+      if (message.includes('WebSocket') || message.includes('relay.walletconnect.org')) {
+        handleWebSocketError({ message });
+      }
+      originalConsoleError.apply(console, args);
+    };
+    
+    return () => {
+      console.error = originalConsoleError;
+    };
+  }, [isConnected, isMobile, disconnect]);
   
   // Show diagnostics on mobile connection issues
   useEffect(() => {
-    if (isMobileDevice && (hasWebSocketError || connectionAttempts > 1)) {
+    if (isMobile && (hasWebSocketError || connectionAttempts > 1)) {
       setDiagnostics(getMobileConnectionDiagnostics());
       setShowDiagnostics(true);
     }
-  }, [isMobileDevice, hasWebSocketError, connectionAttempts]);
+  }, [isMobile, hasWebSocketError, connectionAttempts]);
 
   const handleConnect = async () => {
     console.log('🔍 [DEBUG] Connect button clicked');
@@ -63,7 +97,7 @@ export function WalletConnection() {
     console.log('🔍 [DEBUG] Actual Chain ID (wagmi):', chainId);
     console.log('🔍 [DEBUG] User Agent:', navigator.userAgent);
     console.log('🔍 [DEBUG] Window.ethereum:', hasEthereumWallet());
-    console.log('🔍 [DEBUG] Is Mobile:', isMobileDevice);
+    console.log('🔍 [DEBUG] Is Mobile:', isMobile);
     
     try {
       // Always use Web3Modal for connection - it handles mobile properly
@@ -73,7 +107,7 @@ export function WalletConnection() {
     } catch (err: any) {
       console.error('❌ [DEBUG] Failed to connect:', err);
       
-      if (isMobileDevice) {
+      if (isMobile) {
         if (err.message?.includes('WebSocket')) {
           toast.error('Network connection issue. Please check your internet and try again.');
         } else if (err.message?.includes('User rejected')) {
@@ -109,7 +143,7 @@ export function WalletConnection() {
   return (
     <div className="flex flex-col space-y-2">
       {/* Mobile diagnostics panel */}
-      {showDiagnostics && isMobileDevice && diagnostics && (
+      {showDiagnostics && isMobile && diagnostics && (
         <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-3 text-xs text-yellow-200">
           <div className="font-semibold mb-2">📱 Mobile Connection Info:</div>
           <div>Device: {diagnostics.isIOS ? 'iOS' : diagnostics.isAndroid ? 'Android' : 'Unknown'}</div>
@@ -138,7 +172,7 @@ export function WalletConnection() {
       </button>
       
       {/* Mobile retry button */}
-      {isMobileDevice && hasWebSocketError && canRetry && (
+      {isMobile && hasWebSocketError && canRetry && (
         <button
           onClick={handleConnect}
           className="px-4 py-2 bg-yellow-600/20 border border-yellow-500/30 text-yellow-200 rounded-lg text-sm font-medium hover:bg-yellow-600/30 transition-colors"
@@ -148,7 +182,7 @@ export function WalletConnection() {
       )}
       
       {/* Mobile help text */}
-      {isMobileDevice && connectionAttempts > 0 && (
+      {isMobile && connectionAttempts > 0 && (
         <div className="text-xs text-slate-400 text-center">
           Having trouble? Try refreshing the page or switching to a different network.
         </div>
