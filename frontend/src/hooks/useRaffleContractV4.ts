@@ -6,7 +6,7 @@
 import React from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { useContractVersionManager } from './useContractVersionManager';
-import { useOptimizedBuyTickets, useOptimizedSelectWinner, useOptimizedCreateRaffle, useOptimizedCancelRaffle } from './useOptimizedTransactionManager';
+import { useOptimizedBuyTickets, useOptimizedSelectWinner, useOptimizedCreateRaffle } from './useOptimizedTransactionManager';
 import { useContractValidator } from './useContractValidator';
 import { RAFFLE_FACTORY_ABI, ERC721_ABI, RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';

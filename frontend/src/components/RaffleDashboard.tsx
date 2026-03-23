@@ -4,7 +4,7 @@ import ParticipatedRaffleCard from './ParticipatedRaffleCard';
 import CreatedRaffleCard from './CreatedRaffleCard';
 import toast from 'react-hot-toast';
 import { useUserRafflePositionsV4, useCreatedRafflesV4, useClearRaffleCacheV4 } from '../hooks/useRafflePositionsV4';
-import { useOptimizedCancelRaffle } from '../hooks/useOptimizedCancelRaffle';
+import { useOptimizedCancelRaffle } from '../hooks/useOptimizedTransactionManager';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useDashboardStyles } from '../hooks/useDashboardStyles';
@@ -183,7 +183,17 @@ export default function RaffleDashboard() {
     });
     
     try {
-      await cancelRaffleHook.cancelRaffle(raffleContract);
+      await cancelRaffleHook.executeTransaction({
+        address: raffleContract as `0x${string}`,
+        abi: [{
+          name: 'cancelRaffle',
+          type: 'function',
+          stateMutability: 'nonpayable',
+          inputs: [],
+          outputs: []
+        }],
+        functionName: 'cancelRaffle',
+      });
       console.log('✅ [CANCEL] Raffle cancellation initiated successfully');
     } catch (error) {
       console.error('❌ [CANCEL] Raffle cancellation failed:', error);
@@ -192,7 +202,7 @@ export default function RaffleDashboard() {
       });
       setCancellingRaffle(null);
     }
-  }, [cancelRaffleHook.cancelRaffle]);
+  }, [cancelRaffleHook.executeTransaction]);
 
   // Immediate refresh when winner is selected - optimized for speed
   useEffect(() => {
