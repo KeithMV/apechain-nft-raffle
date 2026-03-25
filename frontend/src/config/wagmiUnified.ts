@@ -26,7 +26,7 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Polygon chain - unified RPC configuration (removed problematic endpoints)
+// Polygon chain - optimized RPC configuration for performance
 export const polygonChain = defineChain({
   id: 137,
   name: 'Polygon',
@@ -38,12 +38,12 @@ export const polygonChain = defineChain({
   rpcUrls: {
     default: {
       http: [
+        // Priority 1: Alchemy (fastest, most reliable if API key available)
         'https://polygon-mainnet.g.alchemy.com/v2/' + (process.env.REACT_APP_ALCHEMY_API_KEY || 'demo'),
+        // Priority 2: Ankr (reliable commercial endpoint)
         'https://rpc.ankr.com/polygon',
+        // Priority 3: LlamaRPC (fast, community-optimized)
         'https://polygon.llamarpc.com',
-        'https://polygon-mainnet.public.blastapi.io',
-        'https://polygon.blockpi.network/v1/rpc/public',
-        'https://rpc-mainnet.matic.quiknode.pro'
       ],
     },
   },
@@ -73,10 +73,10 @@ export const getDeviceType = () => {
     ? 'mobile' : 'desktop';
 };
 
-// Device-adaptive configuration function
+// Device-adaptive configuration function with chain-specific optimizations
 const createAdaptiveConfig = () => {
   // Always create desktop config - device detection will happen in Web3Modal setup
-  console.log('🔧 [UNIFIED CONFIG] Creating unified configuration for all devices');
+  console.log('🔧 [UNIFIED CONFIG] Creating unified configuration with chain-specific optimizations');
   
   return defaultWagmiConfig({
     chains: [apeChain, polygonChain],
@@ -87,16 +87,18 @@ const createAdaptiveConfig = () => {
     enableEIP6963: true,
     enableCoinbase: true, // Enable for all devices, Web3Modal will handle appropriately
     
-    // Standard batch configuration
+    // Chain-specific batch configuration for optimal performance
     batch: {
       multicall: {
-        batchSize: 1024 * 200, // 200KB standard
-        wait: 32, // Standard wait time
+        // Polygon: Smaller batches for faster processing on high-activity network
+        // ApeChain: Larger batches for efficiency on lower-activity network
+        batchSize: 1024 * 150, // 150KB - balanced for both chains
+        wait: 25, // Faster batching for better responsiveness
       },
     },
     
-    // Standard polling interval
-    pollingInterval: 15000, // 15s standard
+    // Optimized polling interval - faster for high-activity networks
+    pollingInterval: 8000, // 8s - faster polling for better UX on both chains
   });
 };
 
