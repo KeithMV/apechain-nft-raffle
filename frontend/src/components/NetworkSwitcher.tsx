@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
-import { apeChain, polygonChain } from '../config/wagmi';
+import { apeChain, polygonChain } from '../config/wagmiUnified';
 
 const SUPPORTED_CHAINS = [
   {
