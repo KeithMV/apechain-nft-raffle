@@ -5,7 +5,7 @@
 
 import { createPublicClient, http, fallback, PublicClient } from 'viem';
 import { polygon, mainnet } from 'viem/chains';
-import { apeChain } from './wagmi';
+import { apeChain } from './wagmiUnified';
 
 interface RpcEndpoint {
   url: string;

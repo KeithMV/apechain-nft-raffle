@@ -38,12 +38,12 @@ export const polygonChain = defineChain({
   rpcUrls: {
     default: {
       http: [
-        // Priority 1: Ankr (reliable, no API key needed)
-        'https://rpc.ankr.com/polygon',
-        // Priority 2: LlamaRPC (fast, community-optimized)
+        // Priority 1: LlamaRPC (fast, community-optimized, no API key needed)
         'https://polygon.llamarpc.com',
-        // Priority 3: Polygon official (backup)
+        // Priority 2: Polygon official (reliable, no API key needed)
         'https://polygon-rpc.com',
+        // Priority 3: Public Polygon RPC (backup)
+        'https://rpc-mainnet.matic.network',
         // Priority 4: Alchemy with API key if available
         ...(process.env.REACT_APP_ALCHEMY_API_KEY && process.env.REACT_APP_ALCHEMY_API_KEY !== 'demo' 
           ? [`https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`] 
@@ -102,7 +102,7 @@ const createAdaptiveConfig = () => {
     },
     
     // Chain-specific polling intervals for optimal performance
-    pollingInterval: 12000, // 12s - balanced for both networks, reduces RPC load
+    pollingInterval: 10000, // 10s - balanced for both networks, avoids rate limits
   });
 };
 
