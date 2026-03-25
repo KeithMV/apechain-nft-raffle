@@ -86,10 +86,11 @@ export function useUserRafflePositionsV4(userAddress?: string) {
 
 // Get user's created raffles (network-aware)
 export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
+  const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
 
   const { data: raffles, isLoading: loading, error, refetch } = useQuery({
-    queryKey: ['created-v4', userAddress, page],
+    queryKey: ['created-v4', chainId, userAddress, page],
     queryFn: async () => {
       if (!dataFetcher.isReady || !userAddress) {
         throw new Error('Missing required parameters');
@@ -106,7 +107,7 @@ export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
         .filter(r => r.creator.toLowerCase() === userAddress.toLowerCase())
         .sort((a, b) => b.endTime - a.endTime);
     },
-    enabled: Boolean(dataFetcher.isReady && userAddress),
+    enabled: Boolean(dataFetcher.isReady && userAddress && chainId),
     staleTime: 45000, // 45 seconds - created raffles change less frequently
     gcTime: 90000, // 1.5 minutes
   });
