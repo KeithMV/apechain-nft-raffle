@@ -207,8 +207,8 @@ export function useOptimizedBuyTickets(optimisticData?: OptimizedTransactionConf
 export function useOptimizedSelectWinner(optimisticData?: OptimizedTransactionConfig['optimisticData']) {
   return useOptimizedTransactionManager({
     transactionType: 'select-winner',
-    successMessage: '', // Disable built-in toast
-    enableToasts: false, // Disable all built-in toasts
+    successMessage: '🏆 Winner selected successfully!',
+    enableToasts: true, // Enable built-in toasts
     enableOptimisticUpdates: true,
     optimisticData,
     onSuccess: (hash) => {

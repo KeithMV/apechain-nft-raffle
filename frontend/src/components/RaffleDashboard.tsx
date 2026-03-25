@@ -57,12 +57,6 @@ export default function RaffleDashboard() {
       console.log('✅ [CANCEL] Raffle cancelled successfully, updating UI immediately');
       setCancellingRaffle(null);
       
-      // Dismiss loading toast and show success
-      toast.success('🎉 Raffle cancelled successfully!', {
-        id: `cancel-${cancellingRaffle}`,
-        duration: 3000,
-      });
-      
       // Immediate refetch for instant UI update
       refetchPositions();
       refetchCreatedRaffles();
@@ -221,19 +215,6 @@ export default function RaffleDashboard() {
     if (winnerSelected && selectingWinnerFor) {
       console.log('✅ [WINNER] Winner selected successfully, updating UI immediately');
       
-      // Dismiss loading toast and show success
-      toast.success('🏆 Winner selected successfully!', {
-        id: `winner-${selectingWinnerFor}`,
-        duration: 4000,
-      });
-      
-      if (winnerHash) {
-        toast.success(`Transaction: ${winnerHash.slice(0, 10)}...`, {
-          duration: 3000,
-          icon: '🔗',
-        });
-      }
-      
       // Clear the selecting state immediately
       setSelectingWinnerFor(null);
       
@@ -241,7 +222,7 @@ export default function RaffleDashboard() {
       refetchPositions();
       refetchCreatedRaffles();
     }
-  }, [winnerSelected, selectingWinnerFor, winnerHash, refetchPositions, refetchCreatedRaffles]);
+  }, [winnerSelected, selectingWinnerFor, refetchPositions, refetchCreatedRaffles]);
 
   // Only show full loading screen if no cached data available
   if (loading && userPositions.length === 0 && createdRaffles.length === 0) {
