@@ -3,7 +3,7 @@ import { useAccount, useChainId } from 'wagmi';
 import ParticipatedRaffleCard from './ParticipatedRaffleCard';
 import CreatedRaffleCard from './CreatedRaffleCard';
 import toast from 'react-hot-toast';
-import { useUserRafflePositionsV4, useCreatedRafflesV4, useClearRaffleCacheV4 } from '../hooks/useRafflePositionsV4';
+import { useUserRafflePositionsV4, useInfiniteCreatedRafflesV4, useClearRaffleCacheV4 } from '../hooks/useRafflePositionsV4';
 import { useOptimizedCancelRaffle } from '../hooks/useOptimizedTransactionManager';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { useNetwork } from '../contexts/NetworkContext';
@@ -23,10 +23,17 @@ export default function RaffleDashboard() {
   
   const [activeTab, setActiveTab] = useState<'participated' | 'created'>('participated');
   const [showExpired, setShowExpired] = useState(true);
-  const [page, setPage] = useState(0);
   
   const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositionsV4(address);
-  const { raffles: createdRaffles, loading: rafflesLoading, refetch: refetchCreatedRaffles } = useCreatedRafflesV4(address, page);
+  const {
+    raffles: createdRaffles,
+    loading: rafflesLoading,
+    refetch: refetchCreatedRaffles,
+    fetchNextPage: fetchNextCreatedPage,
+    hasNextPage: hasNextCreatedPage,
+    isFetchingNextPage: isFetchingNextCreatedPage,
+    pageCount: createdPageCount
+  } = useInfiniteCreatedRafflesV4(address);
   const clearCache = useClearRaffleCacheV4();
   
   const cancelRaffleHook = useOptimizedCancelRaffle();
@@ -46,7 +53,7 @@ export default function RaffleDashboard() {
         refetchPositions();
         refetchCreatedRaffles();
       }, 100); // Small delay to ensure cache is cleared
-      setPage(0); // Reset pagination
+      // No pagination reset needed for infinite queries
     }
     prevChainIdRef.current = chainId;
   }, [chainId, clearCache, refetchPositions, refetchCreatedRaffles]);
@@ -102,7 +109,19 @@ export default function RaffleDashboard() {
   }, [cancelRaffleHook.error, cancellingRaffle]);
   
   const loading = positionsLoading || rafflesLoading;
-  const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
+
+  // Throttled load more function for created raffles
+  const loadMoreCreatedRaffles = useMemo(
+    () => debounce(() => {
+      if (!hasNextCreatedPage || isFetchingNextCreatedPage) {
+        console.log('🚫 [DASHBOARD-LOAD-MORE] Cannot load more:', { hasNextCreatedPage, isFetchingNextCreatedPage });
+        return;
+      }
+      console.log(`📄 [DASHBOARD-LOAD-MORE] Loading page ${createdPageCount + 1} for created raffles...`);
+      fetchNextCreatedPage();
+    }, 1000),
+    [hasNextCreatedPage, isFetchingNextCreatedPage, fetchNextCreatedPage, createdPageCount]
+  );
 
   // Memoized filtered data for performance with monitoring
   const filteredPositions = useMemo(() => {
@@ -117,15 +136,7 @@ export default function RaffleDashboard() {
     });
   }, [showExpired, createdRaffles]);
 
-  useEffect(() => {
-    if (createdRaffles.length === 0) {
-      setHasMoreRaffles(false);
-    }
-  }, [createdRaffles]);
 
-  const loadMoreRaffles = () => {
-    setPage(prev => prev + 1);
-  };
 
   const formatTimeRemaining = useCallback((endTime: number) => {
     const now = Date.now() / 1000;
@@ -377,22 +388,22 @@ export default function RaffleDashboard() {
                   ))
                 )}
               
-              {/* Load More Button for Created Raffles */}
-              {activeTab === 'created' && hasMoreRaffles && createdRaffles.length > 0 && (
+              {/* Load More Button for Created Raffles - Updated for Infinite Queries */}
+              {activeTab === 'created' && hasNextCreatedPage && createdRaffles.length > 0 && (
                 <div className="text-center pt-6">
                   <button
-                    onClick={loadMoreRaffles}
-                    disabled={loading}
+                    onClick={loadMoreCreatedRaffles}
+                    disabled={isFetchingNextCreatedPage}
                     className={`relative bg-gradient-to-r ${styles.loadMoreButtonGradient} ${styles.loadMoreButtonHover} disabled:from-gray-600 disabled:to-gray-600 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 shadow-lg ${styles.loadMoreButtonShadow} ${styles.loadMoreButtonShadowHover} transform hover:-translate-y-0.5 font-mono tracking-wider overflow-hidden group`}
                   >
                     <div className={`absolute inset-0 bg-gradient-to-r ${styles.shimmerGradient} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
-                    {loading ? (
+                    {isFetchingNextCreatedPage ? (
                       <span className="relative flex items-center space-x-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Loading...</span>
+                        <span>Loading more...</span>
                       </span>
                     ) : (
-                      <span className="relative">Load More Raffles</span>
+                      <span className="relative">Load More Raffles ({createdPageCount} pages loaded)</span>
                     )}
                   </button>
                 </div>
