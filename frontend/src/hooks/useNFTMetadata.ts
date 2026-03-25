@@ -19,12 +19,12 @@ interface NFTMetadata {
   }>;
 }
 
-// Lightweight cache for NFT metadata - optimized for performance
+// Optimized cache for NFT metadata
 const metadataCache = new OptimizedCache<NFTMetadata>({ 
-  maxSize: 2 * 1024 * 1024, // Reduced from 5MB to 2MB
-  maxItems: 200, // Reduced from 500 to 200 items
-  ttl: 600000 // Reduced from 15min to 10min TTL
-});
+  maxSize: 5 * 1024 * 1024, 
+  maxItems: 500, 
+  ttl: 900000 
+}); // 5MB, 500 items, 15min TTL
 
 function validateMetadataUrl(url: string): { valid: boolean; error?: string } {
   if (!url || typeof url !== 'string') {
@@ -182,33 +182,30 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
       const cacheKey = `${contractAddress?.toLowerCase()}_${tokenId}`;
       const cached = metadataCache.get(cacheKey);
       if (cached) {
-        console.log('🖼️ [PERF] Using cached metadata for:', cacheKey);
         return { metadata: cached };
       }
       
-      console.log('🖼️ [PERF] Fetching fresh metadata for:', cacheKey);
       const result = await fetchNFTMetadata(publicClient, contractAddress, tokenId);
       
       // Only cache successful results
       if (result.metadata) {
         metadataCache.set(cacheKey, result.metadata);
-        console.log('🖼️ [PERF] Cached metadata for:', cacheKey);
       }
       
       return result;
     },
     enabled: !!publicClient && !!contractAddress && !!tokenId,
-    staleTime: 30 * 60 * 1000, // Reduced from 1 hour to 30 minutes
-    gcTime: 2 * 60 * 60 * 1000, // Reduced from 24 hours to 2 hours
-    retry: 1, // Reduced from false to 1 retry for better reliability
-    retryDelay: 1000, // Reduced from 2000ms to 1000ms
+    staleTime: 60 * 60 * 1000, // 1 hour - NFT metadata rarely changes
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours - keep in memory much longer
+    retry: false, // Disable retries to reduce console spam
+    retryDelay: 2000, // Fixed delay
     placeholderData: {
       metadata: {
         name: `NFT #${tokenId}`,
         image: '/placeholder-nft.svg',
       }
     },
-    // Optimized for performance
+    // Prevent excessive requests
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
