@@ -11,12 +11,75 @@ import { useRafflePositionProcessor } from './useRafflePositionProcessor';
 import { useAsyncCachedLoader } from './useAsyncCachedLoader';
 import { getRaffleFactoryAddress, isV4Available } from '../config/addresses';
 import { debounce } from '../utils/performance';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 
 // Type aliases for backward compatibility
 export interface CreatedRaffle extends RaffleInfo {}
 
-// Get all raffles from both V3 and V4 - optimized for performance
+// PHASE 1: New Infinite Query Hook for Browse Raffles
+export function useInfiniteAllRafflesV4(limit: number = 10) {
+  const chainId = useChainId();
+  const dataFetcher = useRaffleDataFetcher();
+  
+  // Chain-specific query optimization
+  const isPolygon = chainId === 137;
+  const staleTime = isPolygon ? 45000 : 30000;
+  const gcTime = isPolygon ? 90000 : 60000;
+
+  const infiniteQuery = useInfiniteQuery({
+    queryKey: ['raffles-infinite-v4', chainId],
+    queryFn: ({ pageParam = 0 }) => {
+      console.log(`🔄 [INFINITE] Fetching page ${pageParam} with limit ${limit}`);
+      return dataFetcher.fetchAllRaffles({ 
+        limit, 
+        offset: pageParam * limit 
+      });
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      // If last page has fewer items than limit, we've reached the end
+      if (lastPage.length < limit) {
+        console.log(`📄 [INFINITE] Reached end at page ${allPages.length - 1}`);
+        return undefined;
+      }
+      console.log(`📄 [INFINITE] Next page available: ${allPages.length}`);
+      return allPages.length;
+    },
+    enabled: dataFetcher.isReady,
+    staleTime,
+    gcTime,
+    // Ensure pages don't get garbage collected too quickly
+    maxPages: 10, // Keep up to 10 pages in memory
+  });
+
+  // Flatten all pages into single array with memoization
+  const allRaffles = useMemo(() => {
+    if (!infiniteQuery.data?.pages) return [];
+    const flattened = infiniteQuery.data.pages.flat();
+    console.log(`📊 [INFINITE] Total raffles across ${infiniteQuery.data.pages.length} pages: ${flattened.length}`);
+    return flattened;
+  }, [infiniteQuery.data?.pages]);
+
+  // Debounced refetch function
+  const debouncedRefetch = useMemo(
+    () => debounce(infiniteQuery.refetch, 300),
+    [infiniteQuery.refetch]
+  );
+
+  return {
+    raffles: allRaffles,
+    loading: infiniteQuery.isLoading,
+    error: infiniteQuery.error,
+    refetch: debouncedRefetch,
+    // Infinite query specific methods
+    fetchNextPage: infiniteQuery.fetchNextPage,
+    hasNextPage: infiniteQuery.hasNextPage,
+    isFetchingNextPage: infiniteQuery.isFetchingNextPage,
+    // Debug info
+    pageCount: infiniteQuery.data?.pages.length || 0,
+  };
+}
+
+// EXISTING: Original hook remains unchanged for backward compatibility
 export function useAllRafflesV4(limit: number = 15, offset: number = 0) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
@@ -94,7 +157,87 @@ export function useUserRafflePositionsV4(userAddress?: string) {
 }
 
 
-// Get user's created raffles (network-aware)
+// PHASE 1: New Infinite Query Hook for Dashboard Created Raffles
+export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number = 15) {
+  const chainId = useChainId();
+  const dataFetcher = useRaffleDataFetcher();
+  
+  // Chain-specific query optimization
+  const isPolygon = chainId === 137;
+  const staleTime = isPolygon ? 45000 : 30000;
+  const gcTime = isPolygon ? 90000 : 60000;
+
+  const infiniteQuery = useInfiniteQuery({
+    queryKey: ['created-infinite-v4', chainId, userAddress],
+    queryFn: async ({ pageParam = 0 }) => {
+      if (!dataFetcher.isReady || !userAddress) {
+        throw new Error('Missing required parameters');
+      }
+
+      console.log(`🔄 [INFINITE-CREATED] Fetching page ${pageParam} for user ${userAddress}`);
+      
+      // Fetch more raffles to filter from (since we're filtering by creator)
+      const fetchLimit = 30;
+      const allRaffles = await dataFetcher.fetchAllRaffles({ 
+        limit: fetchLimit,
+        offset: pageParam * fetchLimit
+      });
+      
+      // Filter by creator and sort by creation time (newest first)
+      const createdRaffles = allRaffles
+        .filter(r => r.creator.toLowerCase() === userAddress.toLowerCase())
+        .sort((a, b) => b.endTime - a.endTime);
+      
+      console.log(`📊 [INFINITE-CREATED] Page ${pageParam}: ${createdRaffles.length} created raffles found`);
+      return createdRaffles;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      // For created raffles, we continue if we got any results
+      // (since filtering might result in fewer items per page)
+      if (lastPage.length === 0) {
+        console.log(`📄 [INFINITE-CREATED] No more created raffles at page ${allPages.length - 1}`);
+        return undefined;
+      }
+      return allPages.length;
+    },
+    enabled: Boolean(dataFetcher.isReady && userAddress && chainId),
+    staleTime,
+    gcTime,
+    maxPages: 5, // Keep fewer pages for user-specific data
+  });
+
+  // Flatten and deduplicate created raffles
+  const allCreatedRaffles = useMemo(() => {
+    if (!infiniteQuery.data?.pages) return [];
+    
+    const flattened = infiniteQuery.data.pages.flat();
+    
+    // Remove duplicates based on contract + raffle ID
+    const unique = flattened.filter((raffle, index, self) => 
+      index === self.findIndex(r => 
+        r.raffleContract === raffle.raffleContract && r.raffleId === raffle.raffleId
+      )
+    );
+    
+    console.log(`📊 [INFINITE-CREATED] Total unique created raffles: ${unique.length}`);
+    return unique;
+  }, [infiniteQuery.data?.pages]);
+
+  return {
+    raffles: allCreatedRaffles,
+    loading: infiniteQuery.isLoading,
+    error: infiniteQuery.error,
+    refetch: infiniteQuery.refetch,
+    // Infinite query specific methods
+    fetchNextPage: infiniteQuery.fetchNextPage,
+    hasNextPage: infiniteQuery.hasNextPage,
+    isFetchingNextPage: infiniteQuery.isFetchingNextPage,
+    // Debug info
+    pageCount: infiniteQuery.data?.pages.length || 0,
+  };
+}
+
+// EXISTING: Original created raffles hook remains unchanged
 export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
