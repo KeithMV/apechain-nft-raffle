@@ -16,8 +16,8 @@ import { useQuery } from '@tanstack/react-query';
 // Type aliases for backward compatibility
 export interface CreatedRaffle extends RaffleInfo {}
 
-// Get all raffles from both V3 and V4
-export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
+// Get all raffles from both V3 and V4 - optimized for performance
+export function useAllRafflesV4(limit: number = 15, offset: number = 0) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
 
@@ -25,7 +25,7 @@ export function useAllRafflesV4(limit: number = 20, offset: number = 0) {
     queryKey: ['raffles-v4', chainId, limit, offset],
     queryFn: () => dataFetcher.fetchAllRaffles({ limit, offset }),
     enabled: dataFetcher.isReady,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000, // 30 seconds - faster refresh
     gcTime: 60000, // 1 minute
   });
 
@@ -71,7 +71,7 @@ export function useUserRafflePositionsV4(userAddress?: string) {
       return await getCombinedUserPositions(factories, userAddress);
     },
     enabled: Boolean(userAddress && chainId),
-    staleTime: 15000, // 15 seconds - positions change frequently
+    staleTime: 15000, // 15 seconds - faster refresh
     gcTime: 30000, // 30 seconds
   });
 
@@ -96,10 +96,10 @@ export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
         throw new Error('Missing required parameters');
       }
 
-      // Fetch more raffles to filter by creator
+      // Fetch fewer raffles for better performance, then filter
       const allRaffles = await dataFetcher.fetchAllRaffles({ 
-        limit: 50, 
-        offset: page * 20 
+        limit: 30, // Reduced from 50 to 30 for better performance
+        offset: page * 15 // Smaller page size
       });
       
       // Filter by creator and sort by creation time (newest first)
@@ -108,8 +108,8 @@ export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
         .sort((a, b) => b.endTime - a.endTime);
     },
     enabled: Boolean(dataFetcher.isReady && userAddress && chainId),
-    staleTime: 45000, // 45 seconds - created raffles change less frequently
-    gcTime: 90000, // 1.5 minutes
+    staleTime: 30000, // 30 seconds - faster refresh
+    gcTime: 60000, // 1 minute
   });
 
   return { 

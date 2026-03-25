@@ -39,9 +39,9 @@ export const createTransactionQueryClient = () => {
         },
         refetchOnWindowFocus: false,
         refetchOnReconnect: true,
-        // Adaptive stale times based on data type
-        staleTime: deviceSettings.staleTime,
-        gcTime: deviceSettings.staleTime * 2,
+        // Optimized stale times for better performance
+        staleTime: 30 * 1000, // 30 seconds - good balance
+        gcTime: 5 * 60 * 1000, // 5 minutes
         networkMode: 'online',
       },
       mutations: {
