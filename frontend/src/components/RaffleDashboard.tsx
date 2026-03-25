@@ -62,6 +62,15 @@ export default function RaffleDashboard() {
   useEffect(() => {
     if (cancelRaffleHook.isSuccess) {
       console.log('✅ [CANCEL] Raffle cancelled successfully, updating UI immediately');
+      
+      // Dismiss the loading toast and show success
+      if (cancellingRaffle) {
+        toast.success('💫 Raffle cancelled successfully!', {
+          id: `cancel-${cancellingRaffle}`,
+          duration: 4000, // Show success for 4 seconds
+        });
+      }
+      
       setCancellingRaffle(null);
       
       // Immediate refetch for instant UI update
@@ -232,6 +241,12 @@ export default function RaffleDashboard() {
     if (winnerSelected && selectingWinnerFor) {
       const isPolygon = chainId === 137;
       console.log(`✅ [WINNER] Winner selected successfully on ${isPolygon ? 'Polygon' : 'ApeChain'}, starting enhanced UI update`);
+      
+      // Dismiss the loading toast and show success
+      toast.success('🏆 Winner selected successfully!', {
+        id: `winner-${selectingWinnerFor}`,
+        duration: 4000, // Show success for 4 seconds
+      });
       
       // Clear the selecting state immediately
       setSelectingWinnerFor(null);
