@@ -35,6 +35,7 @@ export function useInfiniteAllRafflesV4(limit: number = 10) {
         offset: pageParam * limit 
       });
     },
+    initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       // If last page has fewer items than limit, we've reached the end
       if (lastPage.length < limit) {
@@ -191,6 +192,7 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
       console.log(`📊 [INFINITE-CREATED] Page ${pageParam}: ${createdRaffles.length} created raffles found`);
       return createdRaffles;
     },
+    initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       // For created raffles, we continue if we got any results
       // (since filtering might result in fewer items per page)

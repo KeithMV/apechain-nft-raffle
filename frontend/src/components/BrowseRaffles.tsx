@@ -96,14 +96,19 @@ export default function BrowseRaffles() {
       let expired = 0;
       const filtered: CreatedRaffle[] = [];
       
-      for (const raffle of raffles) {
-        if (raffle.isActive) {
-          active++;
-          filtered.push(raffle);
-        } else {
-          expired++;
-          if (showExpired) {
-            filtered.push(raffle);
+      // Ensure raffles is an array and has proper typing
+      const raffleArray = Array.isArray(raffles) ? raffles : [];
+      
+      for (const raffle of raffleArray) {
+        if (raffle && typeof raffle === 'object' && 'isActive' in raffle) {
+          if (raffle.isActive) {
+            active++;
+            filtered.push(raffle as CreatedRaffle);
+          } else {
+            expired++;
+            if (showExpired) {
+              filtered.push(raffle as CreatedRaffle);
+            }
           }
         }
       }
