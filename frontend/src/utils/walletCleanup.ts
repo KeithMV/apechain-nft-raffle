@@ -22,7 +22,11 @@ export const suppressWalletConnectErrors = () => {
         message.includes('MetaMask - RPC Error') ||
         message.includes('Unhandled Promise Rejection') ||
         message.includes('WebSocket connection') ||
-        message.includes('relay.walletconnect.org')
+        message.includes('relay.walletconnect.org') ||
+        message.includes('searchWalletByIds') ||
+        message.includes('HTTP status code: 400') ||
+        message.includes('fetchData') ||
+        message.includes('FetchUtil.get')
       ) {
         return; // Suppress these errors
       }
