@@ -42,80 +42,73 @@ export class SimpleImageProxy {
     if (originalUrl.startsWith('ipfs://')) {
       const path = originalUrl.slice(7);
       
-      // 1. Lambda proxy with different IPFS gateways (PRIMARY)
-      this.IPFS_GATEWAYS.forEach((gateway) => {
-        const directUrl = `${gateway}${path}`;
-        urls.push(`${this.LAMBDA_PROXY}?url=${encodeURIComponent(directUrl)}`);
-      });
-      
-      // 2. Direct IPFS gateways (SECONDARY)
-      this.IPFS_GATEWAYS.forEach((gateway) => {
-        urls.push(`${gateway}${path}`);
-      });
-      
-      // 3. Additional IPFS gateways for Polygon compatibility
-      const additionalGateways = [
-        'https://ipfs.moralis.io/ipfs/',
-        'https://cf-ipfs.com/ipfs/',
-        'https://ipfs.infura.io/ipfs/'
-      ];
-      additionalGateways.forEach((gateway) => {
-        urls.push(`${this.LAMBDA_PROXY}?url=${encodeURIComponent(`${gateway}${path}`)}`);
-        urls.push(`${gateway}${path}`);
-      });
-      
-      // 4. Backup proxy with IPFS (TERTIARY)
-      const primaryGateway = `${this.IPFS_GATEWAYS[0]}${path}`;
-      urls.push(`${this.BACKUP_PROXY}${encodeURIComponent(primaryGateway)}`);
+      // Limit to 3 high-quality IPFS sources for better performance
+      urls.push(`${this.LAMBDA_PROXY}?url=${encodeURIComponent(`https://ipfs.io/ipfs/${path}`)}`);
+      urls.push(`https://ipfs.io/ipfs/${path}`);
+      urls.push(`https://gateway.pinata.cloud/ipfs/${path}`);
       
     } else if (originalUrl.startsWith('http')) {
-      // 1. Lambda proxy (PRIMARY)
+      // Limit to 2 HTTP sources for better performance
       urls.push(`${this.LAMBDA_PROXY}?url=${encodeURIComponent(originalUrl)}`);
       
-      // 2. Direct URL for CORS-enabled sources (SECONDARY)
+      // Only add direct URL for known CORS-enabled sources
       if (originalUrl.includes('img.op.xyz') || 
-          originalUrl.includes('img.other.page') ||
           originalUrl.includes('arweave.net') ||
           originalUrl.includes('polygon-metadata.s3.amazonaws.com') ||
           originalUrl.includes('assets.polygon.technology')) {
         urls.push(originalUrl);
       }
-      
-      // 3. Backup proxy (TERTIARY)
-      urls.push(`${this.BACKUP_PROXY}${encodeURIComponent(originalUrl)}`);
     }
     
     // Final fallback
     urls.push('/placeholder-nft.svg');
     
-    // Remove duplicates while preserving order
-    return [...new Set(urls)];
+    console.log(`🖼️ [PERF] Reduced fallback URLs from 15+ to ${urls.length} for better performance`);
+    return urls;
   }
 
-  // New method for debugging image loading issues
-  static async testImageUrl(url: string): Promise<{ success: boolean; error?: string; status?: number }> {
-    try {
-      // Create timeout controller for broader compatibility
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+  // Intelligent image preloading for better performance
+  static async preloadImage(url: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, 3000); // 3 second timeout
       
-      const response = await fetch(url, { 
-        method: 'HEAD',
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      return {
-        success: response.ok,
-        status: response.status,
-        error: response.ok ? undefined : `HTTP ${response.status}: ${response.statusText}`
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve(true);
       };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Network error'
+      img.onerror = () => {
+        clearTimeout(timeout);
+        resolve(false);
       };
+      img.src = url;
+    });
+  }
+
+  // Get the best available image URL with preloading
+  static async getBestImageUrl(originalUrl: string): Promise<string> {
+    const urls = this.getFallbackUrls(originalUrl);
+    
+    // Try to preload the first 2 URLs in parallel for speed
+    const preloadPromises = urls.slice(0, 2).map(async (url) => {
+      const success = await this.preloadImage(url);
+      return success ? url : null;
+    });
+    
+    const results = await Promise.allSettled(preloadPromises);
+    
+    // Return the first successful URL
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value) {
+        console.log('🖼️ [PERF] Preloaded image successfully:', result.value.substring(0, 50) + '...');
+        return result.value;
+      }
     }
+    
+    // Fallback to placeholder if all preloads fail
+    console.log('🖼️ [PERF] All preloads failed, using placeholder');
+    return '/placeholder-nft.svg';
   }
 }
