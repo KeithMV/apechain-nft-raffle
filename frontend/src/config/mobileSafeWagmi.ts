@@ -4,10 +4,9 @@
  */
 
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
-import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defineChain } from 'viem';
 import { config as envConfig } from './environment';
-import { CHAIN_IDS, WALLET_IDS } from '../constants/chains';
+import { CHAIN_IDS } from '../constants/chains';
 
 // Runtime device detection (safer for mobile)
 const getDeviceInfo = () => {
@@ -22,24 +21,24 @@ const getDeviceInfo = () => {
   return { isMobile, isSlowConnection };
 };
 
-// Conservative configuration that works well on both mobile and desktop
+// Optimized configuration for better performance
 const getOptimalConfig = () => {
-  const { isMobile, isSlowConnection } = getDeviceInfo();
+  const { isMobile } = getDeviceInfo();
   
-  // Use more conservative settings that work reliably across devices
+  // Simplified settings for better performance
   if (isMobile) {
     return {
-      pollingInterval: 6000, // 6 seconds - reliable for mobile
-      batchSize: 1024 * 64, // 64KB - safe for mobile memory
-      wait: 50, // Reasonable batching delay
-      staleTime: 4 * 60 * 1000, // 4 minutes
+      pollingInterval: 4000, // 4 seconds - faster
+      batchSize: 1024 * 64, // 64KB
+      wait: 50,
+      staleTime: 30 * 1000, // 30 seconds - faster refresh
     };
   } else {
     return {
-      pollingInterval: 4000, // 4 seconds - faster for desktop but not aggressive
-      batchSize: 1024 * 128, // 128KB - balanced for desktop
-      wait: 32, // Standard batching delay
-      staleTime: 3 * 60 * 1000, // 3 minutes
+      pollingInterval: 3000, // 3 seconds - faster
+      batchSize: 1024 * 128, // 128KB
+      wait: 32,
+      staleTime: 30 * 1000, // 30 seconds - faster refresh
     };
   }
 };
@@ -67,7 +66,7 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Polygon chain with mobile-safe RPC configuration
+// Polygon chain with optimized RPC configuration
 export const polygonChain = defineChain({
   id: 137,
   name: 'Polygon',
@@ -79,12 +78,10 @@ export const polygonChain = defineChain({
   rpcUrls: {
     default: {
       http: [
-        // Prioritize most reliable endpoints for mobile compatibility
+        // Fastest, most reliable endpoints first
         'https://polygon-rpc.com',
         'https://rpc.ankr.com/polygon',
         'https://polygon.llamarpc.com',
-        'https://polygon-mainnet.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78',
-        'https://polygon-mainnet.public.blastapi.io',
       ],
     },
   },
@@ -108,7 +105,7 @@ const metadata = {
 // Get optimal configuration
 const optimalConfig = getOptimalConfig();
 
-// Mobile-safe wagmi configuration
+// Optimized wagmi configuration
 export const config = defaultWagmiConfig({
   chains: [apeChain, polygonChain],
   projectId,
@@ -117,54 +114,15 @@ export const config = defaultWagmiConfig({
   syncConnectedChain: true,
   enableEIP6963: true,
   enableCoinbase: true,
-  // Conservative batch configuration for mobile compatibility
+  // Optimized batch configuration
   batch: {
     multicall: {
       batchSize: optimalConfig.batchSize,
       wait: optimalConfig.wait,
     },
   },
-  // Moderate polling interval that works on mobile
+  // Faster polling for better UX
   pollingInterval: optimalConfig.pollingInterval,
-  // Remove storage configuration to avoid TypeScript issues
-});
-
-// Mobile-optimized Web3Modal configuration
-const deviceInfo = getDeviceInfo();
-
-createWeb3Modal({
-  wagmiConfig: config,
-  projectId,
-  enableAnalytics: false,
-  enableOnramp: false,
-  enableSwaps: false,
-  themeMode: 'dark',
-  // Mobile-first wallet selection - prioritize MetaMask for mobile
-  featuredWalletIds: deviceInfo.isMobile ? [
-    WALLET_IDS.METAMASK, // MetaMask first for mobile
-  ] : [
-    WALLET_IDS.METAMASK,
-    WALLET_IDS.RAINBOW,
-    WALLET_IDS.TRUST_WALLET,
-  ],
-  includeWalletIds: deviceInfo.isMobile ? [
-    WALLET_IDS.METAMASK,
-    WALLET_IDS.TRUST_WALLET,
-  ] : [
-    WALLET_IDS.METAMASK,
-    WALLET_IDS.RAINBOW,
-    WALLET_IDS.TRUST_WALLET,
-  ],
-  excludeWalletIds: [
-    WALLET_IDS.COINBASE,
-    WALLET_IDS.LEDGER,
-  ],
-  allWallets: 'HIDE',
-  defaultChain: apeChain,
-  chainImages: {
-    [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
-    [polygonChain.id]: 'https://polygon.technology/favicon.ico'
-  }
 });
 
 // Export device info for runtime use
