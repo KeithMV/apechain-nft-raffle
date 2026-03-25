@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { getDeviceSettings } from '../config/mobileSafeWagmi';
+import { getDeviceType } from '../config/wagmiUnified';
 
 interface TransactionProgressProps {
   isVisible: boolean;
@@ -41,8 +41,7 @@ export const TransactionProgress: React.FC<TransactionProgressProps> = ({
   if (!isVisible) return null;
 
   const message = getTransactionMessages(transactionType, error);
-  const deviceSettings = getDeviceSettings();
-  const isMobile = deviceSettings.isMobile;
+  const isMobile = getDeviceType() === 'mobile';
 
   return (
     <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4`}>

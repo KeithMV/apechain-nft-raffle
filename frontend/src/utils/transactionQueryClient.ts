@@ -4,7 +4,7 @@
  */
 
 import { QueryClient } from '@tanstack/react-query';
-import { getDeviceSettings } from '../config/mobileSafeWagmi';
+import { getDeviceType } from '../config/wagmiUnified';
 
 // Transaction-specific cache keys
 export const TRANSACTION_CACHE_KEYS = {
@@ -16,7 +16,7 @@ export const TRANSACTION_CACHE_KEYS = {
 
 // Create transaction-optimized QueryClient
 export const createTransactionQueryClient = () => {
-  const deviceSettings = getDeviceSettings();
+  const isMobile = getDeviceType() === 'mobile';
   
   return new QueryClient({
     defaultOptions: {
@@ -30,11 +30,11 @@ export const createTransactionQueryClient = () => {
           if (error?.message?.includes('User rejected') || error?.message?.includes('user rejected')) {
             return false;
           }
-          return failureCount < (deviceSettings.isMobile ? 1 : 2);
+          return failureCount < (isMobile ? 1 : 2);
         },
         retryDelay: (attemptIndex) => {
           // Faster retries for better UX
-          const baseDelay = deviceSettings.isMobile ? 500 : 300;
+          const baseDelay = isMobile ? 500 : 300;
           return Math.min(baseDelay * Math.pow(1.5, attemptIndex), 3000);
         },
         refetchOnWindowFocus: false,
@@ -54,28 +54,28 @@ export const createTransactionQueryClient = () => {
 
 // Transaction-specific query options
 export const getTransactionQueryOptions = (transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle') => {
-  const deviceSettings = getDeviceSettings();
+  const isMobile = getDeviceType() === 'mobile';
   
   const baseOptions = {
     'buy-tickets': {
       staleTime: 1000, // 1 second - need real-time updates
       gcTime: 5000,
-      refetchInterval: deviceSettings.isMobile ? 3000 : 2000,
+      refetchInterval: isMobile ? 3000 : 2000,
     },
     'select-winner': {
       staleTime: 2000, // 2 seconds - slightly less critical
       gcTime: 10000,
-      refetchInterval: deviceSettings.isMobile ? 4000 : 3000,
+      refetchInterval: isMobile ? 4000 : 3000,
     },
     'create-raffle': {
       staleTime: 5000, // 5 seconds - less time-sensitive
       gcTime: 30000,
-      refetchInterval: deviceSettings.isMobile ? 6000 : 4000,
+      refetchInterval: isMobile ? 6000 : 4000,
     },
     'cancel-raffle': {
       staleTime: 3000, // 3 seconds - moderate priority
       gcTime: 15000,
-      refetchInterval: deviceSettings.isMobile ? 5000 : 3000,
+      refetchInterval: isMobile ? 5000 : 3000,
     },
   };
 
@@ -111,13 +111,13 @@ export const optimisticUpdateHelpers = {
 
 // Progressive timeout configuration
 export const getProgressiveTimeout = (transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle', attempt: number = 0) => {
-  const deviceSettings = getDeviceSettings();
+  const isMobile = getDeviceType() === 'mobile';
   
   const baseTimeouts = {
-    'buy-tickets': deviceSettings.isMobile ? 25000 : 20000, // 25s mobile, 20s desktop
-    'select-winner': deviceSettings.isMobile ? 50000 : 40000, // 50s mobile, 40s desktop
-    'create-raffle': deviceSettings.isMobile ? 40000 : 30000, // 40s mobile, 30s desktop
-    'cancel-raffle': deviceSettings.isMobile ? 35000 : 25000, // 35s mobile, 25s desktop
+    'buy-tickets': isMobile ? 25000 : 20000, // 25s mobile, 20s desktop
+    'select-winner': isMobile ? 50000 : 40000, // 50s mobile, 40s desktop
+    'create-raffle': isMobile ? 40000 : 30000, // 40s mobile, 30s desktop
+    'cancel-raffle': isMobile ? 35000 : 25000, // 35s mobile, 25s desktop
   };
 
   // Increase timeout with each attempt
