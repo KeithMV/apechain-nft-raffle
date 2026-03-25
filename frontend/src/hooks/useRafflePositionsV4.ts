@@ -16,8 +16,8 @@ import { useQuery } from '@tanstack/react-query';
 // Type aliases for backward compatibility
 export interface CreatedRaffle extends RaffleInfo {}
 
-// Get all raffles from both V3 and V4 - optimized for performance
-export function useAllRafflesV4(limit: number = 15, offset: number = 0) {
+// Get all raffles from both V3 and V4 - optimized for performance with proper pagination
+export function useAllRafflesV4(limit: number = 15, currentPage: number = 0) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
   
@@ -26,9 +26,26 @@ export function useAllRafflesV4(limit: number = 15, offset: number = 0) {
   const staleTime = isPolygon ? 45000 : 30000; // Longer stale time for Polygon
   const gcTime = isPolygon ? 90000 : 60000; // Longer garbage collection for Polygon
 
-  const { data: raffles, isLoading: loading, error, refetch } = useQuery({
-    queryKey: ['raffles-v4', chainId, limit, offset],
-    queryFn: () => dataFetcher.fetchAllRaffles({ limit, offset }),
+  // Fetch all pages up to current page
+  const { data: allPagesData, isLoading: loading, error, refetch } = useQuery({
+    queryKey: ['raffles-v4', chainId], // Single query key for all pages
+    queryFn: async () => {
+      const allRaffles: RaffleInfo[] = [];
+      
+      // Fetch all pages from 0 to currentPage
+      for (let page = 0; page <= currentPage; page++) {
+        const offset = page * limit;
+        const pageRaffles = await dataFetcher.fetchAllRaffles({ limit, offset });
+        allRaffles.push(...pageRaffles);
+        
+        // If we got fewer than limit, we've reached the end
+        if (pageRaffles.length < limit) {
+          break;
+        }
+      }
+      
+      return allRaffles;
+    },
     enabled: dataFetcher.isReady,
     staleTime,
     gcTime,
@@ -40,7 +57,7 @@ export function useAllRafflesV4(limit: number = 15, offset: number = 0) {
   );
 
   return { 
-    raffles: raffles || [], 
+    raffles: allPagesData || [], 
     loading, 
     error, 
     refetch: debouncedRefetch 
@@ -94,8 +111,8 @@ export function useUserRafflePositionsV4(userAddress?: string) {
 }
 
 
-// Get user's created raffles (network-aware)
-export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
+// Get user's created raffles (network-aware) with proper pagination
+export function useCreatedRafflesV4(userAddress?: string, currentPage: number = 0) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
   
@@ -105,22 +122,42 @@ export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
   const gcTime = isPolygon ? 90000 : 60000; // Longer garbage collection for Polygon
 
   const { data: raffles, isLoading: loading, error, refetch } = useQuery({
-    queryKey: ['created-v4', chainId, userAddress, page],
+    queryKey: ['created-v4', chainId, userAddress], // Single query key for all pages
     queryFn: async () => {
       if (!dataFetcher.isReady || !userAddress) {
         throw new Error('Missing required parameters');
       }
 
-      // Fetch fewer raffles for better performance, then filter
-      const allRaffles = await dataFetcher.fetchAllRaffles({ 
-        limit: 30, // Reduced from 50 to 30 for better performance
-        offset: page * 15 // Smaller page size
-      });
+      const allCreatedRaffles: RaffleInfo[] = [];
+      const pageSize = 15;
       
-      // Filter by creator and sort by creation time (newest first)
-      return allRaffles
-        .filter(r => r.creator.toLowerCase() === userAddress.toLowerCase())
+      // Fetch all pages up to current page
+      for (let page = 0; page <= currentPage; page++) {
+        const allRaffles = await dataFetcher.fetchAllRaffles({ 
+          limit: 30, // Fetch more to filter from
+          offset: page * 30
+        });
+        
+        // Filter by creator
+        const createdRaffles = allRaffles
+          .filter(r => r.creator.toLowerCase() === userAddress.toLowerCase());
+          
+        allCreatedRaffles.push(...createdRaffles);
+        
+        // If we got fewer than expected, we've reached the end
+        if (allRaffles.length < 30) {
+          break;
+        }
+      }
+      
+      // Sort by creation time (newest first) and remove duplicates
+      const uniqueRaffles = allCreatedRaffles
+        .filter((raffle, index, self) => 
+          index === self.findIndex(r => r.raffleContract === raffle.raffleContract && r.raffleId === raffle.raffleId)
+        )
         .sort((a, b) => b.endTime - a.endTime);
+      
+      return uniqueRaffles;
     },
     enabled: Boolean(dataFetcher.isReady && userAddress && chainId),
     staleTime,
