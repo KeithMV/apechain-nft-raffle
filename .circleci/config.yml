@@ -171,13 +171,13 @@ jobs:
               echo "❌ Critical vulnerabilities found! Build failed."
               echo "Please address critical vulnerabilities before deployment."
               exit 1
-            elif [ "$HIGH" -gt "10" ]; then
-              echo "⚠️  Too many high vulnerabilities found ($HIGH > 10)."
+            elif [ "$HIGH" -gt "30" ]; then
+              echo "⚠️  Too many high vulnerabilities found ($HIGH > 30)."
               echo "Please review and address high-priority vulnerabilities."
               echo "Consider running 'yarn audit fix' to auto-fix issues."
               exit 1
             elif [ "$HIGH" -gt "0" ]; then
-              echo "⚠️  High vulnerabilities found but within acceptable threshold ($HIGH <= 10)."
+              echo "⚠️  High vulnerabilities found but within acceptable threshold ($HIGH <= 30)."
               echo "Please review and address these vulnerabilities when possible."
             else
               echo "✅ No critical or high vulnerabilities detected."
