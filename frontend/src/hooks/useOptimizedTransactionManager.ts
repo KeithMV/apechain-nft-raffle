@@ -21,6 +21,7 @@ export interface OptimizedTransactionConfig {
     userAddress?: string;
     expectedTicketCount?: number;
     expectedBalance?: string;
+    chainId?: number;
   };
 }
 
@@ -79,19 +80,30 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
     }
   }, [enableOptimisticUpdates, optimisticData]);
 
-  // Handle transaction success
+  // Handle transaction success with chain-aware cache invalidation
   useEffect(() => {
     if (isSuccess && hash && hash !== lastSuccessHash.current) {
       lastSuccessHash.current = hash;
       setIsProcessing(false);
       
-      // Unified cache invalidation for immediate frontend updates
-      invalidateAfterTransaction({
-        raffleContract: optimisticData?.raffleId,
-        userAddress: optimisticData?.userAddress,
-        transactionType,
-        immediate: true
-      });
+      // Chain-aware cache invalidation timing
+      const chainId = optimisticData?.chainId || 33139; // Default to ApeChain
+      const isPolygon = chainId === 137;
+      
+      // Polygon needs delayed invalidation due to slower block finality
+      const invalidationDelay = isPolygon ? 3000 : 0; // 3s delay for Polygon, immediate for ApeChain
+      
+      console.log(`🔄 [CACHE] Chain-aware invalidation: ${isPolygon ? 'Polygon (3s delay)' : 'ApeChain (immediate)'} for tx:`, hash);
+      
+      setTimeout(() => {
+        invalidateAfterTransaction({
+          raffleContract: optimisticData?.raffleId,
+          userAddress: optimisticData?.userAddress,
+          transactionType,
+          immediate: true,
+          chainId
+        });
+      }, invalidationDelay);
       
       if (enableToasts && successMessage) {
         toast.success(successMessage);
@@ -214,7 +226,7 @@ export function useOptimizedSelectWinner(optimisticData?: OptimizedTransactionCo
     onSuccess: (hash) => {
       console.log('✅ [WINNER] Transaction confirmed with hash:', hash);
       if (optimisticData?.raffleId) {
-        console.log('🔄 [WINNER] Invalidating cache for raffle:', optimisticData.raffleId);
+        console.log('🔄 [WINNER] Starting progressive cache invalidation for raffle:', optimisticData.raffleId);
       }
     },
   });

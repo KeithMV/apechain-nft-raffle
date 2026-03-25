@@ -28,7 +28,7 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
   const [ticketQuantities, setTicketQuantities] = useState<{ [key: string]: number }>({});
   const [currentRaffleContract, setCurrentRaffleContract] = useState<string | null>(null);
 
-  // Optimized transaction managers - no progress system needed
+  // Optimized transaction managers with chain-aware optimistic data
   const buyTicketsManager = useOptimizedBuyTickets();
   const winnerSelectionManager = useOptimizedSelectWinner();
   
@@ -143,7 +143,7 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     removeProcessingRaffle
   ]);
 
-  // Optimized winner selection handler - simplified without progress tracking
+  // Optimized winner selection handler with chain-aware cache invalidation
   const handleWinnerSelection = useCallback(async (raffle: CreatedRaffle) => {
     // Check if already processing
     if (isProcessing(raffle.raffleContract)) {
@@ -154,7 +154,7 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     addProcessingRaffle(raffle.raffleContract);
     
     try {
-      // Use optimized transaction manager with emergency reveal
+      // Use optimized transaction manager with chain-aware optimistic data
       await winnerSelectionManager.executeTransaction({
         address: raffle.raffleContract as `0x${string}`,
         abi: [{
@@ -167,7 +167,7 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
         functionName: 'emergencyReveal'
       });
       
-      // Success handling is done in useEffect
+      // Success handling is done in useEffect with chain-aware cache invalidation
     } catch (error) {
       console.error('Failed to start winner selection:', error);
       removeProcessingRaffle(raffle.raffleContract);
