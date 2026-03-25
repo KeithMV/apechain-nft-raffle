@@ -35,9 +35,9 @@ async function fetchNFTsViaAPI(
     console.log(`🔍 Fetching NFTs via Lambda proxy for ${chainName} (${chainId})`);
     console.log(`📡 Using endpoint: ${lambdaProxy}`);
     
-    // Chain-specific timeout optimization
+    // Chain-specific timeout optimization - Polygon needs more time due to network congestion
     const isPolygon = chainId === 137;
-    const timeoutMs = isPolygon ? 15000 : 20000; // Faster timeout for Polygon
+    const timeoutMs = isPolygon ? 25000 : 15000; // Longer timeout for Polygon
     
     const response = await fetch(url, {
       headers: {
