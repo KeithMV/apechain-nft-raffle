@@ -5,6 +5,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { useChainId } from 'wagmi';
 import { optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
 
 export interface CacheInvalidationOptions {
@@ -12,6 +13,7 @@ export interface CacheInvalidationOptions {
   userAddress?: string;
   transactionType?: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle';
   immediate?: boolean;
+  chainId?: number;
 }
 
 /**
@@ -19,58 +21,62 @@ export interface CacheInvalidationOptions {
  */
 export function useUnifiedCacheInvalidation() {
   const queryClient = useQueryClient();
+  const currentChainId = useChainId();
   
-  // Clear localStorage cache entries
-  const clearAllCaches = useCallback(() => {
+  // Clear localStorage cache entries (chain-specific)
+  const clearAllCaches = useCallback((chainId?: number) => {
     if (typeof window !== 'undefined') {
+      const targetChainId = chainId || currentChainId;
       Object.keys(localStorage).forEach(key => {
-        if (key.includes('raffle') || key.includes('cache') || key.includes('user_positions') || key.includes('created_raffles')) {
+        if ((key.includes('raffle') || key.includes('cache') || key.includes('user_positions') || key.includes('created_raffles')) &&
+            (key.includes(`_${targetChainId}_`) || !key.includes('_'))) {
           localStorage.removeItem(key);
         }
       });
     }
-    console.log('🧹 [CACHE] All localStorage caches cleared');
-  }, []);
+    console.log(`🧹 [CACHE] Chain ${chainId || currentChainId} localStorage caches cleared`);
+  }, [currentChainId]);
 
   // Comprehensive cache invalidation for transaction completion
   const invalidateAfterTransaction = useCallback(async (options: CacheInvalidationOptions = {}) => {
-    const { raffleContract, userAddress, transactionType, immediate = true } = options;
+    const { raffleContract, userAddress, transactionType, immediate = true, chainId } = options;
+    const targetChainId = chainId || currentChainId;
     
-    console.log('🔄 [CACHE] Starting unified cache invalidation:', options);
+    console.log('🔄 [CACHE] Starting unified cache invalidation:', { ...options, chainId: targetChainId });
     
     try {
-      // 1. Clear custom cache system immediately
-      clearAllCaches();
+      // 1. Clear custom cache system immediately (chain-specific)
+      clearAllCaches(targetChainId);
       
-      // 2. Invalidate React Query caches with specific patterns
+      // 2. Invalidate React Query caches with chain-specific patterns
       const invalidationPromises = [
-        // Core raffle data
-        queryClient.invalidateQueries({ queryKey: ['raffles'] }),
-        queryClient.invalidateQueries({ queryKey: ['user-positions'] }),
-        queryClient.invalidateQueries({ queryKey: ['created-raffles'] }),
-        queryClient.invalidateQueries({ queryKey: ['all-raffles'] }),
+        // Core raffle data (chain-specific)
+        queryClient.invalidateQueries({ queryKey: ['raffles', targetChainId] }),
+        queryClient.invalidateQueries({ queryKey: ['user-positions', targetChainId] }),
+        queryClient.invalidateQueries({ queryKey: ['created-raffles', targetChainId] }),
+        queryClient.invalidateQueries({ queryKey: ['all-raffles', targetChainId] }),
         
-        // V4 specific queries
-        queryClient.invalidateQueries({ queryKey: ['raffles-v4'] }),
-        queryClient.invalidateQueries({ queryKey: ['positions-v4'] }),
-        queryClient.invalidateQueries({ queryKey: ['created-v4'] }),
+        // V4 specific queries (chain-specific)
+        queryClient.invalidateQueries({ queryKey: ['raffles-v4', targetChainId] }),
+        queryClient.invalidateQueries({ queryKey: ['positions-v4', targetChainId] }),
+        queryClient.invalidateQueries({ queryKey: ['created-v4', targetChainId] }),
       ];
       
       // 3. Specific raffle invalidation
       if (raffleContract) {
         invalidationPromises.push(
-          queryClient.invalidateQueries({ queryKey: ['raffle', raffleContract] }),
-          queryClient.invalidateQueries({ queryKey: ['raffle-state', raffleContract] }),
-          queryClient.invalidateQueries({ queryKey: ['ticket-count', raffleContract] })
+          queryClient.invalidateQueries({ queryKey: ['raffle', targetChainId, raffleContract] }),
+          queryClient.invalidateQueries({ queryKey: ['raffle-state', targetChainId, raffleContract] }),
+          queryClient.invalidateQueries({ queryKey: ['ticket-count', targetChainId, raffleContract] })
         );
       }
       
-      // 4. User-specific invalidation
+      // 4. User-specific invalidation (chain-specific)
       if (userAddress) {
         invalidationPromises.push(
-          queryClient.invalidateQueries({ queryKey: ['user-balance', userAddress] }),
-          queryClient.invalidateQueries({ queryKey: ['user-positions', userAddress] }),
-          queryClient.invalidateQueries({ queryKey: ['user-created', userAddress] })
+          queryClient.invalidateQueries({ queryKey: ['user-balance', targetChainId, userAddress] }),
+          queryClient.invalidateQueries({ queryKey: ['user-positions', targetChainId, userAddress] }),
+          queryClient.invalidateQueries({ queryKey: ['user-created', targetChainId, userAddress] })
         );
       }
       
@@ -85,14 +91,14 @@ export function useUnifiedCacheInvalidation() {
       // 6. Force refetch critical queries immediately if requested
       if (immediate) {
         const refetchPromises = [
-          queryClient.refetchQueries({ queryKey: ['raffles'] }),
-          queryClient.refetchQueries({ queryKey: ['user-positions'] }),
-          queryClient.refetchQueries({ queryKey: ['created-raffles'] })
+          queryClient.refetchQueries({ queryKey: ['raffles', targetChainId] }),
+          queryClient.refetchQueries({ queryKey: ['user-positions', targetChainId] }),
+          queryClient.refetchQueries({ queryKey: ['created-raffles', targetChainId] })
         ];
         
         if (raffleContract) {
           refetchPromises.push(
-            queryClient.refetchQueries({ queryKey: ['raffle', raffleContract] })
+            queryClient.refetchQueries({ queryKey: ['raffle', targetChainId, raffleContract] })
           );
         }
         
@@ -100,40 +106,41 @@ export function useUnifiedCacheInvalidation() {
         Promise.all(refetchPromises).catch(console.error);
       }
       
-      console.log('✅ [CACHE] Unified cache invalidation completed successfully');
+      console.log(`✅ [CACHE] Unified cache invalidation completed successfully for chain ${targetChainId}`);
       
     } catch (error) {
       console.error('❌ [CACHE] Cache invalidation failed:', error);
     }
-  }, [queryClient, clearAllCaches]);
+  }, [queryClient, clearAllCaches, currentChainId]);
 
-  // Quick invalidation for immediate UI feedback
-  const quickInvalidate = useCallback((raffleContract?: string) => {
-    console.log('⚡ [CACHE] Quick invalidation for:', raffleContract);
+  // Quick invalidation for immediate UI feedback (chain-specific)
+  const quickInvalidate = useCallback((raffleContract?: string, chainId?: number) => {
+    const targetChainId = chainId || currentChainId;
+    console.log('⚡ [CACHE] Quick invalidation for chain:', targetChainId, 'raffle:', raffleContract);
     
-    // Clear custom caches immediately
-    clearAllCaches();
+    // Clear custom caches immediately (chain-specific)
+    clearAllCaches(targetChainId);
     
-    // Invalidate core queries without waiting
-    queryClient.invalidateQueries({ queryKey: ['raffles'] });
-    queryClient.invalidateQueries({ queryKey: ['user-positions'] });
-    queryClient.invalidateQueries({ queryKey: ['created-raffles'] });
-    queryClient.invalidateQueries({ queryKey: ['all-raffles'] });
+    // Invalidate core queries without waiting (chain-specific)
+    queryClient.invalidateQueries({ queryKey: ['raffles', targetChainId] });
+    queryClient.invalidateQueries({ queryKey: ['user-positions', targetChainId] });
+    queryClient.invalidateQueries({ queryKey: ['created-raffles', targetChainId] });
+    queryClient.invalidateQueries({ queryKey: ['all-raffles', targetChainId] });
     
-    // Also invalidate any React Query queries that might exist
-    queryClient.invalidateQueries({ queryKey: ['raffles-v4'] });
-    queryClient.invalidateQueries({ queryKey: ['positions-v4'] });
-    queryClient.invalidateQueries({ queryKey: ['created-v4'] });
+    // Also invalidate any React Query queries that might exist (chain-specific)
+    queryClient.invalidateQueries({ queryKey: ['raffles-v4', targetChainId] });
+    queryClient.invalidateQueries({ queryKey: ['positions-v4', targetChainId] });
+    queryClient.invalidateQueries({ queryKey: ['created-v4', targetChainId] });
     
     if (raffleContract) {
-      queryClient.invalidateQueries({ queryKey: ['raffle', raffleContract] });
+      queryClient.invalidateQueries({ queryKey: ['raffle', targetChainId, raffleContract] });
     }
     
     // Dispatch custom event to trigger refetch in components using custom cache
     window.dispatchEvent(new CustomEvent('cache-invalidated', { 
-      detail: { raffleContract, timestamp: Date.now() } 
+      detail: { raffleContract, chainId: targetChainId, timestamp: Date.now() } 
     }));
-  }, [queryClient, clearAllCaches]);
+  }, [queryClient, clearAllCaches, currentChainId]);
 
   // Emergency cache reset (use sparingly)
   const emergencyReset = useCallback(async () => {
