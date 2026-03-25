@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import BasicNFTImage from './BasicNFTImage';
 import { LiveCountdown } from './LiveCountdown';
 
@@ -39,31 +39,6 @@ const RaffleCard = React.memo<RaffleCardProps>(({
   address, 
   nativeCurrency 
 }) => {
-  // Intersection Observer for lazy loading
-  const [isVisible, setIsVisible] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          // Once visible, stop observing to prevent re-renders
-          observer.disconnect();
-        }
-      },
-      { 
-        rootMargin: '200px', // Load images 200px before they become visible
-        threshold: 0.1 // Trigger when 10% of the card is visible
-      }
-    );
-    
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
-    }
-    
-    return () => observer.disconnect();
-  }, []);
   // Memoize expensive calculations
   const { quantity, totalCost, progress, availableTickets, isExpired } = useMemo(() => {
     const qty = ticketQuantities[raffle.raffleContract] || 1;
@@ -105,37 +80,25 @@ const RaffleCard = React.memo<RaffleCardProps>(({
   }, [processingRaffles, raffle.raffleContract]);
 
   return (
-    <div 
-      ref={cardRef}
-      className={`relative bg-black/80 backdrop-blur-xl border rounded-xl overflow-hidden transition-all duration-300 group shadow-lg ${
-        isExpired 
-          ? 'border-slate-600/30 opacity-75' 
-          : 'border-cyan-500/30 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/20'
-      }`}
-    >
+    <div className={`relative bg-black/80 backdrop-blur-xl border rounded-xl overflow-hidden transition-all duration-300 group shadow-lg ${
+      isExpired 
+        ? 'border-slate-600/30 opacity-75' 
+        : 'border-cyan-500/30 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/20'
+    }`}>
       <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-xl blur-sm animate-pulse"></div>
       {!isExpired && (
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       )}
       
-      {/* NFT Image - Only load when visible */}
+      {/* NFT Image */}
       <div className="relative">
-        {isVisible ? (
-          <BasicNFTImage 
-            contractAddress={raffle.nftContract}
-            tokenId={raffle.tokenId.toString()}
-            className="w-full h-80 sm:h-96"
-            showName={true}
-            size="lg"
-          />
-        ) : (
-          <div className="w-full h-80 sm:h-96 bg-slate-800/50 rounded-xl flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-slate-400 text-sm">Loading NFT...</p>
-            </div>
-          </div>
-        )}
+        <BasicNFTImage 
+          contractAddress={raffle.nftContract}
+          tokenId={raffle.tokenId.toString()}
+          className="w-full h-80 sm:h-96"
+          showName={true}
+          size="lg"
+        />
         <div className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm border border-cyan-400/30 rounded-xl px-3 py-2">
           <p className="text-cyan-300 font-semibold text-sm">{raffle.ticketPrice} {nativeCurrency}</p>
           <p className="text-slate-400 text-xs">per ticket</p>

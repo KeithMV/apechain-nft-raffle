@@ -83,8 +83,8 @@ export default function PolygonNFTDebugger({ contractAddress, tokenId }: Polygon
             for (let i = 0; i < Math.min(3, imageUrls.length); i++) {
               const url = imageUrls[i];
               try {
-                const testResult = await SimpleImageProxy.preloadImage(url);
-                info.steps.push(`${testResult ? '✅' : '❌'} URL ${i + 1}: ${testResult ? 'OK' : 'Failed to load'}`);
+                const testResult = await SimpleImageProxy.testImageUrl(url);
+                info.steps.push(`${testResult.success ? '✅' : '❌'} URL ${i + 1}: ${testResult.success ? 'OK' : testResult.error}`);
               } catch (error) {
                 info.steps.push(`❌ URL ${i + 1}: Test failed - ${error}`);
               }
