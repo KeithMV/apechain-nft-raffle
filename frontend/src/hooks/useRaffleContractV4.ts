@@ -84,8 +84,16 @@ export function useCreateRaffleV4() {
   const { validateRaffleCreation } = useContractValidator();
   const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
   
-  const handleSuccess = () => {
-    setTimeout(() => invalidateAfterTransaction({ transactionType: 'create-raffle' }), 500);
+  const handleSuccess = (hash: string) => {
+    console.log('✅ [CREATE] Raffle created successfully, invalidating all caches including user NFTs');
+    // Comprehensive cache invalidation after raffle creation
+    setTimeout(() => {
+      invalidateAfterTransaction({ 
+        transactionType: 'create-raffle',
+        immediate: true,
+        chainId: chainId
+      });
+    }, 500);
   };
   
   const transactionManager = useOptimizedCreateRaffle(handleSuccess);
@@ -123,6 +131,9 @@ export function useCreateRaffleV4() {
     }
     
     const ticketPriceWei = parseEther(params.ticketPrice);
+    
+    console.log('🎯 [CREATE] Creating raffle - NFT will be transferred from user wallet to raffle contract');
+    console.log('📝 [CREATE] NFT:', params.nftContract, 'Token ID:', params.tokenId);
     
     return await transactionManager.executeTransaction({
       address: factoryAddress as `0x${string}`,

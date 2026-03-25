@@ -216,7 +216,7 @@ async function fetchUserNFTs(
 export function useUserNFTs(userAddress: string, chainId: number) {
   const publicClient = usePublicClient();
 
-  const { data: nfts = [], isLoading: loading, error } = useQuery({
+  const { data: nfts = [], isLoading: loading, error, refetch } = useQuery({
     queryKey: ['user-nfts', userAddress?.toLowerCase(), chainId],
     queryFn: () => fetchUserNFTs(publicClient, userAddress, chainId),
     enabled: !!publicClient && !!userAddress && !!chainId,
@@ -229,6 +229,7 @@ export function useUserNFTs(userAddress: string, chainId: number) {
   return {
     nfts,
     loading,
-    error: !!error
+    error: !!error,
+    refetch
   };
 }
