@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import RaffleCard, { CreatedRaffle } from './RaffleCard';
 import RaffleFilters from './RaffleFilters';
-import { useAllRafflesV4 } from '../hooks/useRafflePositionsV4';
+import { useInfiniteAllRafflesV4 } from '../hooks/useRafflePositionsV4';
 import { useOptimizedRaffleActions } from '../hooks/useOptimizedRaffleActions';
 // Phase 10: Enhanced performance utilities
 import { throttle, measureSync } from '../utils/performance';
@@ -32,13 +32,19 @@ export default function BrowseRaffles() {
       : 'bg-purple-500/20 text-purple-300 border border-purple-400/30'
   }), [isApeChain]);
   
-  // State management
+  // State management - simplified for infinite queries
   const [showExpired, setShowExpired] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
   
   const BATCH_SIZE = 10;
-  const { raffles, loading, refetch } = useAllRafflesV4(BATCH_SIZE, currentPage * BATCH_SIZE);
+  const {
+    raffles,
+    loading,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    pageCount
+  } = useInfiniteAllRafflesV4(BATCH_SIZE);
   
   // Listen for cache invalidation events to trigger refetch
   useEffect(() => {
@@ -60,19 +66,17 @@ export default function BrowseRaffles() {
     setTicketQuantity
   } = useOptimizedRaffleActions(refetch);
 
-  useEffect(() => {
-    if (raffles.length < BATCH_SIZE) {
-      setHasMoreRaffles(false);
-    }
-  }, [raffles]);
-
-  // Throttled load more to prevent rapid calls
+  // Throttled load more function - now uses infinite query
   const loadMoreRaffles = useMemo(
     () => throttle(() => {
-      if (!hasMoreRaffles || loading) return;
-      setCurrentPage(prev => prev + 1);
+      if (!hasNextPage || isFetchingNextPage) {
+        console.log('🚫 [LOAD-MORE] Cannot load more:', { hasNextPage, isFetchingNextPage });
+        return;
+      }
+      console.log(`📄 [LOAD-MORE] Loading page ${pageCount + 1}...`);
+      fetchNextPage();
     }, 1000),
-    [hasMoreRaffles, loading]
+    [hasNextPage, isFetchingNextPage, fetchNextPage, pageCount]
   );
 
 
@@ -172,24 +176,24 @@ export default function BrowseRaffles() {
                 </div>
               )}
               
-              {/* Load More Button */}
-              {filteredRaffles.length > 0 && hasMoreRaffles && (
+              {/* Load More Button - Updated for Infinite Queries */}
+              {filteredRaffles.length > 0 && hasNextPage && (
                 <div className="mt-8 text-center">
                   <button
                     onClick={loadMoreRaffles}
-                    disabled={loading}
+                    disabled={isFetchingNextPage}
                     className="relative bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 disabled:from-slate-800 disabled:to-slate-800 text-slate-300 hover:text-white disabled:text-slate-500 font-semibold py-3 px-8 rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-3 mx-auto overflow-hidden group border border-slate-600/50 hover:border-slate-500/50"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-slate-500/0 via-slate-500/10 to-slate-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                    {loading ? (
+                    {isFetchingNextPage ? (
                       <>
                         <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                        <span className="relative">Loading older raffles...</span>
+                        <span className="relative">Loading more raffles...</span>
                       </>
                     ) : (
                       <>
                         <span className="relative">📜</span>
-                        <span className="relative">Load More Raffles</span>
+                        <span className="relative">Load More Raffles ({pageCount} pages loaded)</span>
                       </>
                     )}
                   </button>
