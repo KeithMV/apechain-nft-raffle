@@ -132,7 +132,13 @@ export default function RaffleDashboard() {
 
   const filteredRaffles = useMemo(() => {
     return measureSync('dashboard-raffle-filtering', () => {
-      return showExpired ? createdRaffles : createdRaffles.filter(r => r.isActive || (Date.now() / 1000 - r.endTime < 86400));
+      // Ensure createdRaffles is an array and has proper typing
+      const raffleArray = Array.isArray(createdRaffles) ? createdRaffles : [];
+      
+      return showExpired ? raffleArray : raffleArray.filter(r => 
+        r && typeof r === 'object' && 'isActive' in r && 'endTime' in r &&
+        (r.isActive || (Date.now() / 1000 - (r.endTime as number) < 86400))
+      );
     });
   }, [showExpired, createdRaffles]);
 
@@ -372,7 +378,7 @@ export default function RaffleDashboard() {
                       <p className={`${styles.textSecondary} font-mono`}>{showExpired ? "You haven't created any raffles yet" : "No active or recent raffles to show"}</p>
                     </div>
                 ) : (
-                  filteredRaffles.map((raffle) => (
+                  filteredRaffles.map((raffle: any) => (
                     <CreatedRaffleCard
                       key={`${raffle.raffleContract}-${raffle.raffleId}`}
                       raffle={raffle}
