@@ -28,8 +28,22 @@ export default function CreateRafflePage() {
   const { switchToApeChain, isSwitching } = useApeChainSwitching();
   const [formData, setFormData] = useState<FormData>(getInitialFormData);
   
-  // Fetch user's NFTs
-  const { nfts, loading: nftsLoading } = useUserNFTs(address || '', chainId || 0);
+  // Fetch user's NFTs with refetch capability
+  const { nfts, loading: nftsLoading, refetch: refetchNFTs } = useUserNFTs(address || '', chainId || 0);
+  
+  // Listen for cache invalidation events to refresh NFTs
+  useEffect(() => {
+    const handleCacheInvalidated = (event: CustomEvent) => {
+      const { chainId: eventChainId } = event.detail || {};
+      if (!eventChainId || eventChainId === chainId) {
+        console.log('🔄 [CREATE] Cache invalidated, refreshing NFTs...');
+        refetchNFTs();
+      }
+    };
+    
+    window.addEventListener('cache-invalidated', handleCacheInvalidated as EventListener);
+    return () => window.removeEventListener('cache-invalidated', handleCacheInvalidated as EventListener);
+  }, [refetchNFTs, chainId]);
   
   // Use the new approval manager
   const {
@@ -88,6 +102,9 @@ export default function CreateRafflePage() {
       
       // Show success message with chain info
       toast.success(`🎉 Raffle created successfully on ${networkName}! Redirecting...`);
+      
+      // Force immediate NFT cache refresh to remove the NFT from display
+      console.log('🔄 [CREATE] Forcing immediate NFT cache refresh after raffle creation');
       
       // Reset form and clear approval state after a short delay
       setTimeout(() => {

@@ -61,6 +61,10 @@ export function useUnifiedCacheInvalidation() {
         queryClient.invalidateQueries({ queryKey: ['raffles-v4', targetChainId] }),
         queryClient.invalidateQueries({ queryKey: ['positions-v4', targetChainId] }),
         queryClient.invalidateQueries({ queryKey: ['created-v4', targetChainId] }),
+        
+        // User NFTs cache - CRITICAL for raffle creation
+        queryClient.invalidateQueries({ queryKey: ['user-nfts', targetChainId] }),
+        queryClient.invalidateQueries({ queryKey: ['user-nfts'] }), // Also invalidate without chainId for backward compatibility
       ];
       
       // 3. Specific raffle invalidation
@@ -77,7 +81,9 @@ export function useUnifiedCacheInvalidation() {
         invalidationPromises.push(
           queryClient.invalidateQueries({ queryKey: ['user-balance', targetChainId, userAddress] }),
           queryClient.invalidateQueries({ queryKey: ['user-positions', targetChainId, userAddress] }),
-          queryClient.invalidateQueries({ queryKey: ['user-created', targetChainId, userAddress] })
+          queryClient.invalidateQueries({ queryKey: ['user-created', targetChainId, userAddress] }),
+          // User NFTs for specific address
+          queryClient.invalidateQueries({ queryKey: ['user-nfts', userAddress.toLowerCase(), targetChainId] })
         );
       }
       
@@ -126,12 +132,27 @@ export function useUnifiedCacheInvalidation() {
         }, 10000);
         
       } else if (immediate) {
-        // Standard immediate refetch for ApeChain
+        // Standard immediate refetch for ApeChain or raffle creation
         const refetchPromises = [
           queryClient.refetchQueries({ queryKey: ['raffles', targetChainId] }),
           queryClient.refetchQueries({ queryKey: ['user-positions', targetChainId] }),
           queryClient.refetchQueries({ queryKey: ['created-raffles', targetChainId] })
         ];
+        
+        // For raffle creation, also refetch user NFTs immediately
+        if (transactionType === 'create-raffle') {
+          console.log('🎯 [CACHE] Raffle creation detected - refreshing user NFTs');
+          refetchPromises.push(
+            queryClient.refetchQueries({ queryKey: ['user-nfts', targetChainId] }),
+            queryClient.refetchQueries({ queryKey: ['user-nfts'] })
+          );
+          
+          if (userAddress) {
+            refetchPromises.push(
+              queryClient.refetchQueries({ queryKey: ['user-nfts', userAddress.toLowerCase(), targetChainId] })
+            );
+          }
+        }
         
         if (raffleContract) {
           refetchPromises.push(
