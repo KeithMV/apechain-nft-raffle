@@ -38,13 +38,15 @@ export const polygonChain = defineChain({
   rpcUrls: {
     default: {
       http: [
-        // Priority 1: LlamaRPC (fast, community-optimized, no API key needed)
-        'https://polygon.llamarpc.com',
-        // Priority 2: Polygon official (reliable, no API key needed)
+        // Priority 1: Polygon official (most reliable for localhost)
         'https://polygon-rpc.com',
+        // Priority 2: LlamaRPC (re-added as fallback)
+        'https://polygon.llamarpc.com',
         // Priority 3: Public Polygon RPC (backup)
         'https://rpc-mainnet.matic.network',
-        // Priority 4: Alchemy with API key if available
+        // Priority 4: QuickNode public (additional fallback)
+        'https://rpc-mainnet.matic.quiknode.pro',
+        // Priority 5: Alchemy with API key if available
         ...(process.env.REACT_APP_ALCHEMY_API_KEY && process.env.REACT_APP_ALCHEMY_API_KEY !== 'demo' 
           ? [`https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`] 
           : []),
@@ -91,18 +93,16 @@ const createAdaptiveConfig = () => {
     enableEIP6963: true,
     enableCoinbase: true, // Enable for all devices, Web3Modal will handle appropriately
     
-    // Chain-specific batch configuration for optimal performance
+    // Optimized batch configuration with better error handling
     batch: {
       multicall: {
-        // Polygon: Smaller batches for faster processing on high-activity network
-        // ApeChain: Larger batches for efficiency on lower-activity network
         batchSize: 1024 * 150, // 150KB - balanced for both chains
         wait: 25, // Faster batching for better responsiveness
       },
     },
     
     // Chain-specific polling intervals for optimal performance
-    pollingInterval: 10000, // 10s - balanced for both networks, avoids rate limits
+    pollingInterval: 8000, // 8s - faster for better UX, with proper fallbacks
   });
 };
 
