@@ -20,13 +20,18 @@ export interface CreatedRaffle extends RaffleInfo {}
 export function useAllRafflesV4(limit: number = 15, offset: number = 0) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
+  
+  // Chain-specific query optimization
+  const isPolygon = chainId === 137;
+  const staleTime = isPolygon ? 45000 : 30000; // Longer stale time for Polygon
+  const gcTime = isPolygon ? 90000 : 60000; // Longer garbage collection for Polygon
 
   const { data: raffles, isLoading: loading, error, refetch } = useQuery({
     queryKey: ['raffles-v4', chainId, limit, offset],
     queryFn: () => dataFetcher.fetchAllRaffles({ limit, offset }),
     enabled: dataFetcher.isReady,
-    staleTime: 30000, // 30 seconds - faster refresh
-    gcTime: 60000, // 1 minute
+    staleTime,
+    gcTime,
   });
 
   const debouncedRefetch = useMemo(
@@ -51,6 +56,11 @@ export function useClearRaffleCacheV4() {
 export function useUserRafflePositionsV4(userAddress?: string) {
   const chainId = useChainId();
   const { getCombinedUserPositions } = useRafflePositionProcessor();
+  
+  // Chain-specific query optimization
+  const isPolygon = chainId === 137;
+  const staleTime = isPolygon ? 25000 : 15000; // Longer stale time for Polygon
+  const gcTime = isPolygon ? 45000 : 30000; // Longer garbage collection for Polygon
 
   const { data: positions, isLoading: loading, error, refetch } = useQuery({
     queryKey: ['positions-v4', userAddress, chainId],
@@ -71,8 +81,8 @@ export function useUserRafflePositionsV4(userAddress?: string) {
       return await getCombinedUserPositions(factories, userAddress);
     },
     enabled: Boolean(userAddress && chainId),
-    staleTime: 15000, // 15 seconds - faster refresh
-    gcTime: 30000, // 30 seconds
+    staleTime,
+    gcTime,
   });
 
   return { 
@@ -88,6 +98,11 @@ export function useUserRafflePositionsV4(userAddress?: string) {
 export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
+  
+  // Chain-specific query optimization
+  const isPolygon = chainId === 137;
+  const staleTime = isPolygon ? 45000 : 30000; // Longer stale time for Polygon
+  const gcTime = isPolygon ? 90000 : 60000; // Longer garbage collection for Polygon
 
   const { data: raffles, isLoading: loading, error, refetch } = useQuery({
     queryKey: ['created-v4', chainId, userAddress, page],
@@ -108,8 +123,8 @@ export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
         .sort((a, b) => b.endTime - a.endTime);
     },
     enabled: Boolean(dataFetcher.isReady && userAddress && chainId),
-    staleTime: 30000, // 30 seconds - faster refresh
-    gcTime: 60000, // 1 minute
+    staleTime,
+    gcTime,
   });
 
   return { 

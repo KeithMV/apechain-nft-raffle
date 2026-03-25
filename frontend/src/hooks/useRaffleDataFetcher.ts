@@ -60,10 +60,10 @@ export function useRaffleDataFetcher() {
       
       const indices = Array.from({ length: endIndex - startIndex }, (_, i) => startIndex + i);
       
-      // Chain-specific batch optimization
+      // Chain-specific batch optimization - Polygon needs larger batches to reduce RPC calls
       const isPolygon = chainId === 137;
-      const batchSize = isPolygon ? 3 : 5; // Smaller batches for Polygon's higher congestion
-      const delay = isPolygon ? 15 : 10; // Slightly longer delays for Polygon
+      const batchSize = isPolygon ? 5 : 3; // Larger batches for Polygon to reduce network overhead
+      const delay = isPolygon ? 20 : 10; // Longer delays for Polygon congestion
       
       // Get raffle contracts with chain-optimized batching
       const contractResults = await processBatch(
