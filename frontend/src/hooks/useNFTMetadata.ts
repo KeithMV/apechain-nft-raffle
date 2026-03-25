@@ -3,7 +3,7 @@
  * Professional React Query-based hook for NFT metadata fetching with proper caching and deduplication
  */
 
-import { usePublicClient } from 'wagmi';
+import { usePublicClient, useChainId } from 'wagmi';
 import { useQuery } from '@tanstack/react-query';
 import { OptimizedCache } from '../utils/performance';
 import { sanitizeString, validateAddress } from '../utils/security';
@@ -173,9 +173,10 @@ async function fetchNFTMetadata(
 
 export function useNFTMetadata(contractAddress: string, tokenId: string) {
   const publicClient = usePublicClient();
+  const chainId = useChainId();
   
   const { data: result, isLoading: loading, error } = useQuery({
-    queryKey: ['nft-metadata', contractAddress?.toLowerCase(), tokenId],
+    queryKey: ['nft-metadata', chainId, contractAddress?.toLowerCase(), tokenId],
     queryFn: async () => {
       // Check optimized cache first
       const cacheKey = `${contractAddress?.toLowerCase()}_${tokenId}`;
