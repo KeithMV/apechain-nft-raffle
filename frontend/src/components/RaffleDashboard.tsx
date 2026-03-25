@@ -118,10 +118,12 @@ export default function RaffleDashboard() {
   }, [showExpired, createdRaffles]);
 
   useEffect(() => {
-    if (createdRaffles.length === 0) {
+    // Check if we have fewer created raffles than expected for current page
+    const expectedMinRaffles = (page + 1) * 5; // Expect at least 5 per page
+    if (createdRaffles.length > 0 && createdRaffles.length < expectedMinRaffles) {
       setHasMoreRaffles(false);
     }
-  }, [createdRaffles]);
+  }, [createdRaffles, page]);
 
   const loadMoreRaffles = () => {
     setPage(prev => prev + 1);
