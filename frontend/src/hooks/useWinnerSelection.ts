@@ -30,7 +30,7 @@ export function useWinnerSelection() {
       WinnerSelectionService.storeCommitData(raffleContract, nonce);
       setCommitData({ nonce, commitHash });
       
-      // Commit to blockchain using optimized transaction manager
+      // Commit to blockchain using optimized transaction manager with chain info
       await transactionManager.executeTransaction({
         address: raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
@@ -65,6 +65,7 @@ export function useWinnerSelection() {
         throw new Error('No stored nonce found');
       }
 
+      // Execute reveal with chain-aware transaction manager
       await transactionManager.executeTransaction({
         address: raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,
@@ -99,6 +100,7 @@ export function useWinnerSelection() {
       setCurrentPhase('emergency');
       console.log('🏆 [WINNER] Starting emergency winner selection for:', raffleContract);
       
+      // Execute emergency reveal with chain-aware transaction manager
       await transactionManager.executeTransaction({
         address: raffleContract as `0x${string}`,
         abi: RAFFLE_CONTRACT_ABI,

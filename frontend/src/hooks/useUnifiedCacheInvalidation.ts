@@ -37,12 +37,13 @@ export function useUnifiedCacheInvalidation() {
     console.log(`🧹 [CACHE] Chain ${chainId || currentChainId} localStorage caches cleared`);
   }, [currentChainId]);
 
-  // Comprehensive cache invalidation for transaction completion
+  // Comprehensive cache invalidation for transaction completion with progressive refetch
   const invalidateAfterTransaction = useCallback(async (options: CacheInvalidationOptions = {}) => {
     const { raffleContract, userAddress, transactionType, immediate = true, chainId } = options;
     const targetChainId = chainId || currentChainId;
+    const isPolygon = targetChainId === 137;
     
-    console.log('🔄 [CACHE] Starting unified cache invalidation:', { ...options, chainId: targetChainId });
+    console.log('🔄 [CACHE] Starting unified cache invalidation:', { ...options, chainId: targetChainId, isPolygon });
     
     try {
       // 1. Clear custom cache system immediately (chain-specific)
@@ -88,8 +89,44 @@ export function useUnifiedCacheInvalidation() {
       // Execute all invalidations
       await Promise.all(invalidationPromises);
       
-      // 6. Force refetch critical queries immediately if requested
-      if (immediate) {
+      // 6. Progressive refetch strategy for winner selection on Polygon
+      if (immediate && transactionType === 'select-winner' && isPolygon) {
+        console.log('🔄 [CACHE] Starting progressive refetch for Polygon winner selection');
+        
+        // Progressive refetch with exponential backoff for Polygon
+        const progressiveRefetch = async () => {
+          const refetchQueries = [
+            queryClient.refetchQueries({ queryKey: ['raffles', targetChainId] }),
+            queryClient.refetchQueries({ queryKey: ['user-positions', targetChainId] }),
+            queryClient.refetchQueries({ queryKey: ['created-raffles', targetChainId] })
+          ];
+          
+          if (raffleContract) {
+            refetchQueries.push(
+              queryClient.refetchQueries({ queryKey: ['raffle', targetChainId, raffleContract] })
+            );
+          }
+          
+          return Promise.all(refetchQueries);
+        };
+        
+        // Immediate optimistic refetch
+        progressiveRefetch().catch(console.error);
+        
+        // Safety net refetch after 5 seconds
+        setTimeout(() => {
+          console.log('🔄 [CACHE] Safety net refetch for Polygon');
+          progressiveRefetch().catch(console.error);
+        }, 5000);
+        
+        // Final guarantee refetch after 10 seconds
+        setTimeout(() => {
+          console.log('🔄 [CACHE] Final guarantee refetch for Polygon');
+          progressiveRefetch().catch(console.error);
+        }, 10000);
+        
+      } else if (immediate) {
+        // Standard immediate refetch for ApeChain
         const refetchPromises = [
           queryClient.refetchQueries({ queryKey: ['raffles', targetChainId] }),
           queryClient.refetchQueries({ queryKey: ['user-positions', targetChainId] }),

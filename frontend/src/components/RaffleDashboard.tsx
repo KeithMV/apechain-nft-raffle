@@ -157,7 +157,7 @@ export default function RaffleDashboard() {
     
     setSelectingWinnerFor(raffleContract);
     
-    console.log('🏆 [WINNER] Starting winner selection for raffle:', raffleContract);
+    console.log('🏆 [WINNER] Starting winner selection for raffle:', raffleContract, 'on chain:', chainId);
     
     // Show simple loading toast
     toast.loading('🎯 Selecting winner...', {
@@ -175,7 +175,7 @@ export default function RaffleDashboard() {
       });
       setSelectingWinnerFor(null);
     }
-  }, [emergencyReveal]);
+  }, [emergencyReveal, chainId]);
 
   const handleCancelRaffle = useCallback(async (raffleContract: string) => {
     setCancellingRaffle(raffleContract);
@@ -210,19 +210,43 @@ export default function RaffleDashboard() {
     }
   }, [cancelRaffleHook.executeTransaction]);
 
-  // Immediate refresh when winner is selected - optimized for speed
+  // Enhanced refresh when winner is selected - with chain-aware progressive refetch
   useEffect(() => {
     if (winnerSelected && selectingWinnerFor) {
-      console.log('✅ [WINNER] Winner selected successfully, updating UI immediately');
+      const isPolygon = chainId === 137;
+      console.log(`✅ [WINNER] Winner selected successfully on ${isPolygon ? 'Polygon' : 'ApeChain'}, starting enhanced UI update`);
       
       // Clear the selecting state immediately
       setSelectingWinnerFor(null);
       
-      // Immediate refetch for instant UI update
-      refetchPositions();
-      refetchCreatedRaffles();
+      if (isPolygon) {
+        // Progressive refetch strategy for Polygon
+        console.log('🔄 [WINNER] Starting progressive refetch for Polygon');
+        
+        // Immediate optimistic refetch
+        refetchPositions();
+        refetchCreatedRaffles();
+        
+        // Safety net refetch after 3 seconds
+        setTimeout(() => {
+          console.log('🔄 [WINNER] Safety net refetch for Polygon');
+          refetchPositions();
+          refetchCreatedRaffles();
+        }, 3000);
+        
+        // Final guarantee refetch after 8 seconds
+        setTimeout(() => {
+          console.log('🔄 [WINNER] Final guarantee refetch for Polygon');
+          refetchPositions();
+          refetchCreatedRaffles();
+        }, 8000);
+      } else {
+        // Standard immediate refetch for ApeChain
+        refetchPositions();
+        refetchCreatedRaffles();
+      }
     }
-  }, [winnerSelected, selectingWinnerFor, refetchPositions, refetchCreatedRaffles]);
+  }, [winnerSelected, selectingWinnerFor, chainId, refetchPositions, refetchCreatedRaffles]);
 
   // Only show full loading screen if no cached data available
   if (loading && userPositions.length === 0 && createdRaffles.length === 0) {
