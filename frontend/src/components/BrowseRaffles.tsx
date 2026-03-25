@@ -38,7 +38,7 @@ export default function BrowseRaffles() {
   const [hasMoreRaffles, setHasMoreRaffles] = useState(true);
   
   const BATCH_SIZE = 10;
-  const { raffles, loading, refetch } = useAllRafflesV4(BATCH_SIZE, currentPage);
+  const { raffles, loading, refetch } = useAllRafflesV4(BATCH_SIZE, currentPage * BATCH_SIZE);
   
   // Listen for cache invalidation events to trigger refetch
   useEffect(() => {
@@ -61,12 +61,10 @@ export default function BrowseRaffles() {
   } = useOptimizedRaffleActions(refetch);
 
   useEffect(() => {
-    // Check if we have fewer raffles than expected for the current page
-    const expectedRaffles = (currentPage + 1) * BATCH_SIZE;
-    if (raffles.length < expectedRaffles && raffles.length > 0) {
+    if (raffles.length < BATCH_SIZE) {
       setHasMoreRaffles(false);
     }
-  }, [raffles, currentPage]);
+  }, [raffles]);
 
   // Throttled load more to prevent rapid calls
   const loadMoreRaffles = useMemo(
