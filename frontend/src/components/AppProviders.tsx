@@ -15,47 +15,45 @@ import { suppressWeb3ModalWarnings } from '../utils/suppressWarnings';
 import { enableMobileErrorSuppression } from '../utils/mobileErrorSuppression';
 import '../utils/consoleSecure'; // Auto-enables production console security
 
+// Initialize Web3Modal at module level (before any components render)
+const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
+const walletConfig = getWalletConfig();
+const isMobile = getDeviceType() === 'mobile';
+
+console.log(`🔧 [UNIFIED] Initializing Web3Modal at module level for ${isMobile ? 'mobile' : 'desktop'} device`);
+
+try {
+  createWeb3Modal({
+    wagmiConfig: config,
+    projectId,
+    enableAnalytics: false,
+    enableOnramp: false,
+    enableSwaps: false,
+    themeMode: 'dark',
+    
+    // Device-adaptive wallet configuration
+    featuredWalletIds: walletConfig.featuredWalletIds,
+    includeWalletIds: walletConfig.includeWalletIds,
+    excludeWalletIds: walletConfig.excludeWalletIds,
+    
+    allWallets: 'HIDE',
+    defaultChain: apeChain,
+    
+    chainImages: {
+      [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
+      [polygonChain.id]: 'https://polygon.technology/favicon.ico'
+    }
+  });
+  console.log('✅ [UNIFIED] Web3Modal initialized successfully at module level');
+} catch (error) {
+  console.warn('🔧 [UNIFIED] Web3Modal initialization had non-critical errors, continuing...', error);
+}
+
 interface AppProvidersProps {
   children: React.ReactNode;
 }
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
-  // Create Web3Modal with unified configuration
-  useEffect(() => {
-    const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
-    const walletConfig = getWalletConfig();
-    const isMobile = getDeviceType() === 'mobile';
-    
-    console.log(`🔧 [UNIFIED] Initializing Web3Modal for ${isMobile ? 'mobile' : 'desktop'} device`);
-    
-    try {
-      createWeb3Modal({
-        wagmiConfig: config,
-        projectId,
-        enableAnalytics: false,
-        enableOnramp: false,
-        enableSwaps: false,
-        themeMode: 'dark',
-        
-        // Device-adaptive wallet configuration
-        featuredWalletIds: walletConfig.featuredWalletIds,
-        includeWalletIds: walletConfig.includeWalletIds,
-        excludeWalletIds: walletConfig.excludeWalletIds,
-        
-        allWallets: 'HIDE',
-        defaultChain: apeChain,
-        
-        chainImages: {
-          [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
-          [polygonChain.id]: 'https://polygon.technology/favicon.ico'
-        }
-      });
-    } catch (error) {
-      console.warn('🔧 [UNIFIED] Web3Modal initialization had non-critical errors, continuing...');
-      // Don't throw - Web3Modal will still work even with some API failures
-    }
-  }, []); // Remove dependencies to prevent re-initialization
-  
   useEffect(() => {
     const isMobile = getDeviceType() === 'mobile';
     
