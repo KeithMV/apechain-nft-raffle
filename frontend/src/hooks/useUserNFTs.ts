@@ -12,7 +12,7 @@ interface UserNFT {
 // ERC721 Transfer event ABI
 const TRANSFER_EVENT = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)');
 
-// API-based NFT fetching via secure Lambda proxy
+// API-based NFT fetching via secure Lambda proxy with chain-specific optimizations
 async function fetchNFTsViaAPI(
   userAddress: string,
   chainId: number
@@ -35,11 +35,15 @@ async function fetchNFTsViaAPI(
     console.log(`🔍 Fetching NFTs via Lambda proxy for ${chainName} (${chainId})`);
     console.log(`📡 Using endpoint: ${lambdaProxy}`);
     
+    // Chain-specific timeout optimization
+    const isPolygon = chainId === 137;
+    const timeoutMs = isPolygon ? 15000 : 20000; // Faster timeout for Polygon
+    
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json'
       },
-      signal: AbortSignal.timeout(20000) // 20 second timeout for Lambda
+      signal: AbortSignal.timeout(timeoutMs) // Chain-optimized timeout
     });
     
     if (!response.ok) {
@@ -77,7 +81,7 @@ async function fetchNFTsViaAPI(
   }
 }
 
-// On-chain NFT fetching with chunked scanning
+// On-chain NFT fetching with chain-optimized chunked scanning
 async function fetchNFTsOnChain(
   publicClient: any,
   userAddress: string,
@@ -88,13 +92,16 @@ async function fetchNFTsOnChain(
   try {
     const currentBlock = await publicClient.getBlockNumber();
     const isApeChain = chainId === 33139;
+    const isPolygon = chainId === 137;
     
-    // Use reasonable chunk sizes to avoid timeouts
-    const chunkSize = isApeChain ? 100000n : 50000n; // 100k for ApeChain, 50k for others
-    const maxChunks = isApeChain ? 10 : 5; // Limit total chunks to prevent endless scanning
+    // Chain-specific optimization: Polygon needs smaller chunks due to higher activity
+    const chunkSize = isPolygon ? 25000n : isApeChain ? 100000n : 50000n;
+    const maxChunks = isPolygon ? 8 : isApeChain ? 10 : 5; // More chunks for Polygon, fewer total scans
     
     const allNFTs = new Map<string, UserNFT>();
     let chunksScanned = 0;
+    
+    console.log(`🔍 Starting on-chain NFT scan for ${isPolygon ? 'Polygon' : isApeChain ? 'ApeChain' : 'Unknown'} with ${chunkSize.toString()} block chunks`);
     
     // Scan in reverse chronological order (recent first)
     for (let toBlock = currentBlock; toBlock > 0n && chunksScanned < maxChunks; toBlock -= chunkSize) {
@@ -131,9 +138,10 @@ async function fetchNFTsOnChain(
         
         chunksScanned++;
         
-        // If we found enough NFTs, stop scanning
-        if (allNFTs.size >= 20) {
-          console.log(`Found ${allNFTs.size} NFTs, stopping scan`);
+        // Chain-specific early exit: Polygon stops earlier due to higher NFT density
+        const targetNFTs = isPolygon ? 15 : 20;
+        if (allNFTs.size >= targetNFTs) {
+          console.log(`Found ${allNFTs.size} NFTs, stopping scan for ${isPolygon ? 'Polygon' : 'chain'}`);
           break;
         }
         
@@ -148,7 +156,7 @@ async function fetchNFTsOnChain(
 
     // Verify ownership for found NFTs
     const ownedNFTs: UserNFT[] = [];
-    const nftsToCheck = Array.from(allNFTs.values()).slice(0, 20);
+    const nftsToCheck = Array.from(allNFTs.values()).slice(0, isPolygon ? 15 : 20);
     
     for (const nft of nftsToCheck) {
       try {

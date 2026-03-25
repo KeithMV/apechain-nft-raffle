@@ -36,7 +36,7 @@ export function useRaffleDataFetcher() {
   const publicClient = usePublicClient();
   const chainId = useChainId();
 
-  // Get raffles from a specific factory version
+  // Get raffles from a specific factory version with chain-specific optimizations
   const getRafflesFromFactory = useCallback(async (
     factoryAddress: string,
     version: 'v3' | 'v4',
@@ -60,7 +60,12 @@ export function useRaffleDataFetcher() {
       
       const indices = Array.from({ length: endIndex - startIndex }, (_, i) => startIndex + i);
       
-      // Get raffle contracts with proper index tracking
+      // Chain-specific batch optimization
+      const isPolygon = chainId === 137;
+      const batchSize = isPolygon ? 3 : 5; // Smaller batches for Polygon's higher congestion
+      const delay = isPolygon ? 15 : 10; // Slightly longer delays for Polygon
+      
+      // Get raffle contracts with chain-optimized batching
       const contractResults = await processBatch(
         indices,
         async (i) => {
@@ -76,13 +81,13 @@ export function useRaffleDataFetcher() {
             return { index: i, contract: null };
           }
         },
-        { batchSize: 5, delay: 10 }
+        { batchSize, delay }
       );
       
       // Filter out failed contracts while maintaining index mapping
       const validContractResults = contractResults.filter(result => result.contract !== null);
       
-      // Get raffle info with error handling
+      // Get raffle info with chain-optimized error handling
       const raffleInfoResults = await processBatch(
         validContractResults,
         async (contractResult: any) => {
@@ -117,7 +122,7 @@ export function useRaffleDataFetcher() {
             return { ...contractResult, raffleInfo: null };
           }
         },
-        { batchSize: 3, delay: 20 }
+        { batchSize: isPolygon ? 2 : 3, delay: delay + 5 } // Even smaller batches for raffle info on Polygon
       );
       
       // Process valid results with correct index mapping
@@ -157,7 +162,7 @@ export function useRaffleDataFetcher() {
       console.error(`Failed to get raffles from factory ${factoryAddress}:`, error);
       throw new Error(`Failed to load ${version} raffles: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  }, [publicClient]);
+  }, [publicClient, chainId]);
 
   // Get all raffles from both V3 and V4 factories
   const fetchAllRaffles = useCallback(async (options: RaffleDataFetcherOptions = {}): Promise<RaffleInfo[]> => {

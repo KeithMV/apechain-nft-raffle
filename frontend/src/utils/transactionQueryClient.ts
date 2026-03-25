@@ -109,19 +109,25 @@ export const optimisticUpdateHelpers = {
   },
 };
 
-// Progressive timeout configuration
-export const getProgressiveTimeout = (transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle', attempt: number = 0) => {
+// Progressive timeout configuration with chain-specific optimizations
+export const getProgressiveTimeout = (transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle', attempt: number = 0, chainId?: number) => {
   const isMobile = getDeviceType() === 'mobile';
+  const isPolygon = chainId === 137;
   
+  // Base timeouts with chain-specific adjustments
   const baseTimeouts = {
     'buy-tickets': isMobile ? 25000 : 20000, // 25s mobile, 20s desktop
     'select-winner': isMobile ? 50000 : 40000, // 50s mobile, 40s desktop
     'create-raffle': isMobile ? 40000 : 30000, // 40s mobile, 30s desktop
     'cancel-raffle': isMobile ? 35000 : 25000, // 35s mobile, 25s desktop
   };
+  
+  // Polygon network adjustments - slightly longer timeouts due to higher congestion
+  const chainMultiplier = isPolygon ? 1.2 : 1.0;
+  const adjustedTimeout = Math.floor(baseTimeouts[transactionType] * chainMultiplier);
 
   // Increase timeout with each attempt
-  return baseTimeouts[transactionType] + (attempt * 10000);
+  return adjustedTimeout + (attempt * 10000);
 };
 
 export const transactionQueryClient = createTransactionQueryClient();
