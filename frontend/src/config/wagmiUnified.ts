@@ -38,18 +38,18 @@ export const polygonChain = defineChain({
   rpcUrls: {
     default: {
       http: [
-        // Priority 1: Polygon official (most reliable for localhost)
-        'https://polygon-rpc.com',
-        // Priority 2: LlamaRPC (re-added as fallback)
-        'https://polygon.llamarpc.com',
-        // Priority 3: Public Polygon RPC (backup)
+        // Priority 1: Public Polygon RPC (most reliable for localhost)
         'https://rpc-mainnet.matic.network',
-        // Priority 4: QuickNode public (additional fallback)
-        'https://rpc-mainnet.matic.quiknode.pro',
-        // Priority 5: Alchemy with API key if available
+        // Priority 2: LlamaRPC (reliable public endpoint)
+        'https://polygon.llamarpc.com',
+        // Priority 3: Ankr public endpoint
+        'https://rpc.ankr.com/polygon',
+        // Priority 4: Alchemy with API key if available
         ...(process.env.REACT_APP_ALCHEMY_API_KEY && process.env.REACT_APP_ALCHEMY_API_KEY !== 'demo' 
           ? [`https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`] 
           : []),
+        // Priority 5: QuickNode public (additional fallback)
+        'https://rpc-mainnet.matic.quiknode.pro',
       ],
     },
   },
