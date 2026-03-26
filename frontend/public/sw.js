@@ -2,7 +2,7 @@
  * Optimized Service Worker - Smart Caching with Proper Versioning
  */
 
-const CACHE_VERSION = 'v2.0.0-optimized';
+const CACHE_VERSION = 'v2.1.0-polygon-optimized';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
