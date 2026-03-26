@@ -8,6 +8,7 @@ import { useCallback } from 'react';
 import { getRaffleFactoryAddress, isV4Available } from '../config/addresses';
 import { RAFFLE_FACTORY_ABI } from '../config/contracts';
 import { processBatch } from '../utils/performance';
+import { getChainBatchConfig } from '../config/polygonConfig';
 
 export interface RaffleInfo {
   raffleId: number;
@@ -60,10 +61,8 @@ export function useRaffleDataFetcher() {
       
       const indices = Array.from({ length: endIndex - startIndex }, (_, i) => startIndex + i);
       
-      // Chain-specific batch optimization - Polygon needs larger batches to reduce RPC calls
-      const isPolygon = chainId === 137;
-      const batchSize = isPolygon ? 5 : 3; // Larger batches for Polygon to reduce network overhead
-      const delay = isPolygon ? 20 : 10; // Longer delays for Polygon congestion
+      // Chain-specific batch optimization using centralized config
+      const batchConfig = getChainBatchConfig(chainId);
       
       // Get raffle contracts with chain-optimized batching
       const contractResults = await processBatch(
@@ -81,7 +80,10 @@ export function useRaffleDataFetcher() {
             return { index: i, contract: null };
           }
         },
-        { batchSize, delay }
+        { 
+          batchSize: batchConfig.contractBatchSize, 
+          delay: batchConfig.contractDelay 
+        }
       );
       
       // Filter out failed contracts while maintaining index mapping
@@ -122,7 +124,10 @@ export function useRaffleDataFetcher() {
             return { ...contractResult, raffleInfo: null };
           }
         },
-        { batchSize: isPolygon ? 2 : 3, delay: delay + 5 } // Even smaller batches for raffle info on Polygon
+        { 
+          batchSize: batchConfig.raffleBatchSize, 
+          delay: batchConfig.raffleDelay 
+        }
       );
       
       // Process valid results with correct index mapping
