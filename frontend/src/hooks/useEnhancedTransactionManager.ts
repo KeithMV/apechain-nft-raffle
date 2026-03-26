@@ -95,7 +95,6 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
     console.log(`🚀 [ENHANCED-TX] Starting ${transactionType} on ${chainConfig.name} via ${bestEndpoint}`);
     
     try {
-      // Execute transaction with performance measurement
       const result = await measurePerformance(
         `transaction-${transactionType}`,
         async () => {
@@ -114,7 +113,6 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
       // Report success to RPC health monitor
       reportSuccess(bestEndpoint, duration);
       
-      // Update performance metrics
       setPerformanceMetrics(prev => ({
         averageDuration: (prev.averageDuration + duration) / 2,
         successRate: Math.min(100, prev.successRate + 1),
@@ -131,7 +129,6 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
       // Report failure to RPC health monitor
       reportFailure(bestEndpoint);
       
-      // Record performance metric for failure
       recordMetric(`transaction-${transactionType}`, duration, false, {
         chainId,
         rpcEndpoint: bestEndpoint,
@@ -139,7 +136,6 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
         error: error instanceof Error ? error.message : String(error),
       });
       
-      // Update performance metrics
       setPerformanceMetrics(prev => ({
         averageDuration: (prev.averageDuration + duration) / 2,
         successRate: Math.max(0, prev.successRate - 5),
@@ -182,7 +178,6 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
       
       console.log(`✅ [ENHANCED-TX] ${transactionType} confirmed: ${hash}`);
       
-      // Record successful confirmation
       recordMetric('transaction-confirm', duration, true, {
         chainId,
         transactionType,
@@ -229,7 +224,6 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
       
       setIsProcessing(false);
       
-      // Record failed transaction
       recordMetric('transaction-confirm', duration, false, {
         chainId,
         transactionType,

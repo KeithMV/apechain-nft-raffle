@@ -3,15 +3,13 @@
  * Main navigation header with wallet connection and network-aware styling
  */
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 import { useNetwork } from '../contexts/NetworkContext';
 import { WalletConnection } from './WalletConnection';
 import { NetworkSwitcher } from './NetworkSwitcher';
 import { Web3Title } from './Web3Title';
-import PerformanceDashboard from './PerformanceDashboard';
-import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
 
 // Lazy load WalletInfo for better performance
 const WalletInfo = React.lazy(() => import('./WalletInfo'));
@@ -59,11 +57,6 @@ export const AppHeader: React.FC = () => {
   const location = useLocation();
   const currentPage = location.pathname.slice(1) || 'browse';
   
-  // Performance dashboard state
-  const [showPerformanceDashboard, setShowPerformanceDashboard] = useState(false);
-  const { getPerformanceSummary } = usePerformanceMonitor();
-  const performanceSummary = getPerformanceSummary();
-  
   // Network-aware header styling
   const headerBorderColor = isApeChain ? 'border-emerald-400/30' : 'border-purple-400/30';
   
@@ -92,31 +85,6 @@ export const AppHeader: React.FC = () => {
           <div className="flex flex-col items-center space-y-2">
             {isConnected && (
               <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                {/* Performance Dashboard Button */}
-                <button
-                  onClick={() => setShowPerformanceDashboard(true)}
-                  className={`relative p-2 rounded-lg transition-all duration-200 ${
-                    isApeChain 
-                      ? 'text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300'
-                      : 'text-purple-400 hover:bg-purple-500/10 hover:text-purple-300'
-                  }`}
-                  title="Performance Dashboard"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  
-                  {/* Performance Health Indicator */}
-                  {performanceSummary.totalOperations > 0 && (
-                    <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
-                      performanceSummary.health === 'excellent' ? (isApeChain ? 'bg-emerald-400' : 'bg-purple-400') :
-                      performanceSummary.health === 'good' ? 'bg-green-400' :
-                      performanceSummary.health === 'fair' ? 'bg-yellow-400' :
-                      'bg-red-400'
-                    }`}></div>
-                  )}
-                </button>
-                
                 <NetworkSwitcher />
                 <Suspense fallback={<LoadingFallback />}>
                   <WalletInfo />
@@ -127,12 +95,6 @@ export const AppHeader: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      {/* Performance Dashboard Modal */}
-      <PerformanceDashboard 
-        isOpen={showPerformanceDashboard}
-        onClose={() => setShowPerformanceDashboard(false)}
-      />
     </header>
   );
 };

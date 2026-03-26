@@ -48,8 +48,6 @@ export function useRPCHealthMonitor(chainId: number | undefined) {
         { url: 'https://rpc-mainnet.matic.network', priority: 1, isHealthy: true, lastChecked: 0, responseTime: 0, failureCount: 0, successCount: 0 },
         { url: 'https://polygon-rpc.com', priority: 2, isHealthy: true, lastChecked: 0, responseTime: 0, failureCount: 0, successCount: 0 },
         { url: 'https://rpc.ankr.com/polygon', priority: 3, isHealthy: true, lastChecked: 0, responseTime: 0, failureCount: 0, successCount: 0 },
-        { url: 'https://rpc-mainnet.matic.quiknode.pro', priority: 4, isHealthy: true, lastChecked: 0, responseTime: 0, failureCount: 0, successCount: 0 },
-        { url: 'https://polygon.llamarpc.com', priority: 5, isHealthy: false, lastChecked: 0, responseTime: 0, failureCount: 3, successCount: 0 }, // Known to be failing
       ];
     }
     return [];
@@ -112,84 +110,16 @@ export function useRPCHealthMonitor(chainId: number | undefined) {
     }
   }, [chainConfig.rpc.failureThreshold]);
 
-  // Perform health check on all endpoints
-  const performHealthCheck = useCallback(async (targetChainId: number) => {
-    if (!targetChainId || isMonitoring.current) return;
-    
-    isMonitoring.current = true;
-    
-    try {
-      const currentEndpoints = healthStatus?.endpoints || getRPCEndpoints(targetChainId);
-      
-      console.log(`🏥 [RPC-HEALTH] Starting health check for chain ${targetChainId} with ${currentEndpoints.length} endpoints`);
-      
-      // Check all endpoints in parallel
-      const healthCheckPromises = currentEndpoints.map(endpoint => checkEndpointHealth(endpoint));
-      const updatedEndpoints = await Promise.all(healthCheckPromises);
-      
-      // Sort by health status and response time
-      const sortedEndpoints = updatedEndpoints.sort((a, b) => {
-        // Healthy endpoints first
-        if (a.isHealthy !== b.isHealthy) {
-          return a.isHealthy ? -1 : 1;
-        }
-        // Then by priority
-        if (a.priority !== b.priority) {
-          return a.priority - b.priority;
-        }
-        // Then by response time
-        return a.responseTime - b.responseTime;
-      });
-      
-      // Find the best active endpoint
-      const activeEndpoint = sortedEndpoints.find(ep => ep.isHealthy)?.url || sortedEndpoints[0].url;
-      
-      const newHealthStatus: RPCHealthStatus = {
-        endpoints: sortedEndpoints,
-        activeEndpoint,
-        totalFailures: sortedEndpoints.reduce((sum, ep) => sum + ep.failureCount, 0),
-        lastHealthCheck: Date.now(),
-      };
-      
-      setHealthStatus(newHealthStatus);
-      
-      const healthyCount = sortedEndpoints.filter(ep => ep.isHealthy).length;
-      const avgResponseTime = sortedEndpoints
-        .filter(ep => ep.isHealthy && ep.responseTime > 0)
-        .reduce((sum, ep, _, arr) => sum + ep.responseTime / arr.length, 0);
-      
-      console.log(`✅ [RPC-HEALTH] Health check complete: ${healthyCount}/${sortedEndpoints.length} healthy, avg response: ${Math.round(avgResponseTime)}ms, active: ${activeEndpoint}`);
-      
-    } catch (error) {
-      console.error('❌ [RPC-HEALTH] Health check failed:', error);
-    } finally {
-      isMonitoring.current = false;
-    }
-  }, [healthStatus, getRPCEndpoints, checkEndpointHealth]);
-
-  // Start health monitoring
-  useEffect(() => {
-    if (!chainId) return;
-    
-    // Initial health check
-    performHealthCheck(chainId);
-    
-    // Set up periodic health checks
-    if (healthCheckInterval.current) {
-      clearInterval(healthCheckInterval.current);
+  // Get the best available RPC endpoint
+  const getBestEndpoint = useCallback((): string => {
+    if (!healthStatus) {
+      // Fallback to default endpoints if health status not ready
+      const defaultEndpoints = getRPCEndpoints(chainId || 33139);
+      return defaultEndpoints[0]?.url || 'https://rpc.apechain.com';
     }
     
-    healthCheckInterval.current = setInterval(() => {
-      performHealthCheck(chainId);
-    }, chainConfig.rpc.healthCheckInterval);
-    
-    return () => {
-      if (healthCheckInterval.current) {
-        clearInterval(healthCheckInterval.current);
-        healthCheckInterval.current = null;
-      }
-    };
-  }, [chainId, chainConfig.rpc.healthCheckInterval, performHealthCheck]);
+    return healthStatus.activeEndpoint;
+  }, [healthStatus, chainId, getRPCEndpoints]);
 
   // Report RPC failure (called by other hooks when RPC calls fail)
   const reportFailure = useCallback((failedUrl: string) => {
@@ -224,8 +154,6 @@ export function useRPCHealthMonitor(chainId: number | undefined) {
         totalFailures: prev.totalFailures + 1,
       };
     });
-    
-    console.warn(`⚠️ [RPC-HEALTH] Reported failure for ${failedUrl}`);
   }, [healthStatus, chainConfig.rpc.failureThreshold]);
 
   // Report RPC success (called by other hooks when RPC calls succeed)
@@ -255,34 +183,25 @@ export function useRPCHealthMonitor(chainId: number | undefined) {
     });
   }, [healthStatus]);
 
-  // Get the best available RPC endpoint
-  const getBestEndpoint = useCallback((): string => {
-    if (!healthStatus) {
-      // Fallback to default endpoints if health status not ready
-      const defaultEndpoints = getRPCEndpoints(chainId || 33139);
-      return defaultEndpoints[0]?.url || 'https://rpc.apechain.com';
+  // Initialize health status
+  useEffect(() => {
+    if (!chainId) return;
+    
+    const endpoints = getRPCEndpoints(chainId);
+    if (endpoints.length > 0) {
+      setHealthStatus({
+        endpoints,
+        activeEndpoint: endpoints[0].url,
+        totalFailures: 0,
+        lastHealthCheck: Date.now(),
+      });
     }
-    
-    return healthStatus.activeEndpoint;
-  }, [healthStatus, chainId, getRPCEndpoints]);
-
-  // Get all healthy endpoints (for load balancing)
-  const getHealthyEndpoints = useCallback((): string[] => {
-    if (!healthStatus) return [];
-    
-    return healthStatus.endpoints
-      .filter(ep => ep.isHealthy)
-      .sort((a, b) => a.responseTime - b.responseTime)
-      .map(ep => ep.url);
-  }, [healthStatus]);
+  }, [chainId, getRPCEndpoints]);
 
   return {
     healthStatus,
     getBestEndpoint,
-    getHealthyEndpoints,
     reportFailure,
     reportSuccess,
-    performHealthCheck: () => performHealthCheck(chainId || 33139),
-    isMonitoring: isMonitoring.current,
   };
 }
