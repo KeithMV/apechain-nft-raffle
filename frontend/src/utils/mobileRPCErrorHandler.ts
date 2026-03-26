@@ -57,10 +57,11 @@ class MobileRPCErrorHandler {
       '429', 'Too Many Requests',
       '401', 'Unauthorized', 
       '400', 'Bad Request',
-      'timeout', '408',
+      'timeout', '408', '504', 'Gateway Timeout',
       'Failed to fetch', 'NetworkError',
       'CORS', 'access control',
-      'DNS', 'hostname could not be found'
+      'DNS', 'hostname could not be found', 'ERR_NAME_NOT_RESOLVED',
+      'ERR_FAILED'
     ];
     
     return cascadePatterns.some(pattern => 
@@ -94,9 +95,14 @@ if (typeof window !== 'undefined') {
     if (message.includes('Failed to load resource') || 
         message.includes('429') || 
         message.includes('401') ||
+        message.includes('504') ||
         message.includes('Bad Request') ||
+        message.includes('ERR_NAME_NOT_RESOLVED') ||
+        message.includes('ERR_FAILED') ||
+        message.includes('CORS') ||
         message.includes('polygon-rpc.com') ||
         message.includes('matic.network') ||
+        message.includes('walletconnect.org') ||
         message.includes('quiknode.pro')) {
       
       // Handle the error

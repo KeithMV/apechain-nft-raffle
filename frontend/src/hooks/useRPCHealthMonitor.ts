@@ -45,9 +45,11 @@ export function useRPCHealthMonitor(chainId: number | undefined) {
     } else if (targetChainId === 137) {
       // Polygon endpoints - prioritized based on reliability
       return [
-        { url: 'https://rpc-mainnet.matic.network', priority: 1, isHealthy: true, lastChecked: 0, responseTime: 0, failureCount: 0, successCount: 0 },
-        { url: 'https://polygon-rpc.com', priority: 2, isHealthy: true, lastChecked: 0, responseTime: 0, failureCount: 0, successCount: 0 },
-        { url: 'https://rpc.ankr.com/polygon', priority: 3, isHealthy: true, lastChecked: 0, responseTime: 0, failureCount: 0, successCount: 0 },
+        { url: 'https://polygon-mainnet.g.alchemy.com/v2/demo', priority: 1, isHealthy: true, lastChecked: 0, responseTime: 0, failureCount: 0, successCount: 0 },
+        { url: 'https://rpc.ankr.com/polygon', priority: 2, isHealthy: true, lastChecked: 0, responseTime: 0, failureCount: 0, successCount: 0 },
+        { url: 'https://polygon-rpc.com', priority: 3, isHealthy: true, lastChecked: 0, responseTime: 0, failureCount: 0, successCount: 0 },
+        { url: 'https://polygon-mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161', priority: 4, isHealthy: true, lastChecked: 0, responseTime: 0, failureCount: 0, successCount: 0 },
+        { url: 'https://rpc-mainnet.maticvigil.com', priority: 5, isHealthy: true, lastChecked: 0, responseTime: 0, failureCount: 0, successCount: 0 },
       ];
     }
     return [];
@@ -59,7 +61,7 @@ export function useRPCHealthMonitor(chainId: number | undefined) {
     
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // Reduced to 3 seconds for faster failover
       
       const response = await fetch(endpoint.url, {
         method: 'POST',
