@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useAccount } from 'wagmi';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useAccount, useChainId } from 'wagmi';
 import RaffleCard, { CreatedRaffle } from './RaffleCard';
 import RaffleFilters from './RaffleFilters';
 import { useInfiniteAllRafflesV4 } from '../hooks/useRafflePositionsV4';
@@ -7,15 +7,33 @@ import { useOptimizedRaffleActions } from '../hooks/useOptimizedRaffleActions';
 // Phase 10: Enhanced performance utilities
 import { throttle, measureSync } from '../utils/performance';
 import { useNetwork } from '../contexts/NetworkContext';
+// Phase 3: Advanced UX enhancements
+import { SmartLoading, ProgressiveDisclosure, SmartImage } from './UXEnhancements';
+import { usePredictivePreloading } from '../hooks/usePredictivePreloading';
+import { usePerformanceAnalytics } from '../hooks/usePerformanceAnalytics';
 
 
 
 export default function BrowseRaffles() {
   const { address } = useAccount();
+  const chainId = useChainId();
   const { nativeCurrency, isApeChain } = useNetwork();
+  const { triggerPreload } = usePredictivePreloading();
+  const { trackUserAction } = usePerformanceAnalytics();
+  
+  // Track page view and trigger predictive preloading
+  useEffect(() => {
+    trackUserAction('browse_page_view', { chainId });
+    triggerPreload('browse_page');
+  }, [chainId, trackUserAction, triggerPreload]);
   
   // Remove debug console.log for production
   // console.log('🎨 BrowseRaffles: isApeChain =', isApeChain, 'currency =', nativeCurrency);
+  
+  const handleRaffleHover = useCallback((raffleId: string | number) => {
+    triggerPreload('raffle_details', { raffleId: raffleId.toString() });
+    trackUserAction('raffle_hover', { raffleId: raffleId.toString() });
+  }, [triggerPreload, trackUserAction]);
   
   // Memoize network-aware styling to prevent recalculation
   const styles = useMemo(() => ({
@@ -119,13 +137,27 @@ export default function BrowseRaffles() {
 
   if (loading) {
     return (
-      <div className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border border-emerald-400/30 rounded-3xl shadow-2xl shadow-emerald-500/20 p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.1),transparent_50%)] animate-pulse"></div>
-        <div className="relative z-10 flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mr-3"></div>
-          <span className="text-emerald-300 font-medium">Loading raffles...</span>
-        </div>
-      </div>
+      <SmartLoading
+        isLoading={true}
+        operation="browse_raffles"
+        context={{ chainId }}
+        skeleton={
+          <div className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl border border-emerald-400/30 rounded-3xl shadow-2xl shadow-emerald-500/20 p-8">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.1),transparent_50%)] animate-pulse"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-slate-800/50 rounded-xl p-6 animate-pulse">
+                  <div className="w-full h-48 bg-slate-700 rounded-lg mb-4" />
+                  <div className="h-4 bg-slate-700 rounded mb-2" />
+                  <div className="h-4 bg-slate-700 rounded w-3/4" />
+                </div>
+              ))}
+            </div>
+          </div>
+        }
+      >
+        <div />
+      </SmartLoading>
     );
   }
 
@@ -166,17 +198,22 @@ export default function BrowseRaffles() {
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {filteredRaffles.map((raffle, index) => (
-                    <RaffleCard
+                    <div 
                       key={`${raffle.raffleContract}-${raffle.raffleId}`}
-                      raffle={raffle}
-                      ticketQuantities={ticketQuantities}
-                      setTicketQuantity={throttledSetTicketQuantity}
-                      handleBuyTickets={handleBuyTickets}
-                      handleWinnerSelection={handleWinnerSelection}
-                      processingRaffles={processingRaffles}
-                      address={address}
-                      nativeCurrency={nativeCurrency}
-                    />
+                      onMouseEnter={() => handleRaffleHover(raffle.raffleId)}
+                      className="transform transition-transform hover:scale-[1.02]"
+                    >
+                      <RaffleCard
+                        raffle={raffle}
+                        ticketQuantities={ticketQuantities}
+                        setTicketQuantity={throttledSetTicketQuantity}
+                        handleBuyTickets={handleBuyTickets}
+                        handleWinnerSelection={handleWinnerSelection}
+                        processingRaffles={processingRaffles}
+                        address={address}
+                        nativeCurrency={nativeCurrency}
+                      />
+                    </div>
                   ))}
                 </div>
               )}

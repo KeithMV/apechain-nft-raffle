@@ -29,7 +29,7 @@ export const NETWORK_CONFIGS: Record<number, NetworkConfig> = {
   },
   137: { // Polygon Mainnet
     chainId: 137,
-    rpcUrl: 'https://polygon-mainnet.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78',
+    rpcUrl: 'https://rpc-mainnet.matic.network',
     name: 'Polygon',
     explorerUrl: 'https://polygonscan.com',
     nativeCurrency: 'POL'

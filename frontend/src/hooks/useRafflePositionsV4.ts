@@ -12,7 +12,7 @@ import { useAsyncCachedLoader } from './useAsyncCachedLoader';
 import { getRaffleFactoryAddress, isV4Available } from '../config/addresses';
 import { debounce } from '../utils/performance';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
-import { getChainCacheConfig } from '../config/polygonConfig';
+import { useChainConfig } from '../hooks/useChainConfig';
 
 // Type aliases for backward compatibility
 export interface CreatedRaffle extends RaffleInfo {}
@@ -22,13 +22,18 @@ export function useInfiniteAllRafflesV4(limit: number = 10) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
   
-  // Chain-specific query optimization using centralized config
-  const cacheConfig = getChainCacheConfig(chainId);
+  // Use centralized cache configuration
+  const { config: chainConfig } = useChainConfig();
+  const cacheConfig = {
+    staleTime: chainConfig.cache.staleTime,
+    gcTime: chainConfig.cache.gcTime,
+  };
 
   const infiniteQuery = useInfiniteQuery({
     queryKey: ['raffles-infinite-v4', chainId],
     queryFn: ({ pageParam = 0 }) => {
-      console.log(`🔄 [INFINITE] Fetching page ${pageParam} with limit ${limit}`);
+      // Reduced logging frequency
+      if (pageParam === 0) console.log(`🔄 [INFINITE] Fetching initial page with limit ${limit}`);
       return dataFetcher.fetchAllRaffles({ 
         limit, 
         offset: pageParam * limit 
@@ -38,10 +43,10 @@ export function useInfiniteAllRafflesV4(limit: number = 10) {
     getNextPageParam: (lastPage, allPages) => {
       // If last page has fewer items than limit, we've reached the end
       if (lastPage.length < limit) {
-        console.log(`📄 [INFINITE] Reached end at page ${allPages.length - 1}`);
+        if (allPages.length <= 2) console.log(`📄 [INFINITE] Reached end at page ${allPages.length - 1}`);
         return undefined;
       }
-      console.log(`📄 [INFINITE] Next page available: ${allPages.length}`);
+      if (allPages.length <= 2) console.log(`📄 [INFINITE] Next page available: ${allPages.length}`);
       return allPages.length;
     },
     enabled: dataFetcher.isReady,
@@ -55,7 +60,10 @@ export function useInfiniteAllRafflesV4(limit: number = 10) {
   const allRaffles = useMemo(() => {
     if (!infiniteQuery.data?.pages) return [];
     const flattened = infiniteQuery.data.pages.flat();
-    console.log(`📊 [INFINITE] Total raffles across ${infiniteQuery.data.pages.length} pages: ${flattened.length}`);
+    // Only log on significant changes
+    if (flattened.length > 0 && flattened.length % 10 === 0) {
+      console.log(`📊 [INFINITE] Total raffles across ${infiniteQuery.data.pages.length} pages: ${flattened.length}`);
+    }
     return flattened;
   }, [infiniteQuery.data?.pages]);
 
@@ -84,10 +92,10 @@ export function useAllRafflesV4(limit: number = 15, offset: number = 0) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
   
-  // Chain-specific query optimization
-  const isPolygon = chainId === 137;
-  const staleTime = isPolygon ? 45000 : 30000; // Longer stale time for Polygon
-  const gcTime = isPolygon ? 90000 : 60000; // Longer garbage collection for Polygon
+  // Use centralized cache configuration
+  const { config: chainConfig } = useChainConfig();
+  const staleTime = chainConfig.cache.staleTime;
+  const gcTime = chainConfig.cache.gcTime;
 
   const { data: raffles, isLoading: loading, error, refetch } = useQuery({
     queryKey: ['raffles-v4', chainId, limit, offset],
@@ -120,8 +128,12 @@ export function useUserRafflePositionsV4(userAddress?: string) {
   const chainId = useChainId();
   const { getCombinedUserPositions } = useRafflePositionProcessor();
   
-  // Chain-specific query optimization using centralized config
-  const cacheConfig = getChainCacheConfig(chainId);
+  // Use centralized cache configuration
+  const { config: chainConfig } = useChainConfig();
+  const cacheConfig = {
+    userStaleTime: chainConfig.cache.userStaleTime,
+    userGcTime: chainConfig.cache.userGcTime,
+  };
 
   const { data: positions, isLoading: loading, error, refetch } = useQuery({
     queryKey: ['positions-v4', userAddress, chainId],
@@ -160,10 +172,10 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
   
-  // Chain-specific query optimization
-  const isPolygon = chainId === 137;
-  const staleTime = isPolygon ? 45000 : 30000;
-  const gcTime = isPolygon ? 90000 : 60000;
+  // Use centralized cache configuration
+  const { config: chainConfig } = useChainConfig();
+  const staleTime = chainConfig.cache.staleTime;
+  const gcTime = chainConfig.cache.gcTime;
 
   const infiniteQuery = useInfiniteQuery({
     queryKey: ['created-infinite-v4', chainId, userAddress],
@@ -172,7 +184,8 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
         throw new Error('Missing required parameters');
       }
 
-      console.log(`🔄 [INFINITE-CREATED] Fetching page ${pageParam} for user ${userAddress}`);
+      // Reduced logging - only log first fetch
+      if (pageParam === 0) console.log(`🔄 [INFINITE-CREATED] Fetching initial page for user ${userAddress}`);
       
       // Fetch more raffles to filter from (since we're filtering by creator)
       const fetchLimit = 30;
@@ -186,7 +199,10 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
         .filter(r => r.creator.toLowerCase() === userAddress.toLowerCase())
         .sort((a, b) => b.endTime - a.endTime);
       
-      console.log(`📊 [INFINITE-CREATED] Page ${pageParam}: ${createdRaffles.length} created raffles found`);
+      // Only log if found raffles
+      if (createdRaffles.length > 0 && pageParam === 0) {
+        console.log(`📊 [INFINITE-CREATED] Page ${pageParam}: ${createdRaffles.length} created raffles found`);
+      }
       return createdRaffles;
     },
     initialPageParam: 0,
@@ -218,7 +234,10 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
       )
     );
     
-    console.log(`📊 [INFINITE-CREATED] Total unique created raffles: ${unique.length}`);
+    // Only log final count once
+    if (unique.length > 0 && !infiniteQuery.isLoading) {
+      console.log(`📊 [INFINITE-CREATED] Total unique created raffles: ${unique.length}`);
+    }
     return unique;
   }, [infiniteQuery.data?.pages]);
 
@@ -241,10 +260,10 @@ export function useCreatedRafflesV4(userAddress?: string, page: number = 0) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
   
-  // Chain-specific query optimization
-  const isPolygon = chainId === 137;
-  const staleTime = isPolygon ? 45000 : 30000; // Longer stale time for Polygon
-  const gcTime = isPolygon ? 90000 : 60000; // Longer garbage collection for Polygon
+  // Use centralized cache configuration
+  const { config: chainConfig } = useChainConfig();
+  const staleTime = chainConfig.cache.staleTime;
+  const gcTime = chainConfig.cache.gcTime;
 
   const { data: raffles, isLoading: loading, error, refetch } = useQuery({
     queryKey: ['created-v4', chainId, userAddress, page],

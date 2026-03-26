@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useChainId } from 'wagmi';
 import { optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
+import { useChainConfig } from '../hooks/useChainConfig';
 
 export interface CacheInvalidationOptions {
   raffleContract?: string;
@@ -22,6 +23,10 @@ export interface CacheInvalidationOptions {
 export function useUnifiedCacheInvalidation() {
   const queryClient = useQueryClient();
   const currentChainId = useChainId();
+  
+  // Use centralized chain configuration
+  const { config: chainConfig } = useChainConfig();
+  const invalidationDelay = chainConfig.cache.invalidationDelay;
   
   // Clear localStorage cache entries (chain-specific)
   const clearAllCaches = useCallback((chainId?: number) => {
@@ -41,9 +46,11 @@ export function useUnifiedCacheInvalidation() {
   const invalidateAfterTransaction = useCallback(async (options: CacheInvalidationOptions = {}) => {
     const { raffleContract, userAddress, transactionType, immediate = true, chainId } = options;
     const targetChainId = chainId || currentChainId;
-    const isPolygon = targetChainId === 137;
     
-    console.log('🔄 [CACHE] Starting unified cache invalidation:', { ...options, chainId: targetChainId, isPolygon });
+    // Use centralized invalidation delay
+    const delay = invalidationDelay;
+    
+    console.log('🔄 [CACHE] Starting unified cache invalidation:', { ...options, chainId: targetChainId, delay });
     
     try {
       // 1. Clear custom cache system immediately (chain-specific)
@@ -95,11 +102,11 @@ export function useUnifiedCacheInvalidation() {
       // Execute all invalidations
       await Promise.all(invalidationPromises);
       
-      // 6. Progressive refetch strategy for winner selection on Polygon
-      if (immediate && transactionType === 'select-winner' && isPolygon) {
-        console.log('🔄 [CACHE] Starting progressive refetch for Polygon winner selection');
+      // 6. Progressive refetch strategy for winner selection with centralized delay
+      if (immediate && transactionType === 'select-winner' && delay > 0) {
+        console.log('🔄 [CACHE] Starting progressive refetch for delayed invalidation chain');
         
-        // Progressive refetch with exponential backoff for Polygon
+        // Progressive refetch with exponential backoff for chains with delayed invalidation
         const progressiveRefetch = async () => {
           const refetchQueries = [
             queryClient.refetchQueries({ queryKey: ['raffles', targetChainId] }),
@@ -119,17 +126,17 @@ export function useUnifiedCacheInvalidation() {
         // Immediate optimistic refetch
         progressiveRefetch().catch(console.error);
         
-        // Safety net refetch after 5 seconds
+        // Safety net refetch after delay + 2 seconds
         setTimeout(() => {
-          console.log('🔄 [CACHE] Safety net refetch for Polygon');
+          console.log('🔄 [CACHE] Safety net refetch for delayed invalidation');
           progressiveRefetch().catch(console.error);
-        }, 5000);
+        }, delay + 2000);
         
-        // Final guarantee refetch after 10 seconds
+        // Final guarantee refetch after delay + 7 seconds
         setTimeout(() => {
-          console.log('🔄 [CACHE] Final guarantee refetch for Polygon');
+          console.log('🔄 [CACHE] Final guarantee refetch for delayed invalidation');
           progressiveRefetch().catch(console.error);
-        }, 10000);
+        }, delay + 7000);
         
       } else if (immediate) {
         // Standard immediate refetch for ApeChain or raffle creation
@@ -169,7 +176,7 @@ export function useUnifiedCacheInvalidation() {
     } catch (error) {
       console.error('❌ [CACHE] Cache invalidation failed:', error);
     }
-  }, [queryClient, clearAllCaches, currentChainId]);
+  }, [queryClient, clearAllCaches, currentChainId, invalidationDelay]);
 
   // Quick invalidation for immediate UI feedback (chain-specific)
   const quickInvalidate = useCallback((raffleContract?: string, chainId?: number) => {
