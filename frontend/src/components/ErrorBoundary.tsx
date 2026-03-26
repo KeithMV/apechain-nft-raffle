@@ -27,6 +27,21 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Error Boundary caught an error:', error, errorInfo);
+    
+    // Log mobile-specific errors for debugging
+    if (typeof window !== 'undefined') {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        console.error('Mobile-specific error detected:', {
+          userAgent: navigator.userAgent,
+          error: error.message,
+          stack: error.stack,
+          hasRequestIdleCallback: !!window.requestIdleCallback,
+          hasResizeObserver: !!window.ResizeObserver,
+          hasIntersectionObserver: !!window.IntersectionObserver
+        });
+      }
+    }
   }
 
   render() {

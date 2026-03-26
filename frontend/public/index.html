@@ -5,6 +5,29 @@
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
+    
+    <!-- Mobile Browser Compatibility Polyfills -->
+    <script>
+      // Critical polyfill for React 19 mobile compatibility
+      if (!window.requestIdleCallback) {
+        window.requestIdleCallback = function(callback, options) {
+          const start = Date.now();
+          return setTimeout(function() {
+            callback({
+              didTimeout: false,
+              timeRemaining: function() {
+                return Math.max(0, 50 - (Date.now() - start));
+              }
+            });
+          }, 1);
+        };
+      }
+      if (!window.cancelIdleCallback) {
+        window.cancelIdleCallback = function(id) {
+          clearTimeout(id);
+        };
+      }
+    </script>
     <meta
       name="description"
       content="ApeCoin NFT Raffle System - Make expensive NFTs accessible through affordable raffle tickets"
