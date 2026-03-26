@@ -8,6 +8,7 @@ import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import toast from 'react-hot-toast';
 import { getProgressiveTimeout, optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
+import { useChainConfig } from '../hooks/useChainConfig';
 
 export interface OptimizedTransactionConfig {
   transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle';
@@ -46,6 +47,9 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
     optimisticData,
   } = config;
 
+  // Use centralized chain configuration
+  const { chainId, getOperationTimeout, getOperationRetries, invalidationDelay } = useChainConfig();
+  
   const { writeContractAsync, data: hash, error, isPending: wagmiPending } = useWriteContract();
   const [attempt, setAttempt] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -54,7 +58,8 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
   // Unified cache invalidation
   const { invalidateAfterTransaction, quickInvalidate } = useUnifiedCacheInvalidation();
   
-  const timeout = getProgressiveTimeout(transactionType, attempt);
+  // Use centralized timeout configuration
+  const timeout = getOperationTimeout(transactionType);
   
   const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
@@ -86,14 +91,8 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       lastSuccessHash.current = hash;
       setIsProcessing(false);
       
-      // Chain-aware cache invalidation timing
-      const chainId = optimisticData?.chainId || 33139; // Default to ApeChain
-      const isPolygon = chainId === 137;
-      
-      // Polygon needs delayed invalidation due to slower block finality
-      const invalidationDelay = isPolygon ? 3000 : 0; // 3s delay for Polygon, immediate for ApeChain
-      
-      console.log(`🔄 [CACHE] Chain-aware invalidation: ${isPolygon ? 'Polygon (3s delay)' : 'ApeChain (immediate)'} for tx:`, hash);
+      // Use centralized invalidation delay configuration
+      console.log(`🔄 [CACHE] Chain-aware invalidation: ${invalidationDelay > 0 ? `${invalidationDelay}ms delay` : 'immediate'} for tx:`, hash);
       
       setTimeout(() => {
         invalidateAfterTransaction({
@@ -115,7 +114,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       
       setAttempt(0); // Reset attempt counter on success
     }
-  }, [isSuccess, hash, successMessage, onSuccess, enableToasts, optimisticData, transactionType, invalidateAfterTransaction]);
+  }, [isSuccess, hash, successMessage, onSuccess, enableToasts, optimisticData, transactionType, invalidateAfterTransaction, chainId, invalidationDelay]);
 
   // Handle transaction errors with smart retry logic
   useEffect(() => {

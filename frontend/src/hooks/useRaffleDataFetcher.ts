@@ -8,7 +8,7 @@ import { useCallback } from 'react';
 import { getRaffleFactoryAddress, isV4Available } from '../config/addresses';
 import { RAFFLE_FACTORY_ABI } from '../config/contracts';
 import { processBatch } from '../utils/performance';
-import { getChainBatchConfig } from '../config/polygonConfig';
+import { useChainConfig } from '../hooks/useChainConfig';
 
 export interface RaffleInfo {
   raffleId: number;
@@ -36,6 +36,15 @@ export interface RaffleDataFetcherOptions {
 export function useRaffleDataFetcher() {
   const publicClient = usePublicClient();
   const chainId = useChainId();
+  
+  // Use centralized chain configuration
+  const { config: chainConfig } = useChainConfig();
+  const batchConfig = {
+    contractBatchSize: chainConfig.batch.contractSize,
+    contractDelay: chainConfig.batch.contractDelay,
+    raffleBatchSize: chainConfig.batch.raffleSize,
+    raffleDelay: chainConfig.batch.raffleDelay,
+  };
 
   // Get raffles from a specific factory version with chain-specific optimizations
   const getRafflesFromFactory = useCallback(async (
@@ -61,10 +70,7 @@ export function useRaffleDataFetcher() {
       
       const indices = Array.from({ length: endIndex - startIndex }, (_, i) => startIndex + i);
       
-      // Chain-specific batch optimization using centralized config
-      const batchConfig = getChainBatchConfig(chainId);
-      
-      // Get raffle contracts with chain-optimized batching
+      // Use centralized batch configuration
       const contractResults = await processBatch(
         indices,
         async (i) => {
@@ -89,7 +95,7 @@ export function useRaffleDataFetcher() {
       // Filter out failed contracts while maintaining index mapping
       const validContractResults = contractResults.filter(result => result.contract !== null);
       
-      // Get raffle info with chain-optimized error handling
+      // Get raffle info with centralized batch configuration
       const raffleInfoResults = await processBatch(
         validContractResults,
         async (contractResult: any) => {
@@ -211,7 +217,7 @@ export function useRaffleDataFetcher() {
     return uniqueRaffles
       .sort((a, b) => b.endTime - a.endTime)
       .slice(0, limit);
-  }, [publicClient, chainId, getRafflesFromFactory]);
+  }, [publicClient, chainId, chainConfig]);
 
   // Get user tickets for a specific raffle
   const getUserTickets = useCallback(async (raffleContract: string, userAddress: string): Promise<number> => {

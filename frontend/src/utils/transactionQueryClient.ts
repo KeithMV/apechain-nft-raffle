@@ -5,6 +5,7 @@
 
 import { QueryClient } from '@tanstack/react-query';
 import { getDeviceType } from '../config/wagmiUnified';
+import { getChainConfig } from '../config/chainConfigurations';
 
 // Transaction-specific cache keys
 export const TRANSACTION_CACHE_KEYS = {
@@ -109,12 +110,15 @@ export const optimisticUpdateHelpers = {
   },
 };
 
-// Progressive timeout configuration with chain-specific optimizations
+// Progressive timeout configuration with centralized chain-specific optimizations
 export const getProgressiveTimeout = (transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle', attempt: number = 0, chainId?: number) => {
   const isMobile = getDeviceType() === 'mobile';
-  const isPolygon = chainId === 137;
   
-  // Base timeouts with chain-specific adjustments
+  // Use centralized chain configuration
+  const chainConfig = getChainConfig(chainId);
+  const timeoutMultiplier = chainConfig.transaction.timeoutMultiplier;
+  
+  // Base timeouts with device considerations
   const baseTimeouts = {
     'buy-tickets': isMobile ? 25000 : 20000, // 25s mobile, 20s desktop
     'select-winner': isMobile ? 50000 : 40000, // 50s mobile, 40s desktop
@@ -122,12 +126,11 @@ export const getProgressiveTimeout = (transactionType: 'buy-tickets' | 'select-w
     'cancel-raffle': isMobile ? 35000 : 25000, // 35s mobile, 25s desktop
   };
   
-  // Polygon network adjustments - slightly longer timeouts due to higher congestion
-  const chainMultiplier = isPolygon ? 1.2 : 1.0;
-  const adjustedTimeout = Math.floor(baseTimeouts[transactionType] * chainMultiplier);
+  // Apply centralized chain multiplier
+  const adjustedTimeout = Math.floor(baseTimeouts[transactionType] * timeoutMultiplier);
 
-  // Increase timeout with each attempt
-  return adjustedTimeout + (attempt * 10000);
+  // Increase timeout with each attempt (more aggressive for reliability)
+  return adjustedTimeout + (attempt * 15000); // Increased from 10000 to 15000
 };
 
 export const transactionQueryClient = createTransactionQueryClient();

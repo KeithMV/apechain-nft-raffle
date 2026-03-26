@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { usePublicClient } from 'wagmi';
 import { parseAbiItem } from 'viem';
+import { useChainConfig } from '../hooks/useChainConfig';
 
 interface UserNFT {
   contractAddress: string;
@@ -12,10 +13,10 @@ interface UserNFT {
 // ERC721 Transfer event ABI
 const TRANSFER_EVENT = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)');
 
-// API-based NFT fetching via secure Lambda proxy with chain-specific optimizations
 async function fetchNFTsViaAPI(
   userAddress: string,
-  chainId: number
+  chainId: number,
+  nftConfig: any
 ): Promise<UserNFT[]> {
   try {
     // Use environment-aware Lambda proxy endpoint
@@ -35,15 +36,14 @@ async function fetchNFTsViaAPI(
     console.log(`🔍 Fetching NFTs via Lambda proxy for ${chainName} (${chainId})`);
     console.log(`📡 Using endpoint: ${lambdaProxy}`);
     
-    // Chain-specific timeout optimization - Polygon needs more time due to network congestion
-    const isPolygon = chainId === 137;
-    const timeoutMs = isPolygon ? 25000 : 15000; // Longer timeout for Polygon
+    // Use centralized timeout configuration
+    const timeoutMs = nftConfig.scanTimeout;
     
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json'
       },
-      signal: AbortSignal.timeout(timeoutMs) // Chain-optimized timeout
+      signal: AbortSignal.timeout(timeoutMs)
     });
     
     if (!response.ok) {
@@ -54,14 +54,17 @@ async function fetchNFTsViaAPI(
     const data = await response.json();
     
     // Transform Lambda response to our format
-    const nfts: UserNFT[] = (data.nfts || data.ownedNfts)?.map((nft: any) => {
-      console.log(`🖼️ Processing NFT on ${chainName}:`, {
-        contract: nft.contractAddress,
-        tokenId: nft.tokenId,
-        name: nft.name,
-        hasImage: !!nft.image,
-        imageUrl: nft.image ? nft.image.substring(0, 50) + '...' : 'none'
-      });
+    const nfts: UserNFT[] = (data.nfts || data.ownedNfts)?.map((nft: any, index: number) => {
+      // Only log first few NFTs to avoid spam
+      if (index < 3) {
+        console.log(`🖼️ Processing NFT on ${chainName}:`, {
+          contract: nft.contractAddress,
+          tokenId: nft.tokenId,
+          name: nft.name,
+          hasImage: !!nft.image,
+          imageUrl: nft.image ? nft.image.substring(0, 50) + '...' : 'none'
+        });
+      }
       
       return {
         contractAddress: nft.contractAddress,
@@ -81,27 +84,28 @@ async function fetchNFTsViaAPI(
   }
 }
 
-// On-chain NFT fetching with chain-optimized chunked scanning
+// On-chain NFT fetching with centralized configuration
 async function fetchNFTsOnChain(
   publicClient: any,
   userAddress: string,
-  chainId: number
+  chainId: number,
+  nftConfig: any
 ): Promise<UserNFT[]> {
   if (!publicClient || !userAddress) return [];
 
   try {
     const currentBlock = await publicClient.getBlockNumber();
-    const isApeChain = chainId === 33139;
-    const isPolygon = chainId === 137;
+    const chainName = chainId === 137 ? 'Polygon' : chainId === 33139 ? 'ApeChain' : `Chain ${chainId}`;
     
-    // Chain-specific optimization: Polygon needs smaller chunks due to higher activity
-    const chunkSize = isPolygon ? 25000n : isApeChain ? 100000n : 50000n;
-    const maxChunks = isPolygon ? 8 : isApeChain ? 10 : 5; // More chunks for Polygon, fewer total scans
+    // Use centralized NFT configuration
+    const chunkSize = nftConfig.chunkSize;
+    const maxChunks = nftConfig.maxChunks;
+    const targetCount = nftConfig.targetCount;
     
     const allNFTs = new Map<string, UserNFT>();
     let chunksScanned = 0;
     
-    console.log(`🔍 Starting on-chain NFT scan for ${isPolygon ? 'Polygon' : isApeChain ? 'ApeChain' : 'Unknown'} with ${chunkSize.toString()} block chunks`);
+    console.log(`🔍 Starting on-chain NFT scan for ${chainName} with ${chunkSize.toString()} block chunks`);
     
     // Scan in reverse chronological order (recent first)
     for (let toBlock = currentBlock; toBlock > 0n && chunksScanned < maxChunks; toBlock -= chunkSize) {
@@ -138,10 +142,9 @@ async function fetchNFTsOnChain(
         
         chunksScanned++;
         
-        // Chain-specific early exit: Polygon stops earlier due to higher NFT density
-        const targetNFTs = isPolygon ? 15 : 20;
-        if (allNFTs.size >= targetNFTs) {
-          console.log(`Found ${allNFTs.size} NFTs, stopping scan for ${isPolygon ? 'Polygon' : 'chain'}`);
+        // Use centralized early exit configuration
+        if (allNFTs.size >= targetCount) {
+          console.log(`Found ${allNFTs.size} NFTs, stopping scan for ${chainName}`);
           break;
         }
         
@@ -156,7 +159,7 @@ async function fetchNFTsOnChain(
 
     // Verify ownership for found NFTs
     const ownedNFTs: UserNFT[] = [];
-    const nftsToCheck = Array.from(allNFTs.values()).slice(0, isPolygon ? 15 : 20);
+    const nftsToCheck = Array.from(allNFTs.values()).slice(0, targetCount);
     
     for (const nft of nftsToCheck) {
       try {
@@ -192,17 +195,18 @@ async function fetchNFTsOnChain(
 async function fetchUserNFTs(
   publicClient: any,
   userAddress: string,
-  chainId: number
+  chainId: number,
+  nftConfig: any
 ): Promise<UserNFT[]> {
   if (!publicClient || !userAddress) return [];
 
   try {
     // Try API first (when implemented)
-    let nfts = await fetchNFTsViaAPI(userAddress, chainId);
+    let nfts = await fetchNFTsViaAPI(userAddress, chainId, nftConfig);
     
     // If API fails or returns nothing, use on-chain scanning
     if (nfts.length === 0) {
-      nfts = await fetchNFTsOnChain(publicClient, userAddress, chainId);
+      nfts = await fetchNFTsOnChain(publicClient, userAddress, chainId, nftConfig);
     }
     
     return nfts;
@@ -215,10 +219,14 @@ async function fetchUserNFTs(
 
 export function useUserNFTs(userAddress: string, chainId: number) {
   const publicClient = usePublicClient();
+  
+  // Use centralized NFT configuration
+  const { config: chainConfig } = useChainConfig();
+  const nftConfig = chainConfig.nft;
 
   const { data: nfts = [], isLoading: loading, error, refetch } = useQuery({
     queryKey: ['user-nfts', userAddress?.toLowerCase(), chainId],
-    queryFn: () => fetchUserNFTs(publicClient, userAddress, chainId),
+    queryFn: () => fetchUserNFTs(publicClient, userAddress, chainId, nftConfig),
     enabled: !!publicClient && !!userAddress && !!chainId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes

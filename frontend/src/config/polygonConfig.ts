@@ -42,7 +42,7 @@ export const POLYGON_BATCH_CONFIG = {
  */
 export const POLYGON_TRANSACTION_CONFIG = {
   // Timeout multiplier for all transaction types
-  timeoutMultiplier: 1.2,  // 20% longer timeouts
+  timeoutMultiplier: 1.8,  // 80% longer timeouts for Polygon congestion
   
   // NFT scanning configuration
   nftScanTimeout: 25000,   // 25 seconds

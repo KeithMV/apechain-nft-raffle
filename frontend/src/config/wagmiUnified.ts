@@ -3,6 +3,29 @@ import { defineChain } from 'viem';
 import { config as envConfig } from './environment';
 import { CHAIN_IDS, WALLET_IDS } from '../constants/chains';
 
+// Dynamic RPC endpoint management
+let polygonRPCEndpoints = [
+  // Priority 1: Most reliable public endpoints
+  'https://rpc-mainnet.matic.network',
+  'https://polygon-rpc.com', 
+  'https://rpc.ankr.com/polygon',
+  // Priority 2: Additional fallbacks
+  'https://rpc-mainnet.matic.quiknode.pro',
+  // Priority 3: LlamaRPC (currently failing - moved to last)
+  'https://polygon.llamarpc.com',
+];
+
+// Function to update RPC endpoints based on health monitoring
+export const updatePolygonRPCEndpoints = (healthyEndpoints: string[]) => {
+  if (healthyEndpoints.length > 0) {
+    polygonRPCEndpoints = healthyEndpoints;
+    console.log('🔄 [RPC] Updated Polygon endpoints based on health monitoring:', healthyEndpoints);
+  }
+};
+
+// Function to get current RPC endpoints
+export const getPolygonRPCEndpoints = () => polygonRPCEndpoints;
+
 // ApeChain configuration - unified for all devices
 export const apeChain = defineChain({
   id: CHAIN_IDS.APECHAIN_MAINNET,
@@ -26,7 +49,7 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Polygon chain - optimized RPC configuration for performance
+// Polygon chain - optimized RPC configuration with health monitoring
 export const polygonChain = defineChain({
   id: 137,
   name: 'Polygon',
@@ -37,20 +60,7 @@ export const polygonChain = defineChain({
   },
   rpcUrls: {
     default: {
-      http: [
-        // Priority 1: Public Polygon RPC (most reliable for localhost)
-        'https://rpc-mainnet.matic.network',
-        // Priority 2: LlamaRPC (reliable public endpoint)
-        'https://polygon.llamarpc.com',
-        // Priority 3: Ankr public endpoint
-        'https://rpc.ankr.com/polygon',
-        // Priority 4: Alchemy with API key if available
-        ...(process.env.REACT_APP_ALCHEMY_API_KEY && process.env.REACT_APP_ALCHEMY_API_KEY !== 'demo' 
-          ? [`https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`] 
-          : []),
-        // Priority 5: QuickNode public (additional fallback)
-        'https://rpc-mainnet.matic.quiknode.pro',
-      ],
+      http: polygonRPCEndpoints,
     },
   },
   blockExplorers: {
@@ -93,16 +103,16 @@ const createAdaptiveConfig = () => {
     enableEIP6963: true,
     enableCoinbase: true, // Enable for all devices, Web3Modal will handle appropriately
     
-    // Optimized batch configuration with better error handling
+    // Chain-specific batch configuration with better error handling
     batch: {
       multicall: {
-        batchSize: 1024 * 150, // 150KB - balanced for both chains
-        wait: 25, // Faster batching for better responsiveness
+        batchSize: 1024 * 100, // 100KB - optimized for Polygon congestion
+        wait: 50, // 50ms - longer wait for network congestion
       },
     },
     
-    // Chain-specific polling intervals for optimal performance
-    pollingInterval: 8000, // 8s - faster for better UX, with proper fallbacks
+    // Balanced polling interval - faster than before but not excessive
+    pollingInterval: 6000, // 6s - good balance for both chains
   });
 };
 
