@@ -20,18 +20,17 @@ import { useAdvancedErrorRecovery } from '../hooks/useAdvancedErrorRecovery';
 import { usePredictivePreloading } from '../hooks/usePredictivePreloading';
 import { usePerformanceAnalytics } from '../hooks/usePerformanceAnalytics';
 
-// Initialize Web3Modal with proper mobile timing
-const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
-const walletConfig = getWalletConfig();
-const isMobile = getDeviceType() === 'mobile';
-
-console.log(`🔧 [UNIFIED] Preparing Web3Modal for ${isMobile ? 'mobile' : 'desktop'} device`);
-
-// Initialize Web3Modal with mobile-safe timing
+// Initialize Web3Modal with proper mobile detection and error handling
 let web3ModalInitialized = false;
 
 const initializeWeb3Modal = () => {
   if (web3ModalInitialized) return;
+  
+  // Get fresh device detection at initialization time
+  const currentIsMobile = getDeviceType() === 'mobile';
+  const currentWalletConfig = getWalletConfig();
+  
+  console.log(`🔧 [UNIFIED] Initializing Web3Modal for ${currentIsMobile ? 'mobile' : 'desktop'} device`);
   
   try {
     createWeb3Modal({
@@ -43,12 +42,15 @@ const initializeWeb3Modal = () => {
       themeMode: 'dark',
       
       // Device-adaptive wallet configuration
-      featuredWalletIds: walletConfig.featuredWalletIds,
-      includeWalletIds: walletConfig.includeWalletIds,
-      excludeWalletIds: walletConfig.excludeWalletIds,
+      featuredWalletIds: currentWalletConfig.featuredWalletIds,
+      includeWalletIds: currentWalletConfig.includeWalletIds,
+      excludeWalletIds: currentWalletConfig.excludeWalletIds,
       
+      // Disable wallet fetching to prevent API errors
       allWallets: 'HIDE',
-      defaultChain: apeChain,
+      
+      // Use Polygon as default to avoid ApeChain API issues
+      defaultChain: polygonChain,
       
       chainImages: {
         [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
@@ -59,18 +61,20 @@ const initializeWeb3Modal = () => {
     console.log('✅ [UNIFIED] Web3Modal initialized successfully');
   } catch (error) {
     console.warn('🔧 [UNIFIED] Web3Modal initialization had non-critical errors, continuing...', error);
+    web3ModalInitialized = true; // Prevent infinite retries
   }
 };
 
-// Initialize immediately for desktop, or on DOM ready for mobile
-if (!isMobile) {
-  initializeWeb3Modal();
-} else {
-  // Mobile-safe initialization
+// Initialize Web3Modal with proper timing for all devices
+const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
+
+// Initialize Web3Modal when DOM is ready (works for both mobile and desktop)
+if (typeof window !== 'undefined') {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeWeb3Modal);
   } else {
-    setTimeout(initializeWeb3Modal, 100); // Small delay for mobile
+    // DOM already loaded, initialize immediately
+    setTimeout(initializeWeb3Modal, 0);
   }
 }
 
