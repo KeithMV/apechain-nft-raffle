@@ -12,6 +12,7 @@ import { useAsyncCachedLoader } from './useAsyncCachedLoader';
 import { getRaffleFactoryAddress, isV4Available } from '../config/addresses';
 import { debounce } from '../utils/performance';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { getChainCacheConfig } from '../config/polygonConfig';
 
 // Type aliases for backward compatibility
 export interface CreatedRaffle extends RaffleInfo {}
@@ -21,10 +22,8 @@ export function useInfiniteAllRafflesV4(limit: number = 10) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
   
-  // Chain-specific query optimization
-  const isPolygon = chainId === 137;
-  const staleTime = isPolygon ? 45000 : 30000;
-  const gcTime = isPolygon ? 90000 : 60000;
+  // Chain-specific query optimization using centralized config
+  const cacheConfig = getChainCacheConfig(chainId);
 
   const infiniteQuery = useInfiniteQuery({
     queryKey: ['raffles-infinite-v4', chainId],
@@ -46,8 +45,8 @@ export function useInfiniteAllRafflesV4(limit: number = 10) {
       return allPages.length;
     },
     enabled: dataFetcher.isReady,
-    staleTime,
-    gcTime,
+    staleTime: cacheConfig.staleTime,
+    gcTime: cacheConfig.gcTime,
     // Ensure pages don't get garbage collected too quickly
     maxPages: 10, // Keep up to 10 pages in memory
   });
@@ -121,10 +120,8 @@ export function useUserRafflePositionsV4(userAddress?: string) {
   const chainId = useChainId();
   const { getCombinedUserPositions } = useRafflePositionProcessor();
   
-  // Chain-specific query optimization
-  const isPolygon = chainId === 137;
-  const staleTime = isPolygon ? 25000 : 15000; // Longer stale time for Polygon
-  const gcTime = isPolygon ? 45000 : 30000; // Longer garbage collection for Polygon
+  // Chain-specific query optimization using centralized config
+  const cacheConfig = getChainCacheConfig(chainId);
 
   const { data: positions, isLoading: loading, error, refetch } = useQuery({
     queryKey: ['positions-v4', userAddress, chainId],
@@ -145,8 +142,8 @@ export function useUserRafflePositionsV4(userAddress?: string) {
       return await getCombinedUserPositions(factories, userAddress);
     },
     enabled: Boolean(userAddress && chainId),
-    staleTime,
-    gcTime,
+    staleTime: cacheConfig.userStaleTime,
+    gcTime: cacheConfig.userGcTime,
   });
 
   return { 
