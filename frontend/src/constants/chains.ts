@@ -1,6 +1,7 @@
 /**
  * Chain ID Constants
  * Centralized chain IDs to prevent hardcoded values throughout the codebase
+ * NOTE: This is the SINGLE source of truth for chain IDs
  */
 
 export const CHAIN_IDS = {
@@ -9,6 +10,9 @@ export const CHAIN_IDS = {
   POLYGON_MAINNET: 137,
   HARDHAT_LOCAL: 31337
 } as const;
+
+// Export type for TypeScript
+export type ChainId = typeof CHAIN_IDS[keyof typeof CHAIN_IDS];
 
 export const WALLET_IDS = {
   METAMASK: 'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96',

@@ -29,7 +29,7 @@ export const NETWORK_CONFIGS: Record<number, NetworkConfig> = {
   },
   137: { // Polygon Mainnet
     chainId: 137,
-    rpcUrl: 'https://rpc-mainnet.matic.network',
+    rpcUrl: 'https://rpc.ankr.com/polygon', // Use reliable endpoint
     name: 'Polygon',
     explorerUrl: 'https://polygonscan.com',
     nativeCurrency: 'POL'

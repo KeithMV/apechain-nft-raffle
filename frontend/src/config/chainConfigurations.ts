@@ -4,12 +4,9 @@
  * Replaces scattered chainId === 137 checks throughout the codebase
  */
 
-export const CHAIN_IDS = {
-  APECHAIN_MAINNET: 33139,
-  POLYGON_MAINNET: 137,
-} as const;
+import { CHAIN_IDS, type ChainId } from '../constants/chains';
 
-export type ChainId = typeof CHAIN_IDS[keyof typeof CHAIN_IDS];
+export { CHAIN_IDS, type ChainId } from '../constants/chains';
 
 /**
  * Comprehensive chain configuration interface
