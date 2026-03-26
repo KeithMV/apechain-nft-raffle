@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './utils/polyfills'; // Load polyfills FIRST for mobile compatibility
 import './index.css';
 import App from './App';
 import './utils/consoleCleanup'; // Initialize console cleanup first
