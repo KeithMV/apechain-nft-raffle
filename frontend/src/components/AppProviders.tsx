@@ -15,6 +15,7 @@ import { suppressWalletConnectErrors } from '../utils/walletCleanup';
 import { suppressWeb3ModalWarnings } from '../utils/suppressWarnings';
 import { enableMobileErrorSuppression } from '../utils/mobileErrorSuppression';
 import '../utils/consoleSecure'; // Auto-enables production console security
+import '../utils/mobileRPCErrorHandler'; // Auto-enables mobile RPC error handling
 import { useIntelligentCache } from '../hooks/useIntelligentCache';
 import { useAdvancedErrorRecovery } from '../hooks/useAdvancedErrorRecovery';
 import { usePredictivePreloading } from '../hooks/usePredictivePreloading';

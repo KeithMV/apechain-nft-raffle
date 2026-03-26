@@ -23,35 +23,54 @@ export const createTransactionQueryClient = () => {
     defaultOptions: {
       queries: {
         retry: (failureCount, error) => {
-          // Don't retry rate limit errors
+          // AGGRESSIVE: No retries for any HTTP errors to prevent infinite loops
           if (error?.message?.includes('429') || error?.message?.includes('Too Many Requests')) {
+            console.warn('🚫 [QUERY] Rate limit detected - no retries');
             return false;
           }
-          // Don't retry user rejection errors
+          if (error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
+            console.warn('🚫 [QUERY] Auth error detected - no retries');
+            return false;
+          }
+          if (error?.message?.includes('400') || error?.message?.includes('Bad Request')) {
+            console.warn('🚫 [QUERY] Bad request detected - no retries');
+            return false;
+          }
+          if (error?.message?.includes('timeout') || error?.message?.includes('408')) {
+            console.warn('🚫 [QUERY] Timeout detected - no retries');
+            return false;
+          }
           if (error?.message?.includes('User rejected') || error?.message?.includes('user rejected')) {
             return false;
           }
-          // Don't retry timeout errors
-          if (error?.message?.includes('timeout') || error?.message?.includes('408')) {
+          // Network/DNS failures
+          if (error?.message?.includes('Failed to fetch') || error?.message?.includes('NetworkError')) {
+            console.warn('🚫 [QUERY] Network error detected - no retries');
             return false;
           }
-          // Don't retry network errors that are likely permanent
-          if (error?.message?.includes('400') || error?.message?.includes('Bad Request')) {
+          // CORS errors
+          if (error?.message?.includes('CORS') || error?.message?.includes('access control')) {
+            console.warn('🚫 [QUERY] CORS error detected - no retries');
             return false;
           }
-          // Limit retries more aggressively
-          return failureCount < 1; // Only 1 retry maximum
+          // Mobile: No retries at all to prevent cascade failures
+          if (isMobile) {
+            console.warn('🚫 [QUERY] Mobile device - no retries to prevent cascade failures');
+            return false;
+          }
+          // Desktop: Very limited retries
+          return failureCount < 1;
         },
         retryDelay: (attemptIndex) => {
-          // Faster retries for better UX
-          const baseDelay = isMobile ? 500 : 300;
-          return Math.min(baseDelay * Math.pow(1.5, attemptIndex), 3000);
+          // Much longer delays to prevent hammering
+          const baseDelay = isMobile ? 5000 : 2000; // 5s mobile, 2s desktop
+          return Math.min(baseDelay * Math.pow(2, attemptIndex), 30000); // Max 30s
         },
         refetchOnWindowFocus: false,
         refetchOnReconnect: true,
-        // Optimized stale times for better performance
-        staleTime: 30 * 1000, // 30 seconds - good balance
-        gcTime: 5 * 60 * 1000, // 5 minutes
+        // Much longer stale times to reduce requests
+        staleTime: isMobile ? 60 * 1000 : 30 * 1000, // 60s mobile, 30s desktop
+        gcTime: 10 * 60 * 1000, // 10 minutes
         networkMode: 'online',
       },
       mutations: {

@@ -3,17 +3,43 @@ import { defineChain } from 'viem';
 import { config as envConfig } from './environment';
 import { CHAIN_IDS, WALLET_IDS } from '../constants/chains';
 
-// Dynamic RPC endpoint management
+// Dynamic RPC endpoint management with health monitoring
 let polygonRPCEndpoints = [
   // Priority 1: Most reliable public endpoints
   'https://rpc-mainnet.matic.network',
   'https://polygon-rpc.com', 
   'https://rpc.ankr.com/polygon',
-  // Priority 2: Additional fallbacks
-  'https://rpc-mainnet.matic.quiknode.pro',
-  // Priority 3: LlamaRPC (currently failing - moved to last)
-  'https://polygon.llamarpc.com',
 ];
+
+// Failed endpoints tracking for circuit breaker
+const failedEndpoints = new Set<string>();
+const endpointFailureCount = new Map<string, number>();
+const FAILURE_THRESHOLD = 3;
+const RECOVERY_TIME = 5 * 60 * 1000; // 5 minutes
+
+// Circuit breaker: Remove failing endpoints
+export const markEndpointAsFailed = (endpoint: string) => {
+  const currentCount = endpointFailureCount.get(endpoint) || 0;
+  endpointFailureCount.set(endpoint, currentCount + 1);
+  
+  if (currentCount + 1 >= FAILURE_THRESHOLD) {
+    failedEndpoints.add(endpoint);
+    console.warn(`🚫 [RPC] Endpoint marked as failed: ${endpoint}`);
+    
+    // Schedule recovery attempt
+    setTimeout(() => {
+      failedEndpoints.delete(endpoint);
+      endpointFailureCount.delete(endpoint);
+      console.log(`🔄 [RPC] Endpoint recovery attempted: ${endpoint}`);
+    }, RECOVERY_TIME);
+  }
+};
+
+// Get healthy endpoints only
+export const getHealthyPolygonEndpoints = () => {
+  const healthy = polygonRPCEndpoints.filter(endpoint => !failedEndpoints.has(endpoint));
+  return healthy.length > 0 ? healthy : ['https://rpc.ankr.com/polygon']; // Fallback
+};
 
 // Function to update RPC endpoints based on health monitoring
 export const updatePolygonRPCEndpoints = (healthyEndpoints: string[]) => {
@@ -60,7 +86,7 @@ export const polygonChain = defineChain({
   },
   rpcUrls: {
     default: {
-      http: polygonRPCEndpoints,
+      http: getHealthyPolygonEndpoints(),
     },
   },
   blockExplorers: {
@@ -91,8 +117,8 @@ export const getDeviceType = () => {
 
 // Device-adaptive configuration function with chain-specific optimizations
 const createAdaptiveConfig = () => {
-  // Always create desktop config - device detection will happen in Web3Modal setup
-  console.log('🔧 [UNIFIED CONFIG] Creating unified configuration with chain-specific optimizations');
+  const isMobile = getDeviceType() === 'mobile';
+  console.log(`🔧 [UNIFIED CONFIG] Creating unified configuration for ${isMobile ? 'mobile' : 'desktop'} with circuit breaker protection`);
   
   return defaultWagmiConfig({
     chains: [apeChain, polygonChain],
@@ -111,8 +137,8 @@ const createAdaptiveConfig = () => {
       },
     },
     
-    // Balanced polling interval - faster than before but not excessive
-    pollingInterval: 6000, // 6s - good balance for both chains
+    // Much longer polling interval to reduce load
+    pollingInterval: isMobile ? 30000 : 12000, // 30s mobile, 12s desktop
   });
 };
 
