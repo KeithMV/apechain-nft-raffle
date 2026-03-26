@@ -5,10 +5,13 @@ import { CHAIN_IDS, WALLET_IDS } from '../constants/chains';
 
 // Dynamic RPC endpoint management with health monitoring
 let polygonRPCEndpoints = [
-  // Priority 1: Most reliable public endpoints
-  'https://rpc-mainnet.matic.network',
-  'https://polygon-rpc.com', 
-  'https://rpc.ankr.com/polygon',
+  // Priority 1: Most reliable paid/premium endpoints
+  'https://polygon-mainnet.g.alchemy.com/v2/demo', // Alchemy demo (reliable)
+  'https://rpc.ankr.com/polygon', // Ankr (very reliable)
+  'https://polygon-rpc.com', // Polygon official
+  // Priority 2: Backup endpoints
+  'https://polygon-mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161', // Infura demo
+  'https://rpc-mainnet.maticvigil.com', // MaticVigil
 ];
 
 // Failed endpoints tracking for circuit breaker
@@ -38,7 +41,8 @@ export const markEndpointAsFailed = (endpoint: string) => {
 // Get healthy endpoints only
 export const getHealthyPolygonEndpoints = () => {
   const healthy = polygonRPCEndpoints.filter(endpoint => !failedEndpoints.has(endpoint));
-  return healthy.length > 0 ? healthy : ['https://rpc.ankr.com/polygon']; // Fallback
+  // Always ensure we have at least one endpoint
+  return healthy.length > 0 ? healthy : ['https://rpc.ankr.com/polygon', 'https://polygon-rpc.com'];
 };
 
 // Function to update RPC endpoints based on health monitoring
@@ -129,11 +133,11 @@ const createAdaptiveConfig = () => {
     enableEIP6963: true,
     enableCoinbase: true, // Enable for all devices, Web3Modal will handle appropriately
     
-    // Chain-specific batch configuration with better error handling
+    // Chain-specific batch configuration optimized for speed
     batch: {
       multicall: {
-        batchSize: 1024 * 100, // 100KB - optimized for Polygon congestion
-        wait: 50, // 50ms - longer wait for network congestion
+        batchSize: 1024 * 50, // Reduced to 50KB for faster responses
+        wait: 16, // Reduced to 16ms for snappier performance
       },
     },
     
