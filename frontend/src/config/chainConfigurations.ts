@@ -193,7 +193,7 @@ const POLYGON_CONFIG: ChainConfiguration = {
  * Chain configuration registry
  * Maps chain IDs to their configurations
  */
-export const CHAIN_CONFIGS: Record<ChainId, ChainConfiguration> = {
+export const CHAIN_CONFIGS: Partial<Record<ChainId, ChainConfiguration>> = {
   [CHAIN_IDS.APECHAIN_MAINNET]: APECHAIN_CONFIG,
   [CHAIN_IDS.POLYGON_MAINNET]: POLYGON_CONFIG,
 };
@@ -206,12 +206,12 @@ export const CHAIN_CONFIGS: Record<ChainId, ChainConfiguration> = {
  * Get configuration for a specific chain
  */
 export function getChainConfig(chainId: number | undefined): ChainConfiguration {
-  if (!chainId || !(chainId in CHAIN_CONFIGS)) {
+  if (!chainId || !CHAIN_CONFIGS[chainId as ChainId]) {
     console.warn(`Unknown chain ID: ${chainId}, falling back to ApeChain config`);
-    return CHAIN_CONFIGS[CHAIN_IDS.APECHAIN_MAINNET];
+    return CHAIN_CONFIGS[CHAIN_IDS.APECHAIN_MAINNET]!;
   }
   
-  return CHAIN_CONFIGS[chainId as ChainId];
+  return CHAIN_CONFIGS[chainId as ChainId]!;
 }
 
 /**
