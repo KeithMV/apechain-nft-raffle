@@ -31,7 +31,16 @@ export const createTransactionQueryClient = () => {
           if (error?.message?.includes('User rejected') || error?.message?.includes('user rejected')) {
             return false;
           }
-          return failureCount < (isMobile ? 1 : 2);
+          // Don't retry timeout errors
+          if (error?.message?.includes('timeout') || error?.message?.includes('408')) {
+            return false;
+          }
+          // Don't retry network errors that are likely permanent
+          if (error?.message?.includes('400') || error?.message?.includes('Bad Request')) {
+            return false;
+          }
+          // Limit retries more aggressively
+          return failureCount < 1; // Only 1 retry maximum
         },
         retryDelay: (attemptIndex) => {
           // Faster retries for better UX
