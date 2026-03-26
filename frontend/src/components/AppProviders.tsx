@@ -20,38 +20,58 @@ import { useAdvancedErrorRecovery } from '../hooks/useAdvancedErrorRecovery';
 import { usePredictivePreloading } from '../hooks/usePredictivePreloading';
 import { usePerformanceAnalytics } from '../hooks/usePerformanceAnalytics';
 
-// Initialize Web3Modal at module level (before any components render)
+// Initialize Web3Modal with proper mobile timing
 const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
 const walletConfig = getWalletConfig();
 const isMobile = getDeviceType() === 'mobile';
 
-console.log(`🔧 [UNIFIED] Initializing Web3Modal at module level for ${isMobile ? 'mobile' : 'desktop'} device`);
+console.log(`🔧 [UNIFIED] Preparing Web3Modal for ${isMobile ? 'mobile' : 'desktop'} device`);
 
-try {
-  createWeb3Modal({
-    wagmiConfig: config,
-    projectId,
-    enableAnalytics: false,
-    enableOnramp: false,
-    enableSwaps: false,
-    themeMode: 'dark',
-    
-    // Device-adaptive wallet configuration
-    featuredWalletIds: walletConfig.featuredWalletIds,
-    includeWalletIds: walletConfig.includeWalletIds,
-    excludeWalletIds: walletConfig.excludeWalletIds,
-    
-    allWallets: 'HIDE',
-    defaultChain: apeChain,
-    
-    chainImages: {
-      [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
-      [polygonChain.id]: 'https://polygon.technology/favicon.ico'
-    }
-  });
-  console.log('✅ [UNIFIED] Web3Modal initialized successfully at module level');
-} catch (error) {
-  console.warn('🔧 [UNIFIED] Web3Modal initialization had non-critical errors, continuing...', error);
+// Initialize Web3Modal with mobile-safe timing
+let web3ModalInitialized = false;
+
+const initializeWeb3Modal = () => {
+  if (web3ModalInitialized) return;
+  
+  try {
+    createWeb3Modal({
+      wagmiConfig: config,
+      projectId,
+      enableAnalytics: false,
+      enableOnramp: false,
+      enableSwaps: false,
+      themeMode: 'dark',
+      
+      // Device-adaptive wallet configuration
+      featuredWalletIds: walletConfig.featuredWalletIds,
+      includeWalletIds: walletConfig.includeWalletIds,
+      excludeWalletIds: walletConfig.excludeWalletIds,
+      
+      allWallets: 'HIDE',
+      defaultChain: apeChain,
+      
+      chainImages: {
+        [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
+        [polygonChain.id]: 'https://polygon.technology/favicon.ico'
+      }
+    });
+    web3ModalInitialized = true;
+    console.log('✅ [UNIFIED] Web3Modal initialized successfully');
+  } catch (error) {
+    console.warn('🔧 [UNIFIED] Web3Modal initialization had non-critical errors, continuing...', error);
+  }
+};
+
+// Initialize immediately for desktop, or on DOM ready for mobile
+if (!isMobile) {
+  initializeWeb3Modal();
+} else {
+  // Mobile-safe initialization
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeWeb3Modal);
+  } else {
+    setTimeout(initializeWeb3Modal, 100); // Small delay for mobile
+  }
 }
 
 // Phase 3 Optimization Provider (router-independent)
