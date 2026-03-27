@@ -34,11 +34,23 @@ class AlchemyGasOracle {
   private constructor() {
     // Create dedicated gas estimation client
     const gasApiKey = process.env.REACT_APP_ALCHEMY_GAS_KEY;
+    const rpcKey = process.env.REACT_APP_ALCHEMY_API_KEY;
     
     if (!gasApiKey || gasApiKey === 'your_gas_api_key_here') {
       console.warn('⚠️ [GAS ORACLE] No dedicated gas API key found, using RPC key');
       // Fallback to RPC key if gas key not set
-      const rpcKey = process.env.REACT_APP_ALCHEMY_API_KEY;
+      if (!rpcKey || rpcKey === 'your_api_key_here') {
+        console.error('🚨 [GAS ORACLE] No valid Alchemy API keys found! Gas oracle will use fallback settings.');
+        this.gasClient = null; // Will trigger fallback mode
+        this.config = {
+          cacheDuration: 10000,
+          fallbackGasLimit: 500000n,
+          fallbackMaxFee: parseGwei('300'),
+          fallbackPriorityFee: parseGwei('60'),
+        };
+        return;
+      }
+      
       this.gasClient = createPublicClient({
         chain: polygon,
         transport: http(`https://polygon-mainnet.g.alchemy.com/v2/${rpcKey}`)
@@ -80,6 +92,12 @@ class AlchemyGasOracle {
     if (cached && Date.now() - cached.timestamp < this.config.cacheDuration) {
       console.log(`🔄 [GAS ORACLE] Using cached gas for ${operation}`);
       return cached.data;
+    }
+
+    // If no valid gas client, use fallback immediately
+    if (!this.gasClient) {
+      console.warn('🚨 [GAS ORACLE] No valid API client, using fallback gas settings');
+      return this.getFallbackGas(operation);
     }
 
     try {
