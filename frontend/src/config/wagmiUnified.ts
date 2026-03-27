@@ -3,15 +3,19 @@ import { defineChain } from 'viem';
 import { config as envConfig } from './environment';
 import { CHAIN_IDS, WALLET_IDS } from '../constants/chains';
 
-// Dynamic RPC endpoint management with health monitoring
+// Dynamic RPC endpoint management with health monitoring - ALCHEMY INTEGRATION
 let polygonRPCEndpoints = [
-  // Priority 1: Most reliable paid/premium endpoints
-  'https://polygon-mainnet.g.alchemy.com/v2/demo', // Alchemy demo (reliable)
-  'https://rpc.ankr.com/polygon', // Ankr (very reliable)
-  'https://polygon-rpc.com', // Polygon official
-  // Priority 2: Backup endpoints
-  'https://polygon-mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161', // Infura demo
-  'https://rpc-mainnet.maticvigil.com', // MaticVigil
+  // Priority 1: Alchemy RPC (most reliable with API key)
+  ...(process.env.REACT_APP_ALCHEMY_API_KEY ? [
+    `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`,
+  ] : []),
+  // Priority 2: CORS-friendly public endpoints
+  'https://polygon-rpc.com', // Basic but CORS-friendly
+  'https://rpc-mainnet.maticvigil.com', // MaticVigil (CORS-friendly)
+  // Priority 3: Backup endpoints (may have CORS issues in browser)
+  'https://polygon.meowrpc.com', // MeowRPC (fast but CORS issues)
+  'https://rpc.polygon.gateway.fm', // Gateway FM
+  'https://polygon-bor-rpc.publicnode.com', // PublicNode
 ];
 
 // Failed endpoints tracking for circuit breaker
@@ -38,11 +42,22 @@ export const markEndpointAsFailed = (endpoint: string) => {
   }
 };
 
-// Get healthy endpoints only
+// Get healthy endpoints only with Alchemy priority
 export const getHealthyPolygonEndpoints = () => {
   const healthy = polygonRPCEndpoints.filter(endpoint => !failedEndpoints.has(endpoint));
-  // Always ensure we have at least one endpoint
-  return healthy.length > 0 ? healthy : ['https://rpc.ankr.com/polygon', 'https://polygon-rpc.com'];
+  // Always ensure we have at least one endpoint - prioritize Alchemy if available
+  if (healthy.length === 0) {
+    const fallbacks = process.env.REACT_APP_ALCHEMY_API_KEY ? [
+      `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`,
+      'https://polygon-rpc.com',
+      'https://rpc-mainnet.maticvigil.com'
+    ] : [
+      'https://polygon-rpc.com',
+      'https://rpc-mainnet.maticvigil.com'
+    ];
+    return fallbacks;
+  }
+  return healthy;
 };
 
 // Function to update RPC endpoints based on health monitoring
@@ -119,10 +134,17 @@ export const getDeviceType = () => {
     ? 'mobile' : 'desktop';
 };
 
-// Device-adaptive configuration function with chain-specific optimizations
+// Device-adaptive configuration function with chain-specific optimizations and Alchemy integration
 const createAdaptiveConfig = () => {
   const isMobile = getDeviceType() === 'mobile';
+  const hasAlchemy = !!process.env.ALCHEMY_API_KEY;
+  
   console.log(`🔧 [UNIFIED CONFIG] Creating unified configuration for ${isMobile ? 'mobile' : 'desktop'} with circuit breaker protection`);
+  if (hasAlchemy) {
+    console.log('⚡ [ALCHEMY] Using Alchemy RPC endpoints for enhanced performance');
+  } else {
+    console.log('🌐 [PUBLIC RPC] Using public RPC endpoints (consider adding ALCHEMY_API_KEY for better performance)');
+  }
   
   return defaultWagmiConfig({
     chains: [apeChain, polygonChain],
@@ -141,8 +163,8 @@ const createAdaptiveConfig = () => {
       },
     },
     
-    // Much longer polling interval to reduce load
-    pollingInterval: isMobile ? 30000 : 12000, // 30s mobile, 12s desktop
+    // Much shorter polling interval to reduce load
+    pollingInterval: isMobile ? 15000 : 6000, // AGGRESSIVE: 15s mobile, 6s desktop (much faster)
   });
 };
 

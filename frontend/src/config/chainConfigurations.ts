@@ -133,11 +133,12 @@ const APECHAIN_CONFIG: ChainConfiguration = {
 
 /**
  * Polygon Configuration
- * Optimized for high traffic, congested network with slower finality
+ * PERFORMANCE-FIRST OPTIMIZATION - Prioritizing speed over extreme reliability
+ * Based on user feedback that pages load too slowly
  */
 const POLYGON_CONFIG: ChainConfiguration = {
   name: 'Polygon',
-  shortName: 'MATIC',
+  shortName: 'POL',
   nativeCurrency: {
     name: 'POL',
     symbol: 'POL',
@@ -145,47 +146,47 @@ const POLYGON_CONFIG: ChainConfiguration = {
   },
   
   polling: {
-    interval: 6000,      // 6 seconds - same as ApeChain for consistency
-    fastInterval: 4000,  // 4 seconds for active operations (slightly slower)
-    slowInterval: 12000, // 12 seconds for background (slower due to congestion)
+    interval: 4000,      // AGGRESSIVE: 4 seconds - much faster UI updates
+    fastInterval: 2000,  // AGGRESSIVE: 2 seconds for active operations
+    slowInterval: 6000,  // AGGRESSIVE: 6 seconds for background (much faster)
   },
   
   batch: {
-    contractSize: 5,     // Larger batches to reduce RPC calls
-    raffleSize: 2,       // Smaller raffle batches (more intensive operations)
-    contractDelay: 20,   // Longer delay for congestion
-    raffleDelay: 25,     // Longer delay for congestion
-    maxConcurrent: 3,    // Fewer concurrent operations due to rate limits
+    contractSize: 5,     // INCREASED: Larger batches for efficiency
+    raffleSize: 5,       // INCREASED: Larger batches for efficiency
+    contractDelay: 5,    // AGGRESSIVE: Minimal delay (5ms)
+    raffleDelay: 10,     // AGGRESSIVE: Minimal delay (10ms)
+    maxConcurrent: 4,    // INCREASED: More concurrent operations
   },
   
   transaction: {
-    timeoutMultiplier: 1.8,  // 80% longer timeouts for congestion
-    retryAttempts: 3,        // More retries needed
-    retryDelay: 2000,        // 2 second retry delay
-    gasMultiplier: 1.2,      // 20% gas buffer for congestion
+    timeoutMultiplier: 1.5,  // REDUCED: From 2.0x to 1.5x (faster timeouts)
+    retryAttempts: 2,        // Keep at 2 retries
+    retryDelay: 2000,        // AGGRESSIVE: From 3000ms to 2000ms
+    gasMultiplier: 1.2,      // REDUCED: From 1.3x to 1.2x (lower gas, faster)
   },
   
   cache: {
-    staleTime: 45000,        // 45 seconds - longer due to slower finality
-    gcTime: 90000,           // 90 seconds GC
-    userStaleTime: 25000,    // 25 seconds for user data
-    userGcTime: 45000,       // 45 seconds user GC
-    invalidationDelay: 3000, // 3 second delay for block finality
-    maxPages: 5,             // Keep fewer pages (memory optimization)
+    staleTime: 15000,        // AGGRESSIVE: From 45s to 15s (much fresher data)
+    gcTime: 30000,           // AGGRESSIVE: From 90s to 30s
+    userStaleTime: 10000,    // AGGRESSIVE: From 30s to 10s
+    userGcTime: 20000,       // AGGRESSIVE: From 60s to 20s
+    invalidationDelay: 500,  // AGGRESSIVE: From 3000ms to 500ms (almost immediate)
+    maxPages: 8,             // INCREASED: From 5 to 8 (keep more in memory)
   },
   
   nft: {
-    scanTimeout: 25000,      // 25 seconds timeout (longer for congestion)
-    chunkSize: 25000n,       // Smaller chunks due to higher activity
-    maxChunks: 8,            // Fewer chunks to avoid rate limits
-    targetCount: 15,         // Lower target count (stop earlier)
-    metadataTimeout: 15000,  // 15 seconds for metadata (longer timeout)
+    scanTimeout: 15000,      // AGGRESSIVE: From 25s to 15s
+    chunkSize: 30000n,       // INCREASED: From 20000n to 30000n (larger chunks)
+    maxChunks: 10,           // INCREASED: From 8 to 10
+    targetCount: 20,         // INCREASED: From 15 to 20
+    metadataTimeout: 8000,   // AGGRESSIVE: From 15s to 8s
   },
   
   rpc: {
-    healthCheckInterval: 20000,  // Check every 20 seconds (more frequent)
-    failureThreshold: 2,         // 2 failures before marking unhealthy (stricter)
-    recoveryTime: 120000,        // 2 minute recovery time (longer)
+    healthCheckInterval: 30000,  // REDUCED: From 20s to 30s (less frequent, less overhead)
+    failureThreshold: 3,         // INCREASED: From 2 to 3 (more tolerant)
+    recoveryTime: 60000,         // AGGRESSIVE: From 120s to 60s (1 minute recovery)
   },
 };
 

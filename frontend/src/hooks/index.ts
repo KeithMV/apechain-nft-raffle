@@ -23,6 +23,32 @@ export {
   useAllRafflesV4 
 } from './useRafflePositionsV4';
 
+// Transaction Managers
+export { 
+  useOptimizedTransactionManager,
+  useOptimizedBuyTickets,
+  useOptimizedSelectWinner,
+  useOptimizedCreateRaffle,
+  useOptimizedCancelRaffle
+} from './useOptimizedTransactionManager';
+
+export {
+  useEnhancedTransactionManager,
+  useEnhancedBuyTickets,
+  useEnhancedSelectWinner,
+  useEnhancedCreateRaffle,
+  useEnhancedCancelRaffle
+} from './useEnhancedTransactionManager';
+
+// Polygon-Specialized Transaction Hooks
+export {
+  usePolygonTransactionManager,
+  usePolygonBuyTickets,
+  usePolygonSelectWinner,
+  usePolygonCreateRaffle,
+  usePolygonCancelRaffle
+} from './usePolygonTransactionManager';
+
 // Specialized Hooks
 export { useWinnerSelection } from './useWinnerSelection';
 export { useOptimizedRaffleActions } from './useOptimizedRaffleActions';
@@ -31,3 +57,4 @@ export { useApeBalance, useApeDecimals, useApeSymbol, apeTokenUtils } from './us
 // Utility Hooks
 export { useRaffleDataFetcher } from './useRaffleDataFetcher';
 export { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
+export { useChainConfig } from './useChainConfig';

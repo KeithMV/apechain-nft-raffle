@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useAccount, useChainId } from 'wagmi';
 import ParticipatedRaffleCard from './ParticipatedRaffleCard';
 import CreatedRaffleCard from './CreatedRaffleCard';
-import toast from 'react-hot-toast';
+import { appToast } from '../utils/toast';
 import { useUserRafflePositionsV4, useInfiniteCreatedRafflesV4, useClearRaffleCacheV4 } from '../hooks/useRafflePositionsV4';
 import { useOptimizedCancelRaffle } from '../hooks/useOptimizedTransactionManager';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
@@ -60,16 +60,16 @@ export default function RaffleDashboard() {
   
   // Auto-refresh when raffle is cancelled
   useEffect(() => {
-    if (cancelRaffleHook.isSuccess) {
+    if (cancelRaffleHook.isSuccess && cancellingRaffle) {
+      const toastId = `cancel-${cancellingRaffle}`;
+      
       console.log('✅ [CANCEL] Raffle cancelled successfully, updating UI immediately');
       
       // Dismiss the loading toast and show success
-      if (cancellingRaffle) {
-        toast.success('💫 Raffle cancelled successfully!', {
-          id: `cancel-${cancellingRaffle}`,
-          duration: 4000, // Show success for 4 seconds
-        });
-      }
+      appToast.transaction.replaceWithSuccess(toastId, 'Raffle cancellation', {
+        duration: 5000,
+        icon: '💫',
+      });
       
       setCancellingRaffle(null);
       
@@ -100,9 +100,10 @@ export default function RaffleDashboard() {
   // Handle winner selection errors
   useEffect(() => {
     if (winnerError && selectingWinnerFor) {
-      toast.error('Winner selection failed', {
-        id: `winner-${selectingWinnerFor}`,
-      });
+      const toastId = `winner-${selectingWinnerFor}`;
+      
+      appToast.transaction.replaceWithError(toastId, 'Winner selection');
+      
       setSelectingWinnerFor(null);
     }
   }, [winnerError, selectingWinnerFor]);
@@ -110,9 +111,10 @@ export default function RaffleDashboard() {
   // Handle cancel raffle errors
   useEffect(() => {
     if (cancelRaffleHook.error && cancellingRaffle) {
-      toast.error('Raffle cancellation failed', {
-        id: `cancel-${cancellingRaffle}`,
-      });
+      const toastId = `cancel-${cancellingRaffle}`;
+      
+      appToast.transaction.replaceWithError(toastId, 'Raffle cancellation');
+      
       setCancellingRaffle(null);
     }
   }, [cancelRaffleHook.error, cancellingRaffle]);
@@ -185,20 +187,19 @@ export default function RaffleDashboard() {
     
     console.log('🏆 [WINNER] Starting winner selection for raffle:', raffleContract, 'on chain:', chainId);
     
-    // Show simple loading toast
-    toast.loading('🎯 Selecting winner...', {
-      id: `winner-${raffleContract}`,
-      duration: Infinity, // Keep until we dismiss it
-    });
+    // Show loading toast with unique ID
+    const toastId = `winner-${raffleContract}`;
+    appToast.transaction.loading('Selecting winner', { id: toastId });
     
     try {
       await emergencyReveal(raffleContract);
       console.log('✅ [WINNER] Winner selection initiated successfully');
     } catch (error) {
       console.error('❌ [WINNER] Winner selection failed:', error);
-      toast.error('Failed to select winner', {
-        id: `winner-${raffleContract}`,
-      });
+      
+      // Dismiss loading toast and show error
+      appToast.transaction.replaceWithError(toastId, 'Winner selection');
+      
       setSelectingWinnerFor(null);
     }
   }, [emergencyReveal, chainId]);
@@ -208,11 +209,9 @@ export default function RaffleDashboard() {
     
     console.log('💫 [CANCEL] Starting raffle cancellation for:', raffleContract);
     
-    // Show simple loading toast
-    toast.loading('💫 Cancelling raffle...', {
-      id: `cancel-${raffleContract}`,
-      duration: Infinity, // Keep until we dismiss it
-    });
+    // Show loading toast with unique ID
+    const toastId = `cancel-${raffleContract}`;
+    appToast.transaction.loading('Cancelling raffle', { id: toastId });
     
     try {
       await cancelRaffleHook.executeTransaction({
@@ -229,9 +228,10 @@ export default function RaffleDashboard() {
       console.log('✅ [CANCEL] Raffle cancellation initiated successfully');
     } catch (error) {
       console.error('❌ [CANCEL] Raffle cancellation failed:', error);
-      toast.error('Failed to cancel raffle', {
-        id: `cancel-${raffleContract}`,
-      });
+      
+      // Dismiss loading toast and show error
+      appToast.transaction.replaceWithError(toastId, 'Raffle cancellation');
+      
       setCancellingRaffle(null);
     }
   }, [cancelRaffleHook.executeTransaction]);
@@ -240,12 +240,14 @@ export default function RaffleDashboard() {
   useEffect(() => {
     if (winnerSelected && selectingWinnerFor) {
       const isPolygon = chainId === 137;
+      const toastId = `winner-${selectingWinnerFor}`;
+      
       console.log(`✅ [WINNER] Winner selected successfully on ${isPolygon ? 'Polygon' : 'ApeChain'}, starting enhanced UI update`);
       
       // Dismiss the loading toast and show success
-      toast.success('🏆 Winner selected successfully!', {
-        id: `winner-${selectingWinnerFor}`,
-        duration: 4000, // Show success for 4 seconds
+      appToast.transaction.replaceWithSuccess(toastId, 'Winner selection', {
+        duration: 5000,
+        icon: '🏆',
       });
       
       // Clear the selecting state immediately

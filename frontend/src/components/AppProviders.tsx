@@ -50,8 +50,8 @@ const initializeWeb3Modal = () => {
       // Disable wallet fetching to prevent API errors
       allWallets: 'HIDE',
       
-      // Use Polygon as default to avoid ApeChain API issues
-      defaultChain: polygonChain,
+      // Use ApeChain as default to maintain consistency with networks.ts
+      defaultChain: apeChain,
       
       chainImages: {
         [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',

@@ -164,7 +164,10 @@ export function useRaffleDataFetcher() {
             version,
           });
         } catch (error) {
-          // Silent fail for individual raffle processing
+          // Silent fail for individual raffle processing - reduce console noise
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`Failed to process raffle ${result.index}:`, error);
+          }
         }
       });
       
@@ -175,7 +178,7 @@ export function useRaffleDataFetcher() {
     }
   }, [publicClient, chainId]);
 
-  // Get all raffles from both V3 and V4 factories
+  // Get all raffles from both V3 and V4 factories with AGGRESSIVE optimization
   const fetchAllRaffles = useCallback(async (options: RaffleDataFetcherOptions = {}): Promise<RaffleInfo[]> => {
     if (!publicClient || !chainId) {
       throw new Error('Public client or chain ID not available');
@@ -188,19 +191,22 @@ export function useRaffleDataFetcher() {
       includeV4 = true
     } = options;
 
+    // POLYGON OPTIMIZATION: Reduce limit for faster loading
+    const optimizedLimit = chainId === 137 ? Math.min(limit, 10) : limit;
+    
     const allRaffles: RaffleInfo[] = [];
     
     // Get V4 raffles first (priority)
     if (includeV4 && isV4Available(chainId)) {
       const v4Address = getRaffleFactoryAddress(chainId, true);
-      const v4Raffles = await getRafflesFromFactory(v4Address, 'v4', limit, offset);
+      const v4Raffles = await getRafflesFromFactory(v4Address, 'v4', optimizedLimit, offset);
       allRaffles.push(...v4Raffles);
     }
     
     // Only get V3 raffles if we don't have enough V4 raffles or if specifically requested
-    if (includeV3 && (allRaffles.length < limit || !includeV4)) {
+    if (includeV3 && (allRaffles.length < optimizedLimit || !includeV4)) {
       const v3Address = getRaffleFactoryAddress(chainId, false);
-      const remainingLimit = includeV4 ? limit - allRaffles.length : limit;
+      const remainingLimit = includeV4 ? optimizedLimit - allRaffles.length : optimizedLimit;
       const v3Raffles = await getRafflesFromFactory(v3Address, 'v3', remainingLimit, offset);
       allRaffles.push(...v3Raffles);
     }
@@ -216,7 +222,7 @@ export function useRaffleDataFetcher() {
     // Sort by creation time (newest first) and limit results
     return uniqueRaffles
       .sort((a, b) => b.endTime - a.endTime)
-      .slice(0, limit);
+      .slice(0, optimizedLimit);
   }, [publicClient, chainId, chainConfig]);
 
   // Get user tickets for a specific raffle
