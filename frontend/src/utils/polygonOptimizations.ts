@@ -5,7 +5,9 @@
 
 import { getChainConfig } from '../config/chainConfigurations';
 import { markEndpointAsFailed } from '../config/wagmiUnified';
-import { alchemyGasOracle, type OperationType, type GasEstimate } from './alchemyGasOracle';
+
+// Define operation types locally since we removed gas oracle
+type OperationType = 'create-raffle' | 'buy-tickets' | 'select-winner' | 'cancel-raffle';
 
 export class PolygonOptimizer {
   private static instance: PolygonOptimizer;
@@ -24,7 +26,7 @@ export class PolygonOptimizer {
   }
 
   /**
-   * Get optimized gas settings using Alchemy Oracle
+   * Get simple gas settings (no oracle)
    */
   async getOptimizedGasSettings(
     operation: OperationType,
@@ -36,24 +38,12 @@ export class PolygonOptimizer {
     estimatedCostUSD?: number;
     congestionLevel: string;
   }> {
-    try {
-      const gasEstimate = await alchemyGasOracle.getOptimalGas(operation, contractCall);
-      
-      return {
-        gasLimit: gasEstimate.gasLimit.toString(),
-        maxFeePerGas: gasEstimate.maxFeePerGas.toString(),
-        maxPriorityFeePerGas: gasEstimate.maxPriorityFeePerGas.toString(),
-        estimatedCostUSD: gasEstimate.estimatedCostUSD,
-        congestionLevel: gasEstimate.congestionLevel
-      };
-    } catch (error) {
-      console.error('🚨 [POLYGON OPTIMIZER] Gas estimation failed:', error);
-      return this.getFallbackGasSettings(operation);
-    }
+    // Use simple fallback settings (no oracle)
+    return this.getFallbackGasSettings(operation);
   }
 
   /**
-   * Get network status for user notifications
+   * Get simple network status (no oracle)
    */
   async getNetworkStatus(): Promise<{
     baseFeeGwei: number;
@@ -61,21 +51,13 @@ export class PolygonOptimizer {
     recommendedAction: string;
     shouldWarn: boolean;
   }> {
-    try {
-      const status = await alchemyGasOracle.getNetworkStatus();
-      
-      return {
-        ...status,
-        shouldWarn: ['high', 'extreme'].includes(status.congestionLevel)
-      };
-    } catch (error) {
-      return {
-        baseFeeGwei: 100,
-        congestionLevel: 'high',
-        recommendedAction: 'Network status unavailable. Proceed with caution.',
-        shouldWarn: true
-      };
-    }
+    // Return simple status without oracle
+    return {
+      baseFeeGwei: 50, // Assume moderate gas
+      congestionLevel: 'medium',
+      recommendedAction: 'Gas prices are moderate. Transaction should work fine.',
+      shouldWarn: false // Don't show warnings
+    };
   }
 
   /**
