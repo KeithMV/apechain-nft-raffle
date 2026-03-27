@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import { getProgressiveTimeout, optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { useChainConfig } from '../hooks/useChainConfig';
-import { polygonOptimizer, polygonUtils } from '../utils/polygonOptimizations';
+import { polygonUtils } from '../utils/polygonOptimizations';
 
 export interface OptimizedTransactionConfig {
   transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle';
@@ -59,9 +59,9 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
   // Unified cache invalidation
   const { invalidateAfterTransaction, quickInvalidate } = useUnifiedCacheInvalidation();
   
-  // Use centralized timeout configuration with Polygon optimization
+  // Use centralized timeout configuration
   const baseTimeout = getOperationTimeout(transactionType);
-  const timeout = isPolygon ? polygonOptimizer.getOptimizedTimeout(transactionType) : baseTimeout;
+  const timeout = isPolygon ? baseTimeout * 1.5 : baseTimeout; // 50% longer for Polygon
   
   const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
@@ -183,28 +183,47 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
     applyOptimisticUpdates();
     
     try {
-      // Polygon-specific gas optimization
+      // HIGH GAS CEILING APPROACH: Set generous limits, let users decide
       let optimizedContractCall = contractCall;
       if (isPolygon) {
-        const gasSettings = await polygonOptimizer.getOptimizedGasSettings(transactionType);
-        
-        // CRITICAL FIX: Convert string values to BigInt for wagmi/viem
-        optimizedContractCall = {
-          ...contractCall,
-          gasLimit: BigInt(gasSettings.gasLimit),
-          maxFeePerGas: BigInt(gasSettings.maxFeePerGas),
-          maxPriorityFeePerGas: BigInt(gasSettings.maxPriorityFeePerGas),
+        // GENEROUS GAS SETTINGS - Polygon is cheap even at high gas
+        const gasSettings = {
+          'buy-tickets': {
+            gasLimit: BigInt(300000),              // High limit for safety
+            maxFeePerGas: BigInt('200000000000'),  // 200 gwei ceiling (~$0.08)
+            maxPriorityFeePerGas: BigInt('50000000000'), // 50 gwei priority
+          },
+          'create-raffle': {
+            gasLimit: BigInt(500000),              // High limit for complex creation
+            maxFeePerGas: BigInt('250000000000'),  // 250 gwei ceiling (~$0.20)
+            maxPriorityFeePerGas: BigInt('60000000000'), // 60 gwei priority
+          },
+          'select-winner': {
+            gasLimit: BigInt(400000),              // High limit for winner selection
+            maxFeePerGas: BigInt('300000000000'),  // 300 gwei ceiling (~$0.24)
+            maxPriorityFeePerGas: BigInt('70000000000'), // 70 gwei priority
+          },
+          'cancel-raffle': {
+            gasLimit: BigInt(200000),              // Standard limit for cancellation
+            maxFeePerGas: BigInt('150000000000'),  // 150 gwei ceiling (~$0.06)
+            maxPriorityFeePerGas: BigInt('40000000000'), // 40 gwei priority
+          }
         };
         
-        console.log(`🔶 [POLYGON-TX] Optimized gas settings for ${transactionType}:`, {
-          gasLimit: gasSettings.gasLimit,
-          maxFeePerGas: gasSettings.maxFeePerGas,
-          maxPriorityFeePerGas: gasSettings.maxPriorityFeePerGas,
-          congestionLevel: gasSettings.congestionLevel,
-          // Also log the BigInt values for debugging
-          gasLimitBigInt: optimizedContractCall.gasLimit.toString(),
-          maxFeePerGasBigInt: optimizedContractCall.maxFeePerGas.toString(),
-          maxPriorityFeePerGasBigInt: optimizedContractCall.maxPriorityFeePerGas.toString(),
+        const settings = gasSettings[transactionType] || gasSettings['buy-tickets'];
+        
+        optimizedContractCall = {
+          ...contractCall,
+          gas: settings.gasLimit,  // Use 'gas' instead of 'gasLimit' for wagmi
+          maxFeePerGas: settings.maxFeePerGas,
+          maxPriorityFeePerGas: settings.maxPriorityFeePerGas,
+        };
+        
+        console.log(`🔶 [POLYGON-TX] High ceiling gas for ${transactionType}:`, {
+          gasLimit: settings.gasLimit.toString(),
+          maxFeePerGas: `${Number(settings.maxFeePerGas) / 1e9} gwei`,
+          maxPriorityFeePerGas: `${Number(settings.maxPriorityFeePerGas) / 1e9} gwei`,
+          estimatedCost: `~$${(Number(settings.gasLimit) * Number(settings.maxFeePerGas) / 1e18 * 0.5).toFixed(3)} USD`
         });
       }
       
@@ -214,7 +233,6 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       // Record success for Polygon performance tracking
       if (isPolygon) {
         const duration = Date.now() - startTime;
-        polygonOptimizer.recordSuccess(duration);
         console.log(`✅ [POLYGON-TX] ${transactionType} submitted successfully in ${duration}ms`);
       }
       
@@ -224,8 +242,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       
       // Polygon-specific error handling
       if (isPolygon) {
-        polygonOptimizer.recordFailure();
-        const handled = polygonOptimizer.handlePolygonRPCError(error);
+        const handled = polygonUtils.isRecoverableError(error);
         
         if (handled) {
           console.log(`🔶 [POLYGON-TX] Handled Polygon-specific error for ${transactionType}:`, error);
@@ -244,17 +261,13 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
     
     setAttempt(prev => prev + 1);
     
-    // Polygon-specific retry strategy
+    // Simple retry strategy
     let delay: number;
     if (isPolygon) {
-      const retryStrategy = polygonOptimizer.getRetryStrategy(transactionType);
-      delay = retryStrategy.retryDelay * Math.pow(retryStrategy.backoffMultiplier, attempt - 1);
+      // Polygon-specific retry with exponential backoff
+      delay = Math.min(5000 * Math.pow(1.5, attempt - 1), 15000); // 5s, 7.5s, 11.25s, max 15s
       
-      console.log(`🔄 [POLYGON-TX] Retrying ${transactionType} with Polygon-optimized delay: ${delay}ms (attempt ${attempt})`);
-      
-      if (polygonOptimizer.isPolygonCongested()) {
-        console.warn('🐌 [POLYGON-TX] Network congestion detected - using extended retry delay');
-      }
+      console.log(`🔄 [POLYGON-TX] Retrying ${transactionType} with delay: ${delay}ms (attempt ${attempt})`);
     } else {
       // Standard exponential backoff for other chains
       delay = Math.min(1000 * Math.pow(2, attempt), 5000);
