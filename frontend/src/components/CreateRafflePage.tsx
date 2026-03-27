@@ -6,7 +6,6 @@ import { useNFTApprovalManager } from '../hooks/useNFTApprovalManager';
 import { useApeChainSwitching } from '../utils/chainSwitching';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useUserNFTs } from '../hooks/useUserNFTs';
-import { useGasStatus, useGasAwareTransaction } from '../hooks/useGasStatus';
 import ApprovalModal from './ApprovalModal';
 import NFTGrid from './NFTGrid';
 import RaffleForm, { FormData, getInitialFormData, validateAddress } from './RaffleForm';
@@ -27,10 +26,6 @@ export default function CreateRafflePage() {
   const { theme, nativeCurrency, networkName, isApeChain, isPolygon } = useNetwork();
   const { switchToApeChain, isSwitching } = useApeChainSwitching();
   const [formData, setFormData] = useState<FormData>(getInitialFormData);
-  
-  // Gas monitoring for Polygon
-  const { gasStatus } = useGasStatus();
-  const { executeWithOptimalGas } = useGasAwareTransaction();
   
   // Fetch user's NFTs with refetch capability
   const { nfts, loading: nftsLoading, refetch: refetchNFTs } = useUserNFTs(address || '', chainId || 0);
@@ -189,23 +184,6 @@ export default function CreateRafflePage() {
         return;
       }
       
-      // Show gas warning for Polygon if network is congested
-      if (isPolygon && gasStatus.shouldWarn) {
-        const estimatedCostPOL = (400000 * gasStatus.baseFeeGwei * 1e9) / 1e18; // Rough estimate
-        const estimatedCostUSD = estimatedCostPOL * 0.45; // Rough POL price
-        
-        const proceed = window.confirm(
-          `⚠️ EXTREME GAS WARNING ⚠️\n\n` +
-          `Current base fee: ${gasStatus.baseFeeGwei} gwei (${gasStatus.congestionLevel} congestion)\n` +
-          `Estimated cost: ~${estimatedCostPOL.toFixed(3)} POL (~$${estimatedCostUSD.toFixed(2)})\n\n` +
-          `${gasStatus.recommendedAction}\n\n` +
-          `This is 50-100x more expensive than normal!\n` +
-          `Consider using ApeChain instead (much cheaper).\n\n` +
-          `Do you want to proceed with this expensive transaction?`
-        );
-        if (!proceed) return;
-      }
-      
       // Debug logging to see what values we're passing
       console.log('🔍 Creating raffle with parameters:', {
         nftContract: formData.nftContract,
@@ -217,22 +195,17 @@ export default function CreateRafflePage() {
         durationInSeconds,
         approvalStatus,
         userAddress: address,
-        chainId,
-        gasStatus: isPolygon ? gasStatus : 'N/A (not Polygon)'
+        chainId
       });
       
-      // Execute with optimal gas settings (automatically handles Polygon gas optimization)
-      await executeWithOptimalGas(
-        'create-raffle',
-        (gasSettings) => createRaffle({
-          nftContract: sanitizeAddress(formData.nftContract),
-          tokenId: formData.tokenId,
-          ticketPrice: formData.ticketPrice,
-          maxTickets: parseInt(formData.maxTickets),
-          duration: durationInSeconds,
-          ...gasSettings // Spread gas settings (gasLimit, maxFeePerGas, maxPriorityFeePerGas)
-        })
-      );
+      // Create raffle with simple call (no gas optimization needed)
+      await createRaffle({
+        nftContract: sanitizeAddress(formData.nftContract),
+        tokenId: formData.tokenId,
+        ticketPrice: formData.ticketPrice,
+        maxTickets: parseInt(formData.maxTickets),
+        duration: durationInSeconds
+      });
     } catch (error) {
       ErrorHandler.handleContractError(error);
     }
@@ -311,32 +284,6 @@ export default function CreateRafflePage() {
             </div>
           </div>
         )}
-
-        {/* Polygon Gas Status Warning */}
-        {isPolygon && gasStatus.shouldWarn && (
-          <div className="relative bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-4 mb-6 backdrop-blur-sm">
-            <div className="flex items-center text-yellow-300">
-              <span className="mr-2">🚨</span>
-              <div className="flex-1">
-                <p className="font-semibold flex items-center">
-                  High Gas Alert 
-                  <span className="ml-2 text-xs bg-yellow-500/20 px-2 py-1 rounded-full">
-                    {gasStatus.baseFeeGwei} gwei ({gasStatus.congestionLevel})
-                  </span>
-                </p>
-                <p className="text-sm text-yellow-400 mt-1">{gasStatus.recommendedAction}</p>
-                <p className="text-xs text-yellow-500 mt-2">
-                  💰 Transactions will be more expensive than usual. Consider waiting or using ApeChain.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-
-
-
-
 
 
         {/* NFT Wallet Display */}
