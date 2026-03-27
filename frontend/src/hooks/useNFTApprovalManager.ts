@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAccount, useChainId } from 'wagmi';
 import { useNFTApprovalStatusV4, useNFTApprovalV4 } from './useRaffleContractV4';
-import toast from 'react-hot-toast';
+import { appToast } from '../utils/toast';
 
 interface ApprovalState {
   status: boolean | null;
@@ -73,7 +73,7 @@ export function useNFTApprovalManager() {
         }
       }));
       
-      toast.success('NFT contract approved successfully!');
+      appToast.success('NFT contract approved successfully!');
       
       // Refetch after a delay to confirm
       setTimeout(() => {

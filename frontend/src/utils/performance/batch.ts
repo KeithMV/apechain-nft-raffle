@@ -10,7 +10,7 @@ export interface BatchOptions {
 }
 
 /**
- * Memory-efficient batch processor
+ * Memory-efficient batch processor with POLYGON OPTIMIZATION
  * Process items in batches to avoid memory issues
  */
 export async function processBatch<T, R>(
@@ -19,6 +19,10 @@ export async function processBatch<T, R>(
   options: BatchOptions = {}
 ): Promise<R[]> {
   const { batchSize = 5, delay = 0 } = options;
+  
+  // POLYGON OPTIMIZATION: Remove delays entirely for faster processing
+  const optimizedDelay = delay > 0 ? Math.min(delay, 2) : 0; // Max 2ms delay
+  
   const results: R[] = [];
   
   for (let i = 0; i < items.length; i += batchSize) {
@@ -26,8 +30,9 @@ export async function processBatch<T, R>(
     const batchResults = await Promise.all(batch.map(processor));
     results.push(...batchResults);
     
-    if (delay > 0 && i + batchSize < items.length) {
-      await new Promise(resolve => setTimeout(resolve, delay));
+    // Only add delay if explicitly requested and not the last batch
+    if (optimizedDelay > 0 && i + batchSize < items.length) {
+      await new Promise(resolve => setTimeout(resolve, optimizedDelay));
     }
   }
   

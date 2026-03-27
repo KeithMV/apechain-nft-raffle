@@ -11,6 +11,7 @@ import { useChainConfig } from '../hooks/useChainConfig';
 import { useRPCHealthMonitor } from './useRPCHealthMonitor';
 import { usePerformanceMonitor } from './usePerformanceMonitor';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
+import { polygonOptimizer, polygonUtils } from '../utils/polygonOptimizations';
 
 export interface EnhancedTransactionConfig {
   transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle';
@@ -55,7 +56,7 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
   } = config;
 
   // Core hooks
-  const { chainId, getOperationTimeout, getOperationRetries, config: chainConfig } = useChainConfig();
+  const { chainId, getOperationTimeout, getOperationRetries, config: chainConfig, isPolygon } = useChainConfig();
   const { getBestEndpoint, reportFailure, reportSuccess } = useRPCHealthMonitor(chainId);
   const { measurePerformance, recordMetric } = usePerformanceMonitor();
   const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
@@ -74,8 +75,9 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
     lastRPCEndpoint: '',
   });
   
-  // Dynamic timeout based on performance and chain configuration
-  const timeout = getOperationTimeout(transactionType);
+  // Dynamic timeout based on performance and chain configuration with Polygon optimization
+  const baseTimeout = getOperationTimeout(transactionType);
+  const timeout = isPolygon ? polygonOptimizer.getOptimizedTimeout(transactionType) : baseTimeout;
   const maxRetries = getOperationRetries(transactionType);
   
   const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
@@ -83,7 +85,7 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
     timeout,
   });
 
-  // Enhanced transaction execution with performance monitoring
+  // Enhanced transaction execution with performance monitoring and Polygon optimization
   const executeTransaction = useCallback(async (contractCall: any): Promise<string> => {
     const startTime = Date.now();
     const bestEndpoint = getBestEndpoint();
@@ -95,16 +97,38 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
     console.log(`🚀 [ENHANCED-TX] Starting ${transactionType} on ${chainConfig.name} via ${bestEndpoint}`);
     
     try {
+      // Polygon-specific gas optimization
+      let optimizedContractCall = contractCall;
+      if (isPolygon) {
+        const gasSettings = await polygonOptimizer.getOptimizedGasSettings(transactionType);
+        optimizedContractCall = {
+          ...contractCall,
+          gasLimit: gasSettings.gasLimit,
+          maxFeePerGas: gasSettings.maxFeePerGas,
+          maxPriorityFeePerGas: gasSettings.maxPriorityFeePerGas,
+        };
+        
+        console.log(`🔶 [POLYGON-ENHANCED] Optimized gas for ${transactionType}:`, {
+          gasLimit: gasSettings.gasLimit,
+          maxFeePerGas: gasSettings.maxFeePerGas,
+          maxPriorityFeePerGas: gasSettings.maxPriorityFeePerGas,
+          congestionLevel: gasSettings.congestionLevel,
+          congested: polygonOptimizer.isPolygonCongested(),
+          endpoint: bestEndpoint,
+        });
+      }
+      
       const result = await measurePerformance(
         `transaction-${transactionType}`,
         async () => {
-          return await writeContractAsync(contractCall);
+          return await writeContractAsync(optimizedContractCall);
         },
         {
           chainId,
           rpcEndpoint: bestEndpoint,
           attempt: attempt + 1,
           contractAddress: contractCall.address,
+          isPolygonOptimized: isPolygon,
         }
       );
       
@@ -112,6 +136,18 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
       
       // Report success to RPC health monitor
       reportSuccess(bestEndpoint, duration);
+      
+      // Polygon-specific success tracking
+      if (isPolygon) {
+        polygonOptimizer.recordSuccess(duration);
+        const metrics = polygonOptimizer.getPerformanceMetrics();
+        console.log(`✅ [POLYGON-ENHANCED] Success metrics:`, {
+          duration,
+          avgTime: metrics.avgTransactionTime,
+          failureRate: metrics.failureRate,
+          congested: polygonOptimizer.isPolygonCongested(),
+        });
+      }
       
       setPerformanceMetrics(prev => ({
         averageDuration: (prev.averageDuration + duration) / 2,
@@ -129,11 +165,26 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
       // Report failure to RPC health monitor
       reportFailure(bestEndpoint);
       
+      // Polygon-specific error handling and tracking
+      if (isPolygon) {
+        polygonOptimizer.recordFailure();
+        const handled = polygonOptimizer.handlePolygonRPCError(error, bestEndpoint);
+        
+        if (handled) {
+          console.log(`🔶 [POLYGON-ENHANCED] Handled Polygon error for ${transactionType}:`, {
+            error: error instanceof Error ? error.message : String(error),
+            endpoint: bestEndpoint,
+            congested: polygonOptimizer.isPolygonCongested(),
+          });
+        }
+      }
+      
       recordMetric(`transaction-${transactionType}`, duration, false, {
         chainId,
         rpcEndpoint: bestEndpoint,
         attempt: attempt + 1,
         error: error instanceof Error ? error.message : String(error),
+        isPolygonOptimized: isPolygon,
       });
       
       setPerformanceMetrics(prev => ({
@@ -147,9 +198,9 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
       setIsProcessing(false);
       throw error;
     }
-  }, [writeContractAsync, transactionType, chainId, chainConfig.name, getBestEndpoint, reportSuccess, reportFailure, measurePerformance, recordMetric, attempt]);
+  }, [writeContractAsync, transactionType, chainId, chainConfig.name, getBestEndpoint, reportSuccess, reportFailure, measurePerformance, recordMetric, attempt, isPolygon]);
 
-  // Enhanced retry with RPC endpoint switching
+  // Enhanced retry with RPC endpoint switching and Polygon optimization
   const retryTransaction = useCallback(async (): Promise<void> => {
     if (!lastContractCall) {
       throw new Error('No transaction to retry');
@@ -161,14 +212,28 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
     
     setAttempt(prev => prev + 1);
     
-    // Add exponential backoff delay
-    const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
-    console.log(`🔄 [ENHANCED-TX] Retrying ${transactionType} in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+    // Polygon-specific retry strategy with enhanced backoff
+    let delay: number;
+    if (isPolygon) {
+      const retryStrategy = polygonOptimizer.getRetryStrategy(transactionType);
+      delay = retryStrategy.retryDelay * Math.pow(retryStrategy.backoffMultiplier, attempt - 1);
+      
+      console.log(`🔄 [POLYGON-ENHANCED] Retrying ${transactionType} with optimized strategy:`, {
+        delay,
+        attempt: attempt + 1,
+        maxRetries,
+        congested: polygonOptimizer.isPolygonCongested(),
+        endpoint: getBestEndpoint(),
+      });
+    } else {
+      // Standard exponential backoff for other chains
+      delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+      console.log(`🔄 [ENHANCED-TX] Retrying ${transactionType} in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+    }
     
     await new Promise(resolve => setTimeout(resolve, delay));
-    
     await executeTransaction(lastContractCall);
-  }, [lastContractCall, attempt, maxRetries, transactionType, executeTransaction]);
+  }, [lastContractCall, attempt, maxRetries, transactionType, executeTransaction, isPolygon, getBestEndpoint]);
 
   // Handle transaction success with enhanced metrics
   useEffect(() => {
@@ -231,7 +296,7 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
         error: errorToHandle instanceof Error ? errorToHandle.message : String(errorToHandle),
       });
       
-      // Enhanced error handling with RPC context
+      // Enhanced error handling with RPC context and Polygon optimization
       const errorMessage = errorToHandle && typeof errorToHandle === 'object' && 'message' in errorToHandle 
         ? (errorToHandle as any).message 
         : String(errorToHandle);
@@ -241,11 +306,26 @@ export function useEnhancedTransactionManager(config: EnhancedTransactionConfig)
       if (enableToasts) {
         if (errorMessage?.includes('User rejected')) {
           toast.error('Transaction cancelled by user.');
+        } else if (isPolygon && polygonUtils.isRecoverableError(errorToHandle)) {
+          // Polygon-specific error handling with enhanced recovery
+          const polygonMessage = polygonUtils.getPolygonErrorMessage(errorToHandle);
+          const polygonAction = polygonUtils.getPolygonErrorAction(errorToHandle);
+          
+          toast.error(`${polygonMessage}\n${polygonAction}`);
+          
+          // Enhanced auto-retry for Polygon with RPC switching
+          if (attempt < maxRetries && 
+              (errorMessage?.includes('nonce too low') || 
+               errorMessage?.includes('transaction underpriced') ||
+               errorMessage?.includes('429'))) {
+            console.log(`🔄 [POLYGON-ENHANCED] Auto-retrying with RPC switch: ${errorMessage}`);
+            setTimeout(() => retryTransaction().catch(console.error), 3000);
+          }
         } else if (errorMessage?.includes('insufficient funds')) {
-          toast.error('Insufficient funds for transaction.');
+          toast.error(isPolygon ? 'Insufficient POL for transaction fees' : 'Insufficient funds for transaction.');
         } else if (errorMessage?.includes('429') || errorMessage?.includes('rate limit')) {
           toast.error('Network busy. Trying different endpoint...');
-          // Automatically retry with different endpoint
+          // Automatically retry with different endpoint for rate limits
           if (attempt < maxRetries) {
             setTimeout(() => retryTransaction().catch(console.error), 2000);
           }

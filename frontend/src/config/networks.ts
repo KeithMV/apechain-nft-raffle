@@ -29,7 +29,9 @@ export const NETWORK_CONFIGS: Record<number, NetworkConfig> = {
   },
   137: { // Polygon Mainnet
     chainId: 137,
-    rpcUrl: 'https://rpc.ankr.com/polygon', // Use reliable endpoint
+    rpcUrl: process.env.REACT_APP_ALCHEMY_API_KEY 
+      ? `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`
+      : 'https://polygon-rpc.com', // CORS-friendly fallback
     name: 'Polygon',
     explorerUrl: 'https://polygonscan.com',
     nativeCurrency: 'POL'

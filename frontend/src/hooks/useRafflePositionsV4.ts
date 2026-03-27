@@ -17,7 +17,7 @@ import { useChainConfig } from '../hooks/useChainConfig';
 // Type aliases for backward compatibility
 export interface CreatedRaffle extends RaffleInfo {}
 
-// PHASE 1: New Infinite Query Hook for Browse Raffles
+// PHASE 1: New Infinite Query Hook for Browse Raffles - POLYGON OPTIMIZED
 export function useInfiniteAllRafflesV4(limit: number = 10) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
@@ -29,20 +29,23 @@ export function useInfiniteAllRafflesV4(limit: number = 10) {
     gcTime: chainConfig.cache.gcTime,
   };
 
+  // POLYGON OPTIMIZATION: Reduce limit for faster loading
+  const optimizedLimit = chainId === 137 ? Math.min(limit, 8) : limit;
+
   const infiniteQuery = useInfiniteQuery({
     queryKey: ['raffles-infinite-v4', chainId],
     queryFn: ({ pageParam = 0 }) => {
       // Reduced logging frequency
-      if (pageParam === 0) console.log(`🔄 [INFINITE] Fetching initial page with limit ${limit}`);
+      if (pageParam === 0 && process.env.NODE_ENV === 'development') console.log(`🔄 [INFINITE] Fetching initial page with limit ${optimizedLimit}`);
       return dataFetcher.fetchAllRaffles({ 
-        limit, 
-        offset: pageParam * limit 
+        limit: optimizedLimit, // Use optimized limit
+        offset: pageParam * optimizedLimit 
       });
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       // If last page has fewer items than limit, we've reached the end
-      if (lastPage.length < limit) {
+      if (lastPage.length < optimizedLimit) {
         if (allPages.length <= 2) console.log(`📄 [INFINITE] Reached end at page ${allPages.length - 1}`);
         return undefined;
       }
@@ -52,8 +55,8 @@ export function useInfiniteAllRafflesV4(limit: number = 10) {
     enabled: dataFetcher.isReady,
     staleTime: cacheConfig.staleTime,
     gcTime: cacheConfig.gcTime,
-    // Ensure pages don't get garbage collected too quickly
-    maxPages: 10, // Keep up to 10 pages in memory
+    // POLYGON: Keep fewer pages in memory
+    maxPages: chainId === 137 ? 6 : 10,
   });
 
   // Flatten all pages into single array with memoization
@@ -167,7 +170,7 @@ export function useUserRafflePositionsV4(userAddress?: string) {
 }
 
 
-// PHASE 1: New Infinite Query Hook for Dashboard Created Raffles
+// PHASE 1: New Infinite Query Hook for Dashboard Created Raffles - OPTIMIZED
 export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number = 15) {
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
@@ -176,6 +179,9 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
   const { config: chainConfig } = useChainConfig();
   const staleTime = chainConfig.cache.staleTime;
   const gcTime = chainConfig.cache.gcTime;
+
+  // POLYGON OPTIMIZATION: Reduce over-fetching
+  const optimizedFetchLimit = chainId === 137 ? 15 : 30; // Much smaller for Polygon
 
   const infiniteQuery = useInfiniteQuery({
     queryKey: ['created-infinite-v4', chainId, userAddress],
@@ -187,11 +193,10 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
       // Reduced logging - only log first fetch
       if (pageParam === 0) console.log(`🔄 [INFINITE-CREATED] Fetching initial page for user ${userAddress}`);
       
-      // Fetch more raffles to filter from (since we're filtering by creator)
-      const fetchLimit = 30;
+      // CRITICAL FIX: Fetch fewer raffles to reduce over-fetching
       const allRaffles = await dataFetcher.fetchAllRaffles({ 
-        limit: fetchLimit,
-        offset: pageParam * fetchLimit
+        limit: optimizedFetchLimit, // REDUCED from 30 to 15 for Polygon
+        offset: pageParam * optimizedFetchLimit
       });
       
       // Filter by creator and sort by creation time (newest first)
@@ -218,7 +223,7 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
     enabled: Boolean(dataFetcher.isReady && userAddress && chainId),
     staleTime,
     gcTime,
-    maxPages: 5, // Keep fewer pages for user-specific data
+    maxPages: chainId === 137 ? 3 : 5, // POLYGON: Keep fewer pages in memory
   });
 
   // Flatten and deduplicate created raffles

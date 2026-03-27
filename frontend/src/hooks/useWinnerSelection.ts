@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { WinnerSelectionService } from '../services/winnerSelectionService';
 import { useOptimizedSelectWinner } from './useOptimizedTransactionManager';
 import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
-import toast from 'react-hot-toast';
 
 export function useWinnerSelection() {
   const [commitData, setCommitData] = useState<{ nonce: bigint; commitHash: string } | null>(null);
@@ -42,7 +41,7 @@ export function useWinnerSelection() {
       return { nonce, commitHash };
     } catch (error) {
       setCurrentPhase('idle');
-      toast.error('Failed to start winner selection');
+      // Don't show toast here - let dashboard handle it
       throw error;
     }
   }, [transactionManager]);
@@ -81,7 +80,7 @@ export function useWinnerSelection() {
       return storedNonce;
     } catch (error) {
       setCurrentPhase('idle');
-      toast.error('Failed to reveal winner');
+      // Don't show toast here - let dashboard handle it
       throw error;
     }
   }, [transactionManager]);
@@ -116,7 +115,7 @@ export function useWinnerSelection() {
     } catch (error) {
       console.error('❌ [WINNER] Emergency winner selection failed:', error);
       setCurrentPhase('idle');
-      toast.error('Failed to select winner');
+      // Don't show toast here - let dashboard handle it
       throw error;
     }
   }, [transactionManager]);

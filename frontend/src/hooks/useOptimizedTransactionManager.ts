@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { getProgressiveTimeout, optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { useChainConfig } from '../hooks/useChainConfig';
+import { polygonOptimizer, polygonUtils } from '../utils/polygonOptimizations';
 
 export interface OptimizedTransactionConfig {
   transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle';
@@ -48,7 +49,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
   } = config;
 
   // Use centralized chain configuration
-  const { chainId, getOperationTimeout, getOperationRetries, invalidationDelay } = useChainConfig();
+  const { chainId, getOperationTimeout, getOperationRetries, invalidationDelay, isPolygon } = useChainConfig();
   
   const { writeContractAsync, data: hash, error, isPending: wagmiPending } = useWriteContract();
   const [attempt, setAttempt] = useState(0);
@@ -58,8 +59,9 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
   // Unified cache invalidation
   const { invalidateAfterTransaction, quickInvalidate } = useUnifiedCacheInvalidation();
   
-  // Use centralized timeout configuration
-  const timeout = getOperationTimeout(transactionType);
+  // Use centralized timeout configuration with Polygon optimization
+  const baseTimeout = getOperationTimeout(transactionType);
+  const timeout = isPolygon ? polygonOptimizer.getOptimizedTimeout(transactionType) : baseTimeout;
   
   const { isLoading: isConfirming, isSuccess, isError: receiptError } = useWaitForTransactionReceipt({
     hash,
@@ -129,8 +131,21 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       if (enableToasts) {
         if (errorMessage?.includes('User rejected')) {
           toast.error('Transaction cancelled by user.');
+        } else if (isPolygon && polygonUtils.isRecoverableError(errorToHandle)) {
+          // Polygon-specific error messages and actions
+          const polygonMessage = polygonUtils.getPolygonErrorMessage(errorToHandle);
+          const polygonAction = polygonUtils.getPolygonErrorAction(errorToHandle);
+          
+          toast.error(`${polygonMessage}\n${polygonAction}`);
+          
+          // Auto-retry for certain Polygon errors if we haven't exceeded max attempts
+          if (attempt < getOperationRetries(transactionType) && 
+              (errorMessage?.includes('nonce too low') || errorMessage?.includes('transaction underpriced'))) {
+            console.log(`🔄 [POLYGON-TX] Auto-retrying recoverable error: ${errorMessage}`);
+            setTimeout(() => retryTransaction().catch(console.error), 3000);
+          }
         } else if (errorMessage?.includes('insufficient funds')) {
-          toast.error('Insufficient funds for transaction.');
+          toast.error(isPolygon ? 'Insufficient POL for transaction fees' : 'Insufficient funds for transaction.');
         } else if (errorMessage?.includes('429')) {
           toast.error('Network busy. Please try again in a moment.');
         } else {
@@ -159,7 +174,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
     }
   }, [hash, isConfirming, isSuccess, receiptError, timeout, enableToasts]);
 
-  // Execute transaction with optimistic updates
+  // Execute transaction with optimistic updates and Polygon optimization
   const executeTransaction = useCallback(async (contractCall: any): Promise<string> => {
     setIsProcessing(true);
     setLastContractCall(contractCall);
@@ -168,15 +183,60 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
     applyOptimisticUpdates();
     
     try {
-      const result = await writeContractAsync(contractCall);
+      // Polygon-specific gas optimization
+      let optimizedContractCall = contractCall;
+      if (isPolygon) {
+        const gasSettings = await polygonOptimizer.getOptimizedGasSettings(transactionType);
+        
+        // CRITICAL FIX: Convert string values to BigInt for wagmi/viem
+        optimizedContractCall = {
+          ...contractCall,
+          gasLimit: BigInt(gasSettings.gasLimit),
+          maxFeePerGas: BigInt(gasSettings.maxFeePerGas),
+          maxPriorityFeePerGas: BigInt(gasSettings.maxPriorityFeePerGas),
+        };
+        
+        console.log(`🔶 [POLYGON-TX] Optimized gas settings for ${transactionType}:`, {
+          gasLimit: gasSettings.gasLimit,
+          maxFeePerGas: gasSettings.maxFeePerGas,
+          maxPriorityFeePerGas: gasSettings.maxPriorityFeePerGas,
+          congestionLevel: gasSettings.congestionLevel,
+          // Also log the BigInt values for debugging
+          gasLimitBigInt: optimizedContractCall.gasLimit.toString(),
+          maxFeePerGasBigInt: optimizedContractCall.maxFeePerGas.toString(),
+          maxPriorityFeePerGasBigInt: optimizedContractCall.maxPriorityFeePerGas.toString(),
+        });
+      }
+      
+      const startTime = Date.now();
+      const result = await writeContractAsync(optimizedContractCall);
+      
+      // Record success for Polygon performance tracking
+      if (isPolygon) {
+        const duration = Date.now() - startTime;
+        polygonOptimizer.recordSuccess(duration);
+        console.log(`✅ [POLYGON-TX] ${transactionType} submitted successfully in ${duration}ms`);
+      }
+      
       return result;
     } catch (error) {
       setIsProcessing(false);
+      
+      // Polygon-specific error handling
+      if (isPolygon) {
+        polygonOptimizer.recordFailure();
+        const handled = polygonOptimizer.handlePolygonRPCError(error);
+        
+        if (handled) {
+          console.log(`🔶 [POLYGON-TX] Handled Polygon-specific error for ${transactionType}:`, error);
+        }
+      }
+      
       throw error;
     }
-  }, [writeContractAsync, applyOptimisticUpdates]);
+  }, [writeContractAsync, applyOptimisticUpdates, isPolygon, transactionType]);
 
-  // Retry transaction with exponential backoff
+  // Retry transaction with Polygon-optimized backoff strategy
   const retryTransaction = useCallback(async (): Promise<void> => {
     if (!lastContractCall) {
       throw new Error('No transaction to retry');
@@ -184,12 +244,25 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
     
     setAttempt(prev => prev + 1);
     
-    // Add delay before retry (exponential backoff)
-    const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
-    await new Promise(resolve => setTimeout(resolve, delay));
+    // Polygon-specific retry strategy
+    let delay: number;
+    if (isPolygon) {
+      const retryStrategy = polygonOptimizer.getRetryStrategy(transactionType);
+      delay = retryStrategy.retryDelay * Math.pow(retryStrategy.backoffMultiplier, attempt - 1);
+      
+      console.log(`🔄 [POLYGON-TX] Retrying ${transactionType} with Polygon-optimized delay: ${delay}ms (attempt ${attempt})`);
+      
+      if (polygonOptimizer.isPolygonCongested()) {
+        console.warn('🐌 [POLYGON-TX] Network congestion detected - using extended retry delay');
+      }
+    } else {
+      // Standard exponential backoff for other chains
+      delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+    }
     
+    await new Promise(resolve => setTimeout(resolve, delay));
     await executeTransaction(lastContractCall);
-  }, [lastContractCall, attempt, executeTransaction]);
+  }, [lastContractCall, attempt, executeTransaction, isPolygon, transactionType]);
 
 
 
@@ -218,8 +291,8 @@ export function useOptimizedBuyTickets(optimisticData?: OptimizedTransactionConf
 export function useOptimizedSelectWinner(optimisticData?: OptimizedTransactionConfig['optimisticData']) {
   return useOptimizedTransactionManager({
     transactionType: 'select-winner',
-    successMessage: '🏆 Winner selected successfully!',
-    enableToasts: true, // Enable built-in toasts
+    successMessage: undefined, // Disable built-in success toast - let dashboard handle it
+    enableToasts: false, // Disable all built-in toasts for winner selection
     enableOptimisticUpdates: true,
     optimisticData,
     onSuccess: (hash) => {
@@ -227,6 +300,10 @@ export function useOptimizedSelectWinner(optimisticData?: OptimizedTransactionCo
       if (optimisticData?.raffleId) {
         console.log('🔄 [WINNER] Starting progressive cache invalidation for raffle:', optimisticData.raffleId);
       }
+    },
+    onError: (error) => {
+      console.error('❌ [WINNER] Transaction failed:', error);
+      // Error toasts will be handled by the dashboard
     },
   });
 }
@@ -243,7 +320,8 @@ export function useOptimizedCreateRaffle(onSuccess?: (hash: string) => void) {
 export function useOptimizedCancelRaffle(optimisticData?: OptimizedTransactionConfig['optimisticData']) {
   return useOptimizedTransactionManager({
     transactionType: 'cancel-raffle',
-    successMessage: 'Raffle cancelled successfully!',
+    successMessage: undefined, // Disable built-in success toast - let dashboard handle it
+    enableToasts: false, // Disable all built-in toasts for cancel raffle
     enableOptimisticUpdates: true,
     optimisticData,
     onSuccess: (hash) => {
@@ -251,6 +329,10 @@ export function useOptimizedCancelRaffle(optimisticData?: OptimizedTransactionCo
       if (optimisticData?.raffleId) {
         console.log('🔄 [CANCEL] Invalidating cache for raffle:', optimisticData.raffleId);
       }
+    },
+    onError: (error) => {
+      console.error('❌ [CANCEL] Transaction failed:', error);
+      // Error toasts will be handled by the dashboard
     },
   });
 }
