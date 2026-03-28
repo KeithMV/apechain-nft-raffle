@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { usePublicClient } from 'wagmi';
+import { usePublicClient, useAccount } from 'wagmi';
 import { parseAbiItem } from 'viem';
 import { useChainConfig } from '../hooks/useChainConfig';
+import { useMemo } from 'react';
 
 interface UserNFT {
   contractAddress: string;
@@ -16,7 +17,8 @@ const TRANSFER_EVENT = parseAbiItem('event Transfer(address indexed from, addres
 async function fetchNFTsViaAPI(
   userAddress: string,
   chainId: number,
-  nftConfig: any
+  nftConfig: any,
+  publicClient: any
 ): Promise<UserNFT[]> {
   try {
     // Use environment-aware Lambda proxy endpoint
@@ -53,29 +55,62 @@ async function fetchNFTsViaAPI(
     
     const data = await response.json();
     
-    // Transform Lambda response to our format
-    const nfts: UserNFT[] = (data.nfts || data.ownedNfts)?.map((nft: any, index: number) => {
-      // Only log first few NFTs to avoid spam
-      if (index < 3) {
-        console.log(`🖼️ Processing NFT on ${chainName}:`, {
-          contract: nft.contractAddress,
-          tokenId: nft.tokenId,
-          name: nft.name,
-          hasImage: !!nft.image,
-          imageUrl: nft.image ? nft.image.substring(0, 50) + '...' : 'none'
-        });
-      }
-      
-      return {
-        contractAddress: nft.contractAddress,
-        tokenId: nft.tokenId,
-        name: nft.name || `NFT #${nft.tokenId}`,
-        image: nft.image
-      };
-    }).filter(nft => nft.contractAddress && nft.tokenId) || [];
+    // Transform and verify Lambda response
+    const rawNfts = (data.nfts || data.ownedNfts) || [];
+    console.log(`🔍 Lambda proxy returned ${rawNfts.length} NFTs for ${chainName}, verifying ownership...`);
     
-    console.log(`✅ Lambda proxy result for ${chainName}: ${(data.nfts || data.ownedNfts)?.length || 0} raw NFTs, ${nfts.length} processed NFTs, ${nfts.filter(n => n.image).length} with images`);
-    return nfts;
+    const verifiedNfts: UserNFT[] = [];
+    
+    // Verify ownership for each NFT returned by Lambda
+    for (let i = 0; i < rawNfts.length; i++) {
+      const nft = rawNfts[i];
+      
+      if (!nft.contractAddress || !nft.tokenId) continue;
+      
+      try {
+        // Verify ownership on-chain
+        if (!publicClient) continue;
+        
+        const owner = await publicClient.readContract({
+          address: nft.contractAddress as `0x${string}`,
+          abi: [{
+            inputs: [{ name: 'tokenId', type: 'uint256' }],
+            name: 'ownerOf',
+            outputs: [{ name: '', type: 'address' }],
+            stateMutability: 'view',
+            type: 'function'
+          }],
+          functionName: 'ownerOf',
+          args: [BigInt(nft.tokenId)]
+        });
+        
+        // Only include if user actually owns it
+        if (owner?.toLowerCase() === userAddress.toLowerCase()) {
+          // Only log first few verified NFTs to avoid spam
+          if (verifiedNfts.length < 3) {
+            console.log(`✅ Verified NFT ownership on ${chainName}:`, {
+              contract: nft.contractAddress,
+              tokenId: nft.tokenId,
+              name: nft.name,
+              hasImage: !!nft.image
+            });
+          }
+          
+          verifiedNfts.push({
+            contractAddress: nft.contractAddress,
+            tokenId: nft.tokenId,
+            name: nft.name || `NFT #${nft.tokenId}`,
+            image: nft.image
+          });
+        }
+      } catch (error) {
+        // Skip NFTs that fail ownership verification
+        continue;
+      }
+    }
+    
+    console.log(`✅ Lambda proxy result for ${chainName}: ${rawNfts.length} raw NFTs → ${verifiedNfts.length} verified owned NFTs`);
+    return verifiedNfts;
     
   } catch (error) {
     const chainName = chainId === 137 ? 'Polygon' : chainId === 33139 ? 'ApeChain' : `Chain ${chainId}`;
@@ -202,7 +237,7 @@ async function fetchUserNFTs(
 
   try {
     // Try API first (when implemented)
-    let nfts = await fetchNFTsViaAPI(userAddress, chainId, nftConfig);
+    let nfts = await fetchNFTsViaAPI(userAddress, chainId, nftConfig, publicClient);
     
     // If API fails or returns nothing, use on-chain scanning
     if (nfts.length === 0) {
@@ -219,15 +254,22 @@ async function fetchUserNFTs(
 
 export function useUserNFTs(userAddress: string, chainId: number) {
   const publicClient = usePublicClient();
+  const { address, isConnected, isConnecting } = useAccount();
   
   // Use centralized NFT configuration
   const { config: chainConfig } = useChainConfig();
   const nftConfig = chainConfig.nft;
 
+  // Apply wallet state management pattern
+  const resolvedAddress = useMemo(() => {
+    if (!isConnected || isConnecting) return undefined;
+    return userAddress || address;
+  }, [userAddress, address, isConnected, isConnecting]);
+
   const { data: nfts = [], isLoading: loading, error, refetch } = useQuery({
-    queryKey: ['user-nfts', userAddress?.toLowerCase(), chainId],
-    queryFn: () => fetchUserNFTs(publicClient, userAddress, chainId, nftConfig),
-    enabled: !!publicClient && !!userAddress && !!chainId,
+    queryKey: ['user-nfts', resolvedAddress?.toLowerCase(), chainId],
+    queryFn: () => fetchUserNFTs(publicClient, resolvedAddress!, chainId, nftConfig),
+    enabled: Boolean(resolvedAddress && chainId && publicClient && isConnected && !isConnecting),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
