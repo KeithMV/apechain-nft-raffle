@@ -24,8 +24,8 @@ export default function RaffleDashboard() {
   const [activeTab, setActiveTab] = useState<'participated' | 'created'>('participated');
   const [showExpired, setShowExpired] = useState(true);
   
-  // PHASE 2: Simplified - hooks now handle wallet state internally
-  const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositionsV4(address);
+  // PHASE 2: Let hooks handle wallet state internally - don't pass address
+  const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositionsV4();
   const {
     raffles: createdRaffles,
     loading: rafflesLoading,
@@ -34,7 +34,7 @@ export default function RaffleDashboard() {
     hasNextPage: hasNextCreatedPage,
     isFetchingNextPage: isFetchingNextCreatedPage,
     pageCount: createdPageCount
-  } = useInfiniteCreatedRafflesV4(address);
+  } = useInfiniteCreatedRafflesV4();
   const clearCache = useClearRaffleCacheV4();
   
   const cancelRaffleHook = useOptimizedCancelRaffle();
