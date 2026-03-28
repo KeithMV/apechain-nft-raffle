@@ -172,7 +172,6 @@ const RaffleCard = React.memo<RaffleCardProps>(({
               {raffle.winner && raffle.winner !== '0x0000000000000000000000000000000000000000' ? (
                 <>
                   <div className="w-12 h-12 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <span className="text-green-400 text-xl">🏆</span>
                   </div>
                   <p className="text-green-400 font-mono font-semibold mb-1">WINNER SELECTED</p>
                   <p className="text-slate-400 text-sm font-mono">
@@ -182,7 +181,6 @@ const RaffleCard = React.memo<RaffleCardProps>(({
               ) : raffle.ticketsSold > 0 && isCreator ? (
                 <>
                   <div className="w-12 h-12 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <span className="text-yellow-400 text-xl">🎲</span>
                   </div>
                   <p className="text-yellow-400 font-mono font-semibold mb-2">SELECT WINNER</p>
                   <button
@@ -196,7 +194,6 @@ const RaffleCard = React.memo<RaffleCardProps>(({
               ) : (
                 <>
                   <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <span className="text-red-400 text-xl">⏰</span>
                   </div>
                   <p className="text-red-400 font-mono font-semibold mb-1">RAFFLE ENDED</p>
                   <p className="text-slate-400 text-sm font-mono">No tickets were sold</p>
@@ -206,7 +203,6 @@ const RaffleCard = React.memo<RaffleCardProps>(({
           ) : isCreator ? (
             <div className="text-center py-4">
               <div className="w-12 h-12 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <span className="text-yellow-400 text-xl">👑</span>
               </div>
               <p className="text-yellow-400 font-mono font-semibold mb-1">YOUR RAFFLE</p>
               <p className="text-slate-400 text-sm font-mono">Creators cannot buy their own tickets</p>
@@ -246,7 +242,6 @@ const RaffleCard = React.memo<RaffleCardProps>(({
                   <span className="relative">PROTOCOL.FULL</span>
                 ) : (
                   <>
-                    <span className="relative">⚡</span>
                     <span className="relative">ACQUIRE {quantity} TICKET{quantity > 1 ? 'S' : ''}</span>
                   </>
                 )}
