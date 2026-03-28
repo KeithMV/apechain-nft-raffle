@@ -3,7 +3,7 @@
  * Combines raffles from both V3 and V4 contracts
  */
 
-import { useChainId } from 'wagmi';
+import { useChainId, useAccount } from 'wagmi';
 import { useCallback, useMemo } from 'react';
 import { useRaffleDataFetcher, RaffleInfo } from './useRaffleDataFetcher';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
@@ -126,10 +126,17 @@ export function useClearRaffleCacheV4() {
   const { quickInvalidate } = useUnifiedCacheInvalidation();
   return quickInvalidate;
 }
-// Get user's raffle positions (network-aware)
+// Get user's raffle positions (network-aware) - WEB3 BEST PRACTICE IMPLEMENTATION
 export function useUserRafflePositionsV4(userAddress?: string) {
+  const { address, isConnected, isConnecting } = useAccount();
   const chainId = useChainId();
   const { getCombinedUserPositions } = useRafflePositionProcessor();
+  
+  // WEB3 BEST PRACTICE: Stable address resolution
+  const resolvedAddress = useMemo(() => {
+    if (!isConnected || isConnecting) return undefined;
+    return userAddress || address;
+  }, [userAddress, address, isConnected, isConnecting]);
   
   // Use centralized cache configuration
   const { config: chainConfig } = useChainConfig();
@@ -139,9 +146,9 @@ export function useUserRafflePositionsV4(userAddress?: string) {
   };
 
   const { data: positions, isLoading: loading, error, refetch } = useQuery({
-    queryKey: ['positions-v4', userAddress, chainId],
+    queryKey: ['positions-v4', resolvedAddress, chainId],
     queryFn: async () => {
-      if (!userAddress || !chainId) throw new Error('Missing required parameters');
+      if (!resolvedAddress || !chainId) throw new Error('Missing required parameters');
 
       // Build factory list based on available versions
       const factories: Array<{ address: string; version: 'v3' | 'v4' }> = [];
@@ -154,26 +161,39 @@ export function useUserRafflePositionsV4(userAddress?: string) {
       const v3Address = getRaffleFactoryAddress(chainId, false);
       factories.push({ address: v3Address, version: 'v3' as const });
       
-      return await getCombinedUserPositions(factories, userAddress);
+      return await getCombinedUserPositions(factories, resolvedAddress);
     },
-    enabled: Boolean(userAddress && chainId),
+    // WEB3 BEST PRACTICE: Multi-condition enabled check
+    enabled: Boolean(
+      resolvedAddress && 
+      chainId && 
+      isConnected && 
+      !isConnecting
+    ),
     staleTime: cacheConfig.userStaleTime,
     gcTime: cacheConfig.userGcTime,
   });
 
   return { 
     positions: positions || [], 
-    loading, 
+    loading: loading || isConnecting, // Include wallet connection loading
     error, 
     refetch 
   };
 }
 
 
-// PHASE 1: New Infinite Query Hook for Dashboard Created Raffles - OPTIMIZED
+// PHASE 1: New Infinite Query Hook for Dashboard Created Raffles - WEB3 BEST PRACTICE
 export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number = 15) {
+  const { address, isConnected, isConnecting } = useAccount();
   const chainId = useChainId();
   const dataFetcher = useRaffleDataFetcher();
+  
+  // WEB3 BEST PRACTICE: Stable address resolution
+  const resolvedAddress = useMemo(() => {
+    if (!isConnected || isConnecting) return undefined;
+    return userAddress || address;
+  }, [userAddress, address, isConnected, isConnecting]);
   
   // Use centralized cache configuration
   const { config: chainConfig } = useChainConfig();
@@ -184,14 +204,14 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
   const optimizedFetchLimit = chainId === 137 ? 15 : 30; // Much smaller for Polygon
 
   const infiniteQuery = useInfiniteQuery({
-    queryKey: ['created-infinite-v4', chainId, userAddress],
+    queryKey: ['created-infinite-v4', chainId, resolvedAddress],
     queryFn: async ({ pageParam = 0 }) => {
-      if (!dataFetcher.isReady || !userAddress) {
+      if (!dataFetcher.isReady || !resolvedAddress) {
         throw new Error('Missing required parameters');
       }
 
       // Reduced logging - only log first fetch
-      if (pageParam === 0) console.log(`🔄 [INFINITE-CREATED] Fetching initial page for user ${userAddress}`);
+      if (pageParam === 0) console.log(`🔄 [INFINITE-CREATED] Fetching initial page for user ${resolvedAddress}`);
       
       // CRITICAL FIX: Fetch fewer raffles to reduce over-fetching
       const allRaffles = await dataFetcher.fetchAllRaffles({ 
@@ -201,7 +221,7 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
       
       // Filter by creator and sort by creation time (newest first)
       const createdRaffles = allRaffles
-        .filter(r => r.creator.toLowerCase() === userAddress.toLowerCase())
+        .filter(r => r.creator.toLowerCase() === resolvedAddress.toLowerCase())
         .sort((a, b) => b.endTime - a.endTime);
       
       // Only log if found raffles
@@ -220,7 +240,14 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
       }
       return allPages.length;
     },
-    enabled: Boolean(dataFetcher.isReady && userAddress && chainId),
+    // WEB3 BEST PRACTICE: Multi-condition enabled check
+    enabled: Boolean(
+      dataFetcher.isReady && 
+      resolvedAddress && 
+      chainId && 
+      isConnected && 
+      !isConnecting
+    ),
     staleTime,
     gcTime,
     maxPages: chainId === 137 ? 3 : 5, // POLYGON: Keep fewer pages in memory
@@ -248,7 +275,7 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
 
   return {
     raffles: allCreatedRaffles,
-    loading: infiniteQuery.isLoading,
+    loading: infiniteQuery.isLoading || isConnecting, // Include wallet connection loading
     error: infiniteQuery.error,
     refetch: infiniteQuery.refetch,
     // Infinite query specific methods

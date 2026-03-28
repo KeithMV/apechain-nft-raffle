@@ -24,6 +24,7 @@ export default function RaffleDashboard() {
   const [activeTab, setActiveTab] = useState<'participated' | 'created'>('participated');
   const [showExpired, setShowExpired] = useState(true);
   
+  // PHASE 2: Simplified - hooks now handle wallet state internally
   const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositionsV4(address);
   const {
     raffles: createdRaffles,
@@ -282,7 +283,7 @@ export default function RaffleDashboard() {
     }
   }, [winnerSelected, selectingWinnerFor, chainId, refetchPositions, refetchCreatedRaffles]);
 
-  // Only show full loading screen if no cached data available
+  // PHASE 2: Simplified loading - hooks handle wallet connection states
   if (loading && userPositions.length === 0 && createdRaffles.length === 0) {
     return (
       <div className={`relative bg-gray-900/95 backdrop-blur-xl border ${styles.containerBorderColor} rounded-2xl shadow-2xl ${styles.containerShadowColor} p-8`}>
