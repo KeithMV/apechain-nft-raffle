@@ -6,6 +6,7 @@ import { useNFTApprovalManager } from '../hooks/useNFTApprovalManager';
 import { useApeChainSwitching } from '../utils/chainSwitching';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useUserNFTs } from '../hooks/useUserNFTs';
+import { useUnifiedCacheInvalidation } from '../hooks/useUnifiedCacheInvalidation';
 import ApprovalModal from './ApprovalModal';
 import NFTGrid from './NFTGrid';
 import RaffleForm, { FormData, getInitialFormData, validateAddress } from './RaffleForm';
@@ -29,6 +30,9 @@ export default function CreateRafflePage() {
   
   // Fetch user's NFTs with refetch capability
   const { nfts, loading: nftsLoading, refetch: refetchNFTs } = useUserNFTs(address || '', chainId || 0);
+  
+  // Cache invalidation for immediate UI updates
+  const { quickInvalidate } = useUnifiedCacheInvalidation();
   
   // Listen for cache invalidation events to refresh NFTs
   useEffect(() => {
@@ -74,6 +78,21 @@ export default function CreateRafflePage() {
 
   const platformFee = platformFeeData ? (Number(platformFeeData) / 100).toString() : '5';
 
+  // Handle approval success - immediate cache refresh
+  useEffect(() => {
+    if (approvalSuccess) {
+      console.log('✅ [APPROVAL] NFT approval successful, refreshing UI immediately');
+      
+      // Immediate cache invalidation for approval status
+      quickInvalidate(undefined, chainId);
+      
+      // Also refetch NFTs to update approval status
+      setTimeout(() => {
+        refetchNFTs();
+      }, 100);
+    }
+  }, [approvalSuccess, quickInvalidate, chainId, refetchNFTs]);
+  
   // Handle approval errors
   useEffect(() => {
     if (approvalError) {
@@ -99,13 +118,18 @@ export default function CreateRafflePage() {
     if (createSuccess) {
       console.log('✅ Raffle created successfully on chain:', chainId, networkName);
       
+      // IMMEDIATE cache invalidation for raffle creation
+      console.log('🔄 [CREATE] Immediate cache invalidation after raffle creation');
+      quickInvalidate(undefined, chainId);
+      
+      // Force immediate NFT cache refresh to remove the NFT from display
+      console.log('🔄 [CREATE] Forcing immediate NFT cache refresh after raffle creation');
+      refetchNFTs();
+      
       // Show success message with chain info
       appToast.success(`Raffle created successfully on ${networkName}! Redirecting...`, {
         icon: '🎉',
       });
-      
-      // Force immediate NFT cache refresh to remove the NFT from display
-      console.log('🔄 [CREATE] Forcing immediate NFT cache refresh after raffle creation');
       
       // Reset form and clear approval state after a short delay
       setTimeout(() => {
@@ -117,7 +141,7 @@ export default function CreateRafflePage() {
         navigate('/browse', { replace: true });
       }, 2000);
     }
-  }, [createSuccess, navigate, clearApprovalState, chainId, networkName]);
+  }, [createSuccess, navigate, clearApprovalState, chainId, networkName, quickInvalidate, refetchNFTs]);
 
   // Handle create raffle errors
   useEffect(() => {

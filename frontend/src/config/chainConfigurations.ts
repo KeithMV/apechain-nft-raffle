@@ -171,7 +171,7 @@ const POLYGON_CONFIG: ChainConfiguration = {
     gcTime: 30000,           // AGGRESSIVE: From 90s to 30s
     userStaleTime: 10000,    // AGGRESSIVE: From 30s to 10s
     userGcTime: 20000,       // AGGRESSIVE: From 60s to 20s
-    invalidationDelay: 500,  // AGGRESSIVE: From 3000ms to 500ms (almost immediate)
+    invalidationDelay: 0,    // IMMEDIATE: Changed from 500ms to 0ms for instant UI updates
     maxPages: 8,             // INCREASED: From 5 to 8 (keep more in memory)
   },
   
