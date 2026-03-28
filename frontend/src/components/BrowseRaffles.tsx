@@ -234,7 +234,6 @@ export default function BrowseRaffles() {
                       </>
                     ) : (
                       <>
-                        <span className="relative">📜</span>
                         <span className="relative">Load More Raffles ({pageCount} pages loaded)</span>
                       </>
                     )}

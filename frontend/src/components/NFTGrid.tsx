@@ -25,7 +25,7 @@ export default function NFTGrid({ nfts, onSelect, isApeChain = false, loading = 
       <div className={`bg-slate-800/50 border ${borderColor} rounded-xl p-6 mb-6`}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-slate-200 font-semibold text-lg">
-            🖼️ Your NFT Collection
+            Your NFT Collection
           </h3>
           <div className={`px-3 py-1 rounded-full text-xs font-medium ${isApeChain ? 'bg-emerald-500/20 text-emerald-300' : 'bg-blue-500/20 text-blue-300'}`}>
             Loading...
@@ -46,14 +46,13 @@ export default function NFTGrid({ nfts, onSelect, isApeChain = false, loading = 
       <div className={`bg-slate-800/50 border ${borderColor} rounded-xl p-6 mb-6`}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-slate-200 font-semibold text-lg">
-            🖼️ Your NFT Collection
+            Your NFT Collection
           </h3>
           <div className={`px-3 py-1 rounded-full text-xs font-medium ${isApeChain ? 'bg-emerald-500/20 text-emerald-300' : 'bg-blue-500/20 text-blue-300'}`}>
             0 NFTs
           </div>
         </div>
         <div className="text-center py-8">
-          <div className="text-6xl mb-4">🎨</div>
           <p className="text-slate-300 font-medium mb-2">No NFTs Found</p>
           <p className="text-slate-400 text-sm max-w-md mx-auto">
             We couldn't find any NFTs in your wallet on this network. You can still create a raffle by entering the contract address manually below.
@@ -67,7 +66,7 @@ export default function NFTGrid({ nfts, onSelect, isApeChain = false, loading = 
     <div className={`bg-slate-800/50 border ${borderColor} rounded-xl p-6 mb-6`}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-slate-200 font-semibold text-lg">
-          🖼️ Your NFT Collection
+          Your NFT Collection
         </h3>
         <div className={`px-3 py-1 rounded-full text-xs font-medium ${isApeChain ? 'bg-emerald-500/20 text-emerald-300' : 'bg-blue-500/20 text-blue-300'}`}>
           {nfts.length} NFT{nfts.length !== 1 ? 's' : ''}
@@ -95,7 +94,6 @@ export default function NFTGrid({ nfts, onSelect, isApeChain = false, loading = 
               {/* Fallback for NFTs without images */}
               <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-xs bg-slate-800/50 backdrop-blur-sm opacity-0 hover:opacity-100 transition-opacity">
                 <div className="text-center">
-                  <div className="text-2xl mb-1">🖼️</div>
                   <div>NFT #{nft.tokenId}</div>
                 </div>
               </div>
