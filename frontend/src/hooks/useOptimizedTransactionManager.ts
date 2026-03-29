@@ -186,27 +186,27 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       // HIGH GAS CEILING APPROACH: Set generous limits, let users decide
       let optimizedContractCall = contractCall;
       if (isPolygon) {
-        // GENEROUS GAS SETTINGS - Polygon is cheap even at high gas
+        // OPTIMIZED GAS SETTINGS - Balanced approach for Polygon reliability
         const gasSettings = {
           'buy-tickets': {
-            gasLimit: BigInt(300000),              // High limit for safety
-            maxFeePerGas: BigInt('200000000000'),  // 200 gwei ceiling (~$0.08)
-            maxPriorityFeePerGas: BigInt('50000000000'), // 50 gwei priority
+            gasLimit: BigInt(250000),              // Optimized limit
+            maxFeePerGas: BigInt('120000000000'),  // 120 gwei ceiling (~$0.05)
+            maxPriorityFeePerGas: BigInt('30000000000'), // 30 gwei priority
           },
           'create-raffle': {
-            gasLimit: BigInt(500000),              // High limit for complex creation
-            maxFeePerGas: BigInt('250000000000'),  // 250 gwei ceiling (~$0.20)
-            maxPriorityFeePerGas: BigInt('60000000000'), // 60 gwei priority
+            gasLimit: BigInt(400000),              // Optimized for complex creation
+            maxFeePerGas: BigInt('150000000000'),  // 150 gwei ceiling (~$0.12)
+            maxPriorityFeePerGas: BigInt('40000000000'), // 40 gwei priority
           },
           'select-winner': {
-            gasLimit: BigInt(400000),              // High limit for winner selection
-            maxFeePerGas: BigInt('300000000000'),  // 300 gwei ceiling (~$0.24)
-            maxPriorityFeePerGas: BigInt('70000000000'), // 70 gwei priority
+            gasLimit: BigInt(350000),              // Optimized for winner selection
+            maxFeePerGas: BigInt('180000000000'),  // 180 gwei ceiling (~$0.18)
+            maxPriorityFeePerGas: BigInt('50000000000'), // 50 gwei priority
           },
           'cancel-raffle': {
-            gasLimit: BigInt(200000),              // Standard limit for cancellation
-            maxFeePerGas: BigInt('150000000000'),  // 150 gwei ceiling (~$0.06)
-            maxPriorityFeePerGas: BigInt('40000000000'), // 40 gwei priority
+            gasLimit: BigInt(180000),              // Optimized for cancellation
+            maxFeePerGas: BigInt('100000000000'),  // 100 gwei ceiling (~$0.04)
+            maxPriorityFeePerGas: BigInt('25000000000'), // 25 gwei priority
           }
         };
         
@@ -219,7 +219,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
           maxPriorityFeePerGas: settings.maxPriorityFeePerGas,
         };
         
-        console.log(`🔶 [POLYGON-TX] High ceiling gas for ${transactionType}:`, {
+        console.log(`🔶 [POLYGON-TX] Optimized gas for ${transactionType}:`, {
           gasLimit: settings.gasLimit.toString(),
           maxFeePerGas: `${Number(settings.maxFeePerGas) / 1e9} gwei`,
           maxPriorityFeePerGas: `${Number(settings.maxPriorityFeePerGas) / 1e9} gwei`,
@@ -261,13 +261,13 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
     
     setAttempt(prev => prev + 1);
     
-    // Simple retry strategy
+    // Optimized retry strategy for Polygon
     let delay: number;
     if (isPolygon) {
-      // Polygon-specific retry with exponential backoff
-      delay = Math.min(5000 * Math.pow(1.5, attempt - 1), 15000); // 5s, 7.5s, 11.25s, max 15s
+      // Polygon-optimized retry with linear backoff (better for fast finality)
+      delay = Math.min(2000 + (attempt * 1000), 8000); // 2s, 3s, 4s, 5s, max 8s
       
-      console.log(`🔄 [POLYGON-TX] Retrying ${transactionType} with delay: ${delay}ms (attempt ${attempt})`);
+      console.log(`🔄 [POLYGON-TX] Retrying ${transactionType} with optimized delay: ${delay}ms (attempt ${attempt})`);
     } else {
       // Standard exponential backoff for other chains
       delay = Math.min(1000 * Math.pow(2, attempt), 5000);
