@@ -133,8 +133,8 @@ const APECHAIN_CONFIG: ChainConfiguration = {
 
 /**
  * Polygon Configuration
- * PERFORMANCE-FIRST OPTIMIZATION - Prioritizing speed over extreme reliability
- * Based on user feedback that pages load too slowly
+ * BALANCED OPTIMIZATION - Optimized for Polygon's specific characteristics
+ * Based on Polygon's 2-second block time and high throughput capabilities
  */
 const POLYGON_CONFIG: ChainConfiguration = {
   name: 'Polygon',
@@ -146,47 +146,47 @@ const POLYGON_CONFIG: ChainConfiguration = {
   },
   
   polling: {
-    interval: 4000,      // AGGRESSIVE: 4 seconds - much faster UI updates
-    fastInterval: 2000,  // AGGRESSIVE: 2 seconds for active operations
-    slowInterval: 6000,  // AGGRESSIVE: 6 seconds for background (much faster)
+    interval: 6000,      // OPTIMIZED: 6 seconds - aligned with 3 block confirmations
+    fastInterval: 3000,  // OPTIMIZED: 3 seconds - balanced for active operations
+    slowInterval: 12000, // OPTIMIZED: 12 seconds - efficient background updates
   },
   
   batch: {
-    contractSize: 5,     // INCREASED: Larger batches for efficiency
-    raffleSize: 5,       // INCREASED: Larger batches for efficiency
-    contractDelay: 5,    // AGGRESSIVE: Minimal delay (5ms)
-    raffleDelay: 10,     // AGGRESSIVE: Minimal delay (10ms)
-    maxConcurrent: 4,    // INCREASED: More concurrent operations
+    contractSize: 3,     // OPTIMIZED: Smaller batches prevent RPC timeouts
+    raffleSize: 3,       // OPTIMIZED: Smaller batches prevent RPC timeouts
+    contractDelay: 50,   // OPTIMIZED: 50ms prevents rate limiting
+    raffleDelay: 100,    // OPTIMIZED: 100ms prevents rate limiting
+    maxConcurrent: 3,    // OPTIMIZED: Conservative to prevent RPC overload
   },
   
   transaction: {
-    timeoutMultiplier: 1.5,  // REDUCED: From 2.0x to 1.5x (faster timeouts)
-    retryAttempts: 2,        // Keep at 2 retries
-    retryDelay: 2000,        // AGGRESSIVE: From 3000ms to 2000ms
-    gasMultiplier: 1.2,      // REDUCED: From 1.3x to 1.2x (lower gas, faster)
+    timeoutMultiplier: 1.8,  // OPTIMIZED: Balanced timeout for Polygon's variability
+    retryAttempts: 3,        // INCREASED: More retries for Polygon's occasional issues
+    retryDelay: 1500,        // OPTIMIZED: 1.5s retry delay
+    gasMultiplier: 1.15,     // OPTIMIZED: 15% gas buffer for reliability
   },
   
   cache: {
-    staleTime: 15000,        // AGGRESSIVE: From 45s to 15s (much fresher data)
-    gcTime: 30000,           // AGGRESSIVE: From 90s to 30s
-    userStaleTime: 10000,    // AGGRESSIVE: From 30s to 10s
-    userGcTime: 20000,       // AGGRESSIVE: From 60s to 20s
-    invalidationDelay: 0,    // IMMEDIATE: Changed from 500ms to 0ms for instant UI updates
-    maxPages: 8,             // INCREASED: From 5 to 8 (keep more in memory)
+    staleTime: 25000,        // OPTIMIZED: 25 seconds - balanced freshness
+    gcTime: 60000,           // OPTIMIZED: 1 minute GC
+    userStaleTime: 15000,    // OPTIMIZED: 15 seconds for user data
+    userGcTime: 30000,       // OPTIMIZED: 30 seconds user GC
+    invalidationDelay: 200,  // OPTIMIZED: 200ms delay prevents race conditions
+    maxPages: 6,             // OPTIMIZED: Reduced to prevent memory pressure
   },
   
   nft: {
-    scanTimeout: 15000,      // AGGRESSIVE: From 25s to 15s
-    chunkSize: 30000n,       // INCREASED: From 20000n to 30000n (larger chunks)
-    maxChunks: 10,           // INCREASED: From 8 to 10
-    targetCount: 20,         // INCREASED: From 15 to 20
-    metadataTimeout: 8000,   // AGGRESSIVE: From 15s to 8s
+    scanTimeout: 20000,      // OPTIMIZED: 20 seconds - more realistic for Polygon
+    chunkSize: 25000n,       // OPTIMIZED: 25k blocks - balanced chunk size
+    maxChunks: 8,            // OPTIMIZED: 8 chunks max
+    targetCount: 15,         // OPTIMIZED: 15 NFTs target
+    metadataTimeout: 12000,  // OPTIMIZED: 12 seconds for metadata
   },
   
   rpc: {
-    healthCheckInterval: 30000,  // REDUCED: From 20s to 30s (less frequent, less overhead)
-    failureThreshold: 3,         // INCREASED: From 2 to 3 (more tolerant)
-    recoveryTime: 60000,         // AGGRESSIVE: From 120s to 60s (1 minute recovery)
+    healthCheckInterval: 45000,  // OPTIMIZED: 45 seconds - less frequent checks
+    failureThreshold: 4,         // INCREASED: More tolerant of temporary failures
+    recoveryTime: 90000,         // OPTIMIZED: 90 seconds recovery time
   },
 };
 
@@ -208,7 +208,7 @@ export const CHAIN_CONFIGS: Partial<Record<ChainId, ChainConfiguration>> = {
  */
 export function getChainConfig(chainId: number | undefined): ChainConfiguration {
   if (!chainId || !CHAIN_CONFIGS[chainId as ChainId]) {
-    console.warn(`Unknown chain ID: ${chainId}, falling back to ApeChain config`);
+    console.log(`⚠️ Unknown chain ID: ${chainId}, falling back to ApeChain config`);
     return CHAIN_CONFIGS[CHAIN_IDS.APECHAIN_MAINNET]!;
   }
   
