@@ -146,7 +146,7 @@ export function useUserRafflePositionsV4(userAddress?: string) {
   };
 
   const { data: positions, isLoading: loading, error, refetch } = useQuery({
-    queryKey: ['positions-v4', resolvedAddress, chainId],
+    queryKey: ['positions-v4', resolvedAddress?.toLowerCase() || 'disconnected', chainId],
     queryFn: async () => {
       if (!resolvedAddress || !chainId) throw new Error('Missing required parameters');
 
@@ -204,7 +204,7 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
   const optimizedFetchLimit = chainId === 137 ? 15 : 30; // Much smaller for Polygon
 
   const infiniteQuery = useInfiniteQuery({
-    queryKey: ['created-infinite-v4', chainId, resolvedAddress],
+    queryKey: ['created-infinite-v4', chainId, resolvedAddress?.toLowerCase() || 'disconnected'],
     queryFn: async ({ pageParam = 0 }) => {
       if (!dataFetcher.isReady || !resolvedAddress) {
         throw new Error('Missing required parameters');
