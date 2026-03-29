@@ -178,7 +178,7 @@ export function useRaffleDataFetcher() {
     }
   }, [publicClient, chainId]);
 
-  // Get all raffles from both V3 and V4 factories with AGGRESSIVE optimization
+  // Get all raffles from both V3 and V4 factories with DETERMINISTIC fetching
   const fetchAllRaffles = useCallback(async (options: RaffleDataFetcherOptions = {}): Promise<RaffleInfo[]> => {
     if (!publicClient || !chainId) {
       throw new Error('Public client or chain ID not available');
@@ -196,19 +196,41 @@ export function useRaffleDataFetcher() {
     
     const allRaffles: RaffleInfo[] = [];
     
-    // Get V4 raffles first (priority)
+    // DETERMINISTIC APPROACH: Always fetch the same amount from each factory
+    // This prevents reload inconsistencies caused by variable V4 results
+    
+    const factoryPromises: Promise<RaffleInfo[]>[] = [];
+    
+    // Get V4 raffles (priority)
     if (includeV4 && isV4Available(chainId)) {
       const v4Address = getRaffleFactoryAddress(chainId, true);
-      const v4Raffles = await getRafflesFromFactory(v4Address, 'v4', optimizedLimit, offset);
-      allRaffles.push(...v4Raffles);
+      factoryPromises.push(
+        getRafflesFromFactory(v4Address, 'v4', optimizedLimit, offset)
+          .catch(error => {
+            console.warn('V4 factory fetch failed:', error);
+            return [];
+          })
+      );
     }
     
-    // Only get V3 raffles if we don't have enough V4 raffles or if specifically requested
-    if (includeV3 && (allRaffles.length < optimizedLimit || !includeV4)) {
+    // Get V3 raffles (always fetch same amount for consistency)
+    if (includeV3) {
       const v3Address = getRaffleFactoryAddress(chainId, false);
-      const remainingLimit = includeV4 ? optimizedLimit - allRaffles.length : optimizedLimit;
-      const v3Raffles = await getRafflesFromFactory(v3Address, 'v3', remainingLimit, offset);
-      allRaffles.push(...v3Raffles);
+      factoryPromises.push(
+        getRafflesFromFactory(v3Address, 'v3', optimizedLimit, offset)
+          .catch(error => {
+            console.warn('V3 factory fetch failed:', error);
+            return [];
+          })
+      );
+    }
+    
+    // Fetch from all factories in parallel for consistent results
+    const factoryResults = await Promise.all(factoryPromises);
+    
+    // Combine all results
+    for (const raffles of factoryResults) {
+      allRaffles.push(...raffles);
     }
     
     // Remove duplicates based on unique contract address + raffle ID combination
@@ -219,11 +241,11 @@ export function useRaffleDataFetcher() {
       )
     );
     
-    // Sort by creation time (newest first) and limit results
+    // Sort by creation time (newest first) and limit results DETERMINISTICALLY
     return uniqueRaffles
       .sort((a, b) => b.endTime - a.endTime)
       .slice(0, optimizedLimit);
-  }, [publicClient, chainId, chainConfig]);
+  }, [publicClient, chainId, getRafflesFromFactory]);
 
   // Get user tickets for a specific raffle
   const getUserTickets = useCallback(async (raffleContract: string, userAddress: string): Promise<number> => {
