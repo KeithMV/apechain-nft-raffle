@@ -3,7 +3,7 @@ import { useAccount, useChainId } from 'wagmi';
 import ParticipatedRaffleCard from './ParticipatedRaffleCard';
 import CreatedRaffleCard from './CreatedRaffleCard';
 import { appToast } from '../utils/toast';
-import { useUserRafflePositionsV4, useInfiniteCreatedRafflesV4, useClearRaffleCacheV4 } from '../hooks/useRafflePositionsV4';
+import { useParticipatedRaffles, useCreatedRaffles } from '../hooks/useUnifiedRaffleData';
 import { useOptimizedCancelRaffle } from '../hooks/useOptimizedTransactionManager';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { useNetwork } from '../contexts/NetworkContext';
@@ -24,18 +24,19 @@ export default function RaffleDashboard() {
   const [activeTab, setActiveTab] = useState<'participated' | 'created'>('participated');
   const [showExpired, setShowExpired] = useState(true);
   
-  // PHASE 2: Let hooks handle wallet state internally - don't pass address
-  const { positions: userPositions, loading: positionsLoading, refetch: refetchPositions } = useUserRafflePositionsV4();
+  // PHASE 2: Use unified hooks with automatic wallet state handling
+  const { raffles: userPositions, loading: positionsLoading, refetch: refetchPositions } = useParticipatedRaffles();
   const {
     raffles: createdRaffles,
     loading: rafflesLoading,
     refetch: refetchCreatedRaffles,
     fetchNextPage: fetchNextCreatedPage,
     hasNextPage: hasNextCreatedPage,
-    isFetchingNextPage: isFetchingNextCreatedPage,
-    pageCount: createdPageCount
-  } = useInfiniteCreatedRafflesV4();
-  const clearCache = useClearRaffleCacheV4();
+    isFetchingNextPage: isFetchingNextCreatedPage
+  } = useCreatedRaffles(undefined, { infinite: true });
+  
+  // Calculate page count from raffles length
+  const createdPageCount = Math.ceil(createdRaffles.length / 15);
   
   // 🚨 CRITICAL FIX: Only show counts when BOTH hooks are fully loaded
   const bothHooksLoaded = !positionsLoading && !rafflesLoading;
@@ -62,13 +63,11 @@ export default function RaffleDashboard() {
       },
       userPositionsData: userPositions.map(p => ({
         raffleId: p.raffleId,
-        raffleContract: p.raffleContract,
-        version: p.version
+        raffleContract: p.raffleContract
       })),
       createdRafflesData: createdRaffles.map(r => ({
         raffleId: r.raffleId,
-        raffleContract: r.raffleContract,
-        version: r.version
+        raffleContract: r.raffleContract
       }))
     };
     
@@ -115,22 +114,19 @@ export default function RaffleDashboard() {
   const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
   const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
   
-  // Force refresh when network changes - use useRef to track previous chainId
+  // Force refresh when network changes - simplified without cache clearing
   const prevChainIdRef = useRef<number | undefined>(undefined);
   
   useEffect(() => {
     // Only run if chainId actually changed
     if (prevChainIdRef.current !== undefined && prevChainIdRef.current !== chainId) {
-      console.log('🔄 Network changed, clearing cache and refreshing dashboard data for chainId:', chainId);
-      clearCache(); // Clear cache first
-      setTimeout(() => {
-        refetchPositions();
-        refetchCreatedRaffles();
-      }, 100); // Small delay to ensure cache is cleared
-      // No pagination reset needed for infinite queries
+      console.log('🔄 Network changed, refreshing dashboard data for chainId:', chainId);
+      // Direct refetch - unified hooks handle cache invalidation automatically
+      refetchPositions();
+      refetchCreatedRaffles();
     }
     prevChainIdRef.current = chainId;
-  }, [chainId, clearCache, refetchPositions, refetchCreatedRaffles]);
+  }, [chainId, refetchPositions, refetchCreatedRaffles]);
   
   // Auto-refresh when raffle is cancelled
   useEffect(() => {
@@ -461,15 +457,32 @@ export default function RaffleDashboard() {
                   <p className={`${styles.textSecondary} font-mono`}>{showExpired ? "You haven't participated in any raffles yet" : "No active or completed raffles to show"}</p>
                 </div>
               ) : (
-                filteredPositions.map((position, index: number) => (
-                  <ParticipatedRaffleCard
-                    key={`${position.raffleContract}-${position.raffleId}-${position.version}-${index}`}
-                    position={position}
-                    styles={styles}
-                    isApeChain={isApeChain}
-                    formatTimeRemaining={formatTimeRemaining}
-                  />
-                ))
+                filteredPositions.map((position, index: number) => {
+                  // Transform RaffleData to UserRafflePosition
+                  const transformedPosition = {
+                    raffleId: position.raffleId,
+                    raffleContract: position.raffleContract,
+                    nftContract: position.nftContract,
+                    tokenId: position.tokenId,
+                    userTickets: position.userTickets || 0,
+                    ticketsSold: position.ticketsSold,
+                    maxTickets: position.maxTickets,
+                    endTime: position.endTime,
+                    isWinner: position.isWinner || false,
+                    completed: position.completed,
+                    isActive: position.isActive,
+                  };
+                  
+                  return (
+                    <ParticipatedRaffleCard
+                      key={`${position.raffleContract}-${position.raffleId}-${index}`}
+                      position={transformedPosition}
+                      styles={styles}
+                      isApeChain={isApeChain}
+                      formatTimeRemaining={formatTimeRemaining}
+                    />
+                  );
+                })
               )}
             </div>
           ) : (
@@ -486,7 +499,7 @@ export default function RaffleDashboard() {
                 ) : (
                   filteredRaffles.map((raffle: any, index: number) => (
                     <CreatedRaffleCard
-                      key={`${raffle.raffleContract}-${raffle.raffleId}-${raffle.version}-${index}`}
+                      key={`${raffle.raffleContract}-${raffle.raffleId}-${index}`}
                       raffle={raffle}
                       styles={styles}
                       isApeChain={isApeChain}

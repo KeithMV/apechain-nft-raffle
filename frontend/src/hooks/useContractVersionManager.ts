@@ -5,11 +5,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useChainId } from 'wagmi';
-import { getRaffleFactoryAddress, isV4Available, getRateLimit } from '../config/addresses';
+import { getFactoryAddress, getChainConfig } from '../config/simplified-addresses';
 
 export interface VersionConfig {
   v4Available: boolean;
-  currentVersion: 'v3' | 'v4';
+  currentVersion: 'v4';
   factoryAddress: string;
   rateLimit: number;
   rateLimitText: string;
@@ -22,64 +22,55 @@ export interface ContractAddresses {
 
 export function useContractVersionManager() {
   const chainId = useChainId();
-  const [v4Available, setV4Available] = useState(false);
-  const [currentVersion, setCurrentVersion] = useState<'v3' | 'v4'>('v3');
-
-  // Update version info when chain changes
-  useEffect(() => {
-    const checkV4 = isV4Available(chainId);
-    setV4Available(checkV4);
-    setCurrentVersion(checkV4 ? 'v4' : 'v3');
-  }, [chainId]);
+  
+  // Always V4 now - simplified
+  const currentVersion = 'v4' as const;
+  const v4Available = true;
 
   // Memoized version configuration
   const versionConfig = useMemo((): VersionConfig => {
-    const factoryAddress = getRaffleFactoryAddress(chainId, currentVersion === 'v4');
-    const rateLimit = getRateLimit(currentVersion === 'v4');
+    const chainConfig = getChainConfig(chainId);
     
     return {
-      v4Available,
-      currentVersion,
-      factoryAddress,
-      rateLimit,
-      rateLimitText: currentVersion === 'v4' ? '10 seconds' : '5 minutes'
-    };
-  }, [chainId, v4Available, currentVersion]);
-
-  // Get factory address for current version
-  const getFactoryAddress = useMemo(() => {
-    return (forceVersion?: 'v3' | 'v4'): ContractAddresses => {
-      const version = forceVersion || currentVersion;
-      const isV4 = version === 'v4';
-      
-      return {
-        factoryAddress: getRaffleFactoryAddress(chainId, isV4),
-        isV4
-      };
-    };
-  }, [chainId, currentVersion]);
-
-  // Check if specific version is available
-  const isVersionAvailable = useMemo(() => {
-    return (version: 'v3' | 'v4'): boolean => {
-      if (version === 'v3') return true; // V3 always available
-      return isV4Available(chainId);
+      v4Available: true,
+      currentVersion: 'v4',
+      factoryAddress: chainConfig.factory,
+      rateLimit: chainConfig.rateLimit,
+      rateLimitText: `${chainConfig.rateLimit} seconds`
     };
   }, [chainId]);
 
-  // Get rate limit info for version
-  const getRateLimitInfo = useMemo(() => {
-    return (version?: 'v3' | 'v4') => {
-      const targetVersion = version || currentVersion;
-      const rateLimit = getRateLimit(targetVersion === 'v4');
+  // Get factory address for current version (always V4)
+  const getFactoryAddress = useMemo(() => {
+    return (): ContractAddresses => {
+      const chainConfig = getChainConfig(chainId);
       
       return {
-        rateLimit,
-        rateLimitText: targetVersion === 'v4' ? '10 seconds' : '5 minutes',
-        version: targetVersion
+        factoryAddress: chainConfig.factory,
+        isV4: true
       };
     };
-  }, [currentVersion]);
+  }, [chainId]);
+
+  // Check if specific version is available (always true for V4)
+  const isVersionAvailable = useMemo(() => {
+    return (version: 'v3' | 'v4'): boolean => {
+      return version === 'v4'; // Only V4 supported now
+    };
+  }, []);
+
+  // Get rate limit info for version (always V4)
+  const getRateLimitInfo = useMemo(() => {
+    return () => {
+      const chainConfig = getChainConfig(chainId);
+      
+      return {
+        rateLimit: chainConfig.rateLimit,
+        rateLimitText: `${chainConfig.rateLimit} seconds`,
+        version: 'v4' as const
+      };
+    };
+  }, [chainId]);
 
   return {
     // Current version info

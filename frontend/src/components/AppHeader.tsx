@@ -79,6 +79,9 @@ export const AppHeader: React.FC = () => {
                 <NavigationLink to="/browse" currentPage={currentPage} isApeChain={isApeChain}>
                   BROWSE
                 </NavigationLink>
+                <NavigationLink to="/test-unified" currentPage={currentPage} isApeChain={isApeChain}>
+                  🧪 TEST
+                </NavigationLink>
               </nav>
             )}
           </div>
