@@ -15,6 +15,19 @@ vi.mock('../../config/addresses', () => ({
   getRaffleFactoryAddress: vi.fn(() => '0x1234567890123456789012345678901234567890'),
   isV4Available: vi.fn(() => true),
   getRateLimit: vi.fn(() => 10),
+  getChainConfig: vi.fn(() => ({
+    chainId: 33139,
+    name: 'ApeChain',
+    factory: '0x1234567890123456789012345678901234567890',
+    template: '0x1234567890123456789012345678901234567890',
+    version: 'v4',
+    rateLimit: 10,
+    rpcUrl: 'https://apechain.calderachain.xyz/http',
+    explorerUrl: 'https://apescan.io',
+    nativeCurrency: 'APE'
+  })),
+  getFactoryAddress: vi.fn(() => '0x1234567890123456789012345678901234567890'),
+  isSupportedChain: vi.fn(() => true),
 }))
 
 // Mock cache invalidation
