@@ -180,7 +180,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
             maxPriorityFeePerGas: BigInt('30000000000'), // 30 gwei priority
           },
           'create-raffle': {
-            gasLimit: BigInt(400000),              // Optimized for complex creation
+            gasLimit: BigInt(650000),              // Increased for complex creation (was 400000)
             maxFeePerGas: BigInt('150000000000'),  // 150 gwei ceiling (~$0.12)
             maxPriorityFeePerGas: BigInt('40000000000'), // 40 gwei priority
           },

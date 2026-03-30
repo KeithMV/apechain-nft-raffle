@@ -258,6 +258,10 @@ export interface ChainConfiguration {
   nft: {
     batchSize: number;
     retryDelay: number;
+    scanTimeout: number;
+    chunkSize: bigint;
+    maxChunks: number;
+    targetCount: number;
   };
   rpc: {
     timeout: number;
@@ -296,6 +300,10 @@ export const getChainConfig = (chainId?: number): ChainConfiguration => {
     nft: {
       batchSize: 10,
       retryDelay: settings.retryDelay,
+      scanTimeout: 30000, // 30s timeout for NFT API calls
+      chunkSize: chainId === 137 ? 1000n : 2000n, // Smaller chunks for Polygon
+      maxChunks: chainId === 137 ? 5 : 10, // Fewer chunks for Polygon
+      targetCount: chainId === 137 ? 20 : 50, // Fewer NFTs for Polygon
     },
     rpc: {
       timeout: 10000,
