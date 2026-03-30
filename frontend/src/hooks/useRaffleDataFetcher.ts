@@ -200,8 +200,8 @@ export function useRaffleDataFetcher() {
       includeV4 = true
     } = options;
 
-    // POLYGON OPTIMIZATION: Reduce limit for faster loading
-    const optimizedLimit = currentChainId === 137 ? Math.min(limit, 10) : limit;
+    // EMERGENCY: Drastically reduce Polygon limit to stop RPC spam
+    const optimizedLimit = currentChainId === 137 ? Math.min(limit, 3) : limit;
     
     const allRaffles: RaffleInfo[] = [];
     
