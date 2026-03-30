@@ -30,7 +30,3 @@ export { default as MobileBanner } from './MobileBanner';
 
 // Wallet Components
 // Note: Using WalletConnection.tsx as the unified wallet component
-
-// Debug Components
-export { default as PolygonNFTDebugger } from './PolygonNFTDebugger';
-export { default as PolygonNFTTestPage } from './PolygonNFTTestPage';
