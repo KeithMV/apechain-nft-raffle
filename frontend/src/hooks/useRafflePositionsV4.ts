@@ -4,11 +4,10 @@
  */
 
 import { useChainId, useAccount, usePublicClient } from 'wagmi';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useRaffleDataFetcher, RaffleInfo } from './useRaffleDataFetcher';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { useRafflePositionProcessor } from './useRafflePositionProcessor';
-import { useAsyncCachedLoader } from './useAsyncCachedLoader';
 import { getRaffleFactoryAddress, isV4Available } from '../config/addresses';
 import { RAFFLE_FACTORY_ABI } from '../config/contracts';
 import { debounce, processBatch } from '../utils/performance';

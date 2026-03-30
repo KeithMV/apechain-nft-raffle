@@ -23,11 +23,7 @@ export type { CacheOptions } from './cache';
 
 // Batch processing utilities
 export {
-  processBatch,
-  processConcurrent,
-  processChunks,
-  processBatchWithRetry,
-  BatchQueue
+  processBatch
 } from './batch';
 
 export type { BatchOptions } from './batch';

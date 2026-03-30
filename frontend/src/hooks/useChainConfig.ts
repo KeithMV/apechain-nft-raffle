@@ -38,36 +38,3 @@ export function useChainConfig() {
     },
   };
 }
-
-/**
- * Legacy compatibility - gradually replace these with useChainConfig
- */
-export const getChainCacheConfig = (chainId: number | undefined) => {
-  const config = getChainConfig(chainId);
-  return {
-    staleTime: config.cache.staleTime,
-    gcTime: config.cache.gcTime,
-    userStaleTime: config.cache.userStaleTime,
-    userGcTime: config.cache.userGcTime,
-    invalidationDelay: config.cache.invalidationDelay,
-  };
-};
-
-export const getChainBatchConfig = (chainId: number | undefined) => {
-  const config = getChainConfig(chainId);
-  return {
-    contractBatchSize: config.batch.contractSize,
-    contractDelay: config.batch.contractDelay,
-    raffleBatchSize: config.batch.raffleSize,
-    raffleDelay: config.batch.raffleDelay,
-  };
-};
-
-export const getChainTransactionConfig = (chainId: number | undefined) => {
-  const config = getChainConfig(chainId);
-  return {
-    timeoutMultiplier: config.transaction.timeoutMultiplier,
-    nftBatchSize: config.nft.batchSize,
-    nftRetryDelay: config.nft.retryDelay,
-  };
-};
