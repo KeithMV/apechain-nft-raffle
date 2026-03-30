@@ -4,7 +4,6 @@
  */
 
 import { getChainConfig } from '../config/chainConfigurations';
-import { getPrimaryRPCURL } from '../config/rpcConfig';
 
 // Define operation types locally since we removed gas oracle
 type OperationType = 'create-raffle' | 'buy-tickets' | 'select-winner' | 'cancel-raffle';

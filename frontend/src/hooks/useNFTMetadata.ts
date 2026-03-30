@@ -178,9 +178,6 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
   const { data: result, isLoading: loading, error } = useQuery({
     queryKey: ['nft-metadata', chainId, contractAddress?.toLowerCase(), tokenId],
     queryFn: async () => {
-      // Add random delay to spread out requests and prevent rate limiting
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 1000));
-      
       // Check optimized cache first
       const cacheKey = `${contractAddress?.toLowerCase()}_${tokenId}`;
       const cached = metadataCache.get(cacheKey);

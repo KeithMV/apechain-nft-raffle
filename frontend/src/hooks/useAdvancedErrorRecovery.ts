@@ -2,7 +2,6 @@ import { useCallback, useRef, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useChainId } from 'wagmi';
 import { useChainConfig } from './useChainConfig';
-import { getPrimaryRPCURL } from '../config/rpcConfig';
 
 interface ErrorPattern {
   type: string;
@@ -66,7 +65,7 @@ export const useAdvancedErrorRecovery = () => {
         backoffMultiplier: 2,
         fallbackAction: async () => {
           // Switch to primary RPC endpoint
-          console.log('Switching to primary RPC:', getPrimaryRPCURL(chainId || 137));
+          console.log('Switching to primary RPC for chain:', chainId);
           queryClient.invalidateQueries({ queryKey: [context, chainId] });
         },
         shouldRetry: (err, attempt) => attempt < 3 && !err.message.includes('user rejected')
@@ -188,7 +187,7 @@ export const useAdvancedErrorRecovery = () => {
         
         // Proactive endpoint switching for network errors
         if (pattern.type.includes('network') || pattern.type.includes('fetch')) {
-          console.log('Network error pattern detected, using primary RPC:', getPrimaryRPCURL(chainId || 137));
+          console.log('Network error pattern detected for chain:', chainId);
         }
       }
     }

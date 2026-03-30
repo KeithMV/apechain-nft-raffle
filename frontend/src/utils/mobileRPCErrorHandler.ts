@@ -3,8 +3,6 @@
  * Prevents cascade failures and infinite retry loops on mobile devices
  */
 
-import { getPrimaryRPCURL } from '../config/rpcConfig';
-
 interface RPCError {
   message: string;
   code?: number;
