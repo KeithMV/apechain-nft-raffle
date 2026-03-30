@@ -26,7 +26,7 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// PHASE 1: Simplified Polygon configuration with Alchemy
+// PHASE 1: Simplified Polygon configuration with Alchemy + Emergency Fallbacks
 export const polygonChain = defineChain({
   id: 137,
   name: 'Polygon',
@@ -38,10 +38,14 @@ export const polygonChain = defineChain({
   rpcUrls: {
     default: {
       http: [
-        // Primary: Your Alchemy endpoint (reliable, paid)
+        // Primary: Your Alchemy endpoint (when not rate limited)
         `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`,
-        // Backup: Simple CORS-friendly public RPC
-        'https://polygon-rpc.com'
+        // Emergency Fallback 1: Public Polygon RPC
+        'https://polygon-rpc.com',
+        // Emergency Fallback 2: Alternative public RPC
+        'https://rpc.ankr.com/polygon',
+        // Emergency Fallback 3: Another reliable public RPC
+        'https://polygon.meowrpc.com'
       ],
     },
   },
@@ -67,13 +71,13 @@ const metadata = {
 // PHASE 2: Chain-specific optimization utilities
 const getChainOptimizedSettings = (chainId: number) => {
   switch (chainId) {
-    case 137: // Polygon - Optimized for congestion and volatility
+    case 137: // Polygon - EMERGENCY: Ultra-conservative settings due to rate limiting
       return {
-        pollingInterval: 8000,        // 8s - Faster than ApeChain (matches 2-3s block times)
-        batchSize: 1024 * 75,         // 75KB - Smaller batches (avoid RPC limits)
-        batchWait: 100,               // 100ms - Longer waits (handle congestion)
-        retryDelay: 2000,             // 2s - Conservative retries (network instability)
-        maxRetries: 3,                // More retries for Polygon's instability
+        pollingInterval: 15000,       // 15s - Much slower polling
+        batchSize: 1024 * 25,         // 25KB - Much smaller batches
+        batchWait: 500,               // 500ms - Much longer waits
+        retryDelay: 5000,             // 5s - Much longer retry delays
+        maxRetries: 2,                // Fewer retries to avoid rate limits
       };
     case 33139: // ApeChain - Keep current working settings
     default:
