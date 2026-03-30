@@ -69,7 +69,7 @@ export default function CreateRafflePage() {
 
   
   const isWrongNetwork = !isApeChain && !isPolygon;
-  // Professional wagmi V4 hooks
+  // Professional wagmi V4 hooks with Polygon optimizations
   const {
     createRaffle,
     isPending: createPending,
@@ -78,18 +78,18 @@ export default function CreateRafflePage() {
     error: createError
   } = useCreateRaffleV4();
 
-  // Handle approval success - immediate cache refresh
+  // Handle approval success - single coordinated cache refresh
   useEffect(() => {
     if (approvalSuccess) {
-      console.log('✅ [APPROVAL] NFT approval successful, refreshing UI immediately');
+      console.log('✅ [APPROVAL] NFT approval successful, coordinated cache refresh');
       
-      // Immediate cache invalidation for approval status
+      // Single coordinated cache invalidation
       quickInvalidate(undefined, chainId);
       
-      // Also refetch NFTs to update approval status
+      // Delayed NFT refetch to ensure cache is cleared first
       setTimeout(() => {
         refetchNFTs();
-      }, 100);
+      }, 500);
     }
   }, [approvalSuccess, quickInvalidate, chainId, refetchNFTs]);
   
@@ -113,33 +113,35 @@ export default function CreateRafflePage() {
     }
   }, [formData.nftContract, checkApproval]);
 
-  // Handle create raffle success - show success state and redirect
+  // Handle create raffle success - coordinated cache invalidation and redirect
   useEffect(() => {
     if (createSuccess) {
       console.log('✅ Raffle created successfully on chain:', chainId, networkName);
       
-      // IMMEDIATE cache invalidation for raffle creation
-      console.log('🔄 [CREATE] Immediate cache invalidation after raffle creation');
+      // Single coordinated cache invalidation
+      console.log('🔄 [CREATE] Coordinated cache invalidation after raffle creation');
       quickInvalidate(undefined, chainId);
       
-      // Force immediate NFT cache refresh to remove the NFT from display
-      console.log('🔄 [CREATE] Forcing immediate NFT cache refresh after raffle creation');
-      refetchNFTs();
-      
-      // Show success message with chain info
+      // Show success message
       appToast.success(`Raffle created successfully on ${networkName}! Redirecting...`, {
         icon: '🎉',
       });
       
-      // Reset form and clear approval state after a short delay
+      // Coordinated cleanup and redirect
       setTimeout(() => {
+        // Force NFT refresh after cache is cleared
+        refetchNFTs();
+        
+        // Reset form and clear approval state
         setFormData(getInitialFormData());
         clearApprovalState();
         
-        // Navigate to browse raffles page
-        console.log('🔄 Redirecting to browse raffles...');
-        navigate('/browse', { replace: true });
-      }, 2000);
+        // Navigate after everything is cleaned up
+        setTimeout(() => {
+          console.log('🔄 Redirecting to browse raffles...');
+          navigate('/browse', { replace: true });
+        }, 500);
+      }, 1000);
     }
   }, [createSuccess, navigate, clearApprovalState, chainId, networkName, quickInvalidate, refetchNFTs]);
 

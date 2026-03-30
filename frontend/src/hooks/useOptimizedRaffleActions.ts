@@ -143,7 +143,7 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     }
   }, [
     ticketQuantities, 
-    buyTicketsManager.executeTransaction, 
+    buyTicketsManager, 
     isProcessing, 
     addProcessingRaffle, 
     removeProcessingRaffle
@@ -183,7 +183,7 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
       removeProcessingRaffle(raffle.raffleContract);
     }
   }, [
-    winnerSelectionManager.executeTransaction, 
+    winnerSelectionManager, 
     isProcessing, 
     addProcessingRaffle, 
     removeProcessingRaffle

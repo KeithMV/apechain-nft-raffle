@@ -143,7 +143,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
         onError(errorToHandle as Error);
       }
     }
-  }, [error, receiptError, onError, enableToasts]);
+  }, [error, receiptError, onError, enableToasts, isPolygon]);
 
   // Handle confirmation timeout
   useEffect(() => {

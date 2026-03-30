@@ -4,6 +4,7 @@
  */
 
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
+import { useEffect } from 'react';
 import { useContractVersionManager } from './useContractVersionManager';
 import { useOptimizedBuyTickets, useOptimizedCreateRaffle, useOptimizedCancelRaffle } from './useOptimizedTransactionManager';
 import { useContractValidator } from './useContractValidator';
@@ -162,9 +163,14 @@ export function useBuyTickets() {
   const { validateTicketPurchase } = useContractValidator();
   const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
   
-  const handleSuccess = () => invalidateAfterTransaction({ transactionType: 'buy-tickets' });
-  
   const transactionManager = useOptimizedBuyTickets();
+  
+  // Handle success with cache invalidation
+  useEffect(() => {
+    if (transactionManager.isSuccess) {
+      invalidateAfterTransaction({ transactionType: 'buy-tickets' });
+    }
+  }, [transactionManager.isSuccess, invalidateAfterTransaction]);
 
   const buyTickets = async (raffleContract: string, quantity: number, ticketPrice: string, userAddress?: string) => {
     // SECURITY: Validate and sanitize all inputs
@@ -221,9 +227,14 @@ export function useBuyTickets() {
 export function useCancelRaffleV4() {
   const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
   
-  const handleSuccess = () => invalidateAfterTransaction({ transactionType: 'cancel-raffle' });
-  
   const transactionManager = useOptimizedCancelRaffle();
+  
+  // Handle success with cache invalidation
+  useEffect(() => {
+    if (transactionManager.isSuccess) {
+      invalidateAfterTransaction({ transactionType: 'cancel-raffle' });
+    }
+  }, [transactionManager.isSuccess, invalidateAfterTransaction]);
 
   const cancelRaffle = async (raffleContract: string) => {
     // SECURITY: Comprehensive input validation and sanitization
