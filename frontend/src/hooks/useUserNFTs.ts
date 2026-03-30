@@ -57,9 +57,26 @@ async function fetchNFTsViaAPI(
     
     // Transform and verify Lambda response
     const rawNfts = (data.nfts || data.ownedNfts) || [];
-    console.log(`🔍 Lambda proxy returned ${rawNfts.length} NFTs for ${chainName}, verifying ownership...`);
+    console.log(`🔍 Lambda proxy returned ${rawNfts.length} NFTs for ${chainName}`);
+    
+    // DEBUG: Check for duplicates in raw data
+    const seenKeys = new Set<string>();
+    const duplicates: string[] = [];
+    for (const nft of rawNfts) {
+      const key = `${nft.contractAddress}-${nft.tokenId}`;
+      if (seenKeys.has(key)) {
+        duplicates.push(key);
+      }
+      seenKeys.add(key);
+    }
+    if (duplicates.length > 0) {
+      console.warn(`⚠️ Lambda returned ${duplicates.length} duplicate NFTs:`, duplicates.slice(0, 5));
+    }
+    
+    console.log(`🔍 Verifying ownership for ${rawNfts.length} NFTs...`);
     
     const verifiedNfts: UserNFT[] = [];
+    const verificationMap = new Map<string, UserNFT>();
     
     // Verify ownership for each NFT returned by Lambda
     for (let i = 0; i < rawNfts.length; i++) {
@@ -86,22 +103,30 @@ async function fetchNFTsViaAPI(
         
         // Only include if user actually owns it
         if (owner?.toLowerCase() === userAddress.toLowerCase()) {
-          // Only log first few verified NFTs to avoid spam
-          if (verifiedNfts.length < 3) {
-            console.log(`✅ Verified NFT ownership on ${chainName}:`, {
-              contract: nft.contractAddress,
-              tokenId: nft.tokenId,
-              name: nft.name,
-              hasImage: !!nft.image
-            });
-          }
+          const nftKey = `${nft.contractAddress}-${nft.tokenId}`;
           
-          verifiedNfts.push({
-            contractAddress: nft.contractAddress,
-            tokenId: nft.tokenId,
-            name: nft.name || `NFT #${nft.tokenId}`,
-            image: nft.image
-          });
+          // Use Map to prevent duplicates during verification
+          if (!verificationMap.has(nftKey)) {
+            const verifiedNft = {
+              contractAddress: nft.contractAddress,
+              tokenId: nft.tokenId,
+              name: nft.name || `NFT #${nft.tokenId}`,
+              image: nft.image
+            };
+            
+            verificationMap.set(nftKey, verifiedNft);
+            verifiedNfts.push(verifiedNft);
+            
+            // Only log first few verified NFTs to avoid spam
+            if (verifiedNfts.length <= 3) {
+              console.log(`✅ Verified NFT ownership on ${chainName}:`, {
+                contract: nft.contractAddress,
+                tokenId: nft.tokenId,
+                name: nft.name,
+                hasImage: !!nft.image
+              });
+            }
+          }
         }
       } catch (error) {
         // Skip NFTs that fail ownership verification
@@ -110,7 +135,17 @@ async function fetchNFTsViaAPI(
     }
     
     console.log(`✅ Lambda proxy result for ${chainName}: ${rawNfts.length} raw NFTs → ${verifiedNfts.length} verified owned NFTs`);
-    return verifiedNfts;
+    
+    // FINAL DEDUPLICATION: Ensure absolutely no duplicates
+    const finalNfts = Array.from(
+      new Map(verifiedNfts.map(nft => [`${nft.contractAddress}-${nft.tokenId}`, nft])).values()
+    );
+    
+    if (finalNfts.length !== verifiedNfts.length) {
+      console.warn(`⚠️ Removed ${verifiedNfts.length - finalNfts.length} duplicate NFTs in final deduplication`);
+    }
+    
+    return finalNfts;
     
   } catch (error) {
     const chainName = chainId === 137 ? 'Polygon' : chainId === 33139 ? 'ApeChain' : `Chain ${chainId}`;
@@ -194,6 +229,7 @@ async function fetchNFTsOnChain(
 
     // Verify ownership for found NFTs
     const ownedNFTs: UserNFT[] = [];
+    const ownershipMap = new Map<string, UserNFT>();
     const nftsToCheck = Array.from(allNFTs.values()).slice(0, targetCount);
     
     for (const nft of nftsToCheck) {
@@ -212,14 +248,23 @@ async function fetchNFTsOnChain(
         });
         
         if (owner?.toLowerCase() === userAddress.toLowerCase()) {
-          ownedNFTs.push(nft);
+          const nftKey = `${nft.contractAddress}-${nft.tokenId}`;
+          if (!ownershipMap.has(nftKey)) {
+            ownershipMap.set(nftKey, nft);
+            ownedNFTs.push(nft);
+          }
         }
       } catch (error) {
         continue;
       }
     }
 
-    return ownedNFTs;
+    // FINAL DEDUPLICATION for on-chain results
+    const finalOwnedNFTs = Array.from(
+      new Map(ownedNFTs.map(nft => [`${nft.contractAddress}-${nft.tokenId}`, nft])).values()
+    );
+    
+    return finalOwnedNFTs;
     
   } catch (error) {
     console.error('On-chain NFT fetch failed:', error);
@@ -267,13 +312,15 @@ export function useUserNFTs(userAddress: string, chainId: number) {
   }, [userAddress, address, isConnected, isConnecting]);
 
   const { data: nfts = [], isLoading: loading, error, refetch } = useQuery({
-    queryKey: ['user-nfts', resolvedAddress?.toLowerCase(), chainId],
+    queryKey: ['user-nfts-v2', resolvedAddress?.toLowerCase(), chainId], // Updated cache key
     queryFn: () => fetchUserNFTs(publicClient, resolvedAddress!, chainId, nftConfig),
     enabled: Boolean(resolvedAddress && chainId && publicClient && isConnected && !isConnecting),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 2 * 60 * 1000, // Reduced to 2 minutes for testing
+    gcTime: 5 * 60 * 1000, // Reduced to 5 minutes
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    // Force fresh data on mount to clear any cached duplicates
+    refetchOnMount: true,
   });
 
   return {

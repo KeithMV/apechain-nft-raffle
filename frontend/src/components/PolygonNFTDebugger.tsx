@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usePublicClient } from 'wagmi';
 import { SimpleImageProxy } from '../services/SimpleImageProxy';
 
@@ -12,7 +12,7 @@ export default function PolygonNFTDebugger({ contractAddress, tokenId }: Polygon
   const [loading, setLoading] = useState(false);
   const publicClient = usePublicClient();
 
-  const debugNFT = async () => {
+  const debugNFT = useCallback(async () => {
     if (!publicClient || !contractAddress || !tokenId) return;
     
     setLoading(true);
@@ -122,13 +122,13 @@ export default function PolygonNFTDebugger({ contractAddress, tokenId }: Polygon
 
     setDebugInfo(info);
     setLoading(false);
-  };
+  }, [publicClient, contractAddress, tokenId]);
 
   useEffect(() => {
     if (contractAddress && tokenId) {
       debugNFT();
     }
-  }, [contractAddress, tokenId, publicClient]);
+  }, [contractAddress, tokenId, debugNFT]);
 
   return (
     <div className="bg-slate-800 p-4 rounded-lg text-sm font-mono">

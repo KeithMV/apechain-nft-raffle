@@ -118,9 +118,9 @@ export function useRafflePositionProcessor() {
     }
 
     const {
-      maxRafflesToCheck = 50,
-      batchSize = 25,
-      concurrency = 3
+      maxRafflesToCheck = 20,  // REDUCED: Check fewer raffles
+      batchSize = 3,           // REDUCED: Much smaller batches
+      concurrency = 1          // REDUCED: Sequential processing
     } = options;
 
     try {
@@ -141,7 +141,7 @@ export function useRafflePositionProcessor() {
         (_, i) => startIndex + i
       );
       
-      // Process raffles in batches
+      // Process raffles in small batches with delays
       const batchResults = await processBatch(
         indices,
         async (i) => {
@@ -201,7 +201,11 @@ export function useRafflePositionProcessor() {
             return null;
           }
         },
-        { batchSize, maxConcurrent: concurrency }
+        { 
+          batchSize: batchSize, 
+          delay: 150,           // Add 150ms delay between batches
+          maxConcurrent: concurrency 
+        }
       );
       
       // Process results into user positions

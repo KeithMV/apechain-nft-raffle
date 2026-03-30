@@ -178,6 +178,9 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
   const { data: result, isLoading: loading, error } = useQuery({
     queryKey: ['nft-metadata', chainId, contractAddress?.toLowerCase(), tokenId],
     queryFn: async () => {
+      // Add random delay to spread out requests and prevent rate limiting
+      await new Promise(resolve => setTimeout(resolve, Math.random() * 1000));
+      
       // Check optimized cache first
       const cacheKey = `${contractAddress?.toLowerCase()}_${tokenId}`;
       const cached = metadataCache.get(cacheKey);
@@ -197,15 +200,15 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
     enabled: !!publicClient && !!contractAddress && !!tokenId,
     staleTime: 60 * 60 * 1000, // 1 hour - NFT metadata rarely changes
     gcTime: 24 * 60 * 60 * 1000, // 24 hours - keep in memory much longer
-    retry: false, // Disable retries to reduce console spam
-    retryDelay: 2000, // Fixed delay
+    retry: false, // Disable retries to reduce API calls
+    retryDelay: 2000,
     placeholderData: {
       metadata: {
         name: `NFT #${tokenId}`,
         image: '/placeholder-nft.svg',
       }
     },
-    // Prevent excessive requests
+    // CRITICAL: Prevent excessive requests to avoid rate limiting
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,

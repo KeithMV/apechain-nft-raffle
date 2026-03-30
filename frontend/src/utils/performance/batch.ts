@@ -10,29 +10,33 @@ export interface BatchOptions {
 }
 
 /**
- * Memory-efficient batch processor with POLYGON OPTIMIZATION
- * Process items in batches to avoid memory issues
+ * Memory-efficient batch processor with CONSERVATIVE OPTIMIZATION
+ * Process items in small batches with delays to prevent RPC overload
  */
 export async function processBatch<T, R>(
   items: T[],
   processor: (item: T) => Promise<R>,
   options: BatchOptions = {}
 ): Promise<R[]> {
-  const { batchSize = 5, delay = 0 } = options;
-  
-  // POLYGON OPTIMIZATION: Remove delays entirely for faster processing
-  const optimizedDelay = delay > 0 ? Math.min(delay, 2) : 0; // Max 2ms delay
+  const { 
+    batchSize = 3,        // REDUCED: Much smaller batches
+    delay = 100,          // INCREASED: Longer delays between batches
+    maxConcurrent = 2     // REDUCED: Less concurrency
+  } = options;
   
   const results: R[] = [];
   
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
-    const batchResults = await Promise.all(batch.map(processor));
+    
+    // Process batch with limited concurrency
+    const batchPromises = batch.map(processor);
+    const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
     
-    // Only add delay if explicitly requested and not the last batch
-    if (optimizedDelay > 0 && i + batchSize < items.length) {
-      await new Promise(resolve => setTimeout(resolve, optimizedDelay));
+    // Always add delay between batches (except last batch)
+    if (i + batchSize < items.length) {
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
   

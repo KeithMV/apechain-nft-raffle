@@ -3,14 +3,15 @@
  * Combines raffles from both V3 and V4 contracts
  */
 
-import { useChainId, useAccount } from 'wagmi';
+import { useChainId, useAccount, usePublicClient } from 'wagmi';
 import { useCallback, useMemo } from 'react';
 import { useRaffleDataFetcher, RaffleInfo } from './useRaffleDataFetcher';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { useRafflePositionProcessor } from './useRafflePositionProcessor';
 import { useAsyncCachedLoader } from './useAsyncCachedLoader';
 import { getRaffleFactoryAddress, isV4Available } from '../config/addresses';
-import { debounce } from '../utils/performance';
+import { RAFFLE_FACTORY_ABI } from '../config/contracts';
+import { debounce, processBatch } from '../utils/performance';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useChainConfig } from '../hooks/useChainConfig';
 
@@ -138,15 +139,16 @@ export function useUserRafflePositionsV4(userAddress?: string) {
     return userAddress || address;
   }, [userAddress, address, isConnected, isConnecting]);
   
-  // Use centralized cache configuration
+  // PHASE 1: Use IDENTICAL cache configuration for both hooks
   const { config: chainConfig } = useChainConfig();
   const cacheConfig = {
-    userStaleTime: chainConfig.cache.userStaleTime,
-    userGcTime: chainConfig.cache.userGcTime,
+    staleTime: chainConfig.cache.staleTime,
+    gcTime: chainConfig.cache.gcTime,
   };
 
   const { data: positions, isLoading: loading, error, refetch } = useQuery({
-    queryKey: ['positions-v4', resolvedAddress?.toLowerCase() || 'disconnected', chainId],
+    // PHASE 1: Use CONSISTENT query key that matches cache invalidation
+    queryKey: ['positions-v4', chainId, resolvedAddress?.toLowerCase() || 'disconnected'],
     queryFn: async () => {
       if (!resolvedAddress || !chainId) throw new Error('Missing required parameters');
 
@@ -161,7 +163,26 @@ export function useUserRafflePositionsV4(userAddress?: string) {
       const v3Address = getRaffleFactoryAddress(chainId, false);
       factories.push({ address: v3Address, version: 'v3' as const });
       
-      return await getCombinedUserPositions(factories, resolvedAddress);
+      return await getCombinedUserPositions(factories, resolvedAddress, {
+        // 🚨 CRITICAL: Use CONSERVATIVE scanning parameters
+        maxRafflesToCheck: chainId === 137 ? 15 : 25, // REDUCED: Much fewer raffles
+        batchSize: chainId === 137 ? 2 : 3,           // REDUCED: Tiny batches  
+        concurrency: 1,                               // SEQUENTIAL: No parallel processing
+      }).then(positions => {
+        console.log('🔍 [POSITIONS-DEBUG]', {
+          resolvedAddress,
+          chainId,
+          factoryCount: factories.length,
+          positionsFound: positions.length,
+          positionDetails: positions.map(p => ({
+            raffleId: p.raffleId,
+            raffleContract: p.raffleContract,
+            version: p.version,
+            userTickets: p.userTickets
+          }))
+        });
+        return positions;
+      });
     },
     // WEB3 BEST PRACTICE: Multi-condition enabled check
     enabled: Boolean(
@@ -170,8 +191,26 @@ export function useUserRafflePositionsV4(userAddress?: string) {
       isConnected && 
       !isConnecting
     ),
-    staleTime: cacheConfig.userStaleTime,
-    gcTime: cacheConfig.userGcTime,
+    staleTime: cacheConfig.staleTime,
+    gcTime: cacheConfig.gcTime,
+    // PHASE 3: Enhanced error handling and retry logic (matching created raffles)
+    retry: (failureCount, error) => {
+      // Don't retry on wallet disconnection
+      if (error?.message?.includes('Missing required parameters')) {
+        return false;
+      }
+      // Polygon gets more retries due to network instability
+      const maxRetries = chainId === 137 ? 3 : 2;
+      return failureCount < maxRetries;
+    },
+    retryDelay: (attemptIndex) => {
+      // Progressive backoff, longer delays for Polygon
+      const baseDelay = chainId === 137 ? 2000 : 1000;
+      return Math.min(baseDelay * Math.pow(2, attemptIndex), 10000);
+    },
+    // PHASE 3: Prevent background refetches during user interaction
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
   });
 
   return { 
@@ -183,11 +222,11 @@ export function useUserRafflePositionsV4(userAddress?: string) {
 }
 
 
-// PHASE 1: New Infinite Query Hook for Dashboard Created Raffles - WEB3 BEST PRACTICE
+// PHASE 1: New Infinite Query Hook for Dashboard Created Raffles - CONSISTENT APPROACH
 export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number = 15) {
   const { address, isConnected, isConnecting } = useAccount();
   const chainId = useChainId();
-  const dataFetcher = useRaffleDataFetcher();
+  const publicClient = usePublicClient();
   
   // WEB3 BEST PRACTICE: Stable address resolution
   const resolvedAddress = useMemo(() => {
@@ -195,95 +234,243 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
     return userAddress || address;
   }, [userAddress, address, isConnected, isConnecting]);
   
-  // Use centralized cache configuration
+  // PHASE 1: Use IDENTICAL cache configuration as participated raffles
   const { config: chainConfig } = useChainConfig();
-  const staleTime = chainConfig.cache.staleTime;
-  const gcTime = chainConfig.cache.gcTime;
+  const cacheConfig = {
+    staleTime: chainConfig.cache.staleTime,
+    gcTime: chainConfig.cache.gcTime,
+  };
 
-  // POLYGON OPTIMIZATION: Reduce over-fetching
-  const optimizedFetchLimit = chainId === 137 ? 15 : 30; // Much smaller for Polygon
-
-  const infiniteQuery = useInfiniteQuery({
-    queryKey: ['created-infinite-v4', chainId, resolvedAddress?.toLowerCase() || 'disconnected'],
-    queryFn: async ({ pageParam = 0 }) => {
-      if (!dataFetcher.isReady || !resolvedAddress) {
+  const { data: createdRaffles, isLoading: loading, error, refetch } = useQuery({
+    // PHASE 1: Use CONSISTENT query key that matches cache invalidation
+    queryKey: ['created-v4', chainId, resolvedAddress?.toLowerCase() || 'disconnected'],
+    queryFn: async () => {
+      if (!resolvedAddress || !chainId || !publicClient) {
         throw new Error('Missing required parameters');
       }
 
-      // Reduced logging - only log first fetch
-      if (pageParam === 0) console.log(`🔄 [INFINITE-CREATED] Fetching initial page for user ${resolvedAddress}`);
+      console.log(`🔄 [CREATED-RAFFLES] Scanning for created raffles by user ${resolvedAddress}`);
       
-      // CRITICAL FIX: Fetch fewer raffles to reduce over-fetching
-      const allRaffles = await dataFetcher.fetchAllRaffles({ 
-        limit: optimizedFetchLimit, // REDUCED from 30 to 15 for Polygon
-        offset: pageParam * optimizedFetchLimit
+      // Build factory list based on available versions
+      const factories: Array<{ address: string; version: 'v3' | 'v4' }> = [];
+      
+      if (isV4Available(chainId)) {
+        const v4Address = getRaffleFactoryAddress(chainId, true);
+        factories.push({ address: v4Address, version: 'v4' as const });
+      }
+      
+      const v3Address = getRaffleFactoryAddress(chainId, false);
+      factories.push({ address: v3Address, version: 'v3' as const });
+      
+      // PHASE 2: DETERMINISTIC PARALLEL PROCESSING - No more race conditions!
+      const factoryPromises = factories.map(async (factory) => {
+        try {
+          // Get total raffle count
+          const raffleCount = await publicClient.readContract({
+            address: factory.address as `0x${string}`,
+            abi: RAFFLE_FACTORY_ABI,
+            functionName: 'raffleCounter',
+          });
+
+          const totalRaffles = Number(raffleCount);
+          if (totalRaffles === 0) return [];
+
+          // CONSERVATIVE: Fixed scan range for consistency
+          const scanRange = chainId === 137 ? 15 : 25; // REDUCED: Much smaller scan range
+          const startIndex = Math.max(0, totalRaffles - scanRange);
+          const indices = Array.from(
+            { length: totalRaffles - startIndex }, 
+            (_, i) => startIndex + i
+          );
+          
+          // CONSERVATIVE: Very small batch processing
+          const batchConfig = chainId === 137 
+            ? { batchSize: 2, maxConcurrent: 1, delay: 200 } // Very slow for Polygon
+            : { batchSize: 3, maxConcurrent: 1, delay: 100 }; // Slow for ApeChain
+          
+          // Process raffles in deterministic batches
+          const batchResults = await processBatch(
+            indices,
+            async (i) => {
+              try {
+                // Get raffle contract address
+                const raffleContract = await publicClient.readContract({
+                  address: factory.address as `0x${string}`,
+                  abi: RAFFLE_FACTORY_ABI,
+                  functionName: 'getRaffleContract',
+                  args: [BigInt(i)],
+                });
+                
+                // Get raffle info
+                const raffle = await publicClient.readContract({
+                  address: raffleContract as `0x${string}`,
+                  abi: [{
+                    inputs: [],
+                    name: 'getRaffleInfo',
+                    outputs: [{
+                      components: [
+                        { name: 'nftContract', type: 'address' },
+                        { name: 'tokenId', type: 'uint256' },
+                        { name: 'creator', type: 'address' },
+                        { name: 'ticketPrice', type: 'uint256' },
+                        { name: 'maxTickets', type: 'uint256' },
+                        { name: 'ticketsSold', type: 'uint256' },
+                        { name: 'endTime', type: 'uint256' },
+                        { name: 'winner', type: 'address' },
+                        { name: 'completed', type: 'bool' },
+                        { name: 'platformFee', type: 'uint256' }
+                      ],
+                      type: 'tuple'
+                    }],
+                    stateMutability: 'view',
+                    type: 'function'
+                  }],
+                  functionName: 'getRaffleInfo',
+                });
+                
+                // Check if user is the creator
+                if (raffle.creator.toLowerCase() === resolvedAddress.toLowerCase()) {
+                  const now = Date.now() / 1000;
+                  const endTime = Number(raffle.endTime);
+                  const ticketsSold = Number(raffle.ticketsSold);
+                  const maxTickets = Number(raffle.maxTickets);
+                  const isSoldOut = ticketsSold >= maxTickets;
+                  const isActive = now < endTime && !raffle.completed && !isSoldOut;
+                  
+                  return {
+                    raffleId: i,
+                    raffleContract: raffleContract as string,
+                    nftContract: raffle.nftContract,
+                    tokenId: raffle.tokenId.toString(),
+                    creator: raffle.creator,
+                    ticketPrice: (Number(raffle.ticketPrice) / 1e18).toString(),
+                    maxTickets,
+                    ticketsSold,
+                    endTime,
+                    winner: raffle.winner || undefined,
+                    completed: raffle.completed,
+                    isActive,
+                    version: factory.version,
+                    // PHASE 2: Add stable sort key
+                    sortKey: `${factory.version}-${i}`,
+                  };
+                }
+                
+                return null;
+              } catch (err) {
+                console.warn(`Failed to process raffle ${i}:`, err);
+                return null;
+              }
+            },
+            batchConfig
+          );
+          
+          // Filter valid results
+          return batchResults.filter(result => result !== null);
+          
+        } catch (error) {
+          console.error(`Failed to scan factory ${factory.address}:`, error);
+          return [];
+        }
       });
       
-      // Filter by creator and sort by creation time (newest first)
-      const createdRaffles = allRaffles
-        .filter(r => r.creator.toLowerCase() === resolvedAddress.toLowerCase())
-        .sort((a, b) => b.endTime - a.endTime);
+      // PHASE 2: Wait for ALL factories to complete in parallel (deterministic)
+      const factoryResults = await Promise.all(factoryPromises);
       
-      // Only log if found raffles
-      if (createdRaffles.length > 0 && pageParam === 0) {
-        console.log(`📊 [INFINITE-CREATED] Page ${pageParam}: ${createdRaffles.length} created raffles found`);
+      // Combine all results
+      const allCreatedRaffles = factoryResults.flat();
+      
+      // DEDUPLICATION: Remove any duplicate raffles based on contract address + raffle ID
+      const deduplicationMap = new Map<string, any>();
+      const duplicatesFound: string[] = [];
+      
+      for (const raffle of allCreatedRaffles) {
+        const key = `${raffle.raffleContract}-${raffle.raffleId}`;
+        if (deduplicationMap.has(key)) {
+          duplicatesFound.push(key);
+        } else {
+          deduplicationMap.set(key, raffle);
+        }
       }
-      return createdRaffles;
-    },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      // For created raffles, we continue if we got any results
-      // (since filtering might result in fewer items per page)
-      if (lastPage.length === 0) {
-        console.log(`📄 [INFINITE-CREATED] No more created raffles at page ${allPages.length - 1}`);
-        return undefined;
+      
+      if (duplicatesFound.length > 0) {
+        console.warn(`⚠️ [CREATED-RAFFLES] Removed ${duplicatesFound.length} duplicate raffles:`, duplicatesFound.slice(0, 5));
       }
-      return allPages.length;
+      
+      const uniqueCreatedRaffles = Array.from(deduplicationMap.values());
+      
+      // PHASE 2: STABLE DETERMINISTIC SORTING
+      const sortedRaffles = uniqueCreatedRaffles.sort((a, b) => {
+        // Primary sort: endTime (newest first)
+        if (a.endTime !== b.endTime) {
+          return b.endTime - a.endTime;
+        }
+        // Secondary sort: version (v4 first)
+        if (a.version !== b.version) {
+          return a.version === 'v4' ? -1 : 1;
+        }
+        // Tertiary sort: raffleId (highest first)
+        return b.raffleId - a.raffleId;
+      });
+      
+      console.log(`📊 [CREATED-RAFFLES] Found ${uniqueCreatedRaffles.length} unique created raffles (${allCreatedRaffles.length} total before deduplication)`);
+      console.log('🔍 [CREATED-RAFFLES-DEBUG]', {
+        resolvedAddress,
+        chainId,
+        factoryCount: factories.length,
+        totalResults: allCreatedRaffles.length,
+        uniqueResults: uniqueCreatedRaffles.length,
+        sortedResults: sortedRaffles.length,
+        duplicatesRemoved: duplicatesFound.length,
+        raffleDetails: sortedRaffles.map(r => ({
+          raffleId: r.raffleId,
+          creator: r.creator,
+          version: r.version,
+          endTime: r.endTime
+        }))
+      });
+      return sortedRaffles;
     },
     // WEB3 BEST PRACTICE: Multi-condition enabled check
     enabled: Boolean(
-      dataFetcher.isReady && 
       resolvedAddress && 
       chainId && 
       isConnected && 
-      !isConnecting
+      !isConnecting &&
+      publicClient
     ),
-    staleTime,
-    gcTime,
-    maxPages: chainId === 137 ? 3 : 5, // POLYGON: Keep fewer pages in memory
+    staleTime: cacheConfig.staleTime,
+    gcTime: cacheConfig.gcTime,
+    // PHASE 3: Enhanced error handling and retry logic
+    retry: (failureCount, error) => {
+      // Don't retry on wallet disconnection
+      if (error?.message?.includes('Missing required parameters')) {
+        return false;
+      }
+      // Polygon gets more retries due to network instability
+      const maxRetries = chainId === 137 ? 3 : 2;
+      return failureCount < maxRetries;
+    },
+    retryDelay: (attemptIndex) => {
+      // Progressive backoff, longer delays for Polygon
+      const baseDelay = chainId === 137 ? 2000 : 1000;
+      return Math.min(baseDelay * Math.pow(2, attemptIndex), 10000);
+    },
+    // PHASE 3: Prevent background refetches during user interaction
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
   });
 
-  // Flatten and deduplicate created raffles
-  const allCreatedRaffles = useMemo(() => {
-    if (!infiniteQuery.data?.pages) return [];
-    
-    const flattened = infiniteQuery.data.pages.flat();
-    
-    // Remove duplicates based on contract + raffle ID
-    const unique = flattened.filter((raffle, index, self) => 
-      index === self.findIndex(r => 
-        r.raffleContract === raffle.raffleContract && r.raffleId === raffle.raffleId
-      )
-    );
-    
-    // Only log final count once
-    if (unique.length > 0 && !infiniteQuery.isLoading) {
-      console.log(`📊 [INFINITE-CREATED] Total unique created raffles: ${unique.length}`);
-    }
-    return unique;
-  }, [infiniteQuery.data?.pages]);
-
   return {
-    raffles: allCreatedRaffles,
-    loading: infiniteQuery.isLoading || isConnecting, // Include wallet connection loading
-    error: infiniteQuery.error,
-    refetch: infiniteQuery.refetch,
-    // Infinite query specific methods
-    fetchNextPage: infiniteQuery.fetchNextPage,
-    hasNextPage: infiniteQuery.hasNextPage,
-    isFetchingNextPage: infiniteQuery.isFetchingNextPage,
-    // Debug info
-    pageCount: infiniteQuery.data?.pages.length || 0,
+    raffles: createdRaffles || [],
+    loading: loading || isConnecting,
+    error,
+    refetch,
+    // Infinite query compatibility (simplified)
+    fetchNextPage: () => Promise.resolve(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
+    pageCount: 1,
   };
 }
 

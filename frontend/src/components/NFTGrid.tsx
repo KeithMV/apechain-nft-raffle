@@ -16,6 +16,13 @@ interface NFTGridProps {
 }
 
 export default function NFTGrid({ nfts, onSelect, isApeChain = false, loading = false }: NFTGridProps) {
+  // DEBUG: Log NFT data to identify duplicates
+  console.log('🎨 [NFTGrid] Rendering with NFTs:', {
+    count: nfts.length,
+    nfts: nfts.map(nft => `${nft.contractAddress.slice(0,6)}-${nft.tokenId}`),
+    duplicateCheck: nfts.length !== new Set(nfts.map(nft => `${nft.contractAddress}-${nft.tokenId}`)).size
+  });
+  
   const borderColor = isApeChain ? 'border-emerald-400/30' : 'border-blue-400/30';
   const hoverBorder = isApeChain ? 'hover:border-emerald-400' : 'hover:border-blue-400';
   const shadowColor = isApeChain ? 'hover:shadow-emerald-500/20' : 'hover:shadow-blue-500/20';
@@ -78,9 +85,9 @@ export default function NFTGrid({ nfts, onSelect, isApeChain = false, loading = 
       </p>
       
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {nfts.map((nft) => (
+        {nfts.map((nft, index) => (
           <button
-            key={`${nft.contractAddress}-${nft.tokenId}`}
+            key={`${nft.contractAddress}-${nft.tokenId}-${index}`}
             onClick={() => onSelect(nft)}
             className={`group relative border-2 ${borderColor} ${hoverBorder} rounded-xl p-3 transition-all duration-200 ${shadowColor} hover:shadow-lg transform hover:scale-105 bg-slate-900/50 hover:bg-slate-800/70`}
           >

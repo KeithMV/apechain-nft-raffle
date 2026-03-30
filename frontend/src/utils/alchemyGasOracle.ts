@@ -33,35 +33,26 @@ class AlchemyGasOracle {
 
   private constructor() {
     // Create dedicated gas estimation client
-    const gasApiKey = process.env.REACT_APP_ALCHEMY_GAS_KEY;
+    const gasApiKey = process.env.REACT_APP_ALCHEMY_API_KEY; // Use unified API key
     const rpcKey = process.env.REACT_APP_ALCHEMY_API_KEY;
     
-    if (!gasApiKey || gasApiKey === 'your_gas_api_key_here') {
-      console.warn('⚠️ [GAS ORACLE] No dedicated gas API key found, using RPC key');
-      // Fallback to RPC key if gas key not set
-      if (!rpcKey || rpcKey === 'your_api_key_here') {
-        console.error('🚨 [GAS ORACLE] No valid Alchemy API keys found! Gas oracle will use fallback settings.');
-        this.gasClient = null; // Will trigger fallback mode
-        this.config = {
-          cacheDuration: 10000,
-          fallbackGasLimit: 500000n,
-          fallbackMaxFee: parseGwei('300'),
-          fallbackPriorityFee: parseGwei('60'),
-        };
-        return;
-      }
-      
-      this.gasClient = createPublicClient({
-        chain: polygon,
-        transport: http(`https://polygon-mainnet.g.alchemy.com/v2/${rpcKey}`)
-      });
-    } else {
-      this.gasClient = createPublicClient({
-        chain: polygon,
-        transport: http(`https://polygon-mainnet.g.alchemy.com/v2/${gasApiKey}`)
-      });
-      console.log('✅ [GAS ORACLE] Using dedicated Alchemy gas API key');
+    if (!gasApiKey || gasApiKey === 'your_api_key_here') {
+      console.error('🚨 [GAS ORACLE] No valid Alchemy API key found! Gas oracle will use fallback settings.');
+      this.gasClient = null; // Will trigger fallback mode
+      this.config = {
+        cacheDuration: 10000,
+        fallbackGasLimit: 500000n,
+        fallbackMaxFee: parseGwei('300'),
+        fallbackPriorityFee: parseGwei('60'),
+      };
+      return;
     }
+    
+    this.gasClient = createPublicClient({
+      chain: polygon,
+      transport: http(`https://polygon-mainnet.g.alchemy.com/v2/${gasApiKey}`)
+    });
+    console.log('✅ [GAS ORACLE] Using unified Alchemy API key');
 
     this.config = {
       cacheDuration: 10000, // 10 seconds

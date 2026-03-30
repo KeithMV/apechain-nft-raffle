@@ -6,12 +6,12 @@
 import React, { useState, useEffect } from 'react';
 import { useChainConfig } from '../hooks/useChainConfig';
 import { polygonOptimizer } from '../utils/polygonOptimizations';
-import { getHealthyPolygonEndpoints } from '../config/wagmiUnified';
+import { getAllRPCURLs } from '../config/rpcConfig';
 
 export const TransactionOptimizationTest: React.FC = () => {
   const { chainId, isPolygon, isApeChain, config } = useChainConfig();
   const polygonMetrics = polygonOptimizer.getPerformanceMetrics();
-  const healthyEndpoints = getHealthyPolygonEndpoints();
+  const healthyEndpoints = getAllRPCURLs(137);
   
   const [testGasSettings, setTestGasSettings] = useState<any>(null);
   const [testTimeout, setTestTimeout] = useState<number | null>(null);
