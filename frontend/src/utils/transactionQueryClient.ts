@@ -5,7 +5,7 @@
 
 import { QueryClient } from '@tanstack/react-query';
 import { getDeviceType } from '../config/wagmiUnified';
-import { getChainConfig } from '../config/chainConfigurations';
+import { getChainConfig } from '../config/wagmiUnified';
 
 // Transaction-specific cache keys
 export const TRANSACTION_CACHE_KEYS = {

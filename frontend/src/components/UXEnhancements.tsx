@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useChainId } from 'wagmi';
 import { useChainConfig } from '../hooks/useChainConfig';
-import { usePerformanceAnalytics } from '../hooks/usePerformanceAnalytics';
 
 interface SmartLoadingProps {
   isLoading: boolean;
@@ -38,10 +37,13 @@ export const SmartLoading: React.FC<SmartLoadingProps> = ({
 }) => {
   const chainId = useChainId();
   const chainConfig = useChainConfig();
-  const { recordMetric } = usePerformanceAnalytics();
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
   const loadingStartRef = useRef<number | null>(null);
+
+  const recordMetric = (metric: string, value: number, context?: any) => {
+    console.log('Metric recorded:', { metric, value, context });
+  };
 
   // Calculate estimated loading time based on operation and chain
   useEffect(() => {
@@ -76,7 +78,7 @@ export const SmartLoading: React.FC<SmartLoadingProps> = ({
       setShowSkeleton(false);
       setEstimatedTime(null);
     }
-  }, [isLoading, operation, chainId, chainConfig, recordMetric, context]);
+  }, [isLoading, operation, chainId, chainConfig, context]);
 
   if (error) {
     return (
@@ -147,8 +149,11 @@ export const ProgressiveDisclosure: React.FC<ProgressiveDisclosureProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [hasPreloaded, setHasPreloaded] = useState(false);
-  const { trackUserAction } = usePerformanceAnalytics();
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const trackUserAction = (action: string, data?: any) => {
+    console.log('User action tracked:', { action, data });
+  };
 
   // Preload content on hover for high priority items
   const handleMouseEnter = useCallback(() => {
@@ -156,7 +161,7 @@ export const ProgressiveDisclosure: React.FC<ProgressiveDisclosureProps> = ({
       setHasPreloaded(true);
       trackUserAction('progressive_disclosure_hover', { title, priority });
     }
-  }, [priority, preloadContent, hasPreloaded, trackUserAction, title]);
+  }, [priority, preloadContent, hasPreloaded, title]);
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded(prev => {
@@ -168,7 +173,7 @@ export const ProgressiveDisclosure: React.FC<ProgressiveDisclosureProps> = ({
       });
       return newState;
     });
-  }, [trackUserAction, title, priority]);
+  }, [title, priority]);
 
   // Smooth height animation
   useEffect(() => {
@@ -215,9 +220,12 @@ export const AdaptiveUI: React.FC<AdaptiveUIProps> = ({
   children,
   performanceMode = 'auto'
 }) => {
-  const { calculateUXMetrics } = usePerformanceAnalytics();
   const [currentMode, setCurrentMode] = useState(performanceMode);
   const [adaptiveStyles, setAdaptiveStyles] = useState<React.CSSProperties>({});
+
+  const calculateUXMetrics = () => {
+    return { userSatisfactionScore: 85 }; // Mock score
+  };
 
   // Auto-adjust performance mode based on metrics
   useEffect(() => {
@@ -234,7 +242,7 @@ export const AdaptiveUI: React.FC<AdaptiveUIProps> = ({
     } else {
       setCurrentMode(performanceMode);
     }
-  }, [performanceMode, calculateUXMetrics]);
+  }, [performanceMode]);
 
   // Apply adaptive styles based on performance mode
   useEffect(() => {
@@ -286,8 +294,11 @@ export const SmartImage: React.FC<SmartImageProps> = ({
   const [currentSrc, setCurrentSrc] = useState<string>(priority ? src : '');
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const { recordMetric } = usePerformanceAnalytics();
   const imgRef = useRef<HTMLImageElement>(null);
+
+  const recordMetric = (metric: string, value: number, context?: any) => {
+    console.log('Image metric recorded:', { metric, value, context });
+  };
 
   // Intersection Observer for lazy loading
   useEffect(() => {
@@ -312,7 +323,7 @@ export const SmartImage: React.FC<SmartImageProps> = ({
   const handleLoad = useCallback(() => {
     setIsLoading(false);
     recordMetric('image_load_success', 1, { src });
-  }, [recordMetric, src]);
+  }, [src]);
 
   const handleError = useCallback(() => {
     setHasError(true);
@@ -324,7 +335,7 @@ export const SmartImage: React.FC<SmartImageProps> = ({
       setHasError(false);
       setIsLoading(true);
     }
-  }, [recordMetric, src, fallbackSrc, currentSrc]);
+  }, [src, fallbackSrc, currentSrc]);
 
   return (
     <div className={`relative overflow-hidden ${className}`}>

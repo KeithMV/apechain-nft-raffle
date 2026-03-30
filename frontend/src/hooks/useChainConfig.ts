@@ -5,7 +5,7 @@
  */
 
 import { useChainId } from 'wagmi';
-import { getChainConfig, getOperationConfig, isApeChain, isPolygonChain } from '../config/chainConfigurations';
+import { getChainConfig, getOperationConfig, isApeChain, isPolygonChain } from '../config/wagmiUnified';
 
 /**
  * Simple hook to get chain configuration
@@ -67,9 +67,7 @@ export const getChainTransactionConfig = (chainId: number | undefined) => {
   const config = getChainConfig(chainId);
   return {
     timeoutMultiplier: config.transaction.timeoutMultiplier,
-    nftScanTimeout: config.nft.scanTimeout,
-    nftChunkSize: config.nft.chunkSize,
-    nftMaxChunks: config.nft.maxChunks,
-    nftTargetCount: config.nft.targetCount,
+    nftBatchSize: config.nft.batchSize,
+    nftRetryDelay: config.nft.retryDelay,
   };
 };
