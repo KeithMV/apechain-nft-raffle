@@ -3,15 +3,13 @@
  * High-performance transaction hooks with adaptive configurations
  */
 
-import React from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { useContractVersionManager } from './useContractVersionManager';
-import { useOptimizedBuyTickets, useOptimizedSelectWinner, useOptimizedCreateRaffle, useOptimizedCancelRaffle } from './useOptimizedTransactionManager';
+import { useOptimizedBuyTickets, useOptimizedCreateRaffle, useOptimizedCancelRaffle } from './useOptimizedTransactionManager';
 import { useContractValidator } from './useContractValidator';
 import { RAFFLE_FACTORY_ABI, ERC721_ABI, RAFFLE_CONTRACT_ABI } from '../config/contracts';
 import { parseEther } from 'viem/utils';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
-import { MultiChainErrorHandler } from '../utils/multiChainErrorHandler';
 
 // Re-export read hooks for backward compatibility
 export { 
@@ -34,7 +32,6 @@ export interface CreateRaffleParams {
  * Hook for NFT approval transaction (Optimized V4)
  */
 export function useNFTApprovalV4() {
-  const chainId = useChainId();
   const { factoryAddress, currentVersion } = useContractVersionManager();
   const { validateNFTApproval } = useContractValidator();
   const transactionManager = useOptimizedCreateRaffle(); // Use create raffle manager for approvals
@@ -60,7 +57,6 @@ export function useNFTApprovalV4() {
       abi: ERC721_ABI,
       functionName: 'setApprovalForAll',
       args: [factoryAddress as `0x${string}`, true],
-      chainId: chainId,
     });
   };
 
@@ -79,7 +75,6 @@ export function useNFTApprovalV4() {
  * Hook for creating raffle with V4 support and optimized performance
  */
 export function useCreateRaffleV4() {
-  const chainId = useChainId();
   const { factoryAddress, currentVersion, rateLimit, rateLimitText } = useContractVersionManager();
   const { validateRaffleCreation } = useContractValidator();
   const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
@@ -90,8 +85,7 @@ export function useCreateRaffleV4() {
     setTimeout(() => {
       invalidateAfterTransaction({ 
         transactionType: 'create-raffle',
-        immediate: true,
-        chainId: chainId
+        immediate: true
       });
     }, 500);
   };
@@ -146,7 +140,6 @@ export function useCreateRaffleV4() {
         BigInt(params.maxTickets),
         BigInt(params.duration)
       ],
-      chainId: chainId,
     });
   };
 
@@ -166,7 +159,6 @@ export function useCreateRaffleV4() {
  * Hook for buying raffle tickets (Optimized V4)
  */
 export function useBuyTickets() {
-  const chainId = useChainId();
   const { validateTicketPurchase } = useContractValidator();
   const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
   
@@ -202,11 +194,6 @@ export function useBuyTickets() {
     const totalCost = ticketPriceWei * BigInt(quantity);
     
     // Calculate optimistic data for better UX
-    const optimisticData = {
-      raffleId: raffleContract,
-      userAddress,
-      expectedTicketCount: quantity, // This would need to be current + quantity in real implementation
-    };
     
     return await transactionManager.executeTransaction({
       address: raffleContract as `0x${string}`,
@@ -232,7 +219,6 @@ export function useBuyTickets() {
  * Hook for cancelling raffle (Optimized V4)
  */
 export function useCancelRaffleV4() {
-  const chainId = useChainId();
   const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
   
   const handleSuccess = () => invalidateAfterTransaction({ transactionType: 'cancel-raffle' });
@@ -260,7 +246,6 @@ export function useCancelRaffleV4() {
       address: raffleContract as `0x${string}`,
       abi: RAFFLE_CONTRACT_ABI,
       functionName: 'cancelRaffle',
-      chainId: chainId,
     });
   };
 

@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import toast from 'react-hot-toast';
-import { getProgressiveTimeout, optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
+import { optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { useChainConfig } from '../hooks/useChainConfig';
 
@@ -48,15 +48,15 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
   } = config;
 
   // Use centralized chain configuration
-  const { chainId, getOperationTimeout, getOperationRetries, invalidationDelay, isPolygon } = useChainConfig();
+  const { chainId, getOperationTimeout, invalidationDelay, isPolygon } = useChainConfig();
   
-  const { writeContractAsync, data: hash, error, isPending: wagmiPending } = useWriteContract();
+  const { writeContractAsync, data: hash, error } = useWriteContract();
   const [attempt, setAttempt] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastContractCall, setLastContractCall] = useState<any>(null);
   
   // Unified cache invalidation
-  const { invalidateAfterTransaction, quickInvalidate } = useUnifiedCacheInvalidation();
+  const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
   
   // Use centralized timeout configuration
   const baseTimeout = getOperationTimeout(transactionType);

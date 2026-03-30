@@ -1,14 +1,6 @@
 import React from 'react';
 import { usePlatformFeeV4 } from '../hooks/useRaffleContractV4';
 
-// Fee tier definitions
-const FEE_TIERS = {
-  PROMOTIONAL: { basisPoints: 100, percentage: 1, label: 'Promotional', color: 'green', useCase: 'Launch campaigns & special events' },
-  COMPETITIVE: { basisPoints: 500, percentage: 5, label: 'Competitive', color: 'blue', useCase: 'Market standard pricing' },
-  STANDARD: { basisPoints: 1000, percentage: 10, label: 'Standard', color: 'gray', useCase: 'Balanced revenue model' },
-  PREMIUM: { basisPoints: 2000, percentage: 20, label: 'Premium', color: 'purple', useCase: 'Exclusive high-value events' },
-} as const;
-
 interface FeeDisplayProps {
   totalAmount?: number;
   showBreakdown?: boolean;
