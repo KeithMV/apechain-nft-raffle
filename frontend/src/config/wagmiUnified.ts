@@ -38,7 +38,7 @@ export const polygonChain = defineChain({
   rpcUrls: {
     default: {
       http: [
-        // Primary: Your Alchemy endpoint (when not rate limited)
+        // Primary: Your Alchemy endpoint
         `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`,
         // Emergency Fallback 1: Public Polygon RPC
         'https://polygon-rpc.com',
