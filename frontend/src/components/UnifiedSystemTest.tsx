@@ -5,8 +5,8 @@
 
 import React from 'react';
 import { useChainId } from 'wagmi';
-import { useAllRaffles, useCreatedRaffles, useParticipatedRaffles } from '../hooks/useUnifiedRaffleData';
-import { getChainConfig, isSupportedChain } from '../config/simplified-addresses';
+import { useAllRaffles, useCreatedRaffles, useParticipatedRaffles } from '../hooks/useRaffleData';
+import { getChainConfig, isSupportedChain } from '../config/addresses';
 
 export default function UnifiedSystemTest() {
   const chainId = useChainId();

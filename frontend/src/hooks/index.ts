@@ -16,12 +16,13 @@ export {
   useRateLimitChecker
 } from './useRaffleContractV4';
 
-// V4 Position Hooks
+// Unified Raffle Data Hooks
 export { 
-  useUserRafflePositionsV4, 
-  useCreatedRafflesV4, 
-  useAllRafflesV4 
-} from './useRafflePositionsV4';
+  useAllRaffles,
+  useCreatedRaffles,
+  useParticipatedRaffles,
+  useRaffleData
+} from './useRaffleData';
 
 // Transaction Managers
 export { 
@@ -38,6 +39,5 @@ export { useOptimizedRaffleActions } from './useOptimizedRaffleActions';
 export { useApeBalance, useApeDecimals, useApeSymbol, apeTokenUtils } from './useApeToken';
 
 // Utility Hooks
-export { useRaffleDataFetcher } from './useRaffleDataFetcher';
 export { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 export { useChainConfig } from './useChainConfig';

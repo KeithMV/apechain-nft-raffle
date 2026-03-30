@@ -3,7 +3,7 @@ import { useAccount, useChainId } from 'wagmi';
 import ParticipatedRaffleCard from './ParticipatedRaffleCard';
 import CreatedRaffleCard from './CreatedRaffleCard';
 import { appToast } from '../utils/toast';
-import { useParticipatedRaffles, useCreatedRaffles } from '../hooks/useUnifiedRaffleData';
+import { useParticipatedRaffles, useCreatedRaffles } from '../hooks/useRaffleData';
 import { useOptimizedCancelRaffle } from '../hooks/useOptimizedTransactionManager';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { useNetwork } from '../contexts/NetworkContext';
