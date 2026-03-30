@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount, useChainId } from 'wagmi';
 import RaffleCard, { CreatedRaffle } from './RaffleCard';
 import RaffleFilters from './RaffleFilters';
-import { useInfiniteAllRafflesV4 } from '../hooks/useRafflePositionsV4';
+import { useAllRaffles } from '../hooks/useUnifiedRaffleData';
 import { useOptimizedRaffleActions } from '../hooks/useOptimizedRaffleActions';
 // Phase 10: Enhanced performance utilities
 import { throttle, measureSync } from '../utils/performance';
@@ -54,9 +54,14 @@ export default function BrowseRaffles() {
     refetch,
     fetchNextPage,
     hasNextPage,
-    isFetchingNextPage,
-    pageCount
-  } = useInfiniteAllRafflesV4(BATCH_SIZE);
+    isFetchingNextPage
+  } = useAllRaffles({ 
+    infinite: true, 
+    limit: BATCH_SIZE 
+  });
+  
+  // Calculate page count from raffles length
+  const pageCount = Math.ceil(raffles.length / BATCH_SIZE);
   
   // Listen for cache invalidation events to trigger refetch
   useEffect(() => {

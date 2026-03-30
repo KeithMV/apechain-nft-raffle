@@ -13,6 +13,7 @@ const CreateRafflePage = lazy(() => import('./CreateRafflePage'));
 const RaffleDashboard = lazy(() => import('./RaffleDashboard'));
 const BrowseRaffles = lazy(() => import('./BrowseRaffles'));
 const PolygonNFTTestPage = lazy(() => import('./PolygonNFTTestPage'));
+const UnifiedSystemTest = lazy(() => import('./UnifiedSystemTest'));
 
 // Optimized loading fallback with memoization
 const LoadingFallback = React.memo(() => (
@@ -59,6 +60,13 @@ export const AppRoutes: React.FC = () => {
         <ErrorBoundary>
           <LazyWrapper>
             <PolygonNFTTestPage />
+          </LazyWrapper>
+        </ErrorBoundary>
+      } />
+      <Route path="/test-unified" element={
+        <ErrorBoundary>
+          <LazyWrapper>
+            <UnifiedSystemTest />
           </LazyWrapper>
         </ErrorBoundary>
       } />
