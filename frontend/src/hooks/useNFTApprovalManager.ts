@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAccount, useChainId } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { useNFTApprovalStatusV4, useNFTApprovalV4 } from './useRaffleContractV4';
 import { appToast } from '../utils/toast';
 
@@ -16,7 +16,6 @@ interface ApprovalState {
  */
 export function useNFTApprovalManager() {
   const { address } = useAccount();
-  const chainId = useChainId();
   
   // Approval state per contract
   const [approvalStates, setApprovalStates] = useState<Record<string, ApprovalState>>({});
@@ -27,7 +26,7 @@ export function useNFTApprovalManager() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Get approval status for current contract
-  const { data: approvalData, refetch: refetchApproval, isLoading: isCheckingApproval } = useNFTApprovalStatusV4(
+  const { data: approvalData, refetch: refetchApproval } = useNFTApprovalStatusV4(
     currentContract, 
     address || ''
   );
@@ -105,26 +104,28 @@ export function useNFTApprovalManager() {
     // Set as active request
     activeRequestRef.current = contractAddress;
     
-    // Check if we have recent data (less than 30 seconds old)
-    const existingState = approvalStates[contractAddress];
-    const isRecentData = existingState && (Date.now() - existingState.lastChecked) < 30000;
-    
-    if (isRecentData && existingState.status !== null) {
-      // Use cached data
-      setCurrentContract(contractAddress);
-      return;
-    }
-    
-    // Set checking state
-    setApprovalStates(prev => ({
-      ...prev,
-      [contractAddress]: {
-        status: null,
-        isChecking: true,
-        contract: contractAddress,
-        lastChecked: Date.now()
+    // Use ref to get current state to avoid stale closures
+    setApprovalStates(prev => {
+      const existingState = prev[contractAddress];
+      const isRecentData = existingState && (Date.now() - existingState.lastChecked) < 30000;
+      
+      if (isRecentData && existingState.status !== null) {
+        // Use cached data - just set current contract
+        setCurrentContract(contractAddress);
+        return prev;
       }
-    }));
+      
+      // Set checking state
+      return {
+        ...prev,
+        [contractAddress]: {
+          status: null,
+          isChecking: true,
+          contract: contractAddress,
+          lastChecked: Date.now()
+        }
+      };
+    });
     
     // Set current contract (this will trigger the wagmi query)
     setCurrentContract(contractAddress);
@@ -135,7 +136,7 @@ export function useNFTApprovalManager() {
         refetchApproval();
       }
     }, 1000);
-  }, [refetchApproval]); // Removed approvalStates dependency
+  }, [refetchApproval]);
   
   // Approve a contract
   const approveContract = useCallback(async (contractAddress: string) => {

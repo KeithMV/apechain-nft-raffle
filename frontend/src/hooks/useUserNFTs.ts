@@ -59,30 +59,17 @@ async function fetchNFTsViaAPI(
     const rawNfts = (data.nfts || data.ownedNfts) || [];
     console.log(`🔍 Lambda proxy returned ${rawNfts.length} NFTs for ${chainName}`);
     
-    // DEBUG: Check for duplicates in raw data
-    const seenKeys = new Set<string>();
-    const duplicates: string[] = [];
-    for (const nft of rawNfts) {
-      const key = `${nft.contractAddress}-${nft.tokenId}`;
-      if (seenKeys.has(key)) {
-        duplicates.push(key);
-      }
-      seenKeys.add(key);
-    }
-    if (duplicates.length > 0) {
-      console.warn(`⚠️ Lambda returned ${duplicates.length} duplicate NFTs:`, duplicates.slice(0, 5));
-    }
-    
     console.log(`🔍 Verifying ownership for ${rawNfts.length} NFTs...`);
     
     const verifiedNfts: UserNFT[] = [];
-    const verificationMap = new Map<string, UserNFT>();
+    const verificationSet = new Set<string>();
     
     // Verify ownership for each NFT returned by Lambda
-    for (let i = 0; i < rawNfts.length; i++) {
-      const nft = rawNfts[i];
-      
+    for (const nft of rawNfts) {
       if (!nft.contractAddress || !nft.tokenId) continue;
+      
+      const nftKey = `${nft.contractAddress}-${nft.tokenId}`;
+      if (verificationSet.has(nftKey)) continue; // Skip duplicates during verification
       
       try {
         // Verify ownership on-chain
@@ -103,29 +90,21 @@ async function fetchNFTsViaAPI(
         
         // Only include if user actually owns it
         if (owner?.toLowerCase() === userAddress.toLowerCase()) {
-          const nftKey = `${nft.contractAddress}-${nft.tokenId}`;
+          verificationSet.add(nftKey);
+          verifiedNfts.push({
+            contractAddress: nft.contractAddress,
+            tokenId: nft.tokenId,
+            name: nft.name || `NFT #${nft.tokenId}`,
+            image: nft.image
+          });
           
-          // Use Map to prevent duplicates during verification
-          if (!verificationMap.has(nftKey)) {
-            const verifiedNft = {
-              contractAddress: nft.contractAddress,
+          // Log first few verified NFTs
+          if (verifiedNfts.length <= 3) {
+            console.log(`✅ Verified NFT ownership on ${chainName}:`, {
+              contract: nft.contractAddress,
               tokenId: nft.tokenId,
-              name: nft.name || `NFT #${nft.tokenId}`,
-              image: nft.image
-            };
-            
-            verificationMap.set(nftKey, verifiedNft);
-            verifiedNfts.push(verifiedNft);
-            
-            // Only log first few verified NFTs to avoid spam
-            if (verifiedNfts.length <= 3) {
-              console.log(`✅ Verified NFT ownership on ${chainName}:`, {
-                contract: nft.contractAddress,
-                tokenId: nft.tokenId,
-                name: nft.name,
-                hasImage: !!nft.image
-              });
-            }
+              name: nft.name
+            });
           }
         }
       } catch (error) {
@@ -136,16 +115,7 @@ async function fetchNFTsViaAPI(
     
     console.log(`✅ Lambda proxy result for ${chainName}: ${rawNfts.length} raw NFTs → ${verifiedNfts.length} verified owned NFTs`);
     
-    // FINAL DEDUPLICATION: Ensure absolutely no duplicates
-    const finalNfts = Array.from(
-      new Map(verifiedNfts.map(nft => [`${nft.contractAddress}-${nft.tokenId}`, nft])).values()
-    );
-    
-    if (finalNfts.length !== verifiedNfts.length) {
-      console.warn(`⚠️ Removed ${verifiedNfts.length - finalNfts.length} duplicate NFTs in final deduplication`);
-    }
-    
-    return finalNfts;
+    return verifiedNfts;
     
   } catch (error) {
     const chainName = chainId === 137 ? 'Polygon' : chainId === 33139 ? 'ApeChain' : `Chain ${chainId}`;
@@ -281,15 +251,25 @@ async function fetchUserNFTs(
   if (!publicClient || !userAddress) return [];
 
   try {
-    // Try API first (when implemented)
+    // Simplified: Try Lambda API first, fallback to on-chain if needed
     let nfts = await fetchNFTsViaAPI(userAddress, chainId, nftConfig, publicClient);
     
-    // If API fails or returns nothing, use on-chain scanning
+    // Only fallback to on-chain if Lambda completely fails (returns empty)
     if (nfts.length === 0) {
+      console.log(`🔄 Lambda returned no NFTs, trying on-chain scan for chain ${chainId}`);
       nfts = await fetchNFTsOnChain(publicClient, userAddress, chainId, nftConfig);
     }
     
-    return nfts;
+    // Final deduplication at the hook level
+    const deduplicatedNFTs = Array.from(
+      new Map(nfts.map(nft => [`${nft.contractAddress}-${nft.tokenId}`, nft])).values()
+    );
+    
+    if (deduplicatedNFTs.length !== nfts.length) {
+      console.log(`🧹 Removed ${nfts.length - deduplicatedNFTs.length} duplicate NFTs in final processing`);
+    }
+    
+    return deduplicatedNFTs;
     
   } catch (error) {
     console.error('Failed to fetch user NFTs:', error);

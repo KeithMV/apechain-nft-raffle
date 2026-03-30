@@ -70,7 +70,14 @@ export function useRaffleDataFetcher() {
       
       const indices = Array.from({ length: endIndex - startIndex }, (_, i) => startIndex + i);
       
-      // Use centralized batch configuration
+      // Use current batch configuration values to avoid stale closures
+      const currentBatchConfig = {
+        contractBatchSize: batchConfig.contractBatchSize,
+        contractDelay: batchConfig.contractDelay,
+        raffleBatchSize: batchConfig.raffleBatchSize,
+        raffleDelay: batchConfig.raffleDelay,
+      };
+      
       const contractResults = await processBatch(
         indices,
         async (i) => {
@@ -87,15 +94,15 @@ export function useRaffleDataFetcher() {
           }
         },
         { 
-          batchSize: batchConfig.contractBatchSize, 
-          delay: batchConfig.contractDelay 
+          batchSize: currentBatchConfig.contractBatchSize, 
+          delay: currentBatchConfig.contractDelay 
         }
       );
       
       // Filter out failed contracts while maintaining index mapping
       const validContractResults = contractResults.filter(result => result.contract !== null);
       
-      // Get raffle info with centralized batch configuration
+      // Get raffle info with current batch configuration
       const raffleInfoResults = await processBatch(
         validContractResults,
         async (contractResult: any) => {
@@ -131,8 +138,8 @@ export function useRaffleDataFetcher() {
           }
         },
         { 
-          batchSize: batchConfig.raffleBatchSize, 
-          delay: batchConfig.raffleDelay 
+          batchSize: currentBatchConfig.raffleBatchSize, 
+          delay: currentBatchConfig.raffleDelay 
         }
       );
       
@@ -176,11 +183,13 @@ export function useRaffleDataFetcher() {
       console.error(`Failed to get raffles from factory ${factoryAddress}:`, error);
       throw new Error(`Failed to load ${version} raffles: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  }, [publicClient, chainId]);
+  }, [publicClient, batchConfig.contractBatchSize, batchConfig.contractDelay, batchConfig.raffleBatchSize, batchConfig.raffleDelay]);
 
   // Get all raffles from both V3 and V4 factories with DETERMINISTIC fetching
   const fetchAllRaffles = useCallback(async (options: RaffleDataFetcherOptions = {}): Promise<RaffleInfo[]> => {
-    if (!publicClient || !chainId) {
+    const currentChainId = chainId; // Capture chainId to avoid stale closure
+    
+    if (!publicClient || !currentChainId) {
       throw new Error('Public client or chain ID not available');
     }
 
@@ -192,7 +201,7 @@ export function useRaffleDataFetcher() {
     } = options;
 
     // POLYGON OPTIMIZATION: Reduce limit for faster loading
-    const optimizedLimit = chainId === 137 ? Math.min(limit, 10) : limit;
+    const optimizedLimit = currentChainId === 137 ? Math.min(limit, 10) : limit;
     
     const allRaffles: RaffleInfo[] = [];
     
@@ -202,8 +211,8 @@ export function useRaffleDataFetcher() {
     const factoryPromises: Promise<RaffleInfo[]>[] = [];
     
     // Get V4 raffles (priority)
-    if (includeV4 && isV4Available(chainId)) {
-      const v4Address = getRaffleFactoryAddress(chainId, true);
+    if (includeV4 && isV4Available(currentChainId)) {
+      const v4Address = getRaffleFactoryAddress(currentChainId, true);
       factoryPromises.push(
         getRafflesFromFactory(v4Address, 'v4', optimizedLimit, offset)
           .catch(error => {
@@ -215,7 +224,7 @@ export function useRaffleDataFetcher() {
     
     // Get V3 raffles (always fetch same amount for consistency)
     if (includeV3) {
-      const v3Address = getRaffleFactoryAddress(chainId, false);
+      const v3Address = getRaffleFactoryAddress(currentChainId, false);
       factoryPromises.push(
         getRafflesFromFactory(v3Address, 'v3', optimizedLimit, offset)
           .catch(error => {
