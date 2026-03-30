@@ -29,8 +29,8 @@ export function useInfiniteAllRafflesV4(limit: number = 10) {
     gcTime: chainConfig.cache.gcTime,
   };
 
-  // POLYGON OPTIMIZATION: Reduce limit for faster loading
-  const optimizedLimit = chainId === 137 ? Math.min(limit, 8) : limit;
+  // EMERGENCY: Drastically reduce Polygon limit to stop RPC spam
+  const optimizedLimit = chainId === 137 ? Math.min(limit, 3) : limit;  // Only 3 raffles on Polygon
 
   const infiniteQuery = useInfiniteQuery({
     queryKey: ['raffles-infinite-v4', chainId],
@@ -163,9 +163,9 @@ export function useUserRafflePositionsV4(userAddress?: string) {
       factories.push({ address: v3Address, version: 'v3' as const });
       
       return await getCombinedUserPositions(factories, resolvedAddress, {
-        // 🚨 CRITICAL: Use CONSERVATIVE scanning parameters
-        maxRafflesToCheck: chainId === 137 ? 15 : 25, // REDUCED: Much fewer raffles
-        batchSize: chainId === 137 ? 2 : 3,           // REDUCED: Tiny batches  
+        // 🚨 EMERGENCY: Ultra-conservative to stop RPC spam
+        maxRafflesToCheck: chainId === 137 ? 5 : 25,  // DRASTICALLY REDUCED: Only 5 raffles on Polygon
+        batchSize: chainId === 137 ? 1 : 3,           // SEQUENTIAL: 1 at a time on Polygon  
         concurrency: 1,                               // SEQUENTIAL: No parallel processing
       }).then(positions => {
         console.log('🔍 [POSITIONS-DEBUG]', {
@@ -192,20 +192,20 @@ export function useUserRafflePositionsV4(userAddress?: string) {
     ),
     staleTime: cacheConfig.staleTime,
     gcTime: cacheConfig.gcTime,
-    // PHASE 3: Enhanced error handling and retry logic (matching created raffles)
+    // EMERGENCY: Disable retries on Polygon to stop RPC spam
     retry: (failureCount, error) => {
       // Don't retry on wallet disconnection
       if (error?.message?.includes('Missing required parameters')) {
         return false;
       }
-      // Polygon gets more retries due to network instability
-      const maxRetries = chainId === 137 ? 3 : 2;
+      // EMERGENCY: No retries on Polygon, minimal retries on ApeChain
+      const maxRetries = chainId === 137 ? 0 : 1;  // 0 retries for Polygon!
       return failureCount < maxRetries;
     },
     retryDelay: (attemptIndex) => {
-      // Progressive backoff, longer delays for Polygon
-      const baseDelay = chainId === 137 ? 2000 : 1000;
-      return Math.min(baseDelay * Math.pow(2, attemptIndex), 10000);
+      // Much longer delays to prevent spam
+      const baseDelay = chainId === 137 ? 10000 : 2000;  // 10s for Polygon
+      return Math.min(baseDelay * Math.pow(2, attemptIndex), 30000);
     },
     // PHASE 3: Prevent background refetches during user interaction
     refetchOnWindowFocus: false,
@@ -274,18 +274,18 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
           const totalRaffles = Number(raffleCount);
           if (totalRaffles === 0) return [];
 
-          // CONSERVATIVE: Fixed scan range for consistency
-          const scanRange = chainId === 137 ? 15 : 25; // REDUCED: Much smaller scan range
+          // EMERGENCY: Ultra-conservative scan range to stop RPC spam
+          const scanRange = chainId === 137 ? 5 : 25;  // DRASTICALLY REDUCED: Only 5 raffles on Polygon
           const startIndex = Math.max(0, totalRaffles - scanRange);
           const indices = Array.from(
             { length: totalRaffles - startIndex }, 
             (_, i) => startIndex + i
           );
           
-          // CONSERVATIVE: Very small batch processing
+          // EMERGENCY: Ultra-slow batch processing to prevent rate limits
           const batchConfig = chainId === 137 
-            ? { batchSize: 2, maxConcurrent: 1, delay: 200 } // Very slow for Polygon
-            : { batchSize: 3, maxConcurrent: 1, delay: 100 }; // Slow for ApeChain
+            ? { batchSize: 1, maxConcurrent: 1, delay: 1000 } // 1 at a time, 1s delay for Polygon
+            : { batchSize: 3, maxConcurrent: 1, delay: 100 }; // Normal for ApeChain
           
           // Process raffles in deterministic batches
           const batchResults = await processBatch(
@@ -440,20 +440,20 @@ export function useInfiniteCreatedRafflesV4(userAddress?: string, limit: number 
     ),
     staleTime: cacheConfig.staleTime,
     gcTime: cacheConfig.gcTime,
-    // PHASE 3: Enhanced error handling and retry logic
+    // EMERGENCY: Disable retries on Polygon to stop RPC spam
     retry: (failureCount, error) => {
       // Don't retry on wallet disconnection
       if (error?.message?.includes('Missing required parameters')) {
         return false;
       }
-      // Polygon gets more retries due to network instability
-      const maxRetries = chainId === 137 ? 3 : 2;
+      // EMERGENCY: No retries on Polygon
+      const maxRetries = chainId === 137 ? 0 : 1;  // 0 retries for Polygon!
       return failureCount < maxRetries;
     },
     retryDelay: (attemptIndex) => {
-      // Progressive backoff, longer delays for Polygon
-      const baseDelay = chainId === 137 ? 2000 : 1000;
-      return Math.min(baseDelay * Math.pow(2, attemptIndex), 10000);
+      // Much longer delays to prevent spam
+      const baseDelay = chainId === 137 ? 10000 : 2000;  // 10s for Polygon
+      return Math.min(baseDelay * Math.pow(2, attemptIndex), 30000);
     },
     // PHASE 3: Prevent background refetches during user interaction
     refetchOnWindowFocus: false,
