@@ -3,7 +3,7 @@
  * Prevents cascade failures and infinite retry loops on mobile devices
  */
 
-import { markEndpointAsFailed } from '../config/wagmiUnified';
+import { getPrimaryRPCURL } from '../config/rpcConfig';
 
 interface RPCError {
   message: string;
@@ -28,7 +28,7 @@ class MobileRPCErrorHandler {
       console.warn('🚨 [MOBILE RPC] Cascade failure detected, implementing circuit breaker');
       
       if (endpoint) {
-        markEndpointAsFailed(endpoint);
+        console.warn('RPC endpoint failed:', endpoint);
       }
       
       // Reset error counts to prevent further cascade
@@ -39,7 +39,7 @@ class MobileRPCErrorHandler {
     // Check if endpoint has too many errors
     if (currentCount >= this.MAX_ERRORS_PER_ENDPOINT && endpoint) {
       console.warn(`🚨 [MOBILE RPC] Endpoint ${endpoint} has too many errors, marking as failed`);
-      markEndpointAsFailed(endpoint);
+      console.warn('RPC endpoint failed:', endpoint);
       
       // Schedule error count reset
       setTimeout(() => {

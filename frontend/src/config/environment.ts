@@ -64,9 +64,9 @@ const configs: Record<Environment, EnvironmentConfig> = {
       'http://localhost:3000',
     enableLogging: true,
     // Alchemy integration for better RPC performance
-    alchemyApiKey: process.env.ALCHEMY_API_KEY,
-    polygonRpcUrl: process.env.ALCHEMY_API_KEY ? 
-      `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}` : 
+    alchemyApiKey: process.env.REACT_APP_ALCHEMY_API_KEY,
+    polygonRpcUrl: process.env.REACT_APP_ALCHEMY_API_KEY ? 
+      `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}` : 
       'https://polygon.meowrpc.com',
   },
   staging: {
@@ -77,9 +77,9 @@ const configs: Record<Environment, EnvironmentConfig> = {
     appName: 'ApeChain NFT Raffles (STAGING)',
     appUrl: 'https://staging.apechainraffles.io', // Back to proper staging URL
     enableLogging: false,
-    alchemyApiKey: process.env.ALCHEMY_API_KEY,
-    polygonRpcUrl: process.env.ALCHEMY_API_KEY ? 
-      `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}` : 
+    alchemyApiKey: process.env.REACT_APP_ALCHEMY_API_KEY,
+    polygonRpcUrl: process.env.REACT_APP_ALCHEMY_API_KEY ? 
+      `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}` : 
       'https://polygon.meowrpc.com',
   },
   production: {
@@ -90,9 +90,9 @@ const configs: Record<Environment, EnvironmentConfig> = {
     appName: 'ApeChain NFT Raffles',
     appUrl: 'https://apechainraffles.io',
     enableLogging: false,
-    alchemyApiKey: process.env.ALCHEMY_API_KEY,
-    polygonRpcUrl: process.env.ALCHEMY_API_KEY ? 
-      `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}` : 
+    alchemyApiKey: process.env.REACT_APP_ALCHEMY_API_KEY,
+    polygonRpcUrl: process.env.REACT_APP_ALCHEMY_API_KEY ? 
+      `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}` : 
       'https://polygon.meowrpc.com',
   },
 };

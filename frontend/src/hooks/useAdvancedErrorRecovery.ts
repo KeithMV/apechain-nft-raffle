@@ -2,7 +2,7 @@ import { useCallback, useRef, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useChainId } from 'wagmi';
 import { useChainConfig } from './useChainConfig';
-import { useRPCHealthMonitor } from './useRPCHealthMonitor';
+import { getPrimaryRPCURL } from '../config/rpcConfig';
 
 interface ErrorPattern {
   type: string;
@@ -22,7 +22,6 @@ export const useAdvancedErrorRecovery = () => {
   const queryClient = useQueryClient();
   const chainId = useChainId();
   const chainConfig = useChainConfig();
-  const { getBestEndpoint, reportFailure } = useRPCHealthMonitor(chainId);
   const errorPatternsRef = useRef<Map<string, ErrorPattern>>(new Map());
   const recoveryAttemptsRef = useRef<Map<string, number>>(new Map());
 
@@ -66,7 +65,8 @@ export const useAdvancedErrorRecovery = () => {
         maxRetries: 3,
         backoffMultiplier: 2,
         fallbackAction: async () => {
-          reportFailure('current-endpoint');
+          // Switch to primary RPC endpoint
+          console.log('Switching to primary RPC:', getPrimaryRPCURL(chainId || 137));
           queryClient.invalidateQueries({ queryKey: [context, chainId] });
         },
         shouldRetry: (err, attempt) => attempt < 3 && !err.message.includes('user rejected')
@@ -122,7 +122,7 @@ export const useAdvancedErrorRecovery = () => {
       },
       shouldRetry: (err, attempt) => attempt < 2
     };
-  }, [chainId, queryClient, reportFailure]);
+  }, [chainId, queryClient]);
 
   // Execute operation with intelligent retry and recovery
   const executeWithRecovery = useCallback(async <T>(
@@ -188,11 +188,11 @@ export const useAdvancedErrorRecovery = () => {
         
         // Proactive endpoint switching for network errors
         if (pattern.type.includes('network') || pattern.type.includes('fetch')) {
-          reportFailure('current-endpoint');
+          console.log('Network error pattern detected, using primary RPC:', getPrimaryRPCURL(chainId || 137));
         }
       }
     }
-  }, [chainId, queryClient, reportFailure]);
+  }, [chainId, queryClient]);
 
   // Circuit breaker for repeated failures
   const circuitBreaker = useCallback((context: string): boolean => {

@@ -9,12 +9,12 @@ import { useWinnerSelection } from '../hooks/useWinnerSelection';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useDashboardStyles } from '../hooks/useDashboardStyles';
 // Phase 10: Performance monitoring for dashboard operations
-import { performanceMonitor, measureSync, debounce } from '../utils/performance';
+import { measureSync, debounce } from '../utils/performance';
 
 // Interfaces moved to hooks file to avoid duplication
 
 export default function RaffleDashboard() {
-  const { address } = useAccount();
+  const { address, isConnected, isConnecting } = useAccount();
   const chainId = useChainId();
   const { nativeCurrency, isApeChain } = useNetwork();
   
@@ -37,8 +37,81 @@ export default function RaffleDashboard() {
   } = useInfiniteCreatedRafflesV4();
   const clearCache = useClearRaffleCacheV4();
   
+  // 🚨 CRITICAL FIX: Only show counts when BOTH hooks are fully loaded
+  const bothHooksLoaded = !positionsLoading && !rafflesLoading;
+  const displayPositionsCount = bothHooksLoaded ? userPositions.length : '...';
+  const displayCreatedCount = bothHooksLoaded ? createdRaffles.length : '...';
+  
+  // 🔍 DEBUG: Log the actual data to understand what's happening
+  useEffect(() => {
+    const debugInfo = {
+      timestamp: new Date().toISOString(),
+      chainId,
+      address,
+      isConnected,
+      isConnecting,
+      positionsLoading,
+      rafflesLoading,
+      userPositionsLength: userPositions.length,
+      createdRafflesLength: createdRaffles.length,
+      // Add wallet connection debug info
+      walletDebug: {
+        hasAddress: !!address,
+        addressLength: address?.length || 0,
+        connectionState: isConnected ? 'connected' : isConnecting ? 'connecting' : 'disconnected'
+      },
+      userPositionsData: userPositions.map(p => ({
+        raffleId: p.raffleId,
+        raffleContract: p.raffleContract,
+        version: p.version
+      })),
+      createdRafflesData: createdRaffles.map(r => ({
+        raffleId: r.raffleId,
+        raffleContract: r.raffleContract,
+        version: r.version
+      }))
+    };
+    
+    console.log('🔍 [DASHBOARD-FULL-DEBUG]', JSON.stringify(debugInfo, null, 2));
+    
+    // Also log a simple summary
+    console.log(`📊 [DASHBOARD-SUMMARY] Chain: ${chainId}, Connected: ${isConnected}, Positions: ${userPositions.length}, Created: ${createdRaffles.length}`);
+    
+    // Store in localStorage for comparison
+    const key = `dashboard-debug-${Date.now()}`;
+    localStorage.setItem(key, JSON.stringify(debugInfo));
+    
+    // Keep only last 5 entries
+    const allKeys = Object.keys(localStorage).filter(k => k.startsWith('dashboard-debug-'));
+    if (allKeys.length > 5) {
+      allKeys.sort().slice(0, -5).forEach(k => localStorage.removeItem(k));
+    }
+    
+  }, [chainId, address, isConnected, isConnecting, positionsLoading, rafflesLoading, userPositions, createdRaffles]);
+  
+  // Expose comparison function to window
+  useEffect(() => {
+    (window as any).compareDashboardStates = () => {
+      const allKeys = Object.keys(localStorage).filter(k => k.startsWith('dashboard-debug-')).sort();
+      const states = allKeys.map(k => JSON.parse(localStorage.getItem(k) || '{}'));
+      
+      console.log('📊 [DASHBOARD-COMPARISON]', {
+        totalStates: states.length,
+        states: states.map((s, i) => ({
+          index: i,
+          timestamp: s.timestamp,
+          positionsCount: s.userPositionsLength,
+          createdCount: s.createdRafflesLength,
+          loading: { positions: s.positionsLoading, raffles: s.rafflesLoading }
+        }))
+      });
+      
+      return states;
+    };
+  }, []);
+  
   const cancelRaffleHook = useOptimizedCancelRaffle();
-  const { emergencyReveal, isPending: isSelectingWinner, isSuccess: winnerSelected, hash: winnerHash, error: winnerError } = useWinnerSelection();
+  const { emergencyReveal, isSuccess: winnerSelected, error: winnerError } = useWinnerSelection();
   const [selectingWinnerFor, setSelectingWinnerFor] = useState<string | null>(null);
   const [cancellingRaffle, setCancellingRaffle] = useState<string | null>(null);
   
@@ -147,10 +220,25 @@ export default function RaffleDashboard() {
       // Ensure createdRaffles is an array and has proper typing
       const raffleArray = Array.isArray(createdRaffles) ? createdRaffles : [];
       
-      return showExpired ? raffleArray : raffleArray.filter(r => 
+      // DEBUG: Check for duplicates in created raffles
+      console.log('🎯 [DASHBOARD-CREATED] Filtering created raffles:', {
+        totalRaffles: raffleArray.length,
+        showExpired,
+        raffleIds: raffleArray.map(r => `${r.raffleContract?.slice(0,6)}-${r.raffleId}`),
+        hasDuplicates: raffleArray.length !== new Set(raffleArray.map(r => `${r.raffleContract}-${r.raffleId}`)).size
+      });
+      
+      const filtered = showExpired ? raffleArray : raffleArray.filter(r => 
         r && typeof r === 'object' && 'isActive' in r && 'endTime' in r &&
         (r.isActive || (Date.now() / 1000 - (r.endTime as number) < 86400))
       );
+      
+      console.log('🎯 [DASHBOARD-CREATED] After filtering:', {
+        filteredCount: filtered.length,
+        filteredIds: filtered.map(r => `${r.raffleContract?.slice(0,6)}-${r.raffleId}`)
+      });
+      
+      return filtered;
     });
   }, [showExpired, createdRaffles]);
 
@@ -235,7 +323,7 @@ export default function RaffleDashboard() {
       
       setCancellingRaffle(null);
     }
-  }, [cancelRaffleHook.executeTransaction]);
+  }, [cancelRaffleHook]);
 
   // Enhanced refresh when winner is selected - with chain-aware progressive refetch
   useEffect(() => {
@@ -332,7 +420,7 @@ export default function RaffleDashboard() {
               }`}
             >
               <div className={`absolute inset-0 bg-gradient-to-r ${styles.shimmerGradient} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
-              <span className="relative">Participated ({userPositions.length})</span>
+              <span className="relative">Participated ({displayPositionsCount})</span>
             </button>
             <button
               onClick={() => setActiveTab('created')}
@@ -343,7 +431,7 @@ export default function RaffleDashboard() {
               }`}
             >
               <div className={`absolute inset-0 bg-gradient-to-r ${styles.shimmerGradient} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
-              <span className="relative">Created ({createdRaffles.length})</span>
+              <span className="relative">Created ({displayCreatedCount})</span>
             </button>
             </div>
             <div className="flex items-center space-x-3">
@@ -373,9 +461,9 @@ export default function RaffleDashboard() {
                   <p className={`${styles.textSecondary} font-mono`}>{showExpired ? "You haven't participated in any raffles yet" : "No active or completed raffles to show"}</p>
                 </div>
               ) : (
-                filteredPositions.map((position) => (
+                filteredPositions.map((position, index: number) => (
                   <ParticipatedRaffleCard
-                    key={`${position.raffleContract}-${position.raffleId}`}
+                    key={`${position.raffleContract}-${position.raffleId}-${position.version}-${index}`}
                     position={position}
                     styles={styles}
                     isApeChain={isApeChain}
@@ -396,9 +484,9 @@ export default function RaffleDashboard() {
                       <p className={`${styles.textSecondary} font-mono`}>{showExpired ? "You haven't created any raffles yet" : "No active or recent raffles to show"}</p>
                     </div>
                 ) : (
-                  filteredRaffles.map((raffle: any) => (
+                  filteredRaffles.map((raffle: any, index: number) => (
                     <CreatedRaffleCard
-                      key={`${raffle.raffleContract}-${raffle.raffleId}`}
+                      key={`${raffle.raffleContract}-${raffle.raffleId}-${raffle.version}-${index}`}
                       raffle={raffle}
                       styles={styles}
                       isApeChain={isApeChain}

@@ -16,7 +16,6 @@ import { suppressWeb3ModalWarnings } from '../utils/suppressWarnings';
 import { enableMobileErrorSuppression } from '../utils/mobileErrorSuppression';
 import '../utils/consoleSecure'; // Auto-enables production console security
 import '../utils/mobileRPCErrorHandler'; // Auto-enables mobile RPC error handling
-import { useIntelligentCache } from '../hooks/useIntelligentCache';
 import { useAdvancedErrorRecovery } from '../hooks/useAdvancedErrorRecovery';
 import { usePredictivePreloading } from '../hooks/usePredictivePreloading';
 import { usePerformanceAnalytics } from '../hooks/usePerformanceAnalytics';
@@ -81,7 +80,6 @@ if (typeof window !== 'undefined') {
 
 // Phase 3 Optimization Provider (router-independent)
 const Phase3OptimizationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const intelligentCache = useIntelligentCache();
   const errorRecovery = useAdvancedErrorRecovery();
   const performanceAnalytics = usePerformanceAnalytics();
 

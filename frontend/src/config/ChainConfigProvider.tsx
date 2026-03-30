@@ -13,8 +13,7 @@ import {
   isApeChain, 
   isPolygonChain,
   isSupportedChain,
-  getOperationConfig,
-  CHAIN_IDS
+  getOperationConfig
 } from './chainConfigurations';
 
 /**

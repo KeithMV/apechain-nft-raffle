@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAccount, useDisconnect, useChainId } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { config as envConfig } from '../config/environment';
@@ -43,12 +43,9 @@ export function WalletConnection() {
   // Simplified mobile connection state
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [diagnostics, setDiagnostics] = useState<any>(null);
-  const [connectionAttempts, setConnectionAttempts] = useState(0);
   const [hasWebSocketError, setHasWebSocketError] = useState(false);
-  const connectionState = useRef({ lastConnectionTime: 0 });
   
   const isMobile = isMobileDevice();
-  const canRetry = connectionAttempts < 3;
 
   // Mobile WebSocket error monitoring
   useEffect(() => {
@@ -84,11 +81,11 @@ export function WalletConnection() {
   
   // Show diagnostics on mobile connection issues
   useEffect(() => {
-    if (isMobile && (hasWebSocketError || connectionAttempts > 1)) {
+    if (isMobile && hasWebSocketError) {
       setDiagnostics(getMobileConnectionDiagnostics());
       setShowDiagnostics(true);
     }
-  }, [isMobile, hasWebSocketError, connectionAttempts]);
+  }, [isMobile, hasWebSocketError]);
 
   const handleConnect = async () => {
     console.log('🔍 [DEBUG] Connect button clicked');
@@ -148,7 +145,6 @@ export function WalletConnection() {
           <div className="font-semibold mb-2">📱 Mobile Connection Info:</div>
           <div>Device: {diagnostics.isIOS ? 'iOS' : diagnostics.isAndroid ? 'Android' : 'Unknown'}</div>
           <div>Network: {diagnostics.onLine ? 'Online' : 'Offline'} ({diagnostics.connectionType})</div>
-          <div>Attempts: {connectionAttempts}/3</div>
           {hasWebSocketError && <div className="text-red-300">⚠️ WebSocket connection issues detected</div>}
           <button 
             onClick={() => setShowDiagnostics(false)}
@@ -172,17 +168,17 @@ export function WalletConnection() {
       </button>
       
       {/* Mobile retry button */}
-      {isMobile && hasWebSocketError && canRetry && (
+      {isMobile && hasWebSocketError && (
         <button
           onClick={handleConnect}
           className="px-4 py-2 bg-yellow-600/20 border border-yellow-500/30 text-yellow-200 rounded-lg text-sm font-medium hover:bg-yellow-600/30 transition-colors"
         >
-          🔄 Retry Connection ({3 - connectionAttempts} attempts left)
+          🔄 Retry Connection
         </button>
       )}
       
       {/* Mobile help text */}
-      {isMobile && connectionAttempts > 0 && (
+      {isMobile && hasWebSocketError && (
         <div className="text-xs text-slate-400 text-center">
           Having trouble? Try refreshing the page or switching to a different network.
         </div>

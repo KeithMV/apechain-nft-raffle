@@ -8,7 +8,7 @@ import { useOptimizedRaffleActions } from '../hooks/useOptimizedRaffleActions';
 import { throttle, measureSync } from '../utils/performance';
 import { useNetwork } from '../contexts/NetworkContext';
 // Phase 3: Advanced UX enhancements
-import { SmartLoading, ProgressiveDisclosure, SmartImage } from './UXEnhancements';
+import { SmartLoading } from './UXEnhancements';
 import { usePredictivePreloading } from '../hooks/usePredictivePreloading';
 import { usePerformanceAnalytics } from '../hooks/usePerformanceAnalytics';
 
@@ -199,7 +199,7 @@ export default function BrowseRaffles() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {filteredRaffles.map((raffle, index) => (
                     <div 
-                      key={`${raffle.raffleContract}-${raffle.raffleId}`}
+                      key={`${raffle.raffleContract}-${raffle.raffleId}-${index}`}
                       onMouseEnter={() => handleRaffleHover(raffle.raffleId)}
                       className="transform transition-transform hover:scale-[1.02]"
                     >

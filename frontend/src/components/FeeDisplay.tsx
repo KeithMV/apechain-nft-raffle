@@ -9,8 +9,6 @@ const FEE_TIERS = {
   PREMIUM: { basisPoints: 2000, percentage: 20, label: 'Premium', color: 'purple', useCase: 'Exclusive high-value events' },
 } as const;
 
-type FeeTier = typeof FEE_TIERS[keyof typeof FEE_TIERS];
-
 interface FeeDisplayProps {
   totalAmount?: number;
   showBreakdown?: boolean;
@@ -23,49 +21,7 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
   className = ""
 }) => {
   // Professional wagmi hook with error handling
-  const { data: platformFeeData, isLoading: loading, error } = usePlatformFeeV4();
-  
-  // Determine current fee tier
-  const getCurrentFeeTier = (basisPoints: number): FeeTier => {
-    switch (basisPoints) {
-      case 100: return FEE_TIERS.PROMOTIONAL;
-      case 500: return FEE_TIERS.COMPETITIVE;
-      case 1000: return FEE_TIERS.STANDARD;
-      case 2000: return FEE_TIERS.PREMIUM;
-      default: return FEE_TIERS.COMPETITIVE;
-    }
-  };
-  
-  const currentFee = platformFeeData ? {
-    basisPoints: Number(platformFeeData),
-    percentage: Number(platformFeeData) / 100,
-    tier: getCurrentFeeTier(Number(platformFeeData))
-  } : {
-    basisPoints: 500,
-    percentage: 5,
-    tier: FEE_TIERS.COMPETITIVE
-  };
-
-  const feeDisplay = {
-    percentage: `${currentFee.percentage}%`,
-    badge: currentFee.tier.color,
-    description: currentFee.tier.label
-  };
-  
-  const breakdown = totalAmount > 0 ? {
-    feeAmount: isNaN(totalAmount) ? 0 : totalAmount * currentFee.percentage / 100,
-    creatorAmount: isNaN(totalAmount) ? 0 : totalAmount * (1 - currentFee.percentage / 100)
-  } : null;
-
-  const getBadgeColor = (badge: string) => {
-    const colors = {
-      promotional: 'bg-green-100 text-green-800 border-green-200',
-      competitive: 'bg-blue-100 text-blue-800 border-blue-200',
-      standard: 'bg-gray-100 text-gray-800 border-gray-200',
-      premium: 'bg-purple-100 text-purple-800 border-purple-200'
-    };
-    return colors[badge as keyof typeof colors] || colors.standard;
-  };
+  const { isLoading: loading, error } = usePlatformFeeV4();
 
   if (loading) {
     return (

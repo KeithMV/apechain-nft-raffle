@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAccount, useChainId } from 'wagmi';
 import { useNavigate } from 'react-router-dom';
-import { usePlatformFeeV4, useCreateRaffleV4 } from '../hooks/useRaffleContractV4';
+import { useCreateRaffleV4 } from '../hooks/useRaffleContractV4';
 import { useNFTApprovalManager } from '../hooks/useNFTApprovalManager';
 import { useApeChainSwitching } from '../utils/chainSwitching';
 import { useNetwork } from '../contexts/NetworkContext';
@@ -15,21 +15,24 @@ import { appToast } from '../utils/toast';
 import { ErrorHandler } from '../utils/errorHandler';
 import { sanitizeAddress } from '../utils/security';
 
-// Pure function moved outside component
-const calculateDurationInSeconds = (hours: string): number => {
-  return parseInt(hours) * 3600;
-};
-
 export default function CreateRafflePage() {
   const { address } = useAccount();
   const chainId = useChainId();
   const navigate = useNavigate();
-  const { theme, nativeCurrency, networkName, isApeChain, isPolygon } = useNetwork();
-  const { switchToApeChain, isSwitching } = useApeChainSwitching();
+  const { nativeCurrency, networkName, isApeChain, isPolygon } = useNetwork();
+  const { isSwitching } = useApeChainSwitching();
   const [formData, setFormData] = useState<FormData>(getInitialFormData);
   
   // Fetch user's NFTs with refetch capability
   const { nfts, loading: nftsLoading, refetch: refetchNFTs } = useUserNFTs(address || '', chainId || 0);
+  
+  // DEBUG: Log NFT data from hook
+  console.log('🔍 [CreateRafflePage] NFTs from hook:', {
+    count: nfts.length,
+    loading: nftsLoading,
+    nfts: nfts.map(nft => `${nft.contractAddress.slice(0,6)}-${nft.tokenId}`),
+    hasDuplicates: nfts.length !== new Set(nfts.map(nft => `${nft.contractAddress}-${nft.tokenId}`)).size
+  });
   
   // Cache invalidation for immediate UI updates
   const { quickInvalidate } = useUnifiedCacheInvalidation();
@@ -67,7 +70,6 @@ export default function CreateRafflePage() {
   
   const isWrongNetwork = !isApeChain && !isPolygon;
   // Professional wagmi V4 hooks
-  const { data: platformFeeData } = usePlatformFeeV4();
   const {
     createRaffle,
     isPending: createPending,
@@ -75,8 +77,6 @@ export default function CreateRafflePage() {
     isSuccess: createSuccess,
     error: createError
   } = useCreateRaffleV4();
-
-  const platformFee = platformFeeData ? (Number(platformFeeData) / 100).toString() : '5';
 
   // Handle approval success - immediate cache refresh
   useEffect(() => {

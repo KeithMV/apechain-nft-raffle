@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useEmergencyPause, useFactoryPauseStatusV4 } from '../hooks/useRaffleContractV4';
 import toast from 'react-hot-toast';

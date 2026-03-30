@@ -4,7 +4,7 @@
  */
 
 import { getChainConfig } from '../config/chainConfigurations';
-import { markEndpointAsFailed } from '../config/wagmiUnified';
+import { getPrimaryRPCURL } from '../config/rpcConfig';
 
 // Define operation types locally since we removed gas oracle
 type OperationType = 'create-raffle' | 'buy-tickets' | 'select-winner' | 'cancel-raffle';
@@ -126,7 +126,7 @@ export class PolygonOptimizer {
     if (errorMessage.includes('429') || errorMessage.includes('too many requests')) {
       console.warn('🚫 [POLYGON] Rate limit detected on endpoint:', endpoint);
       if (endpoint) {
-        markEndpointAsFailed(endpoint);
+        console.warn('Polygon RPC endpoint failed:', endpoint);
       }
       return true; // Handled
     }
