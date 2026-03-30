@@ -4,12 +4,17 @@ import { BrowserRouter } from 'react-router-dom'
 import CreateRafflePage from '../CreateRafflePage'
 
 // Mock wagmi hooks with simple return values
-vi.mock('wagmi', () => ({
-  useAccount: vi.fn(),
-  useChainId: vi.fn(),
-  useSwitchChain: vi.fn(),
-  usePublicClient: vi.fn(),
-}))
+vi.mock('wagmi', async () => {
+  const actual = await vi.importActual('wagmi')
+  return {
+    ...actual,
+    useAccount: vi.fn(),
+    useChainId: vi.fn(),
+    useSwitchChain: vi.fn(),
+    usePublicClient: vi.fn(),
+    createConfig: vi.fn(),
+  }
+})
 
 // Mock react-router-dom
 vi.mock('react-router-dom', async () => {
