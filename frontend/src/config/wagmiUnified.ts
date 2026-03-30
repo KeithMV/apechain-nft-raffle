@@ -212,3 +212,103 @@ export const getPolygonRPCEndpoints = () => {
   console.warn('[DEPRECATED] getPolygonRPCEndpoints - using simplified RPC management');
   return [];
 };
+
+// Chain utility functions for backward compatibility
+export const isApeChain = (chainId?: number) => chainId === 33139;
+export const isPolygonChain = (chainId?: number) => chainId === 137;
+export const isSupportedChain = (chainId?: number) => chainId === 33139 || chainId === 137;
+
+export const getChainName = (chainId?: number) => {
+  switch (chainId) {
+    case 33139: return 'ApeChain';
+    case 137: return 'Polygon';
+    default: return 'Unknown';
+  }
+};
+
+// Simple chain configuration interface
+export interface ChainConfiguration {
+  polling: {
+    interval: number;
+    fastInterval: number;
+    slowInterval: number;
+  };
+  batch: {
+    contractSize: number;
+    raffleSize: number;
+    contractDelay: number;
+    raffleDelay: number;
+    maxConcurrent: number;
+  };
+  transaction: {
+    timeoutMultiplier: number;
+  };
+  cache: {
+    staleTime: number;
+    gcTime: number;
+    userStaleTime: number;
+    userGcTime: number;
+    invalidationDelay: number;
+    maxPages: number;
+  };
+  nft: {
+    batchSize: number;
+    retryDelay: number;
+  };
+  rpc: {
+    timeout: number;
+    retries: number;
+  };
+}
+
+// Get chain configuration
+export const getChainConfig = (chainId?: number): ChainConfiguration => {
+  const settings = getChainOptimizedSettings(chainId || 33139);
+  
+  return {
+    polling: {
+      interval: settings.pollingInterval,
+      fastInterval: settings.pollingInterval / 2,
+      slowInterval: settings.pollingInterval * 2,
+    },
+    batch: {
+      contractSize: Math.floor(settings.batchSize / 1024), // Convert to KB
+      raffleSize: Math.floor(settings.batchSize / 1024),
+      contractDelay: settings.batchWait,
+      raffleDelay: settings.batchWait,
+      maxConcurrent: 3,
+    },
+    transaction: {
+      timeoutMultiplier: chainId === 137 ? 1.5 : 1.0,
+    },
+    cache: {
+      staleTime: chainId === 137 ? 25000 : 30000,
+      gcTime: chainId === 137 ? 5 * 60 * 1000 : 10 * 60 * 1000,
+      userStaleTime: 15000,
+      userGcTime: 2 * 60 * 1000,
+      invalidationDelay: chainId === 137 ? 2000 : 1000,
+      maxPages: 5,
+    },
+    nft: {
+      batchSize: 10,
+      retryDelay: settings.retryDelay,
+    },
+    rpc: {
+      timeout: 10000,
+      retries: settings.maxRetries,
+    },
+  };
+};
+
+// Operation configuration
+export const getOperationConfig = (chainId?: number, operation?: string) => {
+  const baseTimeout = 20000;
+  const multiplier = chainId === 137 ? 1.5 : 1.0;
+  
+  return {
+    timeout: baseTimeout * multiplier,
+    retries: chainId === 137 ? 3 : 2,
+    retryDelay: chainId === 137 ? 2000 : 1000,
+    staleTime: chainId === 137 ? 25000 : 30000,
+  };
+};

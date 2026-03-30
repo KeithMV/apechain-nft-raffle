@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 import { getProgressiveTimeout, optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { useChainConfig } from '../hooks/useChainConfig';
-import { polygonUtils } from '../utils/polygonOptimizations';
 
 export interface OptimizedTransactionConfig {
   transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle';
@@ -131,19 +130,6 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       if (enableToasts) {
         if (errorMessage?.includes('User rejected')) {
           toast.error('Transaction cancelled by user.');
-        } else if (isPolygon && polygonUtils.isRecoverableError(errorToHandle)) {
-          // Polygon-specific error messages and actions
-          const polygonMessage = polygonUtils.getPolygonErrorMessage(errorToHandle);
-          const polygonAction = polygonUtils.getPolygonErrorAction(errorToHandle);
-          
-          toast.error(`${polygonMessage}\n${polygonAction}`);
-          
-          // Auto-retry for certain Polygon errors if we haven't exceeded max attempts
-          if (attempt < getOperationRetries(transactionType) && 
-              (errorMessage?.includes('nonce too low') || errorMessage?.includes('transaction underpriced'))) {
-            console.log(`🔄 [POLYGON-TX] Auto-retrying recoverable error: ${errorMessage}`);
-            setTimeout(() => retryTransaction().catch(console.error), 3000);
-          }
         } else if (errorMessage?.includes('insufficient funds')) {
           toast.error(isPolygon ? 'Insufficient POL for transaction fees' : 'Insufficient funds for transaction.');
         } else if (errorMessage?.includes('429')) {
@@ -242,11 +228,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       
       // Polygon-specific error handling
       if (isPolygon) {
-        const handled = polygonUtils.isRecoverableError(error);
-        
-        if (handled) {
-          console.log(`🔶 [POLYGON-TX] Handled Polygon-specific error for ${transactionType}:`, error);
-        }
+        console.log(`🔶 [POLYGON-TX] Error for ${transactionType}:`, error);
       }
       
       throw error;

@@ -1,8 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useOptimizedBuyTickets, useOptimizedSelectWinner } from './useOptimizedTransactionManager';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
-import { useAdvancedErrorRecovery } from './useAdvancedErrorRecovery';
-import { usePerformanceAnalytics } from './usePerformanceAnalytics';
 import { parseEther } from 'viem';
 import toast from 'react-hot-toast';
 import { CreatedRaffle } from '../components/RaffleCard';
@@ -36,10 +34,6 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
   
   // Unified cache invalidation
   const { quickInvalidate } = useUnifiedCacheInvalidation();
-  
-  // Phase 3 advanced features
-  const { executeWithRecovery } = useAdvancedErrorRecovery();
-  const { measureOperation, trackUserAction } = usePerformanceAnalytics();
 
   // Helper functions
   const addProcessingRaffle = useCallback((raffleContract: string) => {
@@ -78,148 +72,122 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     setTicketQuantities({});
   }, []);
 
-  // Optimized buy tickets handler with Phase 3 enhancements
+  // Optimized buy tickets handler
   const handleBuyTickets = useCallback(async (raffle: CreatedRaffle) => {
-    return measureOperation('buy_tickets_ui', async () => {
-      return executeWithRecovery(async () => {
-        // SECURITY: Validate and sanitize inputs
-        if (!raffle || typeof raffle !== 'object') {
-          toast.error('Invalid raffle data');
-          return;
-        }
-        
-        if (!raffle.raffleContract || !/^0x[a-fA-F0-9]{40}$/.test(raffle.raffleContract)) {
-          toast.error('Invalid raffle contract address');
-          return;
-        }
-        
-        const quantity = ticketQuantities[raffle.raffleContract] || 1;
-        const availableTickets = raffle.maxTickets - raffle.ticketsSold;
-        
-        // Validation with sanitized inputs
-        if (typeof quantity !== 'number' || quantity < 1 || quantity > 25) {
-          toast.error('Invalid ticket quantity');
-          return;
-        }
-        
-        if (quantity > availableTickets) {
-          toast.error(`Only ${availableTickets} tickets available`);
-          return;
-        }
-        
-        // Check if already processing
-        if (isProcessing(raffle.raffleContract)) {
-          return;
-        }
-        
-        // Track user action
-        trackUserAction('buy_tickets_attempt', { 
-          raffleContract: raffle.raffleContract, 
-          quantity,
-          ticketPrice: raffle.ticketPrice 
-        });
-        
-        // Start processing
-        addProcessingRaffle(raffle.raffleContract);
-        
-        try {
-          // Convert ticket price to wei and calculate total value
-          const ticketPriceWei = typeof raffle.ticketPrice === 'string' 
-            ? parseEther(raffle.ticketPrice)
-            : BigInt(raffle.ticketPrice);
-          
-          const totalValue = ticketPriceWei * BigInt(quantity);
-          
-          // Use optimized transaction manager with contract call
-          await buyTicketsManager.executeTransaction({
-            address: raffle.raffleContract as `0x${string}`,
-            abi: [{
-              name: 'buyTickets',
-              type: 'function',
-              stateMutability: 'payable',
-              inputs: [{ name: 'quantity', type: 'uint256' }],
-              outputs: []
-            }],
-            functionName: 'buyTickets',
-            args: [BigInt(quantity)],
-            value: totalValue
-          });
-          
-          // Success handling is done in useEffect
-        } catch (error) {
-          console.error('Failed to buy tickets:', error);
-          removeProcessingRaffle(raffle.raffleContract);
-          trackUserAction('buy_tickets_error', { 
-            raffleContract: raffle.raffleContract, 
-            error: (error as Error).message 
-          });
-        }
-      }, 'buy_tickets_ui');
+    // SECURITY: Validate and sanitize inputs
+    if (!raffle || typeof raffle !== 'object') {
+      toast.error('Invalid raffle data');
+      return;
+    }
+    
+    if (!raffle.raffleContract || !/^0x[a-fA-F0-9]{40}$/.test(raffle.raffleContract)) {
+      toast.error('Invalid raffle contract address');
+      return;
+    }
+    
+    const quantity = ticketQuantities[raffle.raffleContract] || 1;
+    const availableTickets = raffle.maxTickets - raffle.ticketsSold;
+    
+    // Validation with sanitized inputs
+    if (typeof quantity !== 'number' || quantity < 1 || quantity > 25) {
+      toast.error('Invalid ticket quantity');
+      return;
+    }
+    
+    if (quantity > availableTickets) {
+      toast.error(`Only ${availableTickets} tickets available`);
+      return;
+    }
+    
+    // Check if already processing
+    if (isProcessing(raffle.raffleContract)) {
+      return;
+    }
+    
+    console.log('Buying tickets:', { 
+      raffleContract: raffle.raffleContract, 
+      quantity,
+      ticketPrice: raffle.ticketPrice 
     });
+    
+    // Start processing
+    addProcessingRaffle(raffle.raffleContract);
+    
+    try {
+      // Convert ticket price to wei and calculate total value
+      const ticketPriceWei = typeof raffle.ticketPrice === 'string' 
+        ? parseEther(raffle.ticketPrice)
+        : BigInt(raffle.ticketPrice);
+      
+      const totalValue = ticketPriceWei * BigInt(quantity);
+      
+      // Use optimized transaction manager with contract call
+      await buyTicketsManager.executeTransaction({
+        address: raffle.raffleContract as `0x${string}`,
+        abi: [{
+          name: 'buyTickets',
+          type: 'function',
+          stateMutability: 'payable',
+          inputs: [{ name: 'quantity', type: 'uint256' }],
+          outputs: []
+        }],
+        functionName: 'buyTickets',
+        args: [BigInt(quantity)],
+        value: totalValue
+      });
+      
+      // Success handling is done in useEffect
+    } catch (error) {
+      console.error('Failed to buy tickets:', error);
+      removeProcessingRaffle(raffle.raffleContract);
+    }
   }, [
     ticketQuantities, 
     buyTicketsManager.executeTransaction, 
     isProcessing, 
     addProcessingRaffle, 
-    removeProcessingRaffle,
-    executeWithRecovery,
-    measureOperation,
-    trackUserAction
+    removeProcessingRaffle
   ]);
 
-  // Optimized winner selection handler with Phase 3 enhancements
+  // Optimized winner selection handler
   const handleWinnerSelection = useCallback(async (raffle: CreatedRaffle) => {
-    return measureOperation('select_winner_ui', async () => {
-      return executeWithRecovery(async () => {
-        // Check if already processing
-        if (isProcessing(raffle.raffleContract)) {
-          return;
-        }
-        
-        // Track user action
-        trackUserAction('select_winner_attempt', { 
-          raffleContract: raffle.raffleContract 
-        });
-        
-        // Start processing
-        addProcessingRaffle(raffle.raffleContract);
-        
-        try {
-          // Use optimized transaction manager with chain-aware optimistic data
-          await winnerSelectionManager.executeTransaction({
-            address: raffle.raffleContract as `0x${string}`,
-            abi: [{
-              name: 'emergencyReveal',
-              type: 'function',
-              stateMutability: 'nonpayable',
-              inputs: [],
-              outputs: []
-            }],
-            functionName: 'emergencyReveal'
-          });
-          
-          // Success handling is done in useEffect with chain-aware cache invalidation
-        } catch (error) {
-          console.error('Failed to start winner selection:', error);
-          removeProcessingRaffle(raffle.raffleContract);
-          trackUserAction('select_winner_error', { 
-            raffleContract: raffle.raffleContract, 
-            error: (error as Error).message 
-          });
-        }
-      }, 'select_winner_ui');
+    // Check if already processing
+    if (isProcessing(raffle.raffleContract)) {
+      return;
+    }
+    
+    console.log('Selecting winner:', { 
+      raffleContract: raffle.raffleContract 
     });
+    
+    // Start processing
+    addProcessingRaffle(raffle.raffleContract);
+    
+    try {
+      // Use optimized transaction manager with chain-aware optimistic data
+      await winnerSelectionManager.executeTransaction({
+        address: raffle.raffleContract as `0x${string}`,
+        abi: [{
+          name: 'emergencyReveal',
+          type: 'function',
+          stateMutability: 'nonpayable',
+          inputs: [],
+          outputs: []
+        }],
+        functionName: 'emergencyReveal'
+      });
+      
+      // Success handling is done in useEffect with chain-aware cache invalidation
+    } catch (error) {
+      console.error('Failed to start winner selection:', error);
+      removeProcessingRaffle(raffle.raffleContract);
+    }
   }, [
     winnerSelectionManager.executeTransaction, 
     isProcessing, 
     addProcessingRaffle, 
-    removeProcessingRaffle,
-    executeWithRecovery,
-    measureOperation,
-    trackUserAction
+    removeProcessingRaffle
   ]);
-
-
 
   // Effect: Handle buy tickets success
   useEffect(() => {

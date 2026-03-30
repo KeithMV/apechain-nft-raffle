@@ -45,19 +45,6 @@ export type {
   VirtualGridResult
 } from './virtual-scroll';
 
-// Image preloader utilities
-export {
-  ImagePreloader,
-  preloadImage,
-  preloadImages,
-  globalImagePreloader
-} from './image-preloader';
-
-export type {
-  PreloadItem,
-  PreloadOptions
-} from './image-preloader';
-
 // Performance monitoring utilities
 export {
   PerformanceMonitor,

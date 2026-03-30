@@ -9,8 +9,7 @@ import { throttle, measureSync } from '../utils/performance';
 import { useNetwork } from '../contexts/NetworkContext';
 // Phase 3: Advanced UX enhancements
 import { SmartLoading } from './UXEnhancements';
-import { usePredictivePreloading } from '../hooks/usePredictivePreloading';
-import { usePerformanceAnalytics } from '../hooks/usePerformanceAnalytics';
+
 
 
 
@@ -18,22 +17,17 @@ export default function BrowseRaffles() {
   const { address } = useAccount();
   const chainId = useChainId();
   const { nativeCurrency, isApeChain } = useNetwork();
-  const { triggerPreload } = usePredictivePreloading();
-  const { trackUserAction } = usePerformanceAnalytics();
-  
-  // Track page view and trigger predictive preloading
+  // Track page view
   useEffect(() => {
-    trackUserAction('browse_page_view', { chainId });
-    triggerPreload('browse_page');
-  }, [chainId, trackUserAction, triggerPreload]);
+    console.log('Browse page viewed:', { chainId });
+  }, [chainId]);
   
   // Remove debug console.log for production
   // console.log('🎨 BrowseRaffles: isApeChain =', isApeChain, 'currency =', nativeCurrency);
   
   const handleRaffleHover = useCallback((raffleId: string | number) => {
-    triggerPreload('raffle_details', { raffleId: raffleId.toString() });
-    trackUserAction('raffle_hover', { raffleId: raffleId.toString() });
-  }, [triggerPreload, trackUserAction]);
+    console.log('Raffle hovered:', { raffleId: raffleId.toString() });
+  }, []);
   
   // Memoize network-aware styling to prevent recalculation
   const styles = useMemo(() => ({

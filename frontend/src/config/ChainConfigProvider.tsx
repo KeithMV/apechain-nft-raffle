@@ -14,7 +14,7 @@ import {
   isPolygonChain,
   isSupportedChain,
   getOperationConfig
-} from './chainConfigurations';
+} from './wagmiUnified';
 
 /**
  * Chain configuration context interface

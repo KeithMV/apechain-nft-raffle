@@ -15,11 +15,7 @@ import { suppressWalletConnectErrors } from '../utils/walletCleanup';
 import { suppressWeb3ModalWarnings } from '../utils/suppressWarnings';
 import { enableMobileErrorSuppression } from '../utils/mobileErrorSuppression';
 import '../utils/consoleSecure'; // Auto-enables production console security
-import '../utils/mobileRPCErrorHandler'; // Auto-enables mobile RPC error handling
-import { useIntelligentCache } from '../hooks/useIntelligentCache';
-import { useAdvancedErrorRecovery } from '../hooks/useAdvancedErrorRecovery';
-import { usePredictivePreloading } from '../hooks/usePredictivePreloading';
-import { usePerformanceAnalytics } from '../hooks/usePerformanceAnalytics';
+
 
 // Initialize Web3Modal with proper mobile detection and error handling
 let web3ModalInitialized = false;
@@ -79,44 +75,7 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// Phase 3 Optimization Provider (router-independent)
-const Phase3OptimizationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const intelligentCache = useIntelligentCache();
-  const errorRecovery = useAdvancedErrorRecovery();
-  const performanceAnalytics = usePerformanceAnalytics();
 
-  // Initialize Phase 3 optimizations (without predictive preloading)
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 [PHASE3] Optimization features initialized');
-    }
-    
-    // Track app initialization (silent)
-    performanceAnalytics.trackUserAction('app_init');
-    
-    // Initialize error recovery patterns (silent)
-    errorRecovery.preventiveActions();
-  }, [performanceAnalytics, errorRecovery]);
-
-  return <>{children}</>;
-};
-
-// Router-dependent Phase 3 Provider (must be inside BrowserRouter)
-export const Phase3RouterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const predictivePreloading = usePredictivePreloading();
-
-  // Initialize router-dependent optimizations
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔮 [PHASE3] Predictive preloading initialized');
-    }
-    
-    // Start predictive preloading (silent)
-    predictivePreloading.backgroundPreload();
-  }, [predictivePreloading]);
-
-  return <>{children}</>;
-};
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -145,11 +104,9 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
     <WagmiProvider config={config}>
       <QueryClientProvider client={transactionQueryClient}>
         <ChainConfigProvider>
-          <Phase3OptimizationProvider>
-            <NetworkProvider>
-              {children}
-            </NetworkProvider>
-          </Phase3OptimizationProvider>
+          <NetworkProvider>
+            {children}
+          </NetworkProvider>
         </ChainConfigProvider>
       </QueryClientProvider>
     </WagmiProvider>

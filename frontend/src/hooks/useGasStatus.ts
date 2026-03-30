@@ -6,7 +6,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useChainId } from 'wagmi';
 import { alchemyGasOracle, gasUtils, type OperationType, type CongestionLevel } from '../utils/alchemyGasOracle';
-import { polygonOptimizer } from '../utils/polygonOptimizations';
 
 export interface GasStatus {
   baseFeeGwei: number;
@@ -58,13 +57,13 @@ export function useGasStatus() {
     try {
       setGasStatus(prev => ({ ...prev, isLoading: true, error: undefined }));
       
-      const status = await polygonOptimizer.getNetworkStatus();
+      const status = await alchemyGasOracle.getNetworkStatus();
       
       setGasStatus({
         baseFeeGwei: status.baseFeeGwei,
         congestionLevel: status.congestionLevel as CongestionLevel,
         recommendedAction: status.recommendedAction,
-        shouldWarn: status.shouldWarn,
+        shouldWarn: status.congestionLevel === 'high' || status.congestionLevel === 'extreme',
         isLoading: false
       });
     } catch (error) {
@@ -116,14 +115,18 @@ export function useGasEstimate() {
       setIsLoading(true);
       setError(undefined);
       
-      const gasSettings = await polygonOptimizer.getOptimizedGasSettings(operation, contractCall);
+      const gasSettings = await alchemyGasOracle.getOptimalGas(operation, contractCall);
       
       const result: GasEstimateResult = {
-        ...gasSettings,
-        formattedGasPrice: gasUtils.formatGasPrice(BigInt(gasSettings.maxFeePerGas)),
+        gasLimit: gasSettings.gasLimit.toString(),
+        maxFeePerGas: gasSettings.maxFeePerGas.toString(),
+        maxPriorityFeePerGas: gasSettings.maxPriorityFeePerGas.toString(),
+        estimatedCostUSD: gasSettings.estimatedCostUSD,
+        congestionLevel: gasSettings.congestionLevel,
+        formattedGasPrice: gasUtils.formatGasPrice(gasSettings.maxFeePerGas),
         formattedCost: gasSettings.estimatedCostUSD ? gasUtils.formatCost(gasSettings.estimatedCostUSD) : 'Unknown',
-        congestionColor: gasUtils.getCongestionColor(gasSettings.congestionLevel as CongestionLevel),
-        congestionEmoji: gasUtils.getCongestionEmoji(gasSettings.congestionLevel as CongestionLevel)
+        congestionColor: gasUtils.getCongestionColor(gasSettings.congestionLevel),
+        congestionEmoji: gasUtils.getCongestionEmoji(gasSettings.congestionLevel)
       };
       
       return result;
