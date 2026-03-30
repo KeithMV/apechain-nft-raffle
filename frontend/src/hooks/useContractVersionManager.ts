@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useChainId } from 'wagmi';
-import { getFactoryAddress, getChainConfig } from '../config/simplified-addresses';
+import { getFactoryAddress, getChainConfig } from '../config/addresses';
 
 export interface VersionConfig {
   v4Available: boolean;

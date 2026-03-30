@@ -6,7 +6,7 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useChainId, useAccount, usePublicClient } from 'wagmi';
 import { useMemo, useCallback } from 'react';
-import { getChainConfig } from '../config/simplified-addresses';
+import { getChainConfig } from '../config/addresses';
 import { RAFFLE_FACTORY_ABI } from '../config/contracts';
 
 export interface RaffleData {
@@ -200,7 +200,8 @@ export function useRaffleData(options: UseRaffleDataOptions) {
         });
         
         const batchResults = await Promise.all(batchPromises);
-        results.push(...batchResults.filter(Boolean));
+        const validResults = batchResults.filter(result => result !== null) as RaffleData[];
+        results.push(...validResults);
         
         // Delay between batches
         if (i + batchSize < indices.length) {

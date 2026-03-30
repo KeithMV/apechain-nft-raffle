@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAccount, useChainId } from 'wagmi';
-import { NETWORK_CONFIGS } from '../config/networks';
+import { getChainConfig } from '../config/addresses';
 import { CHAIN_IDS } from '../constants/chains';
 
 export default function NetworkStatus() {
@@ -9,7 +9,7 @@ export default function NetworkStatus() {
 
   if (!isConnected) return null;
 
-  const networkConfig = NETWORK_CONFIGS[chainId as keyof typeof NETWORK_CONFIGS];
+  const networkConfig = getChainConfig(chainId);
   const isApeChain = chainId === CHAIN_IDS.APECHAIN_MAINNET;
   const isPolygon = chainId === CHAIN_IDS.POLYGON_MAINNET;
   const isSupportedNetwork = isApeChain || isPolygon;
