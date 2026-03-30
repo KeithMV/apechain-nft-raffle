@@ -6,12 +6,10 @@
 import React, { useState, useEffect } from 'react';
 import { useChainConfig } from '../hooks/useChainConfig';
 import { polygonOptimizer } from '../utils/polygonOptimizations';
-import { getAllRPCURLs } from '../config/rpcConfig';
 
 export const TransactionOptimizationTest: React.FC = () => {
   const { chainId, isPolygon, isApeChain, config } = useChainConfig();
   const polygonMetrics = polygonOptimizer.getPerformanceMetrics();
-  const healthyEndpoints = getAllRPCURLs(137);
   
   const [testGasSettings, setTestGasSettings] = useState<any>(null);
   const [testTimeout, setTestTimeout] = useState<number | null>(null);
@@ -92,13 +90,9 @@ export const TransactionOptimizationTest: React.FC = () => {
       
       {isPolygon && (
         <div style={{ marginBottom: '10px' }}>
-          <strong style={{ color: '#ff6b35' }}>🌐 RPC Endpoints:</strong><br/>
-          Healthy: {healthyEndpoints.length}<br/>
-          {healthyEndpoints.slice(0, 2).map((endpoint, i) => (
-            <div key={i} style={{ fontSize: '10px', opacity: 0.8 }}>
-              {i + 1}. {endpoint.split('//')[1]?.split('/')[0] || endpoint}
-            </div>
-          ))}
+          <strong style={{ color: '#ff6b35' }}>🌐 RPC Status:</strong><br/>
+          Chain: Polygon (137)<br/>
+          Status: Connected
         </div>
       )}
       

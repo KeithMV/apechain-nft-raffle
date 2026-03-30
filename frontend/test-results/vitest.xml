@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="37" failures="0" errors="0" time="0.121576126">
+    <testsuite name="src/components/__tests__/CreateRafflePage.test.tsx" timestamp="2026-03-30T03:12:39.120Z" hostname="Keiths-MacBook-Air.local" tests="7" failures="0" errors="0" skipped="0" time="0.076698084">
+        <testcase classname="src/components/__tests__/CreateRafflePage.test.tsx" name="CreateRafflePage &gt; renders create raffle form" time="0.04304375">
+            <system-out>
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/components/__tests__/CreateRafflePage.test.tsx" name="CreateRafflePage &gt; validates NFT contract address format" time="0.008495208">
+            <system-out>
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/components/__tests__/CreateRafflePage.test.tsx" name="CreateRafflePage &gt; validates ticket price is positive" time="0.003057958">
+            <system-out>
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/components/__tests__/CreateRafflePage.test.tsx" name="CreateRafflePage &gt; validates max tickets range" time="0.003714792">
+            <system-out>
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/components/__tests__/CreateRafflePage.test.tsx" name="CreateRafflePage &gt; shows approval button when NFT needs approval" time="0.006947792">
+            <system-out>
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/components/__tests__/CreateRafflePage.test.tsx" name="CreateRafflePage &gt; shows processing state during raffle creation" time="0.001948542">
+            <system-out>
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/components/__tests__/CreateRafflePage.test.tsx" name="CreateRafflePage &gt; calls createRaffle when form is submitted with valid data" time="0.00829475">
+            <system-out>
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+🔍 [CreateRafflePage] NFTs from hook: { count: [33m0[39m, loading: [33mfalse[39m, nfts: [], hasDuplicates: [33mfalse[39m }
+
+🔍 Creating raffle with parameters: {
+  nftContract: [32m&apos;0x1234567890123456789012345678901234567890&apos;[39m,
+  tokenId: [32m&apos;123&apos;[39m,
+  ticketPrice: [32m&apos;0.1&apos;[39m,
+  maxTickets: [32m&apos;100&apos;[39m,
+  duration: [32m&apos;24&apos;[39m,
+  durationInHours: [33m24[39m,
+  durationInSeconds: [33m86400[39m,
+  approvalStatus: [33mtrue[39m,
+  userAddress: [32m&apos;0x1234567890123456789012345678901234567890&apos;[39m,
+  chainId: [33m33139[39m
+}
+
+            </system-out>
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/__tests__/WalletConnection.test.tsx" timestamp="2026-03-30T03:12:39.121Z" hostname="Keiths-MacBook-Air.local" tests="5" failures="0" errors="0" skipped="0" time="0.022959375">
+        <testcase classname="src/components/__tests__/WalletConnection.test.tsx" name="WalletConnection &gt; shows connect button when wallet is not connected" time="0.012529625">
+        </testcase>
+        <testcase classname="src/components/__tests__/WalletConnection.test.tsx" name="WalletConnection &gt; shows connect button when wallet is connecting" time="0.002469583">
+        </testcase>
+        <testcase classname="src/components/__tests__/WalletConnection.test.tsx" name="WalletConnection &gt; shows wallet address when connected" time="0.001893583">
+        </testcase>
+        <testcase classname="src/components/__tests__/WalletConnection.test.tsx" name="WalletConnection &gt; opens Web3Modal when connect button is clicked" time="0.003318792">
+            <system-out>
+🔍 [DEBUG] Connect button clicked
+🔍 [DEBUG] Environment: development
+🔍 [DEBUG] Env Chain ID: [33m33139[39m
+🔍 [DEBUG] Actual Chain ID (wagmi): [33m33139[39m
+🔍 [DEBUG] User Agent: Mozilla/5.0 (darwin) AppleWebKit/537.36 (KHTML, like Gecko) jsdom/27.4.0
+🔍 [DEBUG] Window.ethereum: [33mtrue[39m
+🔍 [DEBUG] Is Mobile: [33mfalse[39m
+🔍 [DEBUG] Opening Web3Modal...
+
+🔍 [DEBUG] Web3Modal opened successfully
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/components/__tests__/WalletConnection.test.tsx" name="WalletConnection &gt; calls disconnect when disconnect button is clicked" time="0.001534167">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/hooks/__tests__/raffleUtils.test.ts" timestamp="2026-03-30T03:12:39.122Z" hostname="Keiths-MacBook-Air.local" tests="4" failures="0" errors="0" skipped="0" time="0.002311792">
+        <testcase classname="src/hooks/__tests__/raffleUtils.test.ts" name="Raffle Contract Utilities &gt; validates raffle parameters correctly" time="0.000813542">
+        </testcase>
+        <testcase classname="src/hooks/__tests__/raffleUtils.test.ts" name="Raffle Contract Utilities &gt; calculates transaction timeouts correctly" time="0.000100041">
+        </testcase>
+        <testcase classname="src/hooks/__tests__/raffleUtils.test.ts" name="Raffle Contract Utilities &gt; formats contract errors properly" time="0.000127542">
+        </testcase>
+        <testcase classname="src/hooks/__tests__/raffleUtils.test.ts" name="Raffle Contract Utilities &gt; validates approval status correctly" time="0.000072791">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/hooks/__tests__/useRaffleContractV4.test.tsx" timestamp="2026-03-30T03:12:39.122Z" hostname="Keiths-MacBook-Air.local" tests="6" failures="0" errors="0" skipped="0" time="0.015129625">
+        <testcase classname="src/hooks/__tests__/useRaffleContractV4.test.tsx" name="useRaffleContractV4 hooks &gt; useContractVersionManager &gt; returns version information" time="0.00640975">
+        </testcase>
+        <testcase classname="src/hooks/__tests__/useRaffleContractV4.test.tsx" name="useRaffleContractV4 hooks &gt; usePlatformFeeV4 &gt; reads platform fee" time="0.001096709">
+        </testcase>
+        <testcase classname="src/hooks/__tests__/useRaffleContractV4.test.tsx" name="useRaffleContractV4 hooks &gt; useCreateRaffleV4 &gt; initializes with correct default state" time="0.002626875">
+        </testcase>
+        <testcase classname="src/hooks/__tests__/useRaffleContractV4.test.tsx" name="useRaffleContractV4 hooks &gt; useCreateRaffleV4 &gt; handles createRaffle function call" time="0.001865459">
+            <system-out>
+🎯 [CREATE] Creating raffle - NFT will be transferred from user wallet to raffle contract
+📝 [CREATE] NFT: 0x1234567890123456789012345678901234567890 Token ID: 123
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/hooks/__tests__/useRaffleContractV4.test.tsx" name="useRaffleContractV4 hooks &gt; useNFTApprovalV4 &gt; handles approveNFT function call" time="0.00105125">
+        </testcase>
+        <testcase classname="src/hooks/__tests__/useRaffleContractV4.test.tsx" name="useRaffleContractV4 hooks &gt; useNFTApprovalV4 &gt; shows processing state during transaction" time="0.000873916">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/utils/__tests__/inputSanitizer.test.ts" timestamp="2026-03-30T03:12:39.122Z" hostname="Keiths-MacBook-Air.local" tests="15" failures="0" errors="0" skipped="0" time="0.00447725">
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; sanitizeInput &gt; removes script tags" time="0.001608375">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; sanitizeInput &gt; removes javascript: protocols" time="0.000194458">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; sanitizeInput &gt; removes on* event handlers" time="0.000128583">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; sanitizeInput &gt; preserves safe content" time="0.000099042">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; sanitizeInput &gt; handles empty and null inputs" time="0.000119041">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; sanitizeInput &gt; trims whitespace" time="0.000047042">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; validateAddress &gt; validates correct Ethereum addresses" time="0.000066667">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; validateAddress &gt; rejects invalid address formats" time="0.000085375">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; validateAddress &gt; rejects addresses with invalid characters" time="0.000100167">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; validateAddress &gt; handles mixed case addresses" time="0.000113292">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; validatePositiveNumber &gt; validates positive numbers" time="0.000123916">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; validatePositiveNumber &gt; rejects zero and negative numbers" time="0.000056292">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; validatePositiveNumber &gt; rejects invalid number formats" time="0.000079417">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; validatePositiveNumber &gt; handles edge cases" time="0.000162083">
+        </testcase>
+        <testcase classname="src/utils/__tests__/inputSanitizer.test.ts" name="inputSanitizer &gt; validatePositiveNumber &gt; validates within reasonable ranges" time="0.000114333">
+        </testcase>
+    </testsuite>
+</testsuites>
