@@ -64,6 +64,35 @@ const metadata = {
   icons: [`${process.env.REACT_APP_APP_URL || 'http://localhost:3000'}/favicon.ico`]
 };
 
+// PHASE 2: Chain-specific optimization utilities
+const getChainOptimizedSettings = (chainId: number) => {
+  switch (chainId) {
+    case 137: // Polygon - Optimized for congestion and volatility
+      return {
+        pollingInterval: 8000,        // 8s - Faster than ApeChain (matches 2-3s block times)
+        batchSize: 1024 * 75,         // 75KB - Smaller batches (avoid RPC limits)
+        batchWait: 100,               // 100ms - Longer waits (handle congestion)
+        retryDelay: 2000,             // 2s - Conservative retries (network instability)
+        maxRetries: 3,                // More retries for Polygon's instability
+      };
+    case 33139: // ApeChain - Keep current working settings
+    default:
+      return {
+        pollingInterval: 12000,       // 12s - Current working setting
+        batchSize: 1024 * 100,        // 100KB - Larger batches (less congested)
+        batchWait: 50,                // 50ms - Shorter waits (reliable network)
+        retryDelay: 1000,             // 1s - Faster retries (stable network)
+        maxRetries: 2,                // Fewer retries needed
+      };
+  }
+};
+
+// PHASE 2: Dynamic configuration based on primary chain
+const getPrimaryChainId = () => {
+  // Default to ApeChain, but could be made dynamic based on user preference
+  return CHAIN_IDS.APECHAIN_MAINNET;
+};
+
 // Device detection utility (runtime)
 export const getDeviceType = () => {
   if (typeof window === 'undefined') return 'desktop';
@@ -71,12 +100,20 @@ export const getDeviceType = () => {
     ? 'mobile' : 'desktop';
 };
 
-// PHASE 1: Simplified configuration for both chains
-const createSimplifiedConfig = () => {
+// PHASE 2: Chain-optimized configuration with Alchemy
+const createOptimizedConfig = () => {
   const isMobile = getDeviceType() === 'mobile';
+  const primaryChain = getPrimaryChainId();
+  const chainSettings = getChainOptimizedSettings(primaryChain);
   
-  console.log('🔧 [PHASE 1] Creating simplified dual-chain configuration');
+  console.log('🔧 [PHASE 2] Creating chain-optimized dual-chain configuration');
   console.log('⚡ [ALCHEMY] Using Alchemy for Polygon:', !!process.env.REACT_APP_ALCHEMY_API_KEY);
+  console.log('🎯 [OPTIMIZATION] Primary chain settings:', {
+    chainId: primaryChain,
+    polling: chainSettings.pollingInterval,
+    batchSize: chainSettings.batchSize,
+    batchWait: chainSettings.batchWait
+  });
   
   return defaultWagmiConfig({
     chains: [apeChain, polygonChain],
@@ -87,21 +124,49 @@ const createSimplifiedConfig = () => {
     enableEIP6963: true,
     enableCoinbase: true,
     
-    // Reasonable batch configuration for both chains
+    // PHASE 2: Chain-optimized batch configuration
     batch: {
       multicall: {
-        batchSize: 1024 * 100, // 100KB batches
-        wait: 50, // 50ms wait
+        batchSize: chainSettings.batchSize,
+        wait: chainSettings.batchWait,
       },
     },
     
-    // Reasonable polling - not too aggressive
-    pollingInterval: isMobile ? 15000 : 10000, // 15s mobile, 10s desktop
+    // PHASE 2: Optimized polling based on primary chain
+    pollingInterval: isMobile 
+      ? chainSettings.pollingInterval + 5000  // +5s for mobile
+      : chainSettings.pollingInterval,
   });
 };
 
 // Export single unified config
-export const config = createSimplifiedConfig();
+export const config = createOptimizedConfig();
+
+// PHASE 2: Chain-specific React Query configurations
+export const getChainQueryConfig = (chainId: number) => {
+  const settings = getChainOptimizedSettings(chainId);
+  
+  return {
+    staleTime: chainId === 137 
+      ? 25000   // 25s for Polygon (more volatile)
+      : 30000,  // 30s for ApeChain (more stable)
+    
+    gcTime: chainId === 137
+      ? 5 * 60 * 1000   // 5min for Polygon (shorter cache)
+      : 10 * 60 * 1000, // 10min for ApeChain (longer cache)
+    
+    retryDelay: settings.retryDelay,
+    retry: settings.maxRetries,
+    
+    // Polygon needs more conservative refetch settings
+    refetchOnWindowFocus: chainId === 137 ? false : true,
+    refetchOnReconnect: true,
+    refetchInterval: false, // Let polling handle updates
+  };
+};
+
+// PHASE 2: Export chain settings for use in hooks
+export const getChainSettings = getChainOptimizedSettings;
 
 export const getWalletConfig = () => {
   const isMobile = getDeviceType() === 'mobile';
