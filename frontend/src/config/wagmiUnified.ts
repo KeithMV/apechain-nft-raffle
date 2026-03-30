@@ -71,13 +71,13 @@ const metadata = {
 // PHASE 2: Chain-specific optimization utilities
 const getChainOptimizedSettings = (chainId: number) => {
   switch (chainId) {
-    case 137: // Polygon - EMERGENCY: Ultra-conservative settings due to rate limiting
+    case 137: // Polygon - OPTIMIZED: Balanced settings for good UX
       return {
-        pollingInterval: 15000,       // 15s - Much slower polling
-        batchSize: 1024 * 25,         // 25KB - Much smaller batches
-        batchWait: 500,               // 500ms - Much longer waits
-        retryDelay: 5000,             // 5s - Much longer retry delays
-        maxRetries: 2,                // Fewer retries to avoid rate limits
+        pollingInterval: 8000,        // 8s - Faster polling for better UX (was 15s)
+        batchSize: 1024 * 40,         // 40KB - Moderate batches (was 25KB)
+        batchWait: 300,               // 300ms - Moderate waits (was 500ms)
+        retryDelay: 3000,             // 3s - Moderate retry delays (was 5s)
+        maxRetries: 2,                // Keep conservative retries
       };
     case 33139: // ApeChain - Keep current working settings
     default:
@@ -152,7 +152,7 @@ export const getChainQueryConfig = (chainId: number) => {
   
   return {
     staleTime: chainId === 137 
-      ? 25000   // 25s for Polygon (more volatile)
+      ? 15000   // 15s for Polygon (faster refresh)
       : 30000,  // 30s for ApeChain (more stable)
     
     gcTime: chainId === 137
@@ -290,11 +290,11 @@ export const getChainConfig = (chainId?: number): ChainConfiguration => {
       timeoutMultiplier: chainId === 137 ? 1.5 : 1.0,
     },
     cache: {
-      staleTime: chainId === 137 ? 25000 : 30000,
+      staleTime: chainId === 137 ? 15000 : 30000, // Faster refresh for Polygon
       gcTime: chainId === 137 ? 5 * 60 * 1000 : 10 * 60 * 1000,
       userStaleTime: 15000,
       userGcTime: 2 * 60 * 1000,
-      invalidationDelay: chainId === 137 ? 2000 : 1000,
+      invalidationDelay: chainId === 137 ? 1000 : 1000, // 1s for both chains - faster updates
       maxPages: 5,
     },
     nft: {

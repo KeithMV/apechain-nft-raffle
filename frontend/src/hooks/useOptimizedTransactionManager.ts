@@ -95,7 +95,9 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       // Use centralized invalidation delay configuration
       console.log(`🔄 [CACHE] Chain-aware invalidation: ${invalidationDelay > 0 ? `${invalidationDelay}ms delay` : 'immediate'} for tx:`, hash);
       
-      setTimeout(() => {
+      // POLYGON OPTIMIZATION: Immediate + delayed invalidation for faster UX
+      if (isPolygon) {
+        // Immediate invalidation for instant feedback
         invalidateAfterTransaction({
           raffleContract: optimisticData?.raffleId,
           userAddress: optimisticData?.userAddress,
@@ -103,7 +105,29 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
           immediate: true,
           chainId
         });
-      }, invalidationDelay);
+        
+        // Follow-up invalidation to catch any missed updates
+        setTimeout(() => {
+          invalidateAfterTransaction({
+            raffleContract: optimisticData?.raffleId,
+            userAddress: optimisticData?.userAddress,
+            transactionType,
+            immediate: true,
+            chainId
+          });
+        }, 3000); // 3s follow-up
+      } else {
+        // Standard invalidation for other chains
+        setTimeout(() => {
+          invalidateAfterTransaction({
+            raffleContract: optimisticData?.raffleId,
+            userAddress: optimisticData?.userAddress,
+            transactionType,
+            immediate: true,
+            chainId
+          });
+        }, invalidationDelay);
+      }
       
       if (enableToasts && successMessage) {
         toast.success(successMessage);
@@ -115,7 +139,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       
       setAttempt(0); // Reset attempt counter on success
     }
-  }, [isSuccess, hash, successMessage, onSuccess, enableToasts, optimisticData, transactionType, invalidateAfterTransaction, chainId, invalidationDelay]);
+  }, [isSuccess, hash, successMessage, onSuccess, enableToasts, optimisticData, transactionType, invalidateAfterTransaction, chainId, invalidationDelay, isPolygon]);
 
   // Handle transaction errors with smart retry logic
   useEffect(() => {
