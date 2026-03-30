@@ -25,6 +25,8 @@ export const suppressWeb3ModalWarnings = () => {
     
     // Suppress Web3Modal API errors (400 status codes)
     if (message.includes('HTTP status code: 400') ||
+        message.includes('api.web3modal.org') ||
+        message.includes('getWallets') ||
         message.includes('searchWalletByIds') ||
         message.includes('FetchUtil.get') ||
         message.includes('HTTP request failed') && message.includes('Status: 401') ||

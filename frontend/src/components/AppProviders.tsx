@@ -38,13 +38,11 @@ const initializeWeb3Modal = () => {
       enableSwaps: false,
       themeMode: 'dark',
       
-      // Device-adaptive wallet configuration
-      featuredWalletIds: currentWalletConfig.featuredWalletIds,
-      includeWalletIds: currentWalletConfig.includeWalletIds,
-      excludeWalletIds: currentWalletConfig.excludeWalletIds,
-      
-      // CRITICAL FIX: Disable wallet fetching to prevent API errors
+      // CRITICAL FIX: Completely disable external wallet fetching
       allWallets: 'HIDE',
+      featuredWalletIds: [],
+      includeWalletIds: [],
+      excludeWalletIds: [],
       
       // Use ApeChain as default
       defaultChain: apeChain,
