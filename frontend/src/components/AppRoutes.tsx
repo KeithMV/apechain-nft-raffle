@@ -12,6 +12,7 @@ import { ErrorBoundary, Web3ErrorBoundary } from './ErrorBoundary';
 const CreateRafflePage = lazy(() => import('./CreateRafflePage'));
 const RaffleDashboard = lazy(() => import('./RaffleDashboard'));
 const BrowseRaffles = lazy(() => import('./BrowseRaffles'));
+const TransactionDebugger = lazy(() => import('./TransactionDebugger'));
 
 // Optimized loading fallback with memoization
 const LoadingFallback = React.memo(() => (
@@ -51,6 +52,13 @@ export const AppRoutes: React.FC = () => {
         <ErrorBoundary>
           <LazyWrapper>
             <RaffleDashboard key={`dashboard-${chainId}`} />
+          </LazyWrapper>
+        </ErrorBoundary>
+      } />
+      <Route path="/debug" element={
+        <ErrorBoundary>
+          <LazyWrapper>
+            <TransactionDebugger />
           </LazyWrapper>
         </ErrorBoundary>
       } />
