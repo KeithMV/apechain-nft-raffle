@@ -4,6 +4,8 @@
  * Eliminates configuration conflicts and duplication
  */
 
+import { defineChain } from 'viem';
+
 // =============================================================================
 // CORE TYPES
 // =============================================================================
@@ -182,8 +184,6 @@ export function getContracts(chainId?: number) {
 // =============================================================================
 // WAGMI CHAIN DEFINITIONS
 // =============================================================================
-
-import { defineChain } from 'viem';
 
 export const apeChain = defineChain({
   id: APECHAIN_CONFIG.chainId,

@@ -144,7 +144,7 @@ export const getProgressiveTimeout = (transactionType: 'buy-tickets' | 'select-w
   
   // Use centralized chain configuration
   const chainConfig = getChainConfig(chainId);
-  const timeoutMultiplier = chainConfig.transaction.timeoutMultiplier;
+  const timeoutMultiplier = chainId === 137 ? 1.5 : 1.0; // Polygon needs more time
   
   // Base timeouts with device considerations
   const baseTimeouts = {

@@ -68,6 +68,8 @@ export const getWalletConfig = () => {
 
 // Re-export utilities from unified config
 export { 
+  apeChain,
+  polygonChain,
   isApeChain, 
   isPolygonChain, 
   isSupportedChain, 

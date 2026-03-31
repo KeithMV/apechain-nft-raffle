@@ -36,6 +36,7 @@ export function useChainConfig() {
     timeout: config.settings.timeout,
     retries: config.settings.retries,
     rateLimit: config.settings.rateLimit,
+    invalidationDelay: 1000, // 1s invalidation delay for both chains
     
     // Query configuration
     queryConfig: getQueryConfig(chainId),

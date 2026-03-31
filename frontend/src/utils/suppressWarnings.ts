@@ -23,7 +23,7 @@ export const suppressWeb3ModalWarnings = () => {
   console.error = (...args) => {
     const message = args.join(' ');
     
-    // Suppress Web3Modal API errors (400 status codes)
+    // Suppress Web3Modal API errors (400 status codes) - but log them in development
     if (message.includes('HTTP status code: 400') ||
         message.includes('api.web3modal.org') ||
         message.includes('getWallets') ||
@@ -35,6 +35,10 @@ export const suppressWeb3ModalWarnings = () => {
         message.includes('CORS policy') ||
         message.includes('walletconnect.org') ||
         message.includes('Failed to load resource')) {
+      // In development, show a simplified warning instead of hiding completely
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('🔧 [WEB3MODAL] API call failed (this is normal in development)');
+      }
       return;
     }
     
