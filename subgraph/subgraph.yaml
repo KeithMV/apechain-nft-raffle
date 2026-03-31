@@ -6,7 +6,7 @@ dataSources:
     name: RaffleFactory
     network: apechain
     source:
-      address: "0x05139110Db8FF9cF82A836Af95eff4530011c705"
+      address: "0xC9Bd344f5E31481F202E400C33210Bd1AB542b42"
       abi: RaffleFactory
       startBlock: 2000000
     mapping:
