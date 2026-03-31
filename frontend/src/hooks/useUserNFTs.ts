@@ -246,31 +246,14 @@ export function useUserNFTs(userAddress: string, chainId: number) {
   const { address, isConnected } = useAccount();
   const { nftConfig } = useChainConfig();
   
-  // Only fetch if user is connected and address matches
-  const shouldFetch = Boolean(
-    isConnected && 
-    address && 
-    userAddress && 
-    address.toLowerCase() === userAddress.toLowerCase() && 
-    chainId && 
-    publicClient
-  );
-  
-  const query = useQuery({
-    queryKey: ['userNFTs', userAddress, chainId],
-    queryFn: () => fetchUserNFTs(publicClient, userAddress, chainId, nftConfig),
-    enabled: shouldFetch,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    retry: 1,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false
-  });
+  // EMERGENCY: Temporarily disable NFT fetching to stop RPC spam
+  // The raffle data fetching is causing 429 errors and breaking the entire Web3 stack
+  console.log('🚫 NFT fetching temporarily disabled due to RPC rate limiting');
   
   return {
-    nfts: query.data || [],
-    loading: query.isLoading,
-    error: query.isError,
-    refetch: query.refetch
+    nfts: [],
+    loading: false,
+    error: false,
+    refetch: () => Promise.resolve()
   };
 }
