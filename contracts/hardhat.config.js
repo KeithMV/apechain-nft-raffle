@@ -32,15 +32,15 @@ module.exports = {
         : ["0x1234567890123456789012345678901234567890123456789012345678901234"]
     },
     polygon: {
-      url: "https://polygon-mainnet.infura.io/v3/2275e07415e7485ba5b202bfd13eaed3",
+      url: process.env.POLYGON_RPC_URL || "https://polygon-rpc.com",
       accounts: process.env.OWNER_PRIVATE_KEY && process.env.OWNER_PRIVATE_KEY !== 'your_private_key_here' 
         ? [process.env.OWNER_PRIVATE_KEY] 
         : ["0x1234567890123456789012345678901234567890123456789012345678901234"],
       chainId: 137,
-      timeout: 120000,
-      gas: "auto",
-      gasPrice: 50000000000,
-      gasMultiplier: 1.2
+      timeout: 180000,
+      gas: 8000000,
+      gasPrice: 200000000000, // 200 gwei
+      gasMultiplier: 1.5
     },
   }
 };
