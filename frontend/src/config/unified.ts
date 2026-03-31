@@ -73,8 +73,8 @@ const POLYGON_CONFIG: ChainConfig = {
     : 'https://polygon-rpc.com',
   explorerUrl: 'https://polygonscan.com',
   contracts: {
-    factory: '0x5854AF7c836275c55469350a114F62a1609c4A42', // V4
-    template: '0xC7b41b9749724260B4264B90555c9417d66D655A',
+    factory: '0xC9Bd344f5E31481F202E400C33210Bd1AB542b42',
+    template: '0x7487bb0DdAd2d7ff7C59869536cbDcEBAd29D55e',
   },
   settings: {
     rateLimit: 10,

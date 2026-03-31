@@ -32,15 +32,17 @@ module.exports = {
         : ["0x1234567890123456789012345678901234567890123456789012345678901234"]
     },
     polygon: {
-      url: process.env.POLYGON_RPC_URL || "https://polygon-rpc.com",
+      url: process.env.ALCHEMY_API_KEY 
+        ? `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
+        : "https://polygon-rpc.com",
       accounts: process.env.OWNER_PRIVATE_KEY && process.env.OWNER_PRIVATE_KEY !== 'your_private_key_here' 
         ? [process.env.OWNER_PRIVATE_KEY] 
         : ["0x1234567890123456789012345678901234567890123456789012345678901234"],
       chainId: 137,
-      timeout: 180000,
-      gas: 8000000,
-      gasPrice: 200000000000, // 200 gwei
-      gasMultiplier: 1.5
+      timeout: 60000, // 1 minute
+      gas: "auto", // Let ethers estimate
+      gasPrice: "auto", // Use network gas price
+      gasMultiplier: 1.1 // Small buffer
     },
   }
 };
