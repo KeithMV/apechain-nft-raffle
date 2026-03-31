@@ -243,12 +243,18 @@ async function fetchUserNFTs(
 
 export function useUserNFTs(userAddress: string, chainId: number) {
   const publicClient = usePublicClient();
-  const { address, isConnected, isConnecting } = useAccount();
+  const { address, isConnected } = useAccount();
   const { nftConfig } = useChainConfig();
   
   // Only fetch if user is connected and address matches
-  const shouldFetch = isConnected && address && userAddress && 
-    address.toLowerCase() === userAddress.toLowerCase() && chainId && publicClient;
+  const shouldFetch = Boolean(
+    isConnected && 
+    address && 
+    userAddress && 
+    address.toLowerCase() === userAddress.toLowerCase() && 
+    chainId && 
+    publicClient
+  );
   
   const query = useQuery({
     queryKey: ['userNFTs', userAddress, chainId],
