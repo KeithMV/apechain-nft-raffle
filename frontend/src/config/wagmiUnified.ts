@@ -26,7 +26,7 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// PHASE 1: Simplified Polygon configuration with Alchemy + Emergency Fallbacks
+// Polygon configuration with free high-limit RPC
 export const polygonChain = defineChain({
   id: 137,
   name: 'Polygon',
@@ -38,14 +38,14 @@ export const polygonChain = defineChain({
   rpcUrls: {
     default: {
       http: [
-        // Primary: Your Alchemy endpoint
-        `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`,
-        // Emergency Fallback 1: Public Polygon RPC
+        // Primary: Polygon's free RPC with higher limits
         'https://polygon-rpc.com',
-        // Emergency Fallback 2: Alternative public RPC
+        // Backup: Ankr free RPC
         'https://rpc.ankr.com/polygon',
-        // Emergency Fallback 3: Another reliable public RPC
-        'https://polygon.meowrpc.com'
+        // Backup: Another reliable free RPC
+        'https://polygon.meowrpc.com',
+        // Emergency fallback: Your Alchemy (if needed)
+        `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`,
       ],
     },
   },
@@ -104,14 +104,14 @@ export const getDeviceType = () => {
     ? 'mobile' : 'desktop';
 };
 
-// PHASE 2: Chain-optimized configuration with Alchemy
+// PHASE 2: Chain-optimized configuration with Free Polygon RPC
 const createOptimizedConfig = () => {
   const isMobile = getDeviceType() === 'mobile';
   const primaryChain = getPrimaryChainId();
   const chainSettings = getChainOptimizedSettings(primaryChain);
   
   console.log('🔧 [PHASE 2] Creating chain-optimized dual-chain configuration');
-  console.log('⚡ [ALCHEMY] Using Alchemy for Polygon:', !!process.env.REACT_APP_ALCHEMY_API_KEY);
+  console.log('🆓 [POLYGON] Using free Polygon RPC with higher limits');
   console.log('🎯 [OPTIMIZATION] Primary chain settings:', {
     chainId: primaryChain,
     polling: chainSettings.pollingInterval,
