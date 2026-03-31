@@ -6,7 +6,6 @@
 import React, { useState } from 'react';
 import { useAccount, useChainId, usePublicClient, useWriteContract } from 'wagmi';
 import { getChainConfig } from '../config/addresses';
-import { RAFFLE_CONTRACT_ABI } from '../config/contracts';
 
 export const TransactionDebugger: React.FC = () => {
   const [debugLog, setDebugLog] = useState<string[]>([]);
@@ -48,7 +47,7 @@ export const TransactionDebugger: React.FC = () => {
       log('🔍 [STEP 2] Checking chain configuration...');
       const config = getChainConfig(chainId);
       log(`   - chainId: ${config.chainId}`);
-      log(`   - factory: ${config.factory}`);
+      log(`   - factory: ${config.contracts.factory}`);
       log(`   - name: ${config.name}`);
 
       if (chainId !== 137 && chainId !== 33139) {
@@ -72,7 +71,7 @@ export const TransactionDebugger: React.FC = () => {
       log('🔍 [STEP 4] Testing contract read...');
       try {
         const raffleCount = await publicClient.readContract({
-          address: config.factory as `0x${string}`,
+          address: config.contracts.factory as `0x${string}`,
           abi: [{
             inputs: [],
             name: 'raffleCounter',
@@ -96,7 +95,7 @@ export const TransactionDebugger: React.FC = () => {
         try {
           const gasEstimate = await publicClient.estimateGas({
             account: address as `0x${string}`,
-            to: config.factory as `0x${string}`,
+            to: config.contracts.factory as `0x${string}`,
             data: '0x', // Empty data for basic estimation
           });
           log(`   - gas estimate: ${gasEstimate.toString()}`);
@@ -142,7 +141,7 @@ export const TransactionDebugger: React.FC = () => {
       
       // Create a minimal test transaction (just call a view function as write to test pipeline)
       const contractCall = {
-        address: config.factory as `0x${string}`,
+        address: config.contracts.factory as `0x${string}`,
         abi: [{
           inputs: [],
           name: 'raffleCounter',

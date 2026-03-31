@@ -83,7 +83,7 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return {
       chainId,
       networkName: config.name,
-      nativeCurrency: config.nativeCurrency,
+      nativeCurrency: config.nativeCurrency.symbol, // Extract symbol from nativeCurrency object
       explorerUrl: config.explorerUrl,
       contracts,
       isApeChain,

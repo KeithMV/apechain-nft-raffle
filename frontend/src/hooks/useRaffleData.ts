@@ -72,7 +72,7 @@ export function useRaffleData(options: UseRaffleDataOptions) {
     try {
       // Get total raffle count
       const raffleCount = await publicClient.readContract({
-        address: chainConfig.factory as `0x${string}`,
+        address: chainConfig.contracts.factory as `0x${string}`,
         abi: RAFFLE_FACTORY_ABI,
         functionName: 'raffleCounter',
       });
@@ -100,7 +100,7 @@ export function useRaffleData(options: UseRaffleDataOptions) {
           try {
             // Get raffle contract
             const raffleContract = await publicClient.readContract({
-              address: chainConfig.factory as `0x${string}`,
+              address: chainConfig.contracts.factory as `0x${string}`,
               abi: RAFFLE_FACTORY_ABI,
               functionName: 'getRaffleContract',
               args: [BigInt(index)],

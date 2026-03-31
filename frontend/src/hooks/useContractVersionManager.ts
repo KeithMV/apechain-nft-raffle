@@ -3,9 +3,9 @@
  * Centralized version detection, configuration, and factory address resolution
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useChainId } from 'wagmi';
-import { getFactoryAddress, getChainConfig } from '../config/addresses';
+import { getChainConfig } from '../config/addresses';
 
 export interface VersionConfig {
   v4Available: boolean;
@@ -34,9 +34,9 @@ export function useContractVersionManager() {
     return {
       v4Available: true,
       currentVersion: 'v4',
-      factoryAddress: chainConfig.factory,
-      rateLimit: chainConfig.rateLimit,
-      rateLimitText: `${chainConfig.rateLimit} seconds`
+      factoryAddress: chainConfig.contracts.factory,
+      rateLimit: chainConfig.settings.rateLimit,
+      rateLimitText: `${chainConfig.settings.rateLimit} seconds`
     };
   }, [chainId]);
 
@@ -46,7 +46,7 @@ export function useContractVersionManager() {
       const chainConfig = getChainConfig(chainId);
       
       return {
-        factoryAddress: chainConfig.factory,
+        factoryAddress: chainConfig.contracts.factory,
         isV4: true
       };
     };
@@ -65,8 +65,8 @@ export function useContractVersionManager() {
       const chainConfig = getChainConfig(chainId);
       
       return {
-        rateLimit: chainConfig.rateLimit,
-        rateLimitText: `${chainConfig.rateLimit} seconds`,
+        rateLimit: chainConfig.settings.rateLimit,
+        rateLimitText: `${chainConfig.settings.rateLimit} seconds`,
         version: 'v4' as const
       };
     };

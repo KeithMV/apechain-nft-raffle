@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { usePublicClient, useAccount } from 'wagmi';
 import { parseAbiItem } from 'viem';
-import { useChainConfig } from '../hooks/useChainConfig';
 
 interface UserNFT {
   contractAddress: string;
@@ -16,7 +15,6 @@ const TRANSFER_EVENT = parseAbiItem('event Transfer(address indexed from, addres
 async function fetchNFTsViaAPI(
   userAddress: string,
   chainId: number,
-  nftConfig: any,
   publicClient: any
 ): Promise<UserNFT[]> {
   try {
@@ -111,8 +109,7 @@ async function fetchNFTsViaAPI(
 async function fetchNFTsOnChain(
   publicClient: any,
   userAddress: string,
-  chainId: number,
-  nftConfig: any
+  chainId: number
 ): Promise<UserNFT[]> {
   if (!publicClient || !userAddress) return [];
 
@@ -212,19 +209,18 @@ async function fetchNFTsOnChain(
 async function fetchUserNFTs(
   publicClient: any,
   userAddress: string,
-  chainId: number,
-  nftConfig: any
+  chainId: number
 ): Promise<UserNFT[]> {
   if (!publicClient || !userAddress) return [];
 
   try {
     // Conservative approach: Try Lambda first with reduced verification
-    let nfts = await fetchNFTsViaAPI(userAddress, chainId, nftConfig, publicClient);
+    let nfts = await fetchNFTsViaAPI(userAddress, chainId, publicClient);
     
     // Only fallback to on-chain if Lambda completely fails
     if (nfts.length === 0) {
       console.log(`🔄 Lambda returned no NFTs, trying conservative on-chain scan`);
-      nfts = await fetchNFTsOnChain(publicClient, userAddress, chainId, nftConfig);
+      nfts = await fetchNFTsOnChain(publicClient, userAddress, chainId);
     }
     
     // Final deduplication
@@ -244,7 +240,6 @@ async function fetchUserNFTs(
 export function useUserNFTs(userAddress: string, chainId: number) {
   const publicClient = usePublicClient();
   const { address, isConnected } = useAccount();
-  const { nftConfig } = useChainConfig();
   
   // Re-enabled with conservative limits for free Polygon RPC
   const shouldFetch = Boolean(
@@ -258,7 +253,7 @@ export function useUserNFTs(userAddress: string, chainId: number) {
   
   const query = useQuery({
     queryKey: ['userNFTs', userAddress, chainId],
-    queryFn: () => fetchUserNFTs(publicClient, userAddress, chainId, nftConfig),
+    queryFn: () => fetchUserNFTs(publicClient, userAddress, chainId),
     enabled: shouldFetch,
     staleTime: 3 * 60 * 1000, // 3 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes

@@ -25,8 +25,7 @@ export function useUnifiedCacheInvalidation() {
   const currentChainId = useChainId();
   
   // Use centralized chain configuration
-  const { config: chainConfig } = useChainConfig();
-  const invalidationDelay = chainConfig.cache.invalidationDelay;
+  const { invalidationDelay } = useChainConfig();
   
   // Clear localStorage cache entries (chain-specific)
   const clearAllCaches = useCallback((chainId?: number) => {
