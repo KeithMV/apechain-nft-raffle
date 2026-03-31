@@ -88,7 +88,7 @@ export const AppHero: React.FC = () => {
           />
           
           <ContractButton
-            address="0x5854AF7c836275c55469350a114F62a1609c4A42"
+            address="0xC9Bd344f5E31481F202E400C33210Bd1AB542b42"
             explorerUrl="https://polygonscan.com"
             networkName="Polygon"
             colorScheme="purple"

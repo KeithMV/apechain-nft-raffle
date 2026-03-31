@@ -27,7 +27,7 @@ async function fixPolygonNFTApproval() {
   }
   
   // Factory address on Polygon
-  const factoryAddress = '0x5854AF7c836275c55469350a114F62a1609c4A42';
+  const factoryAddress = '0xC9Bd344f5E31481F202E400C33210Bd1AB542b42';
   console.log('Factory address:', factoryAddress);
   
   // Your specific NFT details (confirmed from previous conversations)
