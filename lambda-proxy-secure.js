@@ -265,7 +265,13 @@ function isValidUrl(url) {
             'artblocks.io',
             'metadata.artblocks.io',
             'api.async.art',
-            'metadata.async.art'
+            'metadata.async.art',
+            
+            // Gaming/Sandbox NFT platforms
+            'contracts.sandbox.game',
+            'api.sandbox.game',
+            'metadata.sandbox.game',
+            'sandbox.game'
         ];
         
         const isAllowed = trustedDomains.some(domain => hostname.includes(domain));

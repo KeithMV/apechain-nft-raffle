@@ -20,6 +20,7 @@ export function useNFTApprovalManager() {
   // Approval state per contract
   const [approvalStates, setApprovalStates] = useState<Record<string, ApprovalState>>({});
   const [currentContract, setCurrentContract] = useState<string>('');
+  const [currentTokenId, setCurrentTokenId] = useState<string>('');
   
   // Refs to prevent race conditions
   const activeRequestRef = useRef<string>('');
@@ -28,7 +29,8 @@ export function useNFTApprovalManager() {
   // Get approval status for current contract
   const { data: approvalData, refetch: refetchApproval } = useNFTApprovalStatusV4(
     currentContract, 
-    address || ''
+    address || '',
+    currentTokenId // Use the actual token ID passed from the form
   );
   
   // Approval transaction hook
@@ -91,10 +93,12 @@ export function useNFTApprovalManager() {
   }, [approvalError]);
   
   // Check approval for a specific contract
-  const checkApprovalForContract = useCallback(async (contractAddress: string) => {
+  const checkApprovalForContract = useCallback(async (contractAddress: string, tokenId?: string) => {
     if (!contractAddress || !/^0x[a-fA-F0-9]{40}$/.test(contractAddress)) {
       return;
     }
+    
+    console.log('🔍 [APPROVAL] Checking approval for:', contractAddress, 'token:', tokenId);
     
     // Clear any existing timeout
     if (timeoutRef.current) {
@@ -112,8 +116,12 @@ export function useNFTApprovalManager() {
       if (isRecentData && existingState.status !== null) {
         // Use cached data - just set current contract
         setCurrentContract(contractAddress);
+        setCurrentTokenId(tokenId || '');
+        console.log('✅ [APPROVAL] Using cached approval status:', existingState.status);
         return prev;
       }
+      
+      console.log('🔄 [APPROVAL] Setting checking state for contract:', contractAddress);
       
       // Set checking state
       return {
@@ -127,12 +135,14 @@ export function useNFTApprovalManager() {
       };
     });
     
-    // Set current contract (this will trigger the wagmi query)
+    // Set current contract and token ID (this will trigger the wagmi query)
     setCurrentContract(contractAddress);
+    setCurrentTokenId(tokenId || '');
     
     // Set timeout to refetch if needed
     timeoutRef.current = setTimeout(() => {
       if (activeRequestRef.current === contractAddress) {
+        console.log('⏰ [APPROVAL] Timeout reached, refetching approval...');
         refetchApproval();
       }
     }, 1000);

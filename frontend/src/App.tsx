@@ -1,8 +1,3 @@
-/**
- * Main App Component
- * Clean, focused entry point with provider management and routing
- */
-
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { useAccount } from 'wagmi';
@@ -10,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { AppProviders } from './components/AppProviders';
 import { AppLayout } from './components/AppLayout';
 import { ConnectWalletPage } from './components/ConnectWalletPage';
+import EmergencyReset from './components/EmergencyReset';
 
 import './index.css';
 
@@ -30,6 +26,7 @@ function App() {
         <BrowserRouter>
           <RaffleApp />
           <Toaster position="top-right" />
+          <EmergencyReset />
         </BrowserRouter>
       </AppProviders>
     </div>

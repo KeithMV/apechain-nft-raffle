@@ -101,17 +101,17 @@ export default function CreateRafflePage() {
   }, [approvalError]);
   
   // Check approval when contract changes
-  const checkApproval = useCallback((contract: string) => {
+  const checkApproval = useCallback((contract: string, tokenId?: string) => {
     if (contract && validateAddress(contract)) {
-      checkApprovalForContract(sanitizeAddress(contract));
+      checkApprovalForContract(sanitizeAddress(contract), tokenId);
     }
   }, [checkApprovalForContract]);
 
   useEffect(() => {
-    if (formData.nftContract) {
-      checkApproval(formData.nftContract);
+    if (formData.nftContract && formData.tokenId) {
+      checkApproval(formData.nftContract, formData.tokenId);
     }
-  }, [formData.nftContract, checkApproval]);
+  }, [formData.nftContract, formData.tokenId, checkApproval]);
 
   // Handle create raffle success - coordinated cache invalidation and redirect
   useEffect(() => {
@@ -165,27 +165,50 @@ export default function CreateRafflePage() {
   };
 
   const handleCreateRaffle = async () => {
-    if (createPending || createConfirming) return;
+    console.log('🚀 [DEBUG] handleCreateRaffle called');
+    console.log('🚀 [DEBUG] Current state:', {
+      createPending,
+      createConfirming,
+      isWrongNetwork,
+      approvalStatus,
+      formData,
+      chainId,
+      address
+    });
+    
+    if (createPending || createConfirming) {
+      console.log('❌ [DEBUG] Already pending/confirming');
+      return;
+    }
     
     try {
       if (isWrongNetwork) {
+        console.log('❌ [DEBUG] Wrong network');
         ErrorHandler.handleValidationError('network', 'Wrong network - please switch to ApeChain or Polygon');
         return;
       }
 
       if (approvalStatus !== true) {
+        console.log('❌ [DEBUG] Not approved. Approval status:', approvalStatus);
         ErrorHandler.handleValidationError('NFT approval', 'Contract not approved');
         return;
       }
 
       // Validate form data more thoroughly
       if (!formData.nftContract || !formData.tokenId || !formData.ticketPrice || !formData.maxTickets) {
+        console.log('❌ [DEBUG] Missing form data:', {
+          nftContract: !!formData.nftContract,
+          tokenId: !!formData.tokenId,
+          ticketPrice: !!formData.ticketPrice,
+          maxTickets: !!formData.maxTickets
+        });
         ErrorHandler.handleValidationError('form data', 'All fields are required');
         return;
       }
       
       // Validate NFT contract address format
       if (!validateAddress(formData.nftContract)) {
+        console.log('❌ [DEBUG] Invalid contract address:', formData.nftContract);
         ErrorHandler.handleValidationError('NFT contract', 'Invalid contract address format');
         return;
       }
@@ -193,6 +216,7 @@ export default function CreateRafflePage() {
       // Validate token ID is a positive number
       const tokenIdNum = parseInt(formData.tokenId);
       if (isNaN(tokenIdNum) || tokenIdNum < 0) {
+        console.log('❌ [DEBUG] Invalid token ID:', formData.tokenId, 'parsed:', tokenIdNum);
         ErrorHandler.handleValidationError('token ID', 'Token ID must be a positive number');
         return;
       }
@@ -202,13 +226,17 @@ export default function CreateRafflePage() {
       
       // Validate duration is within contract limits (contract expects seconds)
       if (durationInSeconds < 3600) {
+        console.log('❌ [DEBUG] Duration too short:', durationInSeconds);
         ErrorHandler.handleValidationError('duration', `Duration ${formData.duration} hours (${durationInSeconds}s) is below minimum of 1 hour (3600s)`);
         return;
       }
       if (durationInSeconds > 2592000) {
+        console.log('❌ [DEBUG] Duration too long:', durationInSeconds);
         ErrorHandler.handleValidationError('duration', `Duration ${formData.duration} hours (${durationInSeconds}s) exceeds maximum of 30 days (2592000s)`);
         return;
       }
+      
+      console.log('✅ [DEBUG] All validations passed!');
       
       // Debug logging to see what values we're passing
       console.log('🔍 Creating raffle with parameters:', {
@@ -224,6 +252,8 @@ export default function CreateRafflePage() {
         chainId
       });
       
+      console.log('🚀 [DEBUG] About to call createRaffle...');
+      
       // Create raffle with simple call (no gas optimization needed)
       await createRaffle({
         nftContract: sanitizeAddress(formData.nftContract),
@@ -232,7 +262,10 @@ export default function CreateRafflePage() {
         maxTickets: parseInt(formData.maxTickets),
         duration: durationInSeconds
       });
+      
+      console.log('✅ [DEBUG] createRaffle call completed');
     } catch (error) {
+      console.log('❌ [DEBUG] Error in handleCreateRaffle:', error);
       ErrorHandler.handleContractError(error);
     }
   };

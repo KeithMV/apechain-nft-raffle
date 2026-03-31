@@ -169,6 +169,22 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
     }
   }, [error, receiptError, onError, enableToasts, isPolygon]);
 
+  // CRITICAL FIX: Add safety mechanism to clear stuck processing states
+  useEffect(() => {
+    if (isProcessing && !hash && !error && !receiptError) {
+      // If we've been processing for more than 2 minutes without a hash, something is wrong
+      const safetyTimeout = setTimeout(() => {
+        console.log('🚨 [SAFETY] Clearing stuck processing state after 2 minutes');
+        setIsProcessing(false);
+        if (enableToasts) {
+          toast.error('Transaction appears to be stuck. Please try again.');
+        }
+      }, 120000); // 2 minutes
+      
+      return () => clearTimeout(safetyTimeout);
+    }
+  }, [isProcessing, hash, error, receiptError, enableToasts]);
+
   // Handle confirmation timeout
   useEffect(() => {
     if (hash && !isConfirming && !isSuccess && !receiptError) {
@@ -184,80 +200,62 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
     }
   }, [hash, isConfirming, isSuccess, receiptError, timeout, enableToasts]);
 
-  // Execute transaction with optimistic updates and Polygon optimization
+  // Execute transaction with AGGRESSIVE timeout protection
   const executeTransaction = useCallback(async (contractCall: any): Promise<string> => {
+    console.log('🚀 [TX] Starting transaction:', transactionType);
     setIsProcessing(true);
     setLastContractCall(contractCall);
     
-    // Apply optimistic updates immediately
-    applyOptimisticUpdates();
+    // AGGRESSIVE FIX: Multiple timeout layers
+    const timeouts = [
+      setTimeout(() => {
+        console.log('⚠️ [TX] 30s timeout - clearing processing state');
+        setIsProcessing(false);
+        toast.error('Transaction taking too long. Cleared processing state.');
+      }, 30000), // 30 seconds
+      
+      setTimeout(() => {
+        console.log('🚨 [TX] 60s timeout - force clearing everything');
+        setIsProcessing(false);
+        // @ts-ignore - queryClient is added globally for debugging
+        if ((window as any).queryClient) (window as any).queryClient.clear();
+        toast.error('Transaction timed out. Please refresh and try again.');
+      }, 60000) // 60 seconds
+    ];
+    
+    const clearAllTimeouts = () => {
+      timeouts.forEach(timeout => clearTimeout(timeout));
+    };
     
     try {
-      // HIGH GAS CEILING APPROACH: Set generous limits, let users decide
+      console.log('📝 [TX] Preparing contract call...');
+      
+      // Simplified gas settings - no complex optimization
       let optimizedContractCall = contractCall;
       if (isPolygon) {
-        // OPTIMIZED GAS SETTINGS - Balanced approach for Polygon reliability
-        const gasSettings = {
-          'buy-tickets': {
-            gasLimit: BigInt(250000),              // Optimized limit
-            maxFeePerGas: BigInt('120000000000'),  // 120 gwei ceiling (~$0.05)
-            maxPriorityFeePerGas: BigInt('30000000000'), // 30 gwei priority
-          },
-          'create-raffle': {
-            gasLimit: BigInt(650000),              // Increased for complex creation (was 400000)
-            maxFeePerGas: BigInt('150000000000'),  // 150 gwei ceiling (~$0.12)
-            maxPriorityFeePerGas: BigInt('40000000000'), // 40 gwei priority
-          },
-          'select-winner': {
-            gasLimit: BigInt(350000),              // Optimized for winner selection
-            maxFeePerGas: BigInt('180000000000'),  // 180 gwei ceiling (~$0.18)
-            maxPriorityFeePerGas: BigInt('50000000000'), // 50 gwei priority
-          },
-          'cancel-raffle': {
-            gasLimit: BigInt(180000),              // Optimized for cancellation
-            maxFeePerGas: BigInt('100000000000'),  // 100 gwei ceiling (~$0.04)
-            maxPriorityFeePerGas: BigInt('25000000000'), // 25 gwei priority
-          }
-        };
-        
-        const settings = gasSettings[transactionType] || gasSettings['buy-tickets'];
-        
         optimizedContractCall = {
           ...contractCall,
-          gas: settings.gasLimit,  // Use 'gas' instead of 'gasLimit' for wagmi
-          maxFeePerGas: settings.maxFeePerGas,
-          maxPriorityFeePerGas: settings.maxPriorityFeePerGas,
+          gas: BigInt(300000), // Simple, high gas limit
+          maxFeePerGas: BigInt('150000000000'), // 150 gwei
+          maxPriorityFeePerGas: BigInt('40000000000'), // 40 gwei
         };
-        
-        console.log(`🔶 [POLYGON-TX] Optimized gas for ${transactionType}:`, {
-          gasLimit: settings.gasLimit.toString(),
-          maxFeePerGas: `${Number(settings.maxFeePerGas) / 1e9} gwei`,
-          maxPriorityFeePerGas: `${Number(settings.maxPriorityFeePerGas) / 1e9} gwei`,
-          estimatedCost: `~$${(Number(settings.gasLimit) * Number(settings.maxFeePerGas) / 1e18 * 0.5).toFixed(3)} USD`
-        });
+        console.log('🔶 [TX] Using Polygon gas settings');
       }
       
-      const startTime = Date.now();
+      console.log('📤 [TX] Submitting transaction...');
       const result = await writeContractAsync(optimizedContractCall);
       
-      // Record success for Polygon performance tracking
-      if (isPolygon) {
-        const duration = Date.now() - startTime;
-        console.log(`✅ [POLYGON-TX] ${transactionType} submitted successfully in ${duration}ms`);
-      }
+      console.log('✅ [TX] Transaction submitted:', result);
+      clearAllTimeouts();
       
       return result;
     } catch (error) {
+      console.log('❌ [TX] Transaction failed:', error);
+      clearAllTimeouts();
       setIsProcessing(false);
-      
-      // Polygon-specific error handling
-      if (isPolygon) {
-        console.log(`🔶 [POLYGON-TX] Error for ${transactionType}:`, error);
-      }
-      
       throw error;
     }
-  }, [writeContractAsync, applyOptimisticUpdates, isPolygon, transactionType]);
+  }, [writeContractAsync, isPolygon, transactionType]);
 
   // Retry transaction with Polygon-optimized backoff strategy
   const retryTransaction = useCallback(async (): Promise<void> => {
