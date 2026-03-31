@@ -26,7 +26,7 @@ export const apeChain = defineChain({
   testnet: false,
 });
 
-// Polygon configuration with free high-limit RPC
+// Polygon configuration with reliable free RPCs
 export const polygonChain = defineChain({
   id: 137,
   name: 'Polygon',
@@ -38,12 +38,12 @@ export const polygonChain = defineChain({
   rpcUrls: {
     default: {
       http: [
-        // Primary: Polygon's free RPC with higher limits
-        'https://polygon-rpc.com',
-        // Backup: Ankr free RPC
+        // Primary: Ankr free RPC (reliable, no auth required)
         'https://rpc.ankr.com/polygon',
         // Backup: Another reliable free RPC
         'https://polygon.meowrpc.com',
+        // Backup: Polygon public RPC
+        'https://polygon-mainnet.public.blastapi.io',
         // Emergency fallback: Your Alchemy (if needed)
         `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`,
       ],
@@ -111,7 +111,7 @@ const createOptimizedConfig = () => {
   const chainSettings = getChainOptimizedSettings(primaryChain);
   
   console.log('🔧 [PHASE 2] Creating chain-optimized dual-chain configuration');
-  console.log('🆓 [POLYGON] Using free Polygon RPC with higher limits');
+  console.log('🆓 [POLYGON] Using Ankr free RPC (no auth required)');
   console.log('🎯 [OPTIMIZATION] Primary chain settings:', {
     chainId: primaryChain,
     polling: chainSettings.pollingInterval,
