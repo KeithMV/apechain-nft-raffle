@@ -31,6 +31,17 @@ export function useContractVersionManager() {
   const versionConfig = useMemo((): VersionConfig => {
     const chainConfig = getChainConfig(chainId);
     
+    // Handle case where chainConfig might be undefined (e.g., in tests)
+    if (!chainConfig || !chainConfig.contracts) {
+      return {
+        v4Available: true,
+        currentVersion: 'v4',
+        factoryAddress: '0x0000000000000000000000000000000000000000',
+        rateLimit: 10,
+        rateLimitText: '10 seconds'
+      };
+    }
+    
     return {
       v4Available: true,
       currentVersion: 'v4',
@@ -44,6 +55,14 @@ export function useContractVersionManager() {
   const getFactoryAddress = useMemo(() => {
     return (): ContractAddresses => {
       const chainConfig = getChainConfig(chainId);
+      
+      // Handle case where chainConfig might be undefined (e.g., in tests)
+      if (!chainConfig || !chainConfig.contracts) {
+        return {
+          factoryAddress: '0x0000000000000000000000000000000000000000',
+          isV4: true
+        };
+      }
       
       return {
         factoryAddress: chainConfig.contracts.factory,
@@ -63,6 +82,15 @@ export function useContractVersionManager() {
   const getRateLimitInfo = useMemo(() => {
     return () => {
       const chainConfig = getChainConfig(chainId);
+      
+      // Handle case where chainConfig might be undefined (e.g., in tests)
+      if (!chainConfig || !chainConfig.settings) {
+        return {
+          rateLimit: 10,
+          rateLimitText: '10 seconds',
+          version: 'v4' as const
+        };
+      }
       
       return {
         rateLimit: chainConfig.settings.rateLimit,

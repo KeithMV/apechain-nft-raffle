@@ -18,13 +18,24 @@ vi.mock('../../config/addresses', () => ({
   getChainConfig: vi.fn(() => ({
     chainId: 33139,
     name: 'ApeChain',
-    factory: '0x1234567890123456789012345678901234567890',
-    template: '0x1234567890123456789012345678901234567890',
-    version: 'v4',
-    rateLimit: 10,
+    contracts: {
+      factory: '0x1234567890123456789012345678901234567890',
+      template: '0x1234567890123456789012345678901234567890',
+    },
+    settings: {
+      rateLimit: 10,
+      platformFee: 500,
+      pollingInterval: 12000,
+      timeout: 20000,
+      retries: 2,
+    },
     rpcUrl: 'https://apechain.calderachain.xyz/http',
     explorerUrl: 'https://apescan.io',
-    nativeCurrency: 'APE'
+    nativeCurrency: {
+      name: 'ApeCoin',
+      symbol: 'APE',
+      decimals: 18,
+    }
   })),
   getFactoryAddress: vi.fn(() => '0x1234567890123456789012345678901234567890'),
   isSupportedChain: vi.fn(() => true),
