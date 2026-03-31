@@ -28,10 +28,10 @@ export default function CreateRafflePage() {
   
   // DEBUG: Log NFT data from hook
   console.log('🔍 [CreateRafflePage] NFTs from hook:', {
-    count: nfts.length,
+    count: nfts?.length || 0,
     loading: nftsLoading,
-    nfts: nfts.map(nft => `${nft.contractAddress.slice(0,6)}-${nft.tokenId}`),
-    hasDuplicates: nfts.length !== new Set(nfts.map(nft => `${nft.contractAddress}-${nft.tokenId}`)).size
+    nfts: nfts?.map(nft => `${nft.contractAddress.slice(0,6)}-${nft.tokenId}`) || [],
+    hasDuplicates: nfts ? nfts.length !== new Set(nfts.map(nft => `${nft.contractAddress}-${nft.tokenId}`)).size : false
   });
   
   // Cache invalidation for immediate UI updates
@@ -315,7 +315,7 @@ export default function CreateRafflePage() {
         {/* NFT Wallet Display */}
         {address && !isWrongNetwork && (
           <NFTGrid 
-            nfts={nfts} 
+            nfts={nfts || []} 
             onSelect={handleNFTSelect}
             isApeChain={isApeChain}
             loading={nftsLoading}
