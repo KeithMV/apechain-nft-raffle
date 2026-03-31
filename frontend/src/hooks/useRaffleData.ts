@@ -48,17 +48,20 @@ export function useRaffleData(options: UseRaffleDataOptions) {
     return userAddress || address;
   }, [type, userAddress, address]);
   
-  // Optimize limits based on chain
+  // Optimize limits based on chain - EMERGENCY RPC REDUCTION
   const optimizedLimit = useMemo(() => {
-    return chainId === 137 ? Math.min(limit, 5) : limit; // Polygon limit
+    return chainId === 137 ? Math.min(limit, 2) : Math.min(limit, 5); // Drastically reduced
   }, [chainId, limit]);
   
-  // Cache configuration
+  // Cache configuration - EMERGENCY: Longer cache times
   const cacheConfig = useMemo(() => ({
-    staleTime: chainId === 137 ? 25000 : 30000,
-    gcTime: chainId === 137 ? 5 * 60 * 1000 : 10 * 60 * 1000,
-    retry: chainId === 137 ? 0 : 1,
-    retryDelay: chainId === 137 ? 10000 : 2000,
+    staleTime: chainId === 137 ? 2 * 60 * 1000 : 5 * 60 * 1000, // 2-5 minutes
+    gcTime: chainId === 137 ? 10 * 60 * 1000 : 15 * 60 * 1000, // 10-15 minutes
+    retry: 0, // No retries to prevent spam
+    retryDelay: 30000, // 30s delay if retry happens
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   }), [chainId]);
   
   // Fetch function
@@ -85,9 +88,9 @@ export function useRaffleData(options: UseRaffleDataOptions) {
       
       const indices = Array.from({ length: endIndex - startIndex }, (_, i) => startIndex + i);
       
-      // Batch process with chain-specific settings
-      const batchSize = chainId === 137 ? 1 : 3;
-      const delay = chainId === 137 ? 1000 : 100;
+      // Batch process with chain-specific settings - EMERGENCY: Slower batching
+      const batchSize = 1; // Always 1 to minimize RPC calls
+      const delay = chainId === 137 ? 3000 : 1000; // Longer delays
       
       const results: RaffleData[] = [];
       
@@ -238,7 +241,7 @@ export function useRaffleData(options: UseRaffleDataOptions) {
     },
     enabled: Boolean(publicClient && chainId && (type === 'all' || (resolvedAddress && isConnected))),
     ...cacheConfig,
-    maxPages: chainId === 137 ? 3 : 5,
+    maxPages: chainId === 137 ? 1 : 2, // Drastically reduced
   });
   
   // Regular query
