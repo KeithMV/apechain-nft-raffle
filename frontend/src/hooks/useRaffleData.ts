@@ -48,20 +48,19 @@ export function useRaffleData(options: UseRaffleDataOptions) {
     return userAddress || address;
   }, [type, userAddress, address]);
   
-  // Optimize limits based on chain - EMERGENCY RPC REDUCTION
+  // Optimize limits based on chain - Using free Polygon RPC with higher limits
   const optimizedLimit = useMemo(() => {
-    return chainId === 137 ? Math.min(limit, 2) : Math.min(limit, 5); // Drastically reduced
+    return chainId === 137 ? Math.min(limit, 10) : Math.min(limit, 20); // Increased limits
   }, [chainId, limit]);
   
-  // Cache configuration - EMERGENCY: Longer cache times
+  // Cache configuration - Balanced for free Polygon RPC
   const cacheConfig = useMemo(() => ({
-    staleTime: chainId === 137 ? 2 * 60 * 1000 : 5 * 60 * 1000, // 2-5 minutes
-    gcTime: chainId === 137 ? 10 * 60 * 1000 : 15 * 60 * 1000, // 10-15 minutes
-    retry: 0, // No retries to prevent spam
-    retryDelay: 30000, // 30s delay if retry happens
-    refetchOnWindowFocus: false,
+    staleTime: chainId === 137 ? 60000 : 2 * 60 * 1000, // 1-2 minutes
+    gcTime: chainId === 137 ? 5 * 60 * 1000 : 10 * 60 * 1000, // 5-10 minutes
+    retry: 1, // Allow 1 retry
+    retryDelay: 5000, // 5s delay
+    refetchOnWindowFocus: false, // Keep disabled to be safe
     refetchOnMount: false,
-    refetchOnReconnect: false,
   }), [chainId]);
   
   // Fetch function
@@ -88,9 +87,9 @@ export function useRaffleData(options: UseRaffleDataOptions) {
       
       const indices = Array.from({ length: endIndex - startIndex }, (_, i) => startIndex + i);
       
-      // Batch process with chain-specific settings - EMERGENCY: Slower batching
-      const batchSize = 1; // Always 1 to minimize RPC calls
-      const delay = chainId === 137 ? 3000 : 1000; // Longer delays
+      // Batch process with reasonable settings for free Polygon RPC
+      const batchSize = chainId === 137 ? 2 : 3; // Moderate batching
+      const delay = chainId === 137 ? 500 : 200; // Reasonable delays
       
       const results: RaffleData[] = [];
       
@@ -241,7 +240,7 @@ export function useRaffleData(options: UseRaffleDataOptions) {
     },
     enabled: Boolean(publicClient && chainId && (type === 'all' || (resolvedAddress && isConnected))),
     ...cacheConfig,
-    maxPages: chainId === 137 ? 1 : 2, // Drastically reduced
+    maxPages: chainId === 137 ? 3 : 5, // Reasonable limits
   });
   
   // Regular query
