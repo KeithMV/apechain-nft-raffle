@@ -28,6 +28,9 @@ export function useChainConfig() {
     staleTime: config.cache.staleTime,
     invalidationDelay: config.cache.invalidationDelay,
     
+    // NFT configuration
+    nftConfig: config.nft,
+    
     // Operation-specific helpers
     getOperationTimeout: (operation: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle') => {
       return getOperationConfig(chainId, operation).timeout;
