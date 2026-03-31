@@ -136,12 +136,14 @@ export function useRaffleContractV4(raffleId: number) {
 
 /**
  * Hook for checking NFT approval status (V4 aware)
+ * FIXED: Now checks both isApprovedForAll AND specific token approval
  */
-export function useNFTApprovalStatusV4(nftContract: string, userAddress: string) {
+export function useNFTApprovalStatusV4(nftContract: string, userAddress: string, tokenId?: string) {
   const { factoryAddress } = useContractVersionManager();
   const isValidAddress = (addr: string) => /^0x[a-fA-F0-9]{40}$/.test(addr);
   
-  return useReadContract({
+  // Check isApprovedForAll
+  const approvedForAllQuery = useReadContract({
     address: nftContract as `0x${string}`,
     abi: ERC721_ABI,
     functionName: 'isApprovedForAll',
@@ -151,5 +153,42 @@ export function useNFTApprovalStatusV4(nftContract: string, userAddress: string)
       staleTime: 30 * 1000, // 30 seconds
     },
   });
+  
+  // Check specific token approval (if tokenId provided)
+  const tokenApprovalQuery = useReadContract({
+    address: nftContract as `0x${string}`,
+    abi: ERC721_ABI,
+    functionName: 'getApproved',
+    args: [BigInt(tokenId || '0')],
+    query: {
+      enabled: !!(nftContract && tokenId && isValidAddress(nftContract)),
+      staleTime: 30 * 1000, // 30 seconds
+    },
+  });
+  
+  // Combine both approval checks (matches contract logic)
+  const isApprovedForAll = approvedForAllQuery.data as boolean;
+  const approvedAddress = tokenApprovalQuery.data as string;
+  const isTokenApproved = tokenId && approvedAddress?.toLowerCase() === factoryAddress.toLowerCase();
+  
+  // Return true if EITHER condition is met (matches contract requirement)
+  const isApproved = isApprovedForAll || isTokenApproved;
+  
+  return {
+    data: isApproved,
+    isLoading: approvedForAllQuery.isLoading || (tokenId ? tokenApprovalQuery.isLoading : false),
+    error: approvedForAllQuery.error || tokenApprovalQuery.error,
+    refetch: () => {
+      approvedForAllQuery.refetch();
+      if (tokenId) tokenApprovalQuery.refetch();
+    },
+    // Debug info
+    debug: {
+      isApprovedForAll,
+      isTokenApproved,
+      approvedAddress,
+      factoryAddress
+    }
+  };
 }
 
