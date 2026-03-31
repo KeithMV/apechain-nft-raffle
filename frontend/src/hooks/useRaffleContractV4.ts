@@ -130,7 +130,8 @@ export function useCreateRaffleV4() {
     console.log('🎯 [CREATE] Creating raffle - NFT will be transferred from user wallet to raffle contract');
     console.log('📝 [CREATE] NFT:', params.nftContract, 'Token ID:', params.tokenId);
     
-    return await transactionManager.executeTransaction({
+    // POLYGON FIX: Add explicit gas configuration for Polygon
+    const contractCall = {
       address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
       functionName: 'createRaffle',
@@ -141,7 +142,21 @@ export function useCreateRaffleV4() {
         BigInt(params.maxTickets),
         BigInt(params.duration)
       ],
-    });
+    };
+    
+    // Add Polygon-specific gas settings
+    const chainId = typeof window !== 'undefined' && (window as any).ethereum 
+      ? await (window as any).ethereum.request({ method: 'eth_chainId' })
+      : null;
+    
+    if (chainId === '0x89' || chainId === 137) { // Polygon
+      console.log('🔶 [POLYGON] Adding Polygon-specific gas settings');
+      (contractCall as any).gas = BigInt(500000); // Higher gas limit for Polygon
+      (contractCall as any).maxFeePerGas = BigInt('200000000000'); // 200 gwei
+      (contractCall as any).maxPriorityFeePerGas = BigInt('50000000000'); // 50 gwei
+    }
+    
+    return await transactionManager.executeTransaction(contractCall);
   };
 
   return {
