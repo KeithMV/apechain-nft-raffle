@@ -79,6 +79,7 @@ export function useCreateRaffleV4() {
   const { factoryAddress, currentVersion, rateLimit, rateLimitText } = useContractVersionManager();
   const { validateRaffleCreation } = useContractValidator();
   const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
+  const chainId = useChainId(); // Use wagmi hook for chain detection
   
   const handleSuccess = (hash: string) => {
     console.log('✅ [CREATE] Raffle created successfully, invalidating all caches including user NFTs');
@@ -144,12 +145,8 @@ export function useCreateRaffleV4() {
       ],
     };
     
-    // Add Polygon-specific gas settings
-    const chainId = typeof window !== 'undefined' && (window as any).ethereum 
-      ? await (window as any).ethereum.request({ method: 'eth_chainId' })
-      : null;
-    
-    if (chainId === '0x89' || chainId === 137) { // Polygon
+    // Add Polygon-specific gas settings using wagmi chainId
+    if (chainId === 137) { // Polygon
       console.log('🔶 [POLYGON] Adding Polygon-specific gas settings');
       (contractCall as any).gas = BigInt(500000); // Higher gas limit for Polygon
       (contractCall as any).maxFeePerGas = BigInt('200000000000'); // 200 gwei
