@@ -48,15 +48,22 @@ export function useNFTApprovalManager() {
   // Update approval state when data changes
   useEffect(() => {
     if (currentContract && approvalData !== undefined) {
-      setApprovalStates(prev => ({
-        ...prev,
-        [currentContract]: {
-          status: approvalData as boolean,
-          isChecking: false,
-          contract: currentContract,
-          lastChecked: Date.now()
+      setApprovalStates(prev => {
+        const existing = prev[currentContract];
+        // Only update if the status actually changed
+        if (!existing || existing.status !== approvalData) {
+          return {
+            ...prev,
+            [currentContract]: {
+              status: approvalData as boolean,
+              isChecking: false,
+              contract: currentContract,
+              lastChecked: Date.now()
+            }
+          };
         }
-      }));
+        return prev;
+      });
     }
   }, [currentContract, approvalData]);
   
@@ -64,15 +71,22 @@ export function useNFTApprovalManager() {
   useEffect(() => {
     if (approvalSuccess && currentContract) {
       // Immediately update local state
-      setApprovalStates(prev => ({
-        ...prev,
-        [currentContract]: {
-          status: true,
-          isChecking: false,
-          contract: currentContract,
-          lastChecked: Date.now()
+      setApprovalStates(prev => {
+        const existing = prev[currentContract];
+        // Only update if not already approved
+        if (!existing || existing.status !== true) {
+          return {
+            ...prev,
+            [currentContract]: {
+              status: true,
+              isChecking: false,
+              contract: currentContract,
+              lastChecked: Date.now()
+            }
+          };
         }
-      }));
+        return prev;
+      });
       
       appToast.success('NFT contract approved successfully!');
       

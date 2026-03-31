@@ -128,10 +128,10 @@ export function useCreateRaffleV4() {
     
     const ticketPriceWei = parseEther(params.ticketPrice);
     
+    // Transaction manager will handle Polygon gas settings
     console.log('🎯 [CREATE] Creating raffle - NFT will be transferred from user wallet to raffle contract');
     console.log('📝 [CREATE] NFT:', params.nftContract, 'Token ID:', params.tokenId);
     
-    // POLYGON FIX: Add explicit gas configuration for Polygon
     const contractCall = {
       address: factoryAddress as `0x${string}`,
       abi: RAFFLE_FACTORY_ABI,
@@ -144,14 +144,6 @@ export function useCreateRaffleV4() {
         BigInt(params.duration)
       ],
     };
-    
-    // Add Polygon-specific gas settings using wagmi chainId
-    if (chainId === 137) { // Polygon
-      console.log('🔶 [POLYGON] Adding Polygon-specific gas settings');
-      (contractCall as any).gas = BigInt(500000); // Higher gas limit for Polygon
-      (contractCall as any).maxFeePerGas = BigInt('200000000000'); // 200 gwei
-      (contractCall as any).maxPriorityFeePerGas = BigInt('50000000000'); // 50 gwei
-    }
     
     return await transactionManager.executeTransaction(contractCall);
   };
