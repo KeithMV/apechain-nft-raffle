@@ -48,7 +48,7 @@ const APECHAIN_CONFIG: ChainConfig = {
   rpcUrl: process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
   explorerUrl: 'https://apescan.io',
   contracts: {
-    factory: '0xC9Bd344f5E31481F202E400C33210Bd1AB542b42', // V4
+    factory: '0x1627E7e63b63878E61f91D336385a59B1747934a', // ApeChain V4
     template: '0x242f56507BFd5034b369418A7C9FB1b4643710a4',
   },
   settings: {
