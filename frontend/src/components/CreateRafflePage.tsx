@@ -26,12 +26,13 @@ export default function CreateRafflePage() {
   // Fetch user's NFTs with refetch capability
   const { nfts, loading: nftsLoading, refetch: refetchNFTs } = useUserNFTs(address || '', chainId || 0);
   
-  // DEBUG: Log NFT data from hook
+  // DEBUG: Log NFT data from hook (temporarily disabled)
   console.log('🔍 [CreateRafflePage] NFTs from hook:', {
-    count: nfts?.length || 0,
+    count: 0,
     loading: nftsLoading,
-    nfts: nfts?.map(nft => `${nft.contractAddress.slice(0,6)}-${nft.tokenId}`) || [],
-    hasDuplicates: nfts ? nfts.length !== new Set(nfts.map(nft => `${nft.contractAddress}-${nft.tokenId}`)).size : false
+    nfts: [],
+    hasDuplicates: false,
+    status: 'temporarily disabled due to RPC rate limiting'
   });
   
   // Cache invalidation for immediate UI updates
