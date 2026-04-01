@@ -57,11 +57,14 @@ export function useUnifiedCacheInvalidation() {
       
       // 2. Invalidate React Query caches with chain-specific patterns
       const invalidationPromises = [
-        // Core raffle data (chain-specific)
+        // Core raffle data (chain-specific) - Updated to match useRaffleData query keys
         queryClient.invalidateQueries({ queryKey: ['raffles', targetChainId] }),
         queryClient.invalidateQueries({ queryKey: ['user-positions', targetChainId] }),
         queryClient.invalidateQueries({ queryKey: ['created-raffles', targetChainId] }),
         queryClient.invalidateQueries({ queryKey: ['all-raffles', targetChainId] }),
+        
+        // Browse page specific invalidation (matches useAllRaffles query key)
+        queryClient.invalidateQueries({ queryKey: ['raffles', targetChainId, 'all'] }),
         
         // V4 specific queries (chain-specific)
         queryClient.invalidateQueries({ queryKey: ['raffles-v4', targetChainId] }),
@@ -100,6 +103,11 @@ export function useUnifiedCacheInvalidation() {
       
       // Execute all invalidations
       await Promise.all(invalidationPromises);
+      
+      // Dispatch custom event for components using event-based invalidation
+      window.dispatchEvent(new CustomEvent('cache-invalidated', { 
+        detail: { raffleContract, chainId: targetChainId, timestamp: Date.now(), transactionType } 
+      }));
       
       // 6. Progressive refetch strategy for winner selection with centralized delay
       if (immediate && transactionType === 'select-winner' && delay > 0) {
@@ -190,6 +198,9 @@ export function useUnifiedCacheInvalidation() {
     queryClient.invalidateQueries({ queryKey: ['user-positions', targetChainId] });
     queryClient.invalidateQueries({ queryKey: ['created-raffles', targetChainId] });
     queryClient.invalidateQueries({ queryKey: ['all-raffles', targetChainId] });
+    
+    // Browse page specific invalidation
+    queryClient.invalidateQueries({ queryKey: ['raffles', targetChainId, 'all'] });
     
     // Also invalidate any React Query queries that might exist (chain-specific)
     queryClient.invalidateQueries({ queryKey: ['raffles-v4', targetChainId] });
