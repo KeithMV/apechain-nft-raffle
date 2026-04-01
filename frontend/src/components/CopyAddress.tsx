@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { appToast } from '../utils/toast';
+import { toastManager } from '../utils/toastManager';
 
 interface CopyAddressProps {
   address: string;
@@ -14,10 +14,10 @@ export default function CopyAddress({ address, label, className = '' }: CopyAddr
     try {
       await navigator.clipboard.writeText(address);
       setCopied(true);
-      appToast.copy.success(label || 'Address');
+      toastManager.copy.success(label || 'Address');
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      appToast.copy.error();
+      toastManager.copy.error();
     }
   };
 

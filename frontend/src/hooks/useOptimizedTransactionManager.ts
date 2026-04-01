@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import toast from 'react-hot-toast';
+import { toastManager } from '../utils/toastManager';
 import { optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { useChainConfig } from '../hooks/useChainConfig';
@@ -130,7 +130,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       }
       
       if (enableToasts && successMessage) {
-        toast.success(successMessage);
+        toastManager.transaction.success(successMessage);
       }
       
       if (onSuccess) {
@@ -153,13 +153,13 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       
       if (enableToasts) {
         if (errorMessage?.includes('User rejected')) {
-          toast.error('Transaction cancelled by user.');
+          toastManager.wallet.userRejected();
         } else if (errorMessage?.includes('insufficient funds')) {
-          toast.error(isPolygon ? 'Insufficient POL for transaction fees' : 'Insufficient funds for transaction.');
+          toastManager.wallet.insufficientFunds(isPolygon);
         } else if (errorMessage?.includes('429')) {
-          toast.error('Network busy. Please try again in a moment.');
+          toastManager.wallet.networkBusy();
         } else {
-          toast.error(`Transaction failed: ${errorMessage || 'Unknown error'}`);
+          toastManager.error(`Transaction failed: ${errorMessage || 'Unknown error'}`);
         }
       }
       
@@ -177,7 +177,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
         console.log('🚨 [SAFETY] Clearing stuck processing state after 2 minutes');
         setIsProcessing(false);
         if (enableToasts) {
-          toast.error('Transaction appears to be stuck. Please try again.');
+          toastManager.error('Transaction appears to be stuck. Please try again.');
         }
       }, 120000); // 2 minutes
       
@@ -192,7 +192,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
         setIsProcessing(false);
         
         if (enableToasts) {
-          toast.error('Transaction confirmation timed out. It may still complete.');
+          toastManager.error('Transaction confirmation timed out. It may still complete.');
         }
       }, timeout + 5000); // Add 5s buffer
       
@@ -211,7 +211,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       setTimeout(() => {
         console.log('⚠️ [TX] 30s timeout - clearing processing state');
         setIsProcessing(false);
-        toast.error('Transaction taking too long. Cleared processing state.');
+        toastManager.error('Transaction taking too long. Cleared processing state.');
       }, 30000), // 30 seconds
       
       setTimeout(() => {
@@ -219,7 +219,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
         setIsProcessing(false);
         // @ts-ignore - queryClient is added globally for debugging
         if ((window as any).queryClient) (window as any).queryClient.clear();
-        toast.error('Transaction timed out. Please refresh and try again.');
+        toastManager.error('Transaction timed out. Please refresh and try again.');
       }, 60000) // 60 seconds
     ];
     

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useAccount, useChainId } from 'wagmi';
 import ParticipatedRaffleCard from './ParticipatedRaffleCard';
 import CreatedRaffleCard from './CreatedRaffleCard';
-import { appToast } from '../utils/toast';
+import { toastManager } from '../utils/toastManager';
 import { useParticipatedRaffles, useCreatedRaffles } from '../hooks/useRaffleData';
 import { useOptimizedCancelRaffle } from '../hooks/useOptimizedTransactionManager';
 import { useWinnerSelection } from '../hooks/useWinnerSelection';
@@ -136,7 +136,7 @@ export default function RaffleDashboard() {
       console.log('✅ [CANCEL] Raffle cancelled successfully, updating UI immediately');
       
       // Dismiss the loading toast and show success
-      appToast.transaction.replaceWithSuccess(toastId, 'Raffle cancellation', {
+      toastManager.transaction.replaceWithSuccess(toastId, 'Raffle cancellation', {
         duration: 5000,
         icon: '💫',
       });
@@ -172,7 +172,7 @@ export default function RaffleDashboard() {
     if (winnerError && selectingWinnerFor) {
       const toastId = `winner-${selectingWinnerFor}`;
       
-      appToast.transaction.replaceWithError(toastId, 'Winner selection');
+      toastManager.transaction.replaceWithError(toastId, 'Winner selection');
       
       setSelectingWinnerFor(null);
     }
@@ -183,7 +183,7 @@ export default function RaffleDashboard() {
     if (cancelRaffleHook.error && cancellingRaffle) {
       const toastId = `cancel-${cancellingRaffle}`;
       
-      appToast.transaction.replaceWithError(toastId, 'Raffle cancellation');
+      toastManager.transaction.replaceWithError(toastId, 'Raffle cancellation');
       
       setCancellingRaffle(null);
     }
@@ -274,7 +274,7 @@ export default function RaffleDashboard() {
     
     // Show loading toast with unique ID
     const toastId = `winner-${raffleContract}`;
-    appToast.transaction.loading('Selecting winner', { id: toastId });
+    toastManager.transaction.loading('Selecting winner', { id: toastId });
     
     try {
       await emergencyReveal(raffleContract);
@@ -283,7 +283,7 @@ export default function RaffleDashboard() {
       console.error('❌ [WINNER] Winner selection failed:', error);
       
       // Dismiss loading toast and show error
-      appToast.transaction.replaceWithError(toastId, 'Winner selection');
+      toastManager.transaction.replaceWithError(toastId, 'Winner selection');
       
       setSelectingWinnerFor(null);
     }
@@ -296,7 +296,7 @@ export default function RaffleDashboard() {
     
     // Show loading toast with unique ID
     const toastId = `cancel-${raffleContract}`;
-    appToast.transaction.loading('Cancelling raffle', { id: toastId });
+    toastManager.transaction.loading('Cancelling raffle', { id: toastId });
     
     try {
       await cancelRaffleHook.executeTransaction({
@@ -315,7 +315,7 @@ export default function RaffleDashboard() {
       console.error('❌ [CANCEL] Raffle cancellation failed:', error);
       
       // Dismiss loading toast and show error
-      appToast.transaction.replaceWithError(toastId, 'Raffle cancellation');
+      toastManager.transaction.replaceWithError(toastId, 'Raffle cancellation');
       
       setCancellingRaffle(null);
     }
@@ -330,7 +330,7 @@ export default function RaffleDashboard() {
       console.log(`✅ [WINNER] Winner selected successfully on ${isPolygon ? 'Polygon' : 'ApeChain'}, starting enhanced UI update`);
       
       // Dismiss the loading toast and show success
-      appToast.transaction.replaceWithSuccess(toastId, 'Winner selection', {
+      toastManager.transaction.replaceWithSuccess(toastId, 'Winner selection', {
         duration: 5000,
         icon: '🏆',
       });

@@ -11,7 +11,7 @@ import ApprovalModal from './ApprovalModal';
 import NFTGrid from './NFTGrid';
 import RaffleForm, { FormData, getInitialFormData, validateAddress } from './RaffleForm';
 
-import { appToast } from '../utils/toast';
+import { toastManager } from '../utils/toastManager';
 import { ErrorHandler } from '../utils/errorHandler';
 import { sanitizeAddress } from '../utils/security';
 
@@ -123,7 +123,7 @@ export default function CreateRafflePage() {
       quickInvalidate(undefined, chainId);
       
       // Show success message
-      appToast.success(`Raffle created successfully on ${networkName}! Redirecting...`, {
+      toastManager.success(`Raffle created successfully on ${networkName}! Redirecting...`, {
         icon: '🎉',
       });
       
