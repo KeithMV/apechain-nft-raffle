@@ -53,10 +53,10 @@ export function useRaffleData(options: UseRaffleDataOptions) {
     return chainId === 137 ? Math.min(limit, 10) : Math.min(limit, 20); // Increased limits
   }, [chainId, limit]);
   
-  // Cache configuration - Balanced for free Polygon RPC
+  // Cache configuration - Optimized for immediate updates after transactions
   const cacheConfig = useMemo(() => ({
-    staleTime: chainId === 137 ? 60000 : 2 * 60 * 1000, // 1-2 minutes
-    gcTime: chainId === 137 ? 5 * 60 * 1000 : 10 * 60 * 1000, // 5-10 minutes
+    staleTime: chainId === 137 ? 5000 : 10000, // Reduced: 5s for Polygon, 10s for ApeChain
+    gcTime: chainId === 137 ? 2 * 60 * 1000 : 5 * 60 * 1000, // 2-5 minutes
     retry: 1, // Allow 1 retry
     retryDelay: 5000, // 5s delay
     refetchOnWindowFocus: false, // Keep disabled to be safe
@@ -222,7 +222,7 @@ export function useRaffleData(options: UseRaffleDataOptions) {
   
   // Query key
   const queryKey = useMemo(() => [
-    'raffles-unified',
+    'raffles', // Changed from 'raffles-unified' to match cache invalidation
     chainId,
     type,
     resolvedAddress?.toLowerCase() || 'anonymous',
