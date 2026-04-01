@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAccount, useDisconnect, useChainId } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { config as envConfig } from '../config/environment';
-import toast from 'react-hot-toast';
+import { toastManager } from '../utils/toastManager';
 
 // Pure functions moved outside component
 const formatAddress = (addr: string): string => {
@@ -59,7 +59,7 @@ export function WalletConnection() {
         setTimeout(() => {
           disconnect();
           setTimeout(() => {
-            toast.error('Connection lost. Please reconnect your wallet.');
+            toastManager.wallet.connectionLost();
           }, 2000);
         }, 1000);
       }
@@ -106,11 +106,11 @@ export function WalletConnection() {
       
       if (isMobile) {
         if (err.message?.includes('WebSocket')) {
-          toast.error('Network connection issue. Please check your internet and try again.');
+          toastManager.wallet.networkIssue();
         } else if (err.message?.includes('User rejected')) {
-          toast.error('Connection cancelled.');
+          toastManager.wallet.connectionCancelled();
         } else {
-          toast.error('Connection failed. Please try refreshing the page.');
+          toastManager.wallet.connectionFailed();
         }
       }
     }

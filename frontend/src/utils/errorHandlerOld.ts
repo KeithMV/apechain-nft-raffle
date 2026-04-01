@@ -3,7 +3,7 @@
  * Provides consistent error handling across the application
  */
 
-import { toastManager } from './toastManager';
+import toast from 'react-hot-toast';
 
 export interface AppError {
   code: string;
@@ -42,7 +42,7 @@ export class ErrorHandler {
     }
     
     ErrorHandler.logError(appError);
-    toastManager.error(appError.message);
+    toast.error(appError.message);
     return appError;
   };
 
@@ -114,7 +114,7 @@ export class ErrorHandler {
     }
     
     ErrorHandler.logError(appError);
-    toastManager.error(appError.message);
+    toast.error(appError.message);
     return appError;
   };
 
@@ -128,21 +128,21 @@ export class ErrorHandler {
     }
     
     this.logError(appError);
-    toastManager.error(appError.message);
+    toast.error(appError.message);
     return appError;
   }
 
   static handleValidationError(field: string, value: any): AppError {
     const appError = this.createError('VALIDATION_ERROR', `Invalid ${field}`, { field, value });
     this.logError(appError);
-    toastManager.error(appError.message);
+    toast.error(appError.message);
     return appError;
   }
 
   static handleGenericError(error: any, context?: string): AppError {
     const appError = this.createError('GENERIC_ERROR', 'An unexpected error occurred', { error, context });
     this.logError(appError);
-    toastManager.error('Something went wrong. Please try again.');
+    toast.error('Something went wrong. Please try again.');
     return appError;
   }
 

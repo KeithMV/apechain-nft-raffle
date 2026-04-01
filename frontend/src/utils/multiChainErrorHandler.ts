@@ -3,7 +3,7 @@
  * Specialized error handling for different chains and RPC issues
  */
 
-import toast from 'react-hot-toast';
+import { toastManager } from './toastManager';
 
 export interface ChainError extends Error {
   chainId?: number;
@@ -19,9 +19,8 @@ export class MultiChainErrorHandler {
     // Rate limiting errors
     if (this.isRateLimitError(error)) {
       console.warn(`🚫 Rate limited on ${chainName}:`, error.message);
-      toast.error(`${chainName} network is busy. Please try again in a moment.`, {
+      toastManager.error(`${chainName} network is busy. Please try again in a moment.`, {
         duration: 5000,
-        id: `rate-limit-${chainId}`,
       });
       return 'RATE_LIMITED';
     }
@@ -29,9 +28,8 @@ export class MultiChainErrorHandler {
     // CORS errors
     if (this.isCorsError(error)) {
       console.warn(`🚫 CORS error on ${chainName}:`, error.message);
-      toast.error(`Network connection issue with ${chainName}. Switching to backup RPC...`, {
+      toastManager.error(`Network connection issue with ${chainName}. Switching to backup RPC...`, {
         duration: 3000,
-        id: `cors-${chainId}`,
       });
       return 'CORS_ERROR';
     }
@@ -39,9 +37,8 @@ export class MultiChainErrorHandler {
     // Network connectivity
     if (this.isNetworkError(error)) {
       console.warn(`🌐 Network error on ${chainName}:`, error.message);
-      toast.error(`${chainName} network unavailable. Check your connection.`, {
+      toastManager.error(`${chainName} network unavailable. Check your connection.`, {
         duration: 4000,
-        id: `network-${chainId}`,
       });
       return 'NETWORK_ERROR';
     }
@@ -50,18 +47,16 @@ export class MultiChainErrorHandler {
     if (this.isTransactionError(error)) {
       console.warn(`💸 Transaction error on ${chainName}:`, error.message);
       const userMessage = this.getTransactionErrorMessage(error, chainName);
-      toast.error(userMessage, {
+      toastManager.error(userMessage, {
         duration: 6000,
-        id: `tx-error-${chainId}`,
       });
       return 'TRANSACTION_ERROR';
     }
 
     // Generic error
     console.error(`❌ Unknown error on ${chainName}:`, error);
-    toast.error(`${chainName} operation failed. Please try again.`, {
+    toastManager.error(`${chainName} operation failed. Please try again.`, {
       duration: 4000,
-      id: `generic-${chainId}`,
     });
     return 'UNKNOWN_ERROR';
   }

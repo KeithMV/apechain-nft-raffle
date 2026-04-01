@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useOptimizedBuyTickets, useOptimizedSelectWinner } from './useOptimizedTransactionManager';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { parseEther } from 'viem';
-import toast from 'react-hot-toast';
+import { toastManager } from '../utils/toastManager';
 import { CreatedRaffle } from '../components/RaffleCard';
 
 export interface RaffleActionsState {
@@ -76,12 +76,12 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
   const handleBuyTickets = useCallback(async (raffle: CreatedRaffle) => {
     // SECURITY: Validate and sanitize inputs
     if (!raffle || typeof raffle !== 'object') {
-      toast.error('Invalid raffle data');
+      toastManager.error('Invalid raffle data');
       return;
     }
     
     if (!raffle.raffleContract || !/^0x[a-fA-F0-9]{40}$/.test(raffle.raffleContract)) {
-      toast.error('Invalid raffle contract address');
+      toastManager.error('Invalid raffle contract address');
       return;
     }
     
@@ -90,12 +90,12 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     
     // Validation with sanitized inputs
     if (typeof quantity !== 'number' || quantity < 1 || quantity > 25) {
-      toast.error('Invalid ticket quantity');
+      toastManager.error('Invalid ticket quantity');
       return;
     }
     
     if (quantity > availableTickets) {
-      toast.error(`Only ${availableTickets} tickets available`);
+      toastManager.error(`Only ${availableTickets} tickets available`);
       return;
     }
     
