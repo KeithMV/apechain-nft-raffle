@@ -49,7 +49,12 @@ export function useUnifiedCacheInvalidation() {
     // Use centralized invalidation delay
     const delay = invalidationDelay;
     
-    console.log('🔄 [CACHE] Starting unified cache invalidation:', { ...options, chainId: targetChainId, delay });
+    console.log('🔄 [CACHE] Starting unified cache invalidation:', { 
+      ...options, 
+      chainId: targetChainId, 
+      chainName: targetChainId === 33139 ? 'ApeChain' : targetChainId === 137 ? 'Polygon' : `Chain ${targetChainId}`,
+      delay 
+    });
     
     try {
       // 1. Clear custom cache system immediately (chain-specific)
