@@ -93,9 +93,10 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       setIsProcessing(false);
       
       // Use centralized invalidation delay configuration
-      console.log(`🔄 [CACHE] Chain-aware invalidation: ${invalidationDelay > 0 ? `${invalidationDelay}ms delay` : 'immediate'} for tx:`, hash);
+      console.log(`🔄 [CACHE] Chain-aware invalidation for ${isPolygon ? 'Polygon' : 'ApeChain'}: immediate for tx:`, hash);
+      console.log(`🔄 [CACHE] Transaction type: ${transactionType}, optimisticData:`, optimisticData);
       
-      // POLYGON OPTIMIZATION: Immediate + delayed invalidation for faster UX
+      // OPTIMIZED INVALIDATION: Immediate for both chains, with follow-up for reliability
       if (isPolygon) {
         // Immediate invalidation for instant feedback
         invalidateAfterTransaction({
@@ -117,7 +118,16 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
           });
         }, 3000); // 3s follow-up
       } else {
-        // Standard invalidation for other chains
+        // APECHAIN FIX: Immediate invalidation for primary chain
+        invalidateAfterTransaction({
+          raffleContract: optimisticData?.raffleId,
+          userAddress: optimisticData?.userAddress,
+          transactionType,
+          immediate: true,
+          chainId
+        });
+        
+        // Follow-up invalidation for ApeChain reliability
         setTimeout(() => {
           invalidateAfterTransaction({
             raffleContract: optimisticData?.raffleId,
@@ -126,7 +136,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
             immediate: true,
             chainId
           });
-        }, invalidationDelay);
+        }, 2000); // 2s follow-up for ApeChain
       }
       
       if (enableToasts && successMessage) {

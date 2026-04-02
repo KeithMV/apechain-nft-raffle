@@ -54,8 +54,8 @@ const APECHAIN_CONFIG: ChainConfig = {
   settings: {
     rateLimit: 10,
     platformFee: 500, // 5%
-    pollingInterval: 12000, // 12s - stable network
-    timeout: 20000, // 20s
+    pollingInterval: 8000, // APECHAIN FIX: Faster polling like Polygon for better UX
+    timeout: 25000, // 25s - balanced timeout
     retries: 2,
   },
 };
