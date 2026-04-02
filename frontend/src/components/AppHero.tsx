@@ -81,7 +81,7 @@ export const AppHero: React.FC = () => {
         {/* Contract Address Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 sm:mb-12">
           <ContractButton
-            address="0xC9Bd344f5E31481F202E400C33210Bd1AB542b42"
+            address="0x1627E7e63b63878E61f91D336385a59B1747934a"
             explorerUrl="https://apescan.io"
             networkName="ApeChain"
             colorScheme="emerald"
