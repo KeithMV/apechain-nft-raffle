@@ -247,9 +247,9 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
         // This will use current network gas prices
         optimizedContractCall = {
           ...contractCall,
-          gas: BigInt(600000), // Just set gas limit, let network determine price
+          gas: BigInt(800000), // Increased gas limit for multiple tickets
         };
-        console.log('🔶 [TX] Using Polygon dynamic gas pricing (network-determined)');
+        console.log('🔶 [TX] Using Polygon dynamic gas pricing with increased gas limit for multiple tickets');
       }
       
       console.log('📤 [TX] Submitting transaction...');

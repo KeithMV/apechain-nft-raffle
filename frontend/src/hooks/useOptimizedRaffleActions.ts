@@ -89,7 +89,10 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
     
     // Validation with sanitized inputs
+    console.log('🎫 [TICKETS] Validation check:', { quantity, availableTickets, maxTickets: raffle.maxTickets });
+    
     if (typeof quantity !== 'number' || quantity < 1 || quantity > 25) {
+      console.error('❌ [TICKETS] Invalid quantity:', { quantity, type: typeof quantity });
       toastManager.error('Invalid ticket quantity');
       return;
     }
