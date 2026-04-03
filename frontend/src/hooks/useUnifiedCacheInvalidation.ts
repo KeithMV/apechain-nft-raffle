@@ -8,6 +8,7 @@ import { useCallback } from 'react';
 import { useChainId } from 'wagmi';
 import { optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
 import { useChainConfig } from '../hooks/useChainConfig';
+import { config } from '../config/environment';
 
 export interface CacheInvalidationOptions {
   raffleContract?: string;
@@ -49,12 +50,14 @@ export function useUnifiedCacheInvalidation() {
     // Use centralized invalidation delay
     const delay = invalidationDelay;
     
-    console.log('🔄 [CACHE] Starting unified cache invalidation:', { 
-      ...options, 
-      chainId: targetChainId, 
-      chainName: targetChainId === 33139 ? 'ApeChain' : targetChainId === 137 ? 'Polygon' : `Chain ${targetChainId}`,
-      delay 
-    });
+    if (config.enableLogging) {
+      console.log('🔄 [CACHE] Starting unified cache invalidation:', { 
+        ...options, 
+        chainId: targetChainId, 
+        chainName: targetChainId === 33139 ? 'ApeChain' : targetChainId === 137 ? 'Polygon' : `Chain ${targetChainId}`,
+        delay 
+      });
+    }
     
     try {
       // 1. Clear custom cache system immediately (chain-specific)
@@ -183,7 +186,9 @@ export function useUnifiedCacheInvalidation() {
         Promise.all(refetchPromises).catch(console.error);
       }
       
-      console.log(`✅ [CACHE] Unified cache invalidation completed successfully for chain ${targetChainId}`);
+      if (config.enableLogging) {
+        console.log(`✅ [CACHE] Unified cache invalidation completed successfully for chain ${targetChainId}`);
+      }
       
     } catch (error) {
       console.error('❌ [CACHE] Cache invalidation failed:', error);

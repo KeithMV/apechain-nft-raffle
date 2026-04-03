@@ -4,6 +4,7 @@ import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { parseEther } from 'viem';
 import { toastManager } from '../utils/toastManager';
 import { CreatedRaffle } from '../components/RaffleCard';
+import { config } from '../config/environment';
 
 export interface RaffleActionsState {
   processingRaffles: Set<string>;
@@ -89,10 +90,14 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     const availableTickets = raffle.maxTickets - raffle.ticketsSold;
     
     // Validation with sanitized inputs
-    console.log('🎫 [TICKETS] Validation check:', { quantity, availableTickets, maxTickets: raffle.maxTickets });
+    if (config.enableLogging) {
+      console.log('🎫 [TICKETS] Validation check:', { quantity, availableTickets, maxTickets: raffle.maxTickets });
+    }
     
     if (typeof quantity !== 'number' || quantity < 1 || quantity > 25) {
-      console.error('❌ [TICKETS] Invalid quantity:', { quantity, type: typeof quantity });
+      if (config.enableLogging) {
+        console.error('❌ [TICKETS] Invalid quantity:', { quantity, type: typeof quantity });
+      }
       toastManager.error('Invalid ticket quantity');
       return;
     }
@@ -107,11 +112,13 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
       return;
     }
     
-    console.log('Buying tickets:', { 
-      raffleContract: raffle.raffleContract, 
-      quantity,
-      ticketPrice: raffle.ticketPrice 
-    });
+    if (config.enableLogging) {
+      console.log('Buying tickets:', { 
+        raffleContract: raffle.raffleContract, 
+        quantity,
+        ticketPrice: raffle.ticketPrice 
+      });
+    }
     
     // Start processing
     addProcessingRaffle(raffle.raffleContract);
@@ -159,9 +166,11 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
       return;
     }
     
-    console.log('Selecting winner:', { 
-      raffleContract: raffle.raffleContract 
-    });
+    if (config.enableLogging) {
+      console.log('Selecting winner:', { 
+        raffleContract: raffle.raffleContract 
+      });
+    }
     
     // Start processing
     addProcessingRaffle(raffle.raffleContract);

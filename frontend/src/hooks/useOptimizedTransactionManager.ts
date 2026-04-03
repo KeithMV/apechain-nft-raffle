@@ -9,6 +9,7 @@ import { toastManager } from '../utils/toastManager';
 import { optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { useChainConfig } from '../hooks/useChainConfig';
+import { config } from '../config/environment';
 
 export interface OptimizedTransactionConfig {
   transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle';
@@ -93,8 +94,10 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       setIsProcessing(false);
       
       // Use centralized invalidation delay configuration
-      console.log(`🔄 [CACHE] Chain-aware invalidation for ${isPolygon ? 'Polygon' : 'ApeChain'}: immediate for tx:`, hash);
-      console.log(`🔄 [CACHE] Transaction type: ${transactionType}, optimisticData:`, optimisticData);
+      if (config.enableLogging) {
+        console.log(`🔄 [CACHE] Chain-aware invalidation for ${isPolygon ? 'Polygon' : 'ApeChain'}: immediate for tx:`, hash);
+        console.log(`🔄 [CACHE] Transaction type: ${transactionType}, optimisticData:`, optimisticData);
+      }
       
       // OPTIMIZED INVALIDATION: Immediate for both chains, with follow-up for reliability
       if (isPolygon) {
@@ -249,13 +252,19 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
           ...contractCall,
           gas: BigInt(800000), // Increased gas limit for multiple tickets
         };
-        console.log('🔶 [TX] Using Polygon dynamic gas pricing with increased gas limit for multiple tickets');
+        if (config.enableLogging) {
+          console.log('🔶 [TX] Using Polygon dynamic gas pricing with increased gas limit for multiple tickets');
+        }
       }
       
-      console.log('📤 [TX] Submitting transaction...');
+      if (config.enableLogging) {
+        console.log('📤 [TX] Submitting transaction...');
+      }
       const result = await writeContractAsync(optimizedContractCall);
       
-      console.log('✅ [TX] Transaction submitted:', result);
+      if (config.enableLogging) {
+        console.log('✅ [TX] Transaction submitted:', result);
+      }
       clearAllTimeouts();
       
       return result;
