@@ -9,6 +9,7 @@ import { throttle, measureSync } from '../utils/performance';
 import { useNetwork } from '../contexts/NetworkContext';
 // Phase 3: Advanced UX enhancements
 import { SmartLoading } from './UXEnhancements';
+import { config } from '../config/environment';
 
 
 
@@ -19,7 +20,9 @@ export default function BrowseRaffles() {
   const { nativeCurrency, isApeChain } = useNetwork();
   // Track page view
   useEffect(() => {
-    console.log('Browse page viewed:', { chainId });
+    if (config.enableLogging) {
+      console.log('Browse page viewed:', { chainId });
+    }
   }, [chainId]);
   
   // Remove debug console.log for production
@@ -66,7 +69,9 @@ export default function BrowseRaffles() {
   // Listen for cache invalidation events to trigger refetch
   useEffect(() => {
     const handleCacheInvalidated = () => {
-      console.log('🔄 [BROWSE] Cache invalidated, refetching data...');
+      if (config.enableLogging) {
+        console.log('🔄 [BROWSE] Cache invalidated, refetching data...');
+      }
       refetch();
     };
     
