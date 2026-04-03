@@ -8,7 +8,7 @@ import { useCallback } from 'react';
 import { useChainId } from 'wagmi';
 import { optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
 import { useChainConfig } from '../hooks/useChainConfig';
-import { config } from '../config/environment';
+import { config as envConfig } from '../config/environment';
 
 export interface CacheInvalidationOptions {
   raffleContract?: string;
@@ -50,7 +50,7 @@ export function useUnifiedCacheInvalidation() {
     // Use centralized invalidation delay
     const delay = invalidationDelay;
     
-    if (config.enableLogging) {
+    if (envConfig.enableLogging) {
       console.log('🔄 [CACHE] Starting unified cache invalidation:', { 
         ...options, 
         chainId: targetChainId, 
@@ -186,7 +186,7 @@ export function useUnifiedCacheInvalidation() {
         Promise.all(refetchPromises).catch(console.error);
       }
       
-      if (config.enableLogging) {
+      if (envConfig.enableLogging) {
         console.log(`✅ [CACHE] Unified cache invalidation completed successfully for chain ${targetChainId}`);
       }
       
