@@ -1,7 +1,7 @@
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 import { apeChain, polygonChain, getQueryConfig } from './unified';
 import { WALLET_IDS } from '../constants/chains';
-import { config } from './environment';
+import { config as envConfig } from './environment';
 
 // WalletConnect project ID
 const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
@@ -26,7 +26,7 @@ export const getDeviceType = () => {
 // Simplified wagmi configuration
 const createWagmiConfig = () => {
   // Only log in staging environments (local and remote)
-  if (config.enableLogging) {
+  if (envConfig.enableLogging) {
     console.log('🔧 Creating unified multichain configuration');
   }
   
