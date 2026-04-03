@@ -137,8 +137,8 @@ const CreatedRaffleCard: React.FC<CreatedRaffleCardProps> = ({
                   );
                 }
                 
-                // Show Cancel button if: raffle is active, no tickets sold
-                if (raffle.isActive && !hasTickets) {
+                // Show Cancel button if: raffle ended, no tickets sold, not completed
+                if (hasEnded && !hasTickets && !raffle.completed) {
                   return (
                     <button
                       onClick={() => handleCancelRaffle(raffle.raffleContract)}
