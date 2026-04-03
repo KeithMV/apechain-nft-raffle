@@ -107,27 +107,62 @@ const CreatedRaffleCard: React.FC<CreatedRaffleCardProps> = ({
               )}
             </div>
             
-            {!raffle.isActive && !raffle.completed && (
-              <div className="space-y-2">
-                {raffle.ticketsSold > 0 ? (
-                  <button
-                    onClick={() => handleSelectWinner(raffle.raffleContract)}
-                    disabled={selectingWinnerFor === raffle.raffleContract}
-                    className="bg-pink-600 hover:bg-pink-500 disabled:bg-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm"
-                  >
-                    {selectingWinnerFor === raffle.raffleContract ? 'Selecting...' : 'Select Winner'}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleCancelRaffle(raffle.raffleContract)}
-                    disabled={cancellingRaffle === raffle.raffleContract}
-                    className="bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm"
-                  >
-                    {cancellingRaffle === raffle.raffleContract ? 'Cancelling...' : 'Cancel Raffle'}
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Action Buttons - Fixed Logic */}
+            <div className="space-y-2">
+              {(() => {
+                const now = Date.now() / 1000;
+                const hasEnded = now > raffle.endTime;
+                const hasTickets = raffle.ticketsSold > 0;
+                
+                // Show Select Winner button if: raffle ended, has tickets, not completed
+                if (hasEnded && hasTickets && !raffle.completed) {
+                  return (
+                    <button
+                      onClick={() => handleSelectWinner(raffle.raffleContract)}
+                      disabled={selectingWinnerFor === raffle.raffleContract}
+                      className={`relative bg-gradient-to-r ${isApeChain ? 'from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400' : 'from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400'} disabled:from-gray-600 disabled:to-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 font-mono tracking-wider overflow-hidden group`}
+                    >
+                      <div className={`absolute inset-0 bg-gradient-to-r ${isApeChain ? 'from-emerald-400/20 to-emerald-300/20' : 'from-blue-400/20 to-blue-300/20'} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`}></div>
+                      <span className="relative">
+                        {selectingWinnerFor === raffle.raffleContract ? (
+                          <span className="flex items-center space-x-2">
+                            <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Selecting...</span>
+                          </span>
+                        ) : (
+                          '🏆 Select Winner'
+                        )}
+                      </span>
+                    </button>
+                  );
+                }
+                
+                // Show Cancel button if: raffle is active, no tickets sold
+                if (raffle.isActive && !hasTickets) {
+                  return (
+                    <button
+                      onClick={() => handleCancelRaffle(raffle.raffleContract)}
+                      disabled={cancellingRaffle === raffle.raffleContract}
+                      className="relative bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 disabled:from-gray-600 disabled:to-gray-600 text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-300 font-mono tracking-wider overflow-hidden group"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-red-400/20 to-red-300/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                      <span className="relative">
+                        {cancellingRaffle === raffle.raffleContract ? (
+                          <span className="flex items-center space-x-2">
+                            <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Cancelling...</span>
+                          </span>
+                        ) : (
+                          '❌ Cancel Raffle'
+                        )}
+                      </span>
+                    </button>
+                  );
+                }
+                
+                return null;
+              })()}
+            </div>
           </div>
         </div>
       </div>
