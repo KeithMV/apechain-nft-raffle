@@ -9,7 +9,7 @@ import { toastManager } from '../utils/toastManager';
 import { optimisticUpdateHelpers, transactionQueryClient } from '../utils/transactionQueryClient';
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { useChainConfig } from '../hooks/useChainConfig';
-import { config } from '../config/environment';
+import { config as envConfig } from '../config/environment';
 
 export interface OptimizedTransactionConfig {
   transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle';
@@ -37,7 +37,7 @@ export interface OptimizedTransactionState {
   retryTransaction: () => Promise<void>;
 }
 
-export function useOptimizedTransactionManager(config: OptimizedTransactionConfig): OptimizedTransactionState {
+export function useOptimizedTransactionManager(transactionConfig: OptimizedTransactionConfig): OptimizedTransactionState {
   const {
     transactionType,
     successMessage,
@@ -46,7 +46,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
     enableToasts = true,
     enableOptimisticUpdates = true,
     optimisticData,
-  } = config;
+  } = transactionConfig;
 
   // Use centralized chain configuration
   const { chainId, getOperationTimeout, invalidationDelay, isPolygon } = useChainConfig();
@@ -94,7 +94,7 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
       setIsProcessing(false);
       
       // Use centralized invalidation delay configuration
-      if (config.enableLogging) {
+      if (envConfig.enableLogging) {
         console.log(`🔄 [CACHE] Chain-aware invalidation for ${isPolygon ? 'Polygon' : 'ApeChain'}: immediate for tx:`, hash);
         console.log(`🔄 [CACHE] Transaction type: ${transactionType}, optimisticData:`, optimisticData);
       }
@@ -252,17 +252,17 @@ export function useOptimizedTransactionManager(config: OptimizedTransactionConfi
           ...contractCall,
           gas: BigInt(800000), // Increased gas limit for multiple tickets
         };
-        if (config.enableLogging) {
+        if (envConfig.enableLogging) {
           console.log('🔶 [TX] Using Polygon dynamic gas pricing with increased gas limit for multiple tickets');
         }
       }
       
-      if (config.enableLogging) {
+      if (envConfig.enableLogging) {
         console.log('📤 [TX] Submitting transaction...');
       }
       const result = await writeContractAsync(optimizedContractCall);
       
-      if (config.enableLogging) {
+      if (envConfig.enableLogging) {
         console.log('✅ [TX] Transaction submitted:', result);
       }
       clearAllTimeouts();
