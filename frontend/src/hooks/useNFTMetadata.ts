@@ -89,11 +89,86 @@ function sanitizeMetadata(data: any): { metadata?: NFTMetadata; error?: string }
   }
 }
 
+/**
+ * PHASE 1: Alchemy NFT API Integration - FIXED
+ * Fetch specific NFT metadata from Alchemy API via Lambda function
+ */
+async function fetchNFTMetadataFromAlchemy(
+  contractAddress: string,
+  tokenId: string,
+  chainId: number
+): Promise<{ metadata?: NFTMetadata; error?: string }> {
+  // Only support Polygon and ApeChain for now
+  if (chainId !== 137 && chainId !== 33139) {
+    return { error: 'Alchemy NFT API only supports Polygon (137) and ApeChain (33139)' };
+  }
+  
+  try {
+    console.log(`🔍 [ALCHEMY NFT] Fetching metadata for ${contractAddress}/${tokenId} on chain ${chainId}`);
+    
+    // Use environment-aware Lambda proxy for Alchemy NFT API
+    const lambdaProxy = process.env.REACT_APP_ENV === 'staging' 
+      ? 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/staging/proxy'
+      : 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    
+    // FIXED: Call Lambda function with contract address and tokenId for specific NFT metadata
+    const alchemyUrl = `${lambdaProxy}?contractAddress=${contractAddress}&tokenId=${tokenId}&chainId=${chainId}`;
+    
+    const response = await fetch(alchemyUrl, {
+      signal: AbortSignal.timeout(15000), // Longer timeout for Alchemy
+      headers: { 'Accept': 'application/json' }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const alchemyData = await response.json();
+    
+    // Check if Alchemy returned NFT metadata
+    if (!alchemyData.success) {
+      return { error: alchemyData.error || 'Alchemy API returned unsuccessful response' };
+    }
+    
+    // Extract metadata from Alchemy response
+    const nftData = alchemyData.nft;
+    if (!nftData) {
+      return { error: `NFT ${tokenId} not found in contract ${contractAddress}` };
+    }
+    
+    // Extract and sanitize metadata from Alchemy response
+    const alchemyMetadata = {
+      name: nftData.name || nftData.title || nftData.metadata?.name,
+      description: nftData.description || nftData.metadata?.description,
+      image: nftData.image || nftData.media?.[0]?.gateway || nftData.media?.[0]?.raw || nftData.metadata?.image,
+      attributes: nftData.metadata?.attributes || nftData.attributes || []
+    };
+    
+    const sanitized = sanitizeMetadata(alchemyMetadata);
+    if (sanitized.metadata) {
+      console.log(`✅ [ALCHEMY NFT] Successfully fetched metadata for ${contractAddress}/${tokenId}`);
+      return { metadata: sanitized.metadata };
+    }
+    
+    return { error: sanitized.error };
+    
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown Alchemy error';
+    console.warn(`⚠️ [ALCHEMY NFT] Failed to fetch from Alchemy: ${errorMessage}`);
+    return { error: `Alchemy NFT API failed: ${errorMessage}` };
+  }
+}
+
+/**
+ * PHASE 2: Enhanced NFT metadata fetching with Alchemy-first approach
+ * Priority: Alchemy API → Blockchain tokenURI → Placeholder
+ */
 async function fetchNFTMetadata(
   publicClient: any,
   contractAddress: string,
-  tokenId: string
-): Promise<{ metadata?: NFTMetadata; error?: string }> {
+  tokenId: string,
+  chainId: number
+): Promise<{ metadata?: NFTMetadata; error?: string; source?: string }> {
   // Validate inputs
   if (!contractAddress || !tokenId) {
     return { error: 'Invalid contract address or token ID' };
@@ -103,7 +178,60 @@ async function fetchNFTMetadata(
     return { error: 'Invalid contract address format' };
   }
   
+  console.log(`🔍 [NFT METADATA] Fetching metadata for ${contractAddress}/${tokenId} on chain ${chainId}`);
+  
+  // PHASE 2: Try Alchemy first for supported chains
+  let alchemyResult: { metadata?: NFTMetadata; error?: string } | undefined;
+  
+  if (chainId === 137 || chainId === 33139) {
+    console.log(`⚡ [NFT METADATA] Trying Alchemy API first...`);
+    
+    alchemyResult = await fetchNFTMetadataFromAlchemy(contractAddress, tokenId, chainId);
+    
+    if (alchemyResult.metadata) {
+      console.log(`✅ [NFT METADATA] Success via Alchemy API`);
+      return { 
+        metadata: alchemyResult.metadata, 
+        source: 'alchemy' 
+      };
+    } else {
+      console.log(`⚠️ [NFT METADATA] Alchemy failed: ${alchemyResult.error}, trying blockchain fallback...`);
+    }
+  } else {
+    console.log(`ℹ️ [NFT METADATA] Chain ${chainId} not supported by Alchemy, using blockchain method`);
+  }
+  
+  // PHASE 2: Fallback to blockchain method
+  console.log(`🔗 [NFT METADATA] Trying blockchain tokenURI method...`);
+  
+  const blockchainResult = await fetchNFTMetadataFromBlockchain(publicClient, contractAddress, tokenId);
+  
+  if (blockchainResult.metadata) {
+    console.log(`✅ [NFT METADATA] Success via blockchain tokenURI`);
+    return { 
+      metadata: blockchainResult.metadata, 
+      source: 'blockchain' 
+    };
+  } else {
+    console.log(`❌ [NFT METADATA] Both Alchemy and blockchain methods failed`);
+    return { 
+      error: `All methods failed. Alchemy: ${chainId === 137 || chainId === 33139 ? alchemyResult?.error || 'Unknown error' : 'Not supported'}. Blockchain: ${blockchainResult.error}`,
+      source: 'none'
+    };
+  }
+}
+
+/**
+ * PHASE 2: Original blockchain metadata fetching (now used as fallback)
+ */
+async function fetchNFTMetadataFromBlockchain(
+  publicClient: any,
+  contractAddress: string,
+  tokenId: string
+): Promise<{ metadata?: NFTMetadata; error?: string }> {
   try {
+    console.log(`🔗 [BLOCKCHAIN] Reading tokenURI from contract...`);
+    
     // Get tokenURI from contract
     const tokenURI = await publicClient.readContract({
       address: contractAddress as `0x${string}`,
@@ -124,6 +252,8 @@ async function fetchNFTMetadata(
       return { error: 'No token URI found for this NFT' };
     }
     
+    console.log(`📋 [BLOCKCHAIN] TokenURI: ${tokenURI}`);
+    
     // Validate the token URI
     const urlValidation = validateMetadataUrl(tokenURI);
     if (!urlValidation.valid) {
@@ -135,6 +265,7 @@ async function fetchNFTMetadata(
     if (tokenURI.startsWith('ipfs://')) {
       const ipfsPath = tokenURI.slice(7);
       metadataUrl = `https://ipfs.io/ipfs/${ipfsPath}`;
+      console.log(`🌐 [BLOCKCHAIN] Converted IPFS URL: ${metadataUrl}`);
     }
     
     // Use environment-aware Lambda proxy for metadata fetching
@@ -143,6 +274,8 @@ async function fetchNFTMetadata(
       : 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
     
     const proxiedMetadataUrl = `${lambdaProxy}?url=${encodeURIComponent(metadataUrl)}`;
+    
+    console.log(`🔄 [BLOCKCHAIN] Fetching metadata via Lambda proxy...`);
     
     try {
       const response = await fetch(proxiedMetadataUrl, {
@@ -154,6 +287,7 @@ async function fetchNFTMetadata(
         const data = await response.json();
         const sanitized = sanitizeMetadata(data);
         if (sanitized.metadata) {
+          console.log(`✅ [BLOCKCHAIN] Successfully fetched and sanitized metadata`);
           return { metadata: sanitized.metadata };
         }
         return { error: sanitized.error };
@@ -162,11 +296,13 @@ async function fetchNFTMetadata(
       }
     } catch (proxyError) {
       const errorMessage = proxyError instanceof Error ? proxyError.message : 'Network error';
+      console.warn(`⚠️ [BLOCKCHAIN] Proxy request failed: ${errorMessage}`);
       return { error: `Failed to fetch metadata: ${errorMessage}` };
     }
     
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.warn(`❌ [BLOCKCHAIN] Contract read failed: ${errorMessage}`);
     return { error: `Contract read failed: ${errorMessage}` };
   }
 }
@@ -176,7 +312,7 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
   const chainId = useChainId();
   
   const { data: result, isLoading: loading, error } = useQuery({
-    queryKey: ['nft-metadata', chainId, contractAddress?.toLowerCase(), tokenId],
+    queryKey: ['nft-metadata', chainId, contractAddress?.toLowerCase(), tokenId, 'v2'], // v2 for Alchemy integration
     queryFn: async () => {
       // Check optimized cache first
       const cacheKey = `${contractAddress?.toLowerCase()}_${tokenId}`;
@@ -185,7 +321,8 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
         return { metadata: cached };
       }
       
-      const result = await fetchNFTMetadata(publicClient, contractAddress, tokenId);
+      // PHASE 2: Use new Alchemy-first approach with chainId
+      const result = await fetchNFTMetadata(publicClient, contractAddress, tokenId, chainId);
       
       // Only cache successful results
       if (result.metadata) {
@@ -213,17 +350,23 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
     networkMode: 'online',
   });
 
-  // Handle the structured result
+  // Handle the structured result with source tracking
   const metadata = result?.metadata || { 
     name: `NFT #${tokenId}`, 
     image: '/placeholder-nft.svg',
     description: result?.error || 'Metadata unavailable'
   };
 
+  // Log successful metadata source for debugging
+  if (result?.metadata && result?.source) {
+    console.log(`✅ [NFT METADATA] Successfully loaded from ${result.source} for ${contractAddress}/${tokenId}`);
+  }
+
   return { 
     metadata, 
     loading, 
     error: !!error || !!result?.error,
-    errorMessage: result?.error
+    errorMessage: result?.error,
+    source: result?.source // Track metadata source
   };
 }
