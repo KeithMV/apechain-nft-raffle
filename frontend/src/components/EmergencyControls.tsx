@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useEmergencyPause, useFactoryPauseStatusV4 } from '../hooks/useRaffleContractV4';
-import toast from 'react-hot-toast';
+import { toastManager } from '../utils/toastManager';
 
 export default function EmergencyControls() {
   const { address } = useAccount();
@@ -12,7 +12,7 @@ export default function EmergencyControls() {
 
   useEffect(() => {
     if (isSuccess) {
-      toast.success(!isPaused ? '✅ Operations resumed' : '🚨 Emergency pause activated');
+      toastManager.success(!isPaused ? '✅ Operations resumed' : '🚨 Emergency pause activated');
       refetch();
     }
   }, [isSuccess, isPaused, refetch]);
@@ -20,11 +20,11 @@ export default function EmergencyControls() {
   useEffect(() => {
     if (error) {
       if (error.message?.includes('User rejected')) {
-        toast.error('Transaction cancelled');
+        toastManager.error('Transaction cancelled');
       } else if (error.message?.includes('Ownable: caller is not the owner')) {
-        toast.error('Only contract owner can perform this action');
+        toastManager.error('Only contract owner can perform this action');
       } else {
-        toast.error('Operation failed: ' + error.message);
+        toastManager.error('Operation failed: ' + error.message);
       }
     }
   }, [error]);
