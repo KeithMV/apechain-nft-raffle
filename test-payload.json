@@ -1,1 +1,1 @@
-{"queryStringParameters":{"url":"https://httpbin.org/json"}}
+{"requestContext":{"stage":"prod"},"queryStringParameters":{"url":"https://ipfs.io/ipfs/test"}}

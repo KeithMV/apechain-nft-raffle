@@ -347,7 +347,7 @@ export function useOptimizedSelectWinner(optimisticData?: OptimizedTransactionCo
 export function useOptimizedCreateRaffle(onSuccess?: (hash: string) => void) {
   return useOptimizedTransactionManager({
     transactionType: 'create-raffle',
-    successMessage: 'Raffle created successfully!',
+    successMessage: undefined, // Disable built-in success toast - let page handle it
     onSuccess,
     enableOptimisticUpdates: false, // Don't use optimistic updates for creation
   });

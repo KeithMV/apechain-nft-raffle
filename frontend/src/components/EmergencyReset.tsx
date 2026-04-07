@@ -1,5 +1,5 @@
 import React from 'react';
-import toast from 'react-hot-toast';
+import { toastManager } from '../utils/toastManager';
 
 const EmergencyReset: React.FC = () => {
   const handleEmergencyReset = () => {
@@ -17,7 +17,7 @@ const EmergencyReset: React.FC = () => {
     console.log('✅ Cleared all storage');
     
     // Show toast and reload
-    toast.success('Emergency reset complete! Reloading...');
+    toastManager.success('Emergency reset complete! Reloading...');
     setTimeout(() => {
       window.location.reload();
     }, 1000);
