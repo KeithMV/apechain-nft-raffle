@@ -55,7 +55,7 @@ export function useRaffleData(options: UseRaffleDataOptions) {
   
   // Cache configuration - Optimized for immediate updates after transactions
   const cacheConfig = useMemo(() => ({
-    staleTime: chainId === 137 ? 5000 : 5000, // APECHAIN FIX: Same 5s stale time for both chains
+    staleTime: chainId === 137 ? 1000 : 5000, // POLYGON FIX: 1s stale time for faster updates
     gcTime: chainId === 137 ? 2 * 60 * 1000 : 3 * 60 * 1000, // 2-3 minutes
     retry: 1, // Allow 1 retry
     retryDelay: 5000, // 5s delay

@@ -154,36 +154,57 @@ export function useUnifiedCacheInvalidation() {
         }, delay + 7000);
         
       } else if (immediate) {
-        // Standard immediate refetch for ApeChain or raffle creation
-        const refetchPromises = [
-          queryClient.refetchQueries({ queryKey: ['raffles', targetChainId] }),
-          queryClient.refetchQueries({ queryKey: ['user-positions', targetChainId] }),
-          queryClient.refetchQueries({ queryKey: ['created-raffles', targetChainId] })
-        ];
-        
-        // For raffle creation, also refetch user NFTs immediately
-        if (transactionType === 'create-raffle') {
-          console.log('🎯 [CACHE] Raffle creation detected - refreshing user NFTs');
-          refetchPromises.push(
-            queryClient.refetchQueries({ queryKey: ['user-nfts', targetChainId] }),
-            queryClient.refetchQueries({ queryKey: ['user-nfts'] })
-          );
+        // POLYGON BUY-TICKETS FIX: Force immediate refetch to eliminate UI delay
+        if (targetChainId === 137 && transactionType === 'buy-tickets') {
+          console.log('🚀 [POLYGON-CACHE] Forcing immediate refetch for buy-tickets to eliminate UI delay');
           
-          if (userAddress) {
-            refetchPromises.push(
-              queryClient.refetchQueries({ queryKey: ['user-nfts', userAddress.toLowerCase(), targetChainId] })
+          const aggressiveRefetchPromises = [
+            queryClient.refetchQueries({ queryKey: ['raffles', targetChainId], type: 'active' }),
+            queryClient.refetchQueries({ queryKey: ['user-positions', targetChainId], type: 'active' }),
+            queryClient.refetchQueries({ queryKey: ['created-raffles', targetChainId], type: 'active' }),
+            queryClient.refetchQueries({ queryKey: ['raffles', targetChainId, 'all'], type: 'active' })
+          ];
+          
+          if (raffleContract) {
+            aggressiveRefetchPromises.push(
+              queryClient.refetchQueries({ queryKey: ['raffle', targetChainId, raffleContract], type: 'active' })
             );
           }
+          
+          // Force immediate execution
+          Promise.all(aggressiveRefetchPromises).catch(console.error);
+        } else {
+          // Standard immediate refetch for other chains/transactions
+          const refetchPromises = [
+            queryClient.refetchQueries({ queryKey: ['raffles', targetChainId] }),
+            queryClient.refetchQueries({ queryKey: ['user-positions', targetChainId] }),
+            queryClient.refetchQueries({ queryKey: ['created-raffles', targetChainId] })
+          ];
+          
+          // For raffle creation, also refetch user NFTs immediately
+          if (transactionType === 'create-raffle') {
+            console.log('🎯 [CACHE] Raffle creation detected - refreshing user NFTs');
+            refetchPromises.push(
+              queryClient.refetchQueries({ queryKey: ['user-nfts', targetChainId] }),
+              queryClient.refetchQueries({ queryKey: ['user-nfts'] })
+            );
+            
+            if (userAddress) {
+              refetchPromises.push(
+                queryClient.refetchQueries({ queryKey: ['user-nfts', userAddress.toLowerCase(), targetChainId] })
+              );
+            }
+          }
+          
+          if (raffleContract) {
+            refetchPromises.push(
+              queryClient.refetchQueries({ queryKey: ['raffle', targetChainId, raffleContract] })
+            );
+          }
+          
+          // Don't await refetch - let it happen in background
+          Promise.all(refetchPromises).catch(console.error);
         }
-        
-        if (raffleContract) {
-          refetchPromises.push(
-            queryClient.refetchQueries({ queryKey: ['raffle', targetChainId, raffleContract] })
-          );
-        }
-        
-        // Don't await refetch - let it happen in background
-        Promise.all(refetchPromises).catch(console.error);
       }
       
       if (envConfig.enableLogging) {
