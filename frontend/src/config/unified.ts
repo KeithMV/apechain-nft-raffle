@@ -190,7 +190,13 @@ export const apeChain = defineChain({
   name: APECHAIN_CONFIG.name,
   nativeCurrency: APECHAIN_CONFIG.nativeCurrency,
   rpcUrls: {
-    default: { http: [APECHAIN_CONFIG.rpcUrl] },
+    default: { 
+      http: [
+        APECHAIN_CONFIG.rpcUrl,
+        'https://rpc.apechain.com',
+        'https://apechain.calderachain.xyz/http'
+      ] 
+    },
   },
   blockExplorers: {
     default: { 
@@ -206,7 +212,14 @@ export const polygonChain = defineChain({
   name: POLYGON_CONFIG.name,
   nativeCurrency: POLYGON_CONFIG.nativeCurrency,
   rpcUrls: {
-    default: { http: [POLYGON_CONFIG.rpcUrl] },
+    default: {
+      http: [
+        POLYGON_CONFIG.rpcUrl,
+        'https://rpc.ankr.com/polygon',
+        'https://polygon.meowrpc.com',
+        'https://polygon-mainnet.public.blastapi.io'
+      ],
+    },
   },
   blockExplorers: {
     default: { 
