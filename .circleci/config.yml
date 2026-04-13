@@ -241,7 +241,7 @@ jobs:
             export REACT_APP_NETWORK="apechain"
             export REACT_APP_CHAIN_ID="33139"
             export REACT_APP_APECHAIN_RPC_URL="https://apechain.calderachain.xyz/http"
-            export REACT_APP_CONTRACT_ADDRESS="0xC9Bd344f5E31481F202E400C33210Bd1AB542b42"
+            export REACT_APP_CONTRACT_ADDRESS="0x1627E7e63b63878E61f91D336385a59B1747934a"
             export REACT_APP_WALLETCONNECT_PROJECT_ID="b848c907908cee0c1bcf0ab0493da6c4"
             export REACT_APP_ENABLE_LOGGING="true"
             export CI=false
@@ -297,7 +297,7 @@ jobs:
             export REACT_APP_NETWORK="apechain"
             export REACT_APP_CHAIN_ID="33139"
             export REACT_APP_APECHAIN_RPC_URL="https://apechain.calderachain.xyz/http"
-            export REACT_APP_CONTRACT_ADDRESS="0xC9Bd344f5E31481F202E400C33210Bd1AB542b42"
+            export REACT_APP_CONTRACT_ADDRESS="0x1627E7e63b63878E61f91D336385a59B1747934a"
             export REACT_APP_WALLETCONNECT_PROJECT_ID="b848c907908cee0c1bcf0ab0493da6c4"
             export CI=false
             export GENERATE_SOURCEMAP=false
