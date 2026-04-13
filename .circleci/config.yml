@@ -292,7 +292,7 @@ jobs:
             
             # Set environment variables
             export REACT_APP_APP_NAME="ApeChain NFT Raffles"
-            export REACT_APP_APP_URL="https://apechainraffles.io"
+            export REACT_APP_APP_URL="https://web3raffles.io"
             export REACT_APP_ENV="production"
             export REACT_APP_NETWORK="apechain"
             export REACT_APP_CHAIN_ID="33139"
