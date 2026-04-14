@@ -37,6 +37,7 @@ const FEATURED_WALLET_IDS = [
 ];
 
 // CRITICAL FIX: Unconditional Web3Modal initialization
+// Build timestamp: 2025-01-14T20:30:00Z - Force cache invalidation
 try {
   createWeb3Modal({
     wagmiConfig: config,
@@ -67,7 +68,7 @@ try {
     },
   });
   
-  console.log('✅ Web3Modal initialized successfully');
+  console.log('✅ Web3Modal initialized successfully - Build v1.0.2');
 } catch (error) {
   console.error('❌ CRITICAL: Web3Modal initialization failed:', error);
   // Don't throw - let the app continue but log the error
