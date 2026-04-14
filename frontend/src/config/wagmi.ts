@@ -10,6 +10,30 @@
 
 import { createConfig, http } from 'wagmi';
 import { defineChain } from 'viem';
+import { injected, walletConnect, coinbaseWallet } from 'wagmi/connectors';
+
+// =============================================================================
+// CONNECTORS (Web3 Expert: Essential for wallet connections)
+// =============================================================================
+
+const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
+
+const connectors = [
+  injected(), // MetaMask, Trust Wallet, etc.
+  walletConnect({ 
+    projectId,
+    metadata: {
+      name: process.env.REACT_APP_APP_NAME || 'ApeChain NFT Raffles',
+      description: 'Decentralized NFT raffle platform on ApeChain and Polygon',
+      url: process.env.REACT_APP_APP_URL || 'https://web3raffles.io',
+      icons: [`${process.env.REACT_APP_APP_URL || 'https://web3raffles.io'}/favicon.ico`],
+    },
+  }),
+  coinbaseWallet({
+    appName: process.env.REACT_APP_APP_NAME || 'ApeChain NFT Raffles',
+    appLogoUrl: `${process.env.REACT_APP_APP_URL || 'https://web3raffles.io'}/favicon.ico`,
+  }),
+];
 
 // =============================================================================
 // CHAIN DEFINITIONS (Web3 Expert: Mobile-optimized with multiple RPC URLs)
@@ -95,6 +119,7 @@ export const CONTRACT_ADDRESSES = {
 
 export const config = createConfig({
   chains: [apeChain, polygon],
+  connectors, // CRITICAL: Add connectors for wallet connections
   transports: {
     [apeChain.id]: http(apeChain.rpcUrls.default.http[0], {
       // Debug Expert: Timeout and retry configuration
