@@ -95,6 +95,26 @@ interface AppProvidersProps {
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   useEffect(() => {
+    // CRITICAL: Clear old WalletConnect sessions that conflict with new config
+    if (typeof window !== 'undefined') {
+      // Clear WalletConnect storage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('wc@2') || key.startsWith('@walletconnect') || key.includes('walletconnect')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Clear session storage too
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('wc@2') || key.startsWith('@walletconnect') || key.includes('walletconnect')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+      
+      if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+        console.log('🧹 Cleared old WalletConnect sessions for simplified config');
+      }
+    }
     // Debug Expert: Initialize Web3Modal when DOM is ready
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initializeWeb3Modal);
