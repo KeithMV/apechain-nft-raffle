@@ -24,7 +24,7 @@ import { transactionQueryClient } from '../utils/transactionQueryClient'; // Use
 // const queryClient = new QueryClient({...}); // REMOVED
 
 // =============================================================================
-// WEB3MODAL CONFIGURATION (Web3 Expert: Mobile-optimized)
+// WEB3MODAL INITIALIZATION (CRITICAL: Must happen before component render)
 // =============================================================================
 
 const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
@@ -36,12 +36,10 @@ const FEATURED_WALLET_IDS = [
   '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
 ];
 
-// Debug Expert: Initialize Web3Modal with proper error handling
+// CRITICAL FIX: Initialize Web3Modal immediately (synchronously)
 let web3ModalInitialized = false;
 
-function initializeWeb3Modal() {
-  if (web3ModalInitialized) return;
-
+if (typeof window !== 'undefined' && !web3ModalInitialized) {
   try {
     createWeb3Modal({
       wagmiConfig: config,
@@ -76,7 +74,7 @@ function initializeWeb3Modal() {
     
     // Debug Expert: Success logging
     if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
-      console.log('✅ Web3Modal initialized successfully');
+      console.log('✅ Web3Modal initialized synchronously');
     }
   } catch (error) {
     // Debug Expert: Non-blocking error handling
@@ -115,13 +113,6 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
         console.log('🧹 Cleared old WalletConnect sessions for simplified config');
       }
     }
-    // Debug Expert: Initialize Web3Modal when DOM is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeWeb3Modal);
-    } else {
-      // DOM already loaded
-      setTimeout(initializeWeb3Modal, 0);
-    }
 
     // Debug Expert: Basic mobile detection for logging
     if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
@@ -129,11 +120,6 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
       console.log(`📱 Device type: ${isMobile ? 'mobile' : 'desktop'}`);
       console.log('🚀 Simplified providers initialized');
     }
-
-    // Cleanup
-    return () => {
-      document.removeEventListener('DOMContentLoaded', initializeWeb3Modal);
-    };
   }, []);
 
   return (
