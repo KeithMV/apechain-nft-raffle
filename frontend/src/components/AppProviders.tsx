@@ -36,35 +36,44 @@ const FEATURED_WALLET_IDS = [
   '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
 ];
 
-// CRITICAL FIX: Initialize Web3Modal at module level (guaranteed synchronous)
-createWeb3Modal({
-  wagmiConfig: config,
-  projectId,
+// CRITICAL FIX: Prevent duplicate Web3Modal instances
+if (typeof window !== 'undefined' && !(window as any).__WEB3MODAL_INITIALIZED__) {
+  createWeb3Modal({
+    wagmiConfig: config,
+    projectId,
+    
+    // Web3 Expert: Essential settings for mobile compatibility
+    enableAnalytics: false,
+    enableOnramp: false,
+    enableSwaps: false,
+    themeMode: 'dark',
+    
+    // Debug Expert: Environment-aware metadata for CORS
+    metadata: {
+      name: process.env.REACT_APP_APP_NAME || 'ApeChain NFT Raffles',
+      description: 'Decentralized NFT raffle platform on ApeChain and Polygon',
+      url: process.env.REACT_APP_APP_URL || 'https://web3raffles.io',
+      icons: ['https://web3raffles.io/favicon.ico'],
+    },
+    
+    // Web3 Expert: Mobile-optimized wallet selection
+    featuredWalletIds: FEATURED_WALLET_IDS,
+    defaultChain: apeChain,
+    
+    // Chain-specific branding
+    chainImages: {
+      [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
+      [polygon.id]: 'https://polygon.technology/favicon.ico',
+    },
+  });
   
-  // Web3 Expert: Essential settings for mobile compatibility
-  enableAnalytics: false,
-  enableOnramp: false,
-  enableSwaps: false,
-  themeMode: 'dark',
+  // Mark as initialized to prevent duplicates
+  (window as any).__WEB3MODAL_INITIALIZED__ = true;
   
-  // Debug Expert: Environment-aware metadata for CORS
-  metadata: {
-    name: process.env.REACT_APP_APP_NAME || 'ApeChain NFT Raffles',
-    description: 'Decentralized NFT raffle platform on ApeChain and Polygon',
-    url: process.env.REACT_APP_APP_URL || 'https://web3raffles.io',
-    icons: ['https://web3raffles.io/favicon.ico'],
-  },
-  
-  // Web3 Expert: Mobile-optimized wallet selection
-  featuredWalletIds: FEATURED_WALLET_IDS,
-  defaultChain: apeChain,
-  
-  // Chain-specific branding
-  chainImages: {
-    [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
-    [polygon.id]: 'https://polygon.technology/favicon.ico',
-  },
-});
+  if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+    console.log('✅ Web3Modal initialized (single instance)');
+  }
+}
 
 // =============================================================================
 // APP PROVIDERS COMPONENT (Code Reviewer: Clean, simple structure)
@@ -76,7 +85,7 @@ interface AppProvidersProps {
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   useEffect(() => {
-    // CRITICAL: Clear old WalletConnect sessions that conflict with new config
+    // CRITICAL: Clear old WalletConnect sessions AND Web3Modal instances
     if (typeof window !== 'undefined') {
       // Clear WalletConnect storage
       Object.keys(localStorage).forEach(key => {
@@ -92,8 +101,16 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
         }
       });
       
+      // Remove any existing Web3Modal DOM elements that might cause duplicates
+      const existingModals = document.querySelectorAll('w3m-modal, w3m-router, w3m-toast');
+      existingModals.forEach(modal => {
+        if (modal.parentNode) {
+          modal.parentNode.removeChild(modal);
+        }
+      });
+      
       if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
-        console.log('🧹 Cleared old WalletConnect sessions for simplified config');
+        console.log('🧹 Cleared old WalletConnect sessions and Web3Modal elements');
       }
     }
 
