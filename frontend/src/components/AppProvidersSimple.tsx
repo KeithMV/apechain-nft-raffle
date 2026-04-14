@@ -13,24 +13,15 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { config, apeChain, polygon } from '../config/wagmi';
+import { NetworkProvider } from '../contexts/NetworkContext'; // CRITICAL: Missing provider
+import { transactionQueryClient } from '../utils/transactionQueryClient'; // Use existing query client
 
 // =============================================================================
 // QUERY CLIENT (Code Reviewer: Simple, focused configuration)
 // =============================================================================
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // Debug Expert: Reasonable defaults for debugging
-      staleTime: 8000, // 8 seconds
-      gcTime: 40000, // 40 seconds
-      retry: 2,
-      retryDelay: 2000,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
-    },
-  },
-});
+// Use existing transaction query client instead of creating new one
+// const queryClient = new QueryClient({...}); // REMOVED
 
 // =============================================================================
 // WEB3MODAL CONFIGURATION (Web3 Expert: Mobile-optimized)
@@ -127,8 +118,10 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
 
   return (
     <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        {children}
+      <QueryClientProvider client={transactionQueryClient}>
+        <NetworkProvider>
+          {children}
+        </NetworkProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );
