@@ -36,52 +36,35 @@ const FEATURED_WALLET_IDS = [
   '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
 ];
 
-// CRITICAL FIX: Initialize Web3Modal immediately (synchronously)
-let web3ModalInitialized = false;
-
-if (typeof window !== 'undefined' && !web3ModalInitialized) {
-  try {
-    createWeb3Modal({
-      wagmiConfig: config,
-      projectId,
-      
-      // Web3 Expert: Essential settings for mobile compatibility
-      enableAnalytics: false,
-      enableOnramp: false,
-      enableSwaps: false,
-      themeMode: 'dark',
-      
-      // Debug Expert: Environment-aware metadata for CORS
-      metadata: {
-        name: process.env.REACT_APP_APP_NAME || 'ApeChain NFT Raffles',
-        description: 'Decentralized NFT raffle platform on ApeChain and Polygon',
-        url: process.env.REACT_APP_APP_URL || window.location.origin,
-        icons: [`${process.env.REACT_APP_APP_URL || window.location.origin}/favicon.ico`],
-      },
-      
-      // Web3 Expert: Mobile-optimized wallet selection
-      featuredWalletIds: FEATURED_WALLET_IDS,
-      defaultChain: apeChain,
-      
-      // Chain-specific branding
-      chainImages: {
-        [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
-        [polygon.id]: 'https://polygon.technology/favicon.ico',
-      },
-    });
-
-    web3ModalInitialized = true;
-    
-    // Debug Expert: Success logging
-    if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
-      console.log('✅ Web3Modal initialized synchronously');
-    }
-  } catch (error) {
-    // Debug Expert: Non-blocking error handling
-    console.warn('⚠️ Web3Modal initialization warning (non-critical):', error);
-    web3ModalInitialized = true; // Prevent infinite retries
-  }
-}
+// CRITICAL FIX: Initialize Web3Modal at module level (guaranteed synchronous)
+createWeb3Modal({
+  wagmiConfig: config,
+  projectId,
+  
+  // Web3 Expert: Essential settings for mobile compatibility
+  enableAnalytics: false,
+  enableOnramp: false,
+  enableSwaps: false,
+  themeMode: 'dark',
+  
+  // Debug Expert: Environment-aware metadata for CORS
+  metadata: {
+    name: process.env.REACT_APP_APP_NAME || 'ApeChain NFT Raffles',
+    description: 'Decentralized NFT raffle platform on ApeChain and Polygon',
+    url: process.env.REACT_APP_APP_URL || 'https://web3raffles.io',
+    icons: ['https://web3raffles.io/favicon.ico'],
+  },
+  
+  // Web3 Expert: Mobile-optimized wallet selection
+  featuredWalletIds: FEATURED_WALLET_IDS,
+  defaultChain: apeChain,
+  
+  // Chain-specific branding
+  chainImages: {
+    [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
+    [polygon.id]: 'https://polygon.technology/favicon.ico',
+  },
+});
 
 // =============================================================================
 // APP PROVIDERS COMPONENT (Code Reviewer: Clean, simple structure)
