@@ -95,6 +95,12 @@ export function WalletConnection() {
     console.log('🔍 [DEBUG] User Agent:', navigator.userAgent);
     console.log('🔍 [DEBUG] Window.ethereum:', hasEthereumWallet());
     console.log('🔍 [DEBUG] Is Mobile:', isMobile);
+    console.log('🔍 [DEBUG] Web3Modal open function:', typeof open, open);
+    
+    if (!open) {
+      console.error('❌ [CRITICAL] Web3Modal open function is undefined - Web3Modal not initialized!');
+      return;
+    }
     
     try {
       // Always use Web3Modal for connection - it handles mobile properly

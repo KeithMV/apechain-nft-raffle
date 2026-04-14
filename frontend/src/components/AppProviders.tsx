@@ -36,8 +36,8 @@ const FEATURED_WALLET_IDS = [
   '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
 ];
 
-// CRITICAL FIX: Prevent duplicate Web3Modal instances
-if (typeof window !== 'undefined' && !(window as any).__WEB3MODAL_INITIALIZED__) {
+// CRITICAL FIX: Unconditional Web3Modal initialization
+try {
   createWeb3Modal({
     wagmiConfig: config,
     projectId,
@@ -67,12 +67,10 @@ if (typeof window !== 'undefined' && !(window as any).__WEB3MODAL_INITIALIZED__)
     },
   });
   
-  // Mark as initialized to prevent duplicates
-  (window as any).__WEB3MODAL_INITIALIZED__ = true;
-  
-  if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
-    console.log('✅ Web3Modal initialized (single instance)');
-  }
+  console.log('✅ Web3Modal initialized successfully');
+} catch (error) {
+  console.error('❌ CRITICAL: Web3Modal initialization failed:', error);
+  // Don't throw - let the app continue but log the error
 }
 
 // =============================================================================
