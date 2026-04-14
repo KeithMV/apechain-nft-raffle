@@ -47,6 +47,10 @@ export function WalletConnection() {
   
   const isMobile = isMobileDevice();
 
+  // CRITICAL DEBUG: Log component render
+  console.log('🔍 [DEBUG] WalletConnection component rendered, isConnected:', isConnected);
+  console.log('🔍 [DEBUG] Web3Modal open function available:', typeof open, !!open);
+
   // Mobile WebSocket error monitoring
   useEffect(() => {
     if (!isMobile) return;
@@ -124,15 +128,57 @@ export function WalletConnection() {
 
   // Debug: Add click event listener to verify button is clickable
   useEffect(() => {
-    const button = document.querySelector('[aria-label="Connect wallet"]');
+    console.log('🔍 [DEBUG] DOM listener effect running...');
+    
+    // Try multiple selectors
+    const selectors = [
+      '[aria-label="Connect wallet"]',
+      'button:contains("Connect Wallet")',
+      'button[aria-label="Connect wallet"]',
+      '.connect-wallet-button'
+    ];
+    
+    let button: Element | null = null;
+    for (const selector of selectors) {
+      button = document.querySelector(selector);
+      console.log(`🔍 [DEBUG] Selector "${selector}" found:`, !!button);
+      if (button) break;
+    }
+    
+    // Also try finding by text content
+    const allButtons = document.querySelectorAll('button');
+    console.log('🔍 [DEBUG] Total buttons found:', allButtons.length);
+    
+    allButtons.forEach((btn, index) => {
+      console.log(`🔍 [DEBUG] Button ${index}:`, btn.textContent?.trim(), btn.getAttribute('aria-label'));
+      if (btn.textContent?.includes('Connect Wallet')) {
+        button = btn;
+        console.log('🔍 [DEBUG] Found button by text content!');
+      }
+    });
+    
     if (button) {
+      console.log('🔍 [DEBUG] Attaching DOM click listener to button');
       const clickHandler = (e: Event) => {
         console.log('🔍 [DEBUG] Button click detected via DOM listener', e);
+        console.log('🔍 [DEBUG] Event target:', e.target);
+        console.log('🔍 [DEBUG] Event type:', e.type);
       };
+      
+      // Add multiple event types for mobile compatibility
       button.addEventListener('click', clickHandler);
-      return () => button.removeEventListener('click', clickHandler);
+      button.addEventListener('touchstart', clickHandler);
+      button.addEventListener('touchend', clickHandler);
+      
+      return () => {
+        button?.removeEventListener('click', clickHandler);
+        button?.removeEventListener('touchstart', clickHandler);
+        button?.removeEventListener('touchend', clickHandler);
+      };
+    } else {
+      console.error('❌ [DEBUG] No connect button found in DOM!');
     }
-  }, []);
+  }, [isConnected]); // Re-run when connection state changes
 
   if (isConnected) {
     return (
@@ -175,9 +221,14 @@ export function WalletConnection() {
       
       <button
         onClick={handleConnect}
+        onTouchStart={() => console.log('🔍 [DEBUG] Touch start detected')}
+        onTouchEnd={() => console.log('🔍 [DEBUG] Touch end detected')}
+        onMouseDown={() => console.log('🔍 [DEBUG] Mouse down detected')}
+        onMouseUp={() => console.log('🔍 [DEBUG] Mouse up detected')}
         disabled={false}
         aria-label="Connect wallet"
-        className="px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-base sm:text-lg font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[60px] sm:min-h-[70px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 active:scale-95"
+        className="connect-wallet-button px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-base sm:text-lg font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[60px] sm:min-h-[70px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 active:scale-95"
+        style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
       >
         Connect Wallet
       </button>
