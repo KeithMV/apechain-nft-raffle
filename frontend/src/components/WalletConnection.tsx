@@ -88,7 +88,7 @@ export function WalletConnection() {
   }, [isMobile, hasWebSocketError]);
 
   const handleConnect = async () => {
-    console.log('🔍 [DEBUG] Connect button clicked');
+    console.log('🔍 [DEBUG] Connect button clicked - ENTRY POINT');
     console.log('🔍 [DEBUG] Environment:', envConfig.environment);
     console.log('🔍 [DEBUG] Env Chain ID:', envConfig.chainId);
     console.log('🔍 [DEBUG] Actual Chain ID (wagmi):', chainId);
@@ -121,6 +121,18 @@ export function WalletConnection() {
       }
     }
   };
+
+  // Debug: Add click event listener to verify button is clickable
+  useEffect(() => {
+    const button = document.querySelector('[aria-label="Connect wallet"]');
+    if (button) {
+      const clickHandler = (e: Event) => {
+        console.log('🔍 [DEBUG] Button click detected via DOM listener', e);
+      };
+      button.addEventListener('click', clickHandler);
+      return () => button.removeEventListener('click', clickHandler);
+    }
+  }, []);
 
   if (isConnected) {
     return (
@@ -165,12 +177,9 @@ export function WalletConnection() {
         onClick={handleConnect}
         disabled={false}
         aria-label="Connect wallet"
-        className={`relative px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-base sm:text-lg font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[60px] sm:min-h-[70px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 active:scale-95 active:shadow-inner overflow-hidden group`}
+        className="px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-base sm:text-lg font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[60px] sm:min-h-[70px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 active:scale-95"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-active:translate-x-[100%] transition-transform duration-500"></div>
-        <span className="relative flex items-center justify-center space-x-2">
-          <span>Connect Wallet</span>
-        </span>
+        Connect Wallet
       </button>
       
       {/* Mobile retry button */}
