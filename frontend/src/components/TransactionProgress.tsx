@@ -4,7 +4,12 @@
  */
 
 import React from 'react';
-import { getDeviceType } from '../config/wagmiUnified';
+// Simple device detection - no need for complex wagmiUnified import
+const getDeviceType = () => {
+  if (typeof window === 'undefined') return 'desktop';
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+    ? 'mobile' : 'desktop';
+};
 
 interface TransactionProgressProps {
   isVisible: boolean;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
-import { apeChain, polygonChain } from '../config/wagmiUnified';
+import { apeChain, polygon } from '../config/wagmi';
 
 const SUPPORTED_CHAINS = [
   {
@@ -9,7 +9,7 @@ const SUPPORTED_CHAINS = [
     color: 'emerald'
   },
   {
-    ...polygonChain,
+    ...polygon,
     logo: '',
     color: 'purple'
   }

@@ -1,53 +1,46 @@
 /**
- * Chain Configuration Hook
- * Simple hook for accessing unified chain configurations
+ * Chain Configuration Hook - Simplified Version
+ * Direct hook for accessing simplified chain configurations
  */
 
 import { useChainId } from 'wagmi';
-import { 
-  getChainConfig, 
-  getOperationConfig, 
-  isApeChain, 
-  isPolygonChain,
-  getQueryConfig 
-} from '../config/unified';
+import { getContractAddresses, isSupportedChain, getChainName, apeChain, polygon } from '../config/wagmi';
+import { getChainConfig } from '../config/addresses';
 
 /**
- * Unified hook for chain configuration
+ * Simplified hook for chain configuration
  */
 export function useChainConfig() {
   const chainId = useChainId();
-  const config = getChainConfig(chainId);
+  const contracts = getContractAddresses(chainId);
+  const isPolygon = chainId === polygon.id;
+  const isApeChain = chainId === apeChain.id;
   
   return {
     chainId,
-    config,
-    isApeChain: isApeChain(chainId),
-    isPolygon: isPolygonChain(chainId),
+    config: getChainConfig(chainId), // Add config property for backward compatibility
+    isApeChain,
+    isPolygon,
     
     // Quick access to common configurations
-    factoryAddress: config.contracts.factory,
-    templateAddress: config.contracts.template,
-    rpcUrl: config.rpcUrl,
-    explorerUrl: config.explorerUrl,
+    factoryAddress: contracts.factory,
+    templateAddress: contracts.template,
     
-    // Settings
-    pollingInterval: config.settings.pollingInterval,
-    timeout: config.settings.timeout,
-    retries: config.settings.retries,
-    rateLimit: config.settings.rateLimit,
-    invalidationDelay: 1000, // 1s invalidation delay for both chains
+    // Simplified settings - no complex unified config needed
+    pollingInterval: 8000, // 8s for all chains
+    timeout: isPolygon ? 30000 : 25000, // 30s for Polygon, 25s for ApeChain
+    retries: isPolygon ? 3 : 2,
+    rateLimit: 10, // 10 seconds for all chains
+    invalidationDelay: 1000, // 1s invalidation delay
     
-    // Query configuration
-    queryConfig: getQueryConfig(chainId),
-    
-    // Operation-specific helpers
+    // Operation-specific helpers - simplified
     getOperationTimeout: (operation: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle') => {
-      return getOperationConfig(chainId, operation).timeout;
+      const baseTimeout = isPolygon ? 30000 : 25000;
+      return baseTimeout;
     },
     
     getOperationRetries: (operation: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle') => {
-      return getOperationConfig(chainId, operation).retries;
+      return isPolygon ? 3 : 2;
     },
   };
 }

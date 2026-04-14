@@ -1,15 +1,22 @@
 /**
- * CONFIGURATION FEATURE FLAG
- * Switch between complex unified system and simplified system
+ * SIMPLIFIED CONFIGURATION - CLEANUP COMPLETE
+ * The simplified configuration is now the default and only system
  * 
- * Set USE_SIMPLIFIED_CONFIG=true to test new system
- * Set USE_SIMPLIFIED_CONFIG=false to use old system
+ * Old unified configuration has been removed:
+ * - ChainConfigProvider.tsx (removed)
+ * - unified.ts (removed) 
+ * - wagmiUnified.ts (removed)
+ * 
+ * New simplified system:
+ * - wagmi.ts (direct wagmi configuration)
+ * - AppProvidersSimple.tsx (clean provider setup)
+ * - useSimpleChainConfig.ts (basic utilities)
  */
 
-// Feature flag - change this to test simplified system
-export const USE_SIMPLIFIED_CONFIG = true; // TESTING: Enable simplified system
+// Simplified configuration is now the only configuration
+export const USE_SIMPLIFIED_CONFIG = true;
 
 // Debug logging
 if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
-  console.log(`🔧 Configuration mode: ${USE_SIMPLIFIED_CONFIG ? 'SIMPLIFIED' : 'UNIFIED'}`);
+  console.log('🎯 Configuration: SIMPLIFIED (cleanup complete)');
 }

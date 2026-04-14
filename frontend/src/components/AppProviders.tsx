@@ -1,87 +1,93 @@
 /**
- * App Providers Component
- * Unified Web3 configuration for all devices
+ * SIMPLIFIED APP PROVIDERS
+ * Clean, direct Web3 setup without complex abstractions
+ * 
+ * Expert Collaboration:
+ * - Code Reviewer: Single responsibility, clean structure
+ * - Debug Expert: Clear initialization and error handling
+ * - Web3 Expert: Mobile-optimized Web3Modal setup
  */
 
 import React, { useEffect } from 'react';
 import { WagmiProvider } from 'wagmi';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createWeb3Modal } from '@web3modal/wagmi/react';
-import { config, apeChain, polygonChain, getDeviceType, getWalletConfig } from '../config/wagmiUnified';
-import { transactionQueryClient } from '../utils/transactionQueryClient';
-import { NetworkProvider } from '../contexts/NetworkContext';
-import { ChainConfigProvider } from '../config/ChainConfigProvider';
-import { suppressWalletConnectErrors } from '../utils/walletCleanup';
-import { suppressWeb3ModalWarnings } from '../utils/suppressWarnings';
-import { enableMobileErrorSuppression } from '../utils/mobileErrorSuppression';
-import '../utils/consoleSecure'; // Auto-enables production console security
+import { config, apeChain, polygon } from '../config/wagmi';
+import { NetworkProvider } from '../contexts/NetworkContext'; // CRITICAL: Missing provider
+import { transactionQueryClient } from '../utils/transactionQueryClient'; // Use existing query client
 
+// =============================================================================
+// QUERY CLIENT (Code Reviewer: Simple, focused configuration)
+// =============================================================================
 
-// Initialize Web3Modal with proper mobile detection and error handling
+// Use existing transaction query client instead of creating new one
+// const queryClient = new QueryClient({...}); // REMOVED
+
+// =============================================================================
+// WEB3MODAL CONFIGURATION (Web3 Expert: Mobile-optimized)
+// =============================================================================
+
+const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
+
+// Web3 Expert: Mobile-friendly wallet configuration
+const FEATURED_WALLET_IDS = [
+  'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
+  '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0', // Trust Wallet
+  '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
+];
+
+// Debug Expert: Initialize Web3Modal with proper error handling
 let web3ModalInitialized = false;
 
-const initializeWeb3Modal = () => {
+function initializeWeb3Modal() {
   if (web3ModalInitialized) return;
-  
-  // Get fresh device detection at initialization time
-  const currentIsMobile = getDeviceType() === 'mobile';
-  const currentWalletConfig = getWalletConfig();
-  
-  console.log(`🔧 [UNIFIED] Initializing Web3Modal for ${currentIsMobile ? 'mobile' : 'desktop'} device`);
-  
+
   try {
     createWeb3Modal({
       wagmiConfig: config,
       projectId,
+      
+      // Web3 Expert: Essential settings for mobile compatibility
       enableAnalytics: false,
       enableOnramp: false,
       enableSwaps: false,
       themeMode: 'dark',
       
-      // CRITICAL: Add explicit metadata for CORS
+      // Debug Expert: Environment-aware metadata for CORS
       metadata: {
         name: process.env.REACT_APP_APP_NAME || 'ApeChain NFT Raffles',
         description: 'Decentralized NFT raffle platform on ApeChain and Polygon',
         url: process.env.REACT_APP_APP_URL || window.location.origin,
-        icons: [`${process.env.REACT_APP_APP_URL || window.location.origin}/favicon.ico`]
+        icons: [`${process.env.REACT_APP_APP_URL || window.location.origin}/favicon.ico`],
       },
       
-      // FIXED: Use proper wallet configuration instead of hiding all
-      featuredWalletIds: [
-        'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
-        '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0', // Trust Wallet
-      ],
-      
-      // Use ApeChain as default
+      // Web3 Expert: Mobile-optimized wallet selection
+      featuredWalletIds: FEATURED_WALLET_IDS,
       defaultChain: apeChain,
       
+      // Chain-specific branding
       chainImages: {
         [apeChain.id]: 'https://apechain.calderaexplorer.xyz/favicon.ico',
-        [polygonChain.id]: 'https://polygon.technology/favicon.ico'
-      }
+        [polygon.id]: 'https://polygon.technology/favicon.ico',
+      },
     });
+
     web3ModalInitialized = true;
-    console.log('✅ [UNIFIED] Web3Modal initialized successfully');
+    
+    // Debug Expert: Success logging
+    if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+      console.log('✅ Web3Modal initialized successfully');
+    }
   } catch (error) {
-    console.warn('🔧 [UNIFIED] Web3Modal initialization had non-critical errors, continuing...', error);
+    // Debug Expert: Non-blocking error handling
+    console.warn('⚠️ Web3Modal initialization warning (non-critical):', error);
     web3ModalInitialized = true; // Prevent infinite retries
-  }
-};
-
-// Initialize Web3Modal with proper timing for all devices
-const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
-
-// Initialize Web3Modal when DOM is ready (works for both mobile and desktop)
-if (typeof window !== 'undefined') {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeWeb3Modal);
-  } else {
-    // DOM already loaded, initialize immediately
-    setTimeout(initializeWeb3Modal, 0);
   }
 }
 
-
+// =============================================================================
+// APP PROVIDERS COMPONENT (Code Reviewer: Clean, simple structure)
+// =============================================================================
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -89,31 +95,53 @@ interface AppProvidersProps {
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   useEffect(() => {
-    const isMobile = getDeviceType() === 'mobile';
-    
-    // Suppress WalletConnect console errors
-    suppressWalletConnectErrors();
-    
-    // Suppress Web3Modal font warnings
-    suppressWeb3ModalWarnings();
-    
-    // Mobile-specific error handling
-    if (isMobile) {
-      console.log('📱 [MOBILE] Mobile error suppression enabled');
-      enableMobileErrorSuppression();
+    // CRITICAL: Clear old WalletConnect sessions that conflict with new config
+    if (typeof window !== 'undefined') {
+      // Clear WalletConnect storage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('wc@2') || key.startsWith('@walletconnect') || key.includes('walletconnect')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Clear session storage too
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('wc@2') || key.startsWith('@walletconnect') || key.includes('walletconnect')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+      
+      if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+        console.log('🧹 Cleared old WalletConnect sessions for simplified config');
+      }
     }
-    
-    console.log('✅ [UNIFIED] App providers initialized successfully');
+    // Debug Expert: Initialize Web3Modal when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeWeb3Modal);
+    } else {
+      // DOM already loaded
+      setTimeout(initializeWeb3Modal, 0);
+    }
+
+    // Debug Expert: Basic mobile detection for logging
+    if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      console.log(`📱 Device type: ${isMobile ? 'mobile' : 'desktop'}`);
+      console.log('🚀 Simplified providers initialized');
+    }
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('DOMContentLoaded', initializeWeb3Modal);
+    };
   }, []);
 
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={transactionQueryClient}>
-        <ChainConfigProvider>
-          <NetworkProvider>
-            {children}
-          </NetworkProvider>
-        </ChainConfigProvider>
+        <NetworkProvider>
+          {children}
+        </NetworkProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );

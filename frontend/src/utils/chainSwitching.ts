@@ -1,5 +1,5 @@
 import { useSwitchChain } from 'wagmi';
-import { apeChain } from '../config/wagmiUnified';
+import { apeChain, polygon } from '../config/wagmi';
 
 export function useApeChainSwitching() {
   const { switchChain, isPending } = useSwitchChain();

@@ -4,8 +4,28 @@
  */
 
 import { QueryClient } from '@tanstack/react-query';
-import { getDeviceType } from '../config/wagmiUnified';
-import { getChainConfig } from '../config/wagmiUnified';
+// Remove old wagmiUnified imports - using simplified approach
+// import { getDeviceType } from '../config/wagmiUnified';
+// import { getChainConfig } from '../config/wagmiUnified';
+
+// Simple device detection
+const getDeviceType = () => {
+  if (typeof window === 'undefined') return 'desktop';
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+    ? 'mobile' : 'desktop';
+};
+
+// Simple chain config - using direct values instead of complex unified config
+const getChainConfig = (chainId?: number) => {
+  // Return basic config for query client - simplified approach
+  return {
+    settings: {
+      pollingInterval: 8000, // 8s for all chains
+      timeout: 30000, // 30s timeout
+      retries: 3,
+    }
+  };
+};
 
 // Transaction-specific cache keys
 export const TRANSACTION_CACHE_KEYS = {
