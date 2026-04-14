@@ -35,7 +35,7 @@ aws s3 sync build/ s3://apechain-nft-raffle-staging-856872546342-us-east-1/ --de
 
 # Invalidate Staging CloudFront cache
 echo "🔄 Invalidating Staging CloudFront cache..."
-aws cloudfront create-invalidation --distribution-id E2OQG8N4GFFTXI --paths "/*"
+aws cloudfront create-invalidation --distribution-id EDPIS47D31NKW --paths "/*"
 
 echo "✅ Staging deployment complete!"
 echo "🌐 Staging URL: https://d1784e9dgxn2du.cloudfront.net"
