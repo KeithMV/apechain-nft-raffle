@@ -249,7 +249,7 @@ jobs:
             export NODE_ENV=production
             
             # Run the build
-            yarn build:staging
+            yarn build
             
             # Verify build output
             if [ -d "build" ] && [ "$(ls -A build)" ]; then
