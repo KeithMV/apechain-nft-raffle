@@ -7,7 +7,7 @@
  */
 
 // Feature flag - change this to test simplified system
-export const USE_SIMPLIFIED_CONFIG = process.env.REACT_APP_USE_SIMPLIFIED_CONFIG === 'true' || false;
+export const USE_SIMPLIFIED_CONFIG = true; // TESTING: Enable simplified system
 
 // Debug logging
 if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
