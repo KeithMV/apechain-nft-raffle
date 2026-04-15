@@ -85,7 +85,44 @@
     <title>ApeCoin NFT Raffle System</title>
   </head>
   <body>
-    <!-- CRITICAL: Mobile-Safe SES Configuration - Must load FIRST -->
+    <!-- CRITICAL: Mobile Safari React Mounting Debug -->
+    <script>
+      // Enhanced error catching for mobile Safari
+      window.addEventListener('error', function(e) {
+        console.error('🚨 [MOBILE-ERROR] JavaScript Error:', e.error, e.message, e.filename, e.lineno);
+      });
+      
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('🚨 [MOBILE-ERROR] Unhandled Promise Rejection:', e.reason);
+      });
+      
+      // Check if React is trying to mount
+      const originalCreateRoot = window.React?.createRoot;
+      if (originalCreateRoot) {
+        console.log('📱 [MOBILE-DEBUG] React createRoot available');
+      }
+      
+      // Monitor DOM ready state
+      console.log('📱 [MOBILE-DEBUG] DOM ready state:', document.readyState);
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('📱 [MOBILE-DEBUG] DOMContentLoaded fired');
+        
+        // Check if root element exists
+        const rootElement = document.getElementById('root');
+        console.log('📱 [MOBILE-DEBUG] Root element found:', !!rootElement);
+        
+        // Check if React has mounted anything
+        setTimeout(() => {
+          const rootContent = rootElement?.innerHTML;
+          console.log('📱 [MOBILE-DEBUG] Root content length:', rootContent?.length || 0);
+          if (!rootContent || rootContent.length < 100) {
+            console.error('🚨 [MOBILE-ERROR] React failed to mount - root is empty or minimal');
+          }
+        }, 2000);
+      });
+    </script>
+    
+    <!-- CRITICAL: Mobile Safari React Mounting Debug -->
     <script>
       // Mobile-Safe SES Configuration - Inline for immediate execution
       (function() {
