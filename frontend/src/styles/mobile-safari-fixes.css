@@ -1,0 +1,68 @@
+/* MOBILE SAFARI WEB3MODAL FIXES */
+
+/* Fix Web3Modal rendering on mobile Safari */
+.w3m-modal, .w3m-overlay {
+  /* Force hardware acceleration on mobile Safari */
+  -webkit-transform: translateZ(0) !important;
+  transform: translateZ(0) !important;
+  
+  /* Fix mobile Safari rendering issues */
+  -webkit-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
+  
+  /* Prevent mobile Safari scroll issues */
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Fix Web3Modal buttons for mobile Safari touch */
+.w3m-modal button, 
+.w3m-connect-button,
+button[data-testid="connect-button"] {
+  /* Apple's minimum touch target size */
+  min-height: 44px !important;
+  min-width: 44px !important;
+  
+  /* Mobile Safari touch optimizations */
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  
+  /* Force hardware acceleration */
+  -webkit-transform: translateZ(0) !important;
+  transform: translateZ(0) !important;
+}
+
+/* Fix Web3Modal wallet list on mobile Safari */
+.w3m-wallet-list {
+  /* Prevent scroll issues on mobile Safari */
+  -webkit-overflow-scrolling: touch !important;
+  
+  /* Fix touch targets */
+  touch-action: pan-y !important;
+}
+
+/* Fix Web3Modal wallet items for mobile Safari */
+.w3m-wallet-item {
+  /* Ensure proper touch targets */
+  min-height: 60px !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Fix mobile Safari viewport issues */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari specific fixes */
+  .w3m-modal {
+    /* Fix iOS Safari modal positioning */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    
+    /* Prevent iOS Safari zoom on input focus */
+    -webkit-text-size-adjust: 100% !important;
+  }
+}

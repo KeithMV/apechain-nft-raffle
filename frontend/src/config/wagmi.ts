@@ -13,7 +13,7 @@ import { defineChain } from 'viem';
 import { injected, walletConnect, coinbaseWallet } from 'wagmi/connectors';
 
 // =============================================================================
-// CONNECTORS (Web3 Expert: Essential for wallet connections)
+// CONNECTORS (Web3 Expert: REQUIRED for Web3Modal v5)
 // =============================================================================
 
 const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b848c907908cee0c1bcf0ab0493da6c4';
@@ -119,7 +119,7 @@ export const CONTRACT_ADDRESSES = {
 
 export const config = createConfig({
   chains: [apeChain, polygon],
-  connectors, // CRITICAL: Add connectors for wallet connections
+  connectors, // REQUIRED: Web3Modal v5 needs these connectors
   transports: {
     [apeChain.id]: http(apeChain.rpcUrls.default.http[0], {
       // Debug Expert: Timeout and retry configuration

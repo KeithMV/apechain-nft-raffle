@@ -23,7 +23,9 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     
-    <!-- Content Security Policy - Mobile Safari & WalletConnect Compatible -->
+    <!-- Content Security Policy - DISABLED for development -->
+    <!-- CSP causes issues with WalletConnect verification frames -->
+    <!--
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
       script-src 'self' 'unsafe-inline' 'unsafe-eval' https://verify.walletconnect.org https://verify.walletconnect.com https://explorer-api.walletconnect.com;
@@ -40,11 +42,15 @@
         https://relay.walletconnect.com
         wss://relay.walletconnect.org
         wss://relay.walletconnect.com;
-      frame-src 'self' https://verify.walletconnect.org https://verify.walletconnect.com;
-      frame-ancestors 'self' https://verify.walletconnect.org https://verify.walletconnect.com;
+      frame-src 'self' 
+        https://verify.walletconnect.org 
+        https://verify.walletconnect.com
+        https://verify.walletconnect.org/b848c907908cee0c1bcf0ab0493da6c4;
+      frame-ancestors 'none';
       object-src 'none';
       base-uri 'self';
     " />
+    -->
     
     <!-- Web3Modal Styles for Mobile Optimization -->
     <style>

@@ -19,9 +19,28 @@ export function WalletConnection() {
   
   const isMobile = isMobileDevice();
 
-  // Simple debug logging for simplified system
-  console.log('🔍 [SIMPLIFIED] WalletConnection rendered, isConnected:', isConnected);
-  console.log('🔍 [SIMPLIFIED] Chain ID:', chainId);
+  // CRITICAL: Debug the Web3Modal hook
+  console.log('🔍 [DEBUG] WalletConnection rendered, isConnected:', isConnected);
+  console.log('🔍 [DEBUG] Chain ID:', chainId);
+  console.log('🔍 [DEBUG] Web3Modal open function:', typeof open, open);
+  
+  // Test if open function exists
+  const handleConnect = () => {
+    console.log('🔍 [DEBUG] Connect button clicked');
+    console.log('🔍 [DEBUG] open function type:', typeof open);
+    
+    if (typeof open === 'function') {
+      console.log('🔍 [DEBUG] Calling open()...');
+      try {
+        open();
+        console.log('✅ [DEBUG] open() called successfully');
+      } catch (error) {
+        console.error('🚨 [DEBUG] open() failed:', error);
+      }
+    } else {
+      console.error('🚨 [DEBUG] open is not a function! Web3Modal not initialized properly.');
+    }
+  };
 
   if (isConnected) {
     return (
@@ -46,9 +65,9 @@ export function WalletConnection() {
 
   return (
     <div className="flex flex-col space-y-2">
-      {/* Simplified Connect Button - Mobile Safari Optimized */}
+      {/* DEBUG CONNECT BUTTON */}
       <button
-        onClick={() => open()}
+        onClick={handleConnect}
         className="px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-base sm:text-lg font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[60px] sm:min-h-[70px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 active:scale-95"
         style={{ 
           pointerEvents: 'auto', 
@@ -56,16 +75,6 @@ export function WalletConnection() {
           WebkitTapHighlightColor: 'transparent',
           WebkitUserSelect: 'none',
           userSelect: 'none'
-        }}
-        onTouchStart={(e) => {
-          console.log('🔍 [SIMPLIFIED] Touch start detected');
-          // Prevent default to avoid iOS Safari issues
-          e.preventDefault();
-        }}
-        onTouchEnd={(e) => {
-          console.log('🔍 [SIMPLIFIED] Touch end detected - opening Web3Modal');
-          e.preventDefault();
-          open();
         }}
       >
         Connect Wallet
