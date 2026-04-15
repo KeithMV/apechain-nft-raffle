@@ -27,36 +27,45 @@ const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
 export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const chainId = useChainId();
   
+  // CRITICAL DEBUG: Log NetworkProvider render
+  console.log('🔍 [DEBUG] NetworkProvider rendering, chainId:', chainId);
+  
   const networkData = useMemo(() => {
-    const config = getChainConfig(chainId);
-    const contracts = getContracts(chainId);
+    console.log('🔍 [DEBUG] NetworkProvider useMemo running, chainId:', chainId);
     
-    const isApeChain = chainId === CHAIN_IDS.APECHAIN_MAINNET || chainId === CHAIN_IDS.APECHAIN_TESTNET;
-    const isPolygon = chainId === CHAIN_IDS.POLYGON_MAINNET;
-    
-    const theme: NetworkTheme = isApeChain 
-      ? {
-          primary: 'emerald',
-          secondary: 'teal', 
-          accent: 'cyan',
-          logo: '🦍',
-          gradient: 'from-emerald-400 via-teal-300 to-cyan-400'
-        }
-      : isPolygon
-      ? {
-          primary: 'purple',
-          secondary: 'violet',
-          accent: 'indigo', 
-          logo: '🔷',
-          gradient: 'from-purple-400 via-violet-300 to-indigo-400'
-        }
-      : {
-          primary: 'emerald',
-          secondary: 'teal',
-          accent: 'cyan', 
-          logo: '🦍',
-          gradient: 'from-emerald-400 via-teal-300 to-cyan-400'
-        };
+    try {
+      const config = getChainConfig(chainId);
+      const contracts = getContracts(chainId);
+      
+      // Use direct chain IDs instead of CHAIN_IDS constants
+      const isApeChain = chainId === 33139; // apeChain.id
+      const isPolygon = chainId === 137; // polygon.id
+      
+      console.log('🔍 [DEBUG] NetworkProvider config loaded:', { isApeChain, isPolygon, chainId });
+      
+      const theme: NetworkTheme = isApeChain 
+        ? {
+            primary: 'emerald',
+            secondary: 'teal', 
+            accent: 'cyan',
+            logo: '🦍',
+            gradient: 'from-emerald-400 via-teal-300 to-cyan-400'
+          }
+        : isPolygon
+        ? {
+            primary: 'purple',
+            secondary: 'violet',
+            accent: 'indigo', 
+            logo: '🔷',
+            gradient: 'from-purple-400 via-violet-300 to-indigo-400'
+          }
+        : {
+            primary: 'emerald',
+            secondary: 'teal',
+            accent: 'cyan', 
+            logo: '🦍',
+            gradient: 'from-emerald-400 via-teal-300 to-cyan-400'
+          };
     
     // Set CSS custom properties for dynamic theming
     if (typeof document !== 'undefined') {
@@ -83,14 +92,35 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return {
       chainId,
       networkName: config.name,
-      nativeCurrency: config.nativeCurrency.symbol, // Extract symbol from nativeCurrency object
+      nativeCurrency: config.nativeCurrency.symbol,
       explorerUrl: config.explorerUrl,
       contracts,
       isApeChain,
       isPolygon,
       theme
     };
+    } catch (error) {
+      console.error('❌ [DEBUG] NetworkProvider error:', error);
+      return {
+        chainId: chainId || 33139,
+        networkName: 'ApeChain',
+        nativeCurrency: 'APE',
+        explorerUrl: 'https://apescan.io',
+        contracts: { RAFFLE_FACTORY: '', RAFFLE_FACTORY_V4: '', RAFFLE_TEMPLATE: '' } as any,
+        isApeChain: true,
+        isPolygon: false,
+        theme: {
+          primary: 'emerald',
+          secondary: 'teal',
+          accent: 'cyan',
+          logo: '🦍',
+          gradient: 'from-emerald-400 via-teal-300 to-cyan-400'
+        }
+      };
+    }
   }, [chainId]);
+
+  console.log('🔍 [DEBUG] NetworkProvider returning data:', networkData);
 
   return (
     <NetworkContext.Provider value={networkData}>
