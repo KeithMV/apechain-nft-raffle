@@ -15,33 +15,34 @@ export interface EnvironmentConfig {
 }
 
 const getEnvironment = (): Environment => {
-  // Explicit environment variable takes priority
-  if (process.env.REACT_APP_ENV === 'staging') {
-    return 'staging';
+  // CRITICAL: Always trust REACT_APP_ENV first (set by build commands)
+  const explicitEnv = process.env.REACT_APP_ENV;
+  if (explicitEnv === 'staging' || explicitEnv === 'production' || explicitEnv === 'development') {
+    return explicitEnv as Environment;
   }
   
-  if (process.env.REACT_APP_ENV === 'development') {
-    return 'development';
+  // Fallback: Detect from hostname (for cases where REACT_APP_ENV isn't set)
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    // Production domains
+    if (hostname === 'web3raffles.io' || hostname === 'apechainraffles.io') {
+      return 'production';
+    }
+    
+    // Staging domains (CloudFront)
+    if (hostname.includes('d1784e9dgxn2du.cloudfront.net') || hostname.includes('staging')) {
+      return 'staging';
+    }
+    
+    // Local development
+    if (hostname === 'localhost' || hostname.includes('192.168')) {
+      return 'staging'; // You use staging config locally
+    }
   }
   
-  // Check for development indicators
-  if (process.env.NODE_ENV === 'development' || 
-      (typeof window !== 'undefined' && (
-        window.location.hostname === 'localhost' ||
-        window.location.hostname.includes('192.168')
-      ))) {
-    return 'development';
-  }
-  
-  // Check for staging indicators
-  if (typeof window !== 'undefined' && (
-      window.location.hostname.includes('staging') ||
-      window.location.hostname.includes('d2v74bfsjdq40l')
-    )) {
-    return 'staging';
-  }
-  
-  return 'production';
+  // Final fallback
+  return 'staging';
 };
 
 // Helper to detect if running locally (dev server)
@@ -49,21 +50,19 @@ const isLocalDevelopment = () => {
   if (typeof window === 'undefined') return false;
   return window.location.hostname === 'localhost' || 
          window.location.hostname.includes('192.168') ||
-         (window.location.port === '3000' && !window.location.hostname.includes('staging'));
+         window.location.port === '3000';
 };
 
+// CRITICAL: Use process.env directly instead of hardcoded values
 const configs: Record<Environment, EnvironmentConfig> = {
   development: {
     environment: 'development',
-    chainId: 33139,
+    chainId: parseInt(process.env.REACT_APP_CHAIN_ID || '33139'),
     rpcUrl: process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
-    contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS || '0x1627E7e63b63878E61f91D336385a59B1747934a', // ApeChain V4
-    appName: 'ApeChain NFT Raffles (DEV)',
-    appUrl: isLocalDevelopment() ? 
-      (typeof window !== 'undefined' ? `http://${window.location.hostname}:${window.location.port}` : 'http://localhost:3000') : 
-      'http://localhost:3000',
-    enableLogging: true,
-    // Alchemy integration for better RPC performance
+    contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS || '0x1627E7e63b63878E61f91D336385a59B1747934a',
+    appName: process.env.REACT_APP_APP_NAME || 'ApeChain NFT Raffles (DEV)',
+    appUrl: process.env.REACT_APP_APP_URL || 'http://localhost:3000',
+    enableLogging: process.env.REACT_APP_ENABLE_LOGGING === 'true',
     alchemyApiKey: process.env.REACT_APP_ALCHEMY_API_KEY,
     polygonRpcUrl: process.env.REACT_APP_ALCHEMY_API_KEY ? 
       `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}` : 
@@ -71,12 +70,12 @@ const configs: Record<Environment, EnvironmentConfig> = {
   },
   staging: {
     environment: 'staging',
-    chainId: 33139, // Use mainnet like production
+    chainId: parseInt(process.env.REACT_APP_CHAIN_ID || '33139'),
     rpcUrl: process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
-    contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS || '0x1627E7e63b63878E61f91D336385a59B1747934a', // ApeChain V4
-    appName: 'ApeChain NFT Raffles (STAGING)',
-    appUrl: 'https://staging.apechainraffles.io', // Back to proper staging URL
-    enableLogging: false,
+    contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS || '0x1627E7e63b63878E61f91D336385a59B1747934a',
+    appName: process.env.REACT_APP_APP_NAME || 'ApeChain NFT Raffles (Staging)',
+    appUrl: process.env.REACT_APP_APP_URL || 'https://d1784e9dgxn2du.cloudfront.net',
+    enableLogging: process.env.REACT_APP_ENABLE_LOGGING === 'true',
     alchemyApiKey: process.env.REACT_APP_ALCHEMY_API_KEY,
     polygonRpcUrl: process.env.REACT_APP_ALCHEMY_API_KEY ? 
       `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}` : 
@@ -84,12 +83,12 @@ const configs: Record<Environment, EnvironmentConfig> = {
   },
   production: {
     environment: 'production',
-    chainId: 33139,
+    chainId: parseInt(process.env.REACT_APP_CHAIN_ID || '33139'),
     rpcUrl: process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
-    contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS || '0x1627E7e63b63878E61f91D336385a59B1747934a', // ApeChain V4
-    appName: 'ApeChain NFT Raffles',
-    appUrl: 'https://apechainraffles.io',
-    enableLogging: false,
+    contractAddress: process.env.REACT_APP_CONTRACT_ADDRESS || '0x1627E7e63b63878E61f91D336385a59B1747934a',
+    appName: process.env.REACT_APP_APP_NAME || 'Web3 NFT Raffles',
+    appUrl: process.env.REACT_APP_APP_URL || 'https://web3raffles.io',
+    enableLogging: process.env.REACT_APP_ENABLE_LOGGING === 'true',
     alchemyApiKey: process.env.REACT_APP_ALCHEMY_API_KEY,
     polygonRpcUrl: process.env.REACT_APP_ALCHEMY_API_KEY ? 
       `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}` : 
@@ -115,3 +114,11 @@ export const logError = (...args: unknown[]) => {
     console.error(`[${config.environment.toUpperCase()}]`, ...args);
   }
 };
+
+// Debug helper to see what environment is detected
+if (typeof window !== 'undefined' && config.enableLogging) {
+  console.log(`🌍 [ENV] Detected environment: ${config.environment}`);
+  console.log(`🌍 [ENV] App URL: ${config.appUrl}`);
+  console.log(`🌍 [ENV] REACT_APP_ENV: ${process.env.REACT_APP_ENV}`);
+  console.log(`🌍 [ENV] Hostname: ${window.location.hostname}`);
+}
