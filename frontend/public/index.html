@@ -46,6 +46,37 @@
       base-uri 'self';
     " />
     
+    <!-- Web3Modal Styles for Mobile Optimization -->
+    <style>
+      /* Web3Modal Mobile Safari Optimizations */
+      w3m-connect-button {
+        --w3m-accent-color: #ec4899;
+        --w3m-accent-fill-color: #ffffff;
+        --w3m-background-color: #1e293b;
+        --w3m-foreground-color: #f1f5f9;
+        --w3m-border-radius-master: 12px;
+        --w3m-font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        
+        /* Mobile touch optimization */
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        min-height: 60px;
+        width: 100%;
+        
+        /* Ensure proper rendering on mobile Safari */
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+      }
+      
+      /* Mobile Safari specific fixes */
+      @supports (-webkit-touch-callout: none) {
+        w3m-connect-button {
+          -webkit-appearance: none;
+          -webkit-user-select: none;
+        }
+      }
+    </style>
+    
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
