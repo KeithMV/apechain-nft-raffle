@@ -50,6 +50,7 @@ export function WalletConnection() {
   // CRITICAL DEBUG: Log component render
   console.log('🔍 [DEBUG] WalletConnection component rendered, isConnected:', isConnected);
   console.log('🔍 [DEBUG] Web3Modal open function available:', typeof open, !!open);
+  console.log('🔍 [DEBUG] Current address:', address);
 
   // Mobile WebSocket error monitoring
   useEffect(() => {
@@ -133,7 +134,6 @@ export function WalletConnection() {
     // Try multiple selectors
     const selectors = [
       '[aria-label="Connect wallet"]',
-      'button:contains("Connect Wallet")',
       'button[aria-label="Connect wallet"]',
       '.connect-wallet-button'
     ];
@@ -151,9 +151,9 @@ export function WalletConnection() {
     
     allButtons.forEach((btn, index) => {
       console.log(`🔍 [DEBUG] Button ${index}:`, btn.textContent?.trim(), btn.getAttribute('aria-label'));
-      if (btn.textContent?.includes('Connect Wallet')) {
+      if (btn.textContent?.includes('Connect Wallet') || btn.getAttribute('aria-label')?.includes('Connect wallet')) {
         button = btn;
-        console.log('🔍 [DEBUG] Found button by text content!');
+        console.log('🔍 [DEBUG] Found button by text/aria-label!');
       }
     });
     
