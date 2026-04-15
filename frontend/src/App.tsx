@@ -23,9 +23,10 @@ const RaffleApp = React.memo(function RaffleApp() {
 });
 
 function App() {
-  // MOBILE SAFARI DEBUG: Check if React is rendering
+  // MOBILE SAFARI DEBUG: Check if React is rendering after SES fix
   console.log('🚀 [APP] React App component rendering - this should appear on mobile!');
   console.log('🚀 [APP] User Agent:', navigator.userAgent);
+  console.log('🚀 [APP] SES Mobile Debug:', (window as any).__SES_MOBILE_DEBUG__);
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative z-0">
