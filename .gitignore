@@ -2,10 +2,14 @@
 node_modules/
 */node_modules/
 
-# Environment variables
-.env
+# Environment variables - SECRETS ONLY
+# .env is committed (base staging config)
+# .env.staging is committed (remote staging config)
+# .env.production is committed (production config)
 .env.local
-.env.production
+.env.development.local
+.env.staging.local
+.env.production.local
 contracts/.env
 
 # Build outputs
