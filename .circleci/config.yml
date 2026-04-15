@@ -234,8 +234,8 @@ jobs:
             # Clean previous builds
             rm -rf build/
             
-            # Use yarn build which respects CircleCI environment variables
-            yarn build
+            # CRITICAL: Use staging-specific build command
+            yarn build:staging
             
             # Verify build output
             if [ -d "build" ] && [ "$(ls -A build)" ]; then
@@ -276,8 +276,8 @@ jobs:
             # Clean previous builds
             rm -rf build/
             
-            # Use yarn build which respects CircleCI environment variables
-            yarn build
+            # CRITICAL: Use production-specific build command
+            yarn build:production
             
             # Verify build output
             if [ -d "build" ] && [ "$(ls -A build)" ]; then
