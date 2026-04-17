@@ -45,6 +45,10 @@ describe('User Workflow Integration Tests', () => {
     
     // User clicks connect
     fireEvent.click(screen.getByText('Connect Wallet'))
+    
+    // Wait for setTimeout delay in mobile Safari fix
+    await new Promise(resolve => setTimeout(resolve, 150))
+    
     expect(mockOpen).toHaveBeenCalled()
     
     // Simulate connecting state (simplified UI shows connect button)

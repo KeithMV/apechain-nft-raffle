@@ -69,7 +69,7 @@ describe('WalletConnection', () => {
     expect(screen.getByText('Disconnect')).toBeInTheDocument()
   })
 
-  it('opens Web3Modal when connect button is clicked', () => {
+  it('opens Web3Modal when connect button is clicked', async () => {
     vi.mocked(useAccount).mockReturnValue({
       address: undefined,
       isConnected: false,
@@ -79,6 +79,9 @@ describe('WalletConnection', () => {
     
     const connectButton = screen.getByText('Connect Wallet')
     fireEvent.click(connectButton)
+    
+    // Wait for setTimeout delay in mobile Safari fix
+    await new Promise(resolve => setTimeout(resolve, 150))
     
     expect(mockOpen).toHaveBeenCalled()
   })
