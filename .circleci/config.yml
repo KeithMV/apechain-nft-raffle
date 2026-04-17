@@ -231,17 +231,32 @@ jobs:
             cd frontend
             echo "🏗️  Building frontend for staging..."
             
-            # Clean previous builds
-            rm -rf build/
+            # CRITICAL: Force completely clean build
+            rm -rf build/ node_modules/.cache/ .cache/
+            echo "🧹 Cleaned all build and cache directories"
             
             # CRITICAL: Use staging-specific build command
             yarn build:staging
+            
+            # CRITICAL: Verify the build contains our mobile Safari fixes
+            echo "🔍 Verifying build contains mobile Safari fixes..."
+            if grep -r "Touch start detected" build/static/js/ > /dev/null; then
+              echo "✅ Mobile Safari touch fixes found in build!"
+            else
+              echo "❌ Mobile Safari touch fixes NOT found in build!"
+              echo "🚨 This indicates a build problem - the latest code is not being built"
+              exit 1
+            fi
+            
+            # Show the actual main.js filename being built
+            MAIN_JS=$(ls build/static/js/main.*.js | head -1)
+            echo "📜 Built main JS file: $(basename $MAIN_JS)"
             
             # Verify build output
             if [ -d "build" ] && [ "$(ls -A build)" ]; then
               echo "✅ Build completed successfully"
               echo "📦 Build size: $(du -sh build | cut -f1)"
-              ls -la build/
+              ls -la build/static/js/main.*.js
             else
               echo "❌ Build failed - no output directory found"
               exit 1
@@ -600,39 +615,25 @@ jobs:
       - run:
           name: Deploy to staging
           command: |
-            # CRITICAL: Deploy with proper cache headers for React SPA
-            echo "📦 Deploying to staging S3 bucket with cache-busting headers..."
+            # SIMPLIFIED: Deploy everything with no-cache headers to fix immediate issue
+            echo "📦 Deploying to staging S3 bucket (simplified approach)..."
             
-            # STEP 1: Deploy static assets (JS, CSS) with long-term caching
-            echo "📜 Step 1: Deploying static assets (JS, CSS, images)..."
-            aws s3 sync frontend/build/static/ s3://apechain-nft-raffle-staging-v2-856872546342-us-east-1/static/ \
+            # Deploy all files with no-cache to ensure immediate updates
+            aws s3 sync frontend/build/ s3://apechain-nft-raffle-staging-v2-856872546342-us-east-1/ \
               --delete \
-              --cache-control "public, max-age=31536000, immutable"
-            
-            # STEP 2: Deploy HTML files with no caching
-            echo "📜 Step 2: Deploying HTML files..."
-            aws s3 cp frontend/build/index.html s3://apechain-nft-raffle-staging-v2-856872546342-us-east-1/index.html \
               --cache-control "no-cache, no-store, must-revalidate, max-age=0"
             
-            # STEP 3: Deploy remaining files (manifest, favicon, etc.) with short caching
-            echo "📜 Step 3: Deploying remaining files (manifest, favicon, etc.)..."
-            aws s3 sync frontend/build/ s3://apechain-nft-raffle-staging-v2-856872546342-us-east-1/ \
-              --cache-control "public, max-age=300" \
-              --exclude "static/*" \
-              --exclude "index.html"
-            
-            # STEP 4: Verify deployment
+            # Verify deployment
             echo "🔍 Verifying deployment..."
-            aws s3 ls s3://apechain-nft-raffle-staging-v2-856872546342-us-east-1/static/js/ | head -5
+            aws s3 ls s3://apechain-nft-raffle-staging-v2-856872546342-us-east-1/static/js/ | head -3
             
-            # STEP 5: Invalidate CloudFront cache
+            # Invalidate CloudFront cache
             echo "🔄 Creating CloudFront invalidation..."
             INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id EDPIS47D31NKW --paths "/*" --query 'Invalidation.Id' --output text)
             
             echo "✅ Staging deployment complete!"
             echo "🌐 Staging URL: https://d1784e9dgxn2du.cloudfront.net"
             echo "🔄 CloudFront invalidation: $INVALIDATION_ID"
-            echo "⏳ Cache invalidation will complete in 5-15 minutes"
       - run:
           name: Run smoke tests on staging
           command: |
