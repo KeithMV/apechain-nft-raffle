@@ -24,16 +24,20 @@ export function WalletConnection() {
   console.log('🔍 [DEBUG] Chain ID:', chainId);
   console.log('🔍 [DEBUG] Web3Modal open function:', typeof open, open);
   
-  // Test if open function exists
+  // CRITICAL: Enhanced mobile Safari touch handler
   const handleConnect = () => {
     console.log('🔍 [DEBUG] Connect button clicked');
     console.log('🔍 [DEBUG] open function type:', typeof open);
+    console.log('🔍 [DEBUG] User agent:', navigator.userAgent);
     
     if (typeof open === 'function') {
       console.log('🔍 [DEBUG] Calling open()...');
       try {
-        open();
-        console.log('✅ [DEBUG] open() called successfully');
+        // CRITICAL: Add small delay for mobile Safari
+        setTimeout(() => {
+          open();
+          console.log('✅ [DEBUG] open() called successfully');
+        }, 100);
       } catch (error) {
         console.error('🚨 [DEBUG] open() failed:', error);
       }
@@ -65,16 +69,31 @@ export function WalletConnection() {
 
   return (
     <div className="flex flex-col space-y-2">
-      {/* DEBUG CONNECT BUTTON */}
+      {/* MOBILE SAFARI COMPATIBLE CONNECT BUTTON */}
       <button
         onClick={handleConnect}
+        onTouchStart={(e) => {
+          // CRITICAL: Mobile Safari touch event fix
+          e.preventDefault();
+          console.log('🍎 [MOBILE-DEBUG] Touch start detected');
+        }}
+        onTouchEnd={(e) => {
+          // CRITICAL: Mobile Safari fallback
+          e.preventDefault();
+          console.log('🍎 [MOBILE-DEBUG] Touch end detected, calling handleConnect');
+          handleConnect();
+        }}
         className="px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-base sm:text-lg font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[60px] sm:min-h-[70px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 active:scale-95"
         style={{ 
           pointerEvents: 'auto', 
           touchAction: 'manipulation',
           WebkitTapHighlightColor: 'transparent',
           WebkitUserSelect: 'none',
-          userSelect: 'none'
+          userSelect: 'none',
+          // CRITICAL: Mobile Safari specific fixes
+          WebkitTouchCallout: 'none',
+          WebkitAppearance: 'none',
+          cursor: 'pointer'
         }}
       >
         Connect Wallet
