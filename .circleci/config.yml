@@ -280,7 +280,7 @@ jobs:
             
             # CRITICAL: Verify the build contains our mobile Safari fixes
             echo "🔍 Verifying build contains mobile Safari fixes..."
-            if grep -r "Touch start detected" build/static/js/ > /dev/null; then
+            if grep -r "MOBILE-DEBUG.*Touch start detected" build/static/js/ > /dev/null; then
               echo "✅ Mobile Safari touch fixes found in build!"
             else
               echo "❌ Mobile Safari touch fixes NOT found in build!"
@@ -701,7 +701,7 @@ jobs:
             
             # CRITICAL: Verify extracted build has mobile Safari fixes
             echo "🔍 Verifying extracted build contains mobile Safari fixes..."
-            if grep -r "Touch start detected" frontend/build/static/js/ > /dev/null; then
+            if grep -r "MOBILE-DEBUG.*Touch start detected" frontend/build/static/js/ > /dev/null; then
               echo "✅ Mobile Safari fixes found in extracted build!"
             else
               echo "❌ Mobile Safari fixes NOT found in extracted build!"
