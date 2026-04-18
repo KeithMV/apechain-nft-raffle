@@ -10,11 +10,11 @@
 
 import React, { useEffect } from 'react';
 import { WagmiProvider } from 'wagmi';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { config, apeChain, polygon } from '../config/wagmi';
-import { NetworkProvider } from '../contexts/NetworkContext'; // CRITICAL: Missing provider
-import { transactionQueryClient } from '../utils/transactionQueryClient'; // Use existing query client
+import { NetworkProvider } from '../contexts/NetworkContext';
+import { transactionQueryClient } from '../utils/transactionQueryClient';
 
 // =============================================================================
 // QUERY CLIENT (Code Reviewer: Simple, focused configuration)

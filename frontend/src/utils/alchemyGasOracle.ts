@@ -55,10 +55,10 @@ class AlchemyGasOracle {
     console.log('✅ [GAS ORACLE] Using unified Alchemy API key');
 
     this.config = {
-      cacheDuration: 10000, // 10 seconds
+      cacheDuration: 60000, // Increase to 60 seconds to reduce API calls
       fallbackGasLimit: 500000n,
-      fallbackMaxFee: parseGwei('300'), // 300 gwei emergency fallback (increased from 200)
-      fallbackPriorityFee: parseGwei('60'), // 60 gwei priority fallback (increased from 40)
+      fallbackMaxFee: parseGwei('300'),
+      fallbackPriorityFee: parseGwei('60'),
     };
   }
 

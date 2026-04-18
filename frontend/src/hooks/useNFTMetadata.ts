@@ -332,7 +332,7 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
       return result;
     },
     enabled: !!publicClient && !!contractAddress && !!tokenId,
-    staleTime: 60 * 60 * 1000, // 1 hour - NFT metadata rarely changes
+    staleTime: 5 * 60 * 60 * 1000, // 5 hours - NFT metadata rarely changes
     gcTime: 24 * 60 * 60 * 1000, // 24 hours - keep in memory much longer
     retry: false, // Disable retries to reduce API calls
     retryDelay: 2000,

@@ -82,8 +82,8 @@ export function useGasStatus() {
   useEffect(() => {
     fetchGasStatus();
     
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchGasStatus, 30000);
+    // Refresh every 2 minutes instead of 30 seconds to reduce API calls
+    const interval = setInterval(fetchGasStatus, 120000);
     
     return () => clearInterval(interval);
   }, [fetchGasStatus]);

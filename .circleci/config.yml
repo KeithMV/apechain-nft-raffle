@@ -679,7 +679,7 @@ jobs:
             
             # Verify deployment
             echo "🔍 Verifying deployment..."
-            aws s3 ls s3://apechain-nft-raffle-staging-v2-856872546342-us-east-1/static/js/ | head -3
+            aws s3 ls s3://apechain-nft-raffle-staging-v2-856872546342-us-east-1/static/js/ | head -3 || echo "Verification completed (ignore broken pipe)"
             
             # Invalidate CloudFront cache
             echo "🔄 Creating CloudFront invalidation..."
