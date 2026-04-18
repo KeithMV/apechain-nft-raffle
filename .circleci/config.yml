@@ -49,25 +49,27 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Clear all caches (force fresh build)
+          name: Force complete cache clear
           command: |
-            echo "🧹 Clearing all caches to force fresh build..."
-            rm -rf ~/.cache/yarn ~/.yarn/cache
-            echo "✅ Cache clearing completed"
-      - restore_frontend_cache
+            echo "🧹 NUCLEAR CACHE CLEAR - Force fresh build..."
+            rm -rf ~/.cache/yarn ~/.yarn/cache ~/.npm ~/.cache/npm
+            echo "✅ All caches cleared"
       - run:
           name: Install frontend dependencies
           command: |
             cd frontend
-            # Use Node.js 20.19 for consistency
-            node --version
-            yarn --version
+            echo "📍 Node version: $(node --version)"
+            echo "📍 Yarn version: $(yarn --version)"
+            echo "📍 Current commit: $(git rev-parse HEAD)"
+            echo "📍 Current branch: $(git branch --show-current || echo 'detached')"
             
-            # CRITICAL: Force fresh install
-            rm -rf node_modules/ .yarn/cache/
+            # CRITICAL: Complete fresh install
+            rm -rf node_modules/ .yarn/cache/ yarn.lock
             
-            # Re-enable frozen lockfile with stable dependencies
-            yarn install --frozen-lockfile --network-timeout 300000
+            # Reinstall yarn.lock and dependencies
+            yarn install --network-timeout 300000
+            
+            echo "✅ Fresh dependencies installed"
       - save_frontend_cache
       - persist_to_workspace:
           root: .
@@ -253,6 +255,18 @@ jobs:
           command: |
             cd frontend
             echo "🏗️  Building frontend for staging..."
+            echo "📍 Git commit: $(git rev-parse HEAD)"
+            echo "📍 Git branch: $(git branch --show-current || echo 'detached')"
+            
+            # CRITICAL: Verify we have the latest source code
+            echo "🔍 Verifying source code is latest..."
+            if grep -r "Touch start detected" src/ > /dev/null; then
+              echo "✅ Latest source code confirmed - mobile Safari fixes present!"
+            else
+              echo "❌ OLD source code detected - mobile Safari fixes missing!"
+              echo "🚨 Source code verification failed - using old checkout"
+              exit 1
+            fi
             
             # SIMPLIFIED: Clean build without nuclear options
             rm -rf build/
@@ -264,6 +278,9 @@ jobs:
             echo "🔍 Verifying build contains mobile Safari fixes..."
             if grep -r "MOBILE-DEBUG.*Touch start detected" build/static/js/ > /dev/null; then
               echo "✅ Mobile Safari fixes found in build!"
+              # Show which main.js file we built
+              MAIN_JS=$(ls build/static/js/main.*.js | head -1)
+              echo "📜 Built file: $(basename $MAIN_JS)"
             else
               echo "❌ Mobile Safari fixes NOT found in build!"
               echo "🚨 Build verification failed - mobile Safari fixes missing"
