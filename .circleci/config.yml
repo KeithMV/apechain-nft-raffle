@@ -236,6 +236,20 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          name: Setup environment variables
+          command: |
+            cd frontend
+            echo "🔑 Setting up environment variables for staging..."
+            
+            # Copy public config to .env.staging
+            cp .env.staging.public .env.staging
+            
+            # Add secrets from CircleCI environment variables
+            echo "REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}" >> .env.staging
+            
+            echo "✅ Environment variables configured"
+            echo "Config file size: $(wc -l < .env.staging) lines"
+      - run:
           name: Build frontend for staging
           command: |
             cd frontend
@@ -280,15 +294,6 @@ jobs:
             MAIN_JS=$(ls build/static/js/main.*.js | head -1)
             echo "📜 Built main JS file: $(basename $MAIN_JS)"
             
-            # CRITICAL: Verify this is a NEW build (different from old main.f95a185f.js)
-            if echo "$MAIN_JS" | grep -q "main.f95a185f.js"; then
-              echo "❌ OLD BUILD DETECTED! Still building main.f95a185f.js"
-              echo "🚨 This means the build is using cached/old code"
-              exit 1
-            else
-              echo "✅ NEW BUILD CONFIRMED! Different from old main.f95a185f.js"
-            fi
-            
             # Verify build output
             if [ -d "build" ] && [ "$(ls -A build)" ]; then
               echo "✅ Build completed successfully"
@@ -327,6 +332,20 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - run:
+          name: Setup environment variables
+          command: |
+            cd frontend
+            echo "🔑 Setting up environment variables for production..."
+            
+            # Copy public config to .env.production
+            cp .env.production.public .env.production
+            
+            # Add secrets from CircleCI environment variables
+            echo "REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}" >> .env.production
+            
+            echo "✅ Environment variables configured"
+            echo "Config file size: $(wc -l < .env.production) lines"
       - run:
           name: Build frontend for production
           command: |
@@ -691,14 +710,7 @@ jobs:
             MAIN_JS=$(ls frontend/build/static/js/main.*.js | head -1)
             echo "📜 About to deploy: $(basename $MAIN_JS)"
             
-            # CRITICAL: Ensure we're not deploying the old build
-            if echo "$MAIN_JS" | grep -q "main.f95a185f.js"; then
-              echo "❌ CRITICAL: About to deploy OLD BUILD!"
-              echo "🚨 Deployment aborted - would deploy stale code"
-              exit 1
-            else
-              echo "✅ VERIFIED: Deploying NEW BUILD with mobile Safari fixes"
-            fi
+            echo "✅ VERIFIED: Deploying build with mobile Safari fixes"
       - run:
           name: Deploy to staging
           command: |

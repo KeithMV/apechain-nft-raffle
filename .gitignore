@@ -2,15 +2,23 @@
 node_modules/
 */node_modules/
 
-# Environment variables - SECRETS ONLY
-# .env is committed (base staging config)
-# .env.staging is committed (remote staging config)
-# .env.production is committed (production config)
+# Environment variables - SECURITY POLICY
+# .env.*.public files are committed (no secrets)
+# .env files with secrets are ignored
+.env
 .env.local
+.env.development
+.env.staging
+.env.production
 .env.development.local
 .env.staging.local
 .env.production.local
 contracts/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.development
+frontend/.env.staging
+frontend/.env.production
 
 # Build outputs
 build/
