@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { useAccount, useDisconnect, useChainId } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 
@@ -12,63 +12,45 @@ const isMobileDevice = (): boolean => {
 };
 
 export function WalletConnection() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, isConnecting, isReconnecting } = useAccount();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { open } = useWeb3Modal();
   
-  // STEP 1: Connection state management
-  const [isConnecting, setIsConnecting] = useState(false);
-  
   const isMobile = isMobileDevice();
+  
+  // Combine all loading states for optimal UX
+  const isLoading = isConnecting || isReconnecting;
 
-  // CRITICAL: Debug the Web3Modal hook
+  // SPEED OPTIMIZED: Debug logging
   console.log('🔍 [DEBUG] WalletConnection rendered, isConnected:', isConnected);
   console.log('🔍 [DEBUG] Chain ID:', chainId);
-  console.log('🔍 [DEBUG] Web3Modal open function:', typeof open, open);
-  console.log('🔍 [DEBUG] Connection state:', { isConnecting, isMobile });
+  console.log('🔍 [DEBUG] Loading states:', { isConnecting, isReconnecting, isLoading });
+  console.log('🔍 [DEBUG] Web3Modal open function:', typeof open);
   
-  // STEP 1: Enhanced mobile-optimized connection handler
+  // SPEED OPTIMIZED: Instant connection handler
   const handleConnect = useCallback(() => {
-    // Prevent double-tap/rapid clicks
-    if (isConnecting) {
-      console.log('🔄 [DEBUG] Connection already in progress, ignoring tap');
+    // Prevent double-clicks during loading states
+    if (isLoading) {
+      console.log('🔄 [DEBUG] Connection in progress, ignoring click');
       return;
     }
     
-    console.log('🔍 [DEBUG] Connect button clicked');
-    console.log('🔍 [DEBUG] open function type:', typeof open);
+    console.log('🔍 [DEBUG] Connect button clicked - starting immediate connection');
     console.log('🔍 [DEBUG] User agent:', navigator.userAgent);
     
     if (typeof open === 'function') {
-      console.log('🔍 [DEBUG] Starting connection process...');
-      
-      // Set connecting state immediately
-      setIsConnecting(true);
-      
       try {
-        // Mobile-specific delay: iOS Safari needs breathing room
-        const delay = isMobile ? 150 : 0;
-        
-        setTimeout(() => {
-          open();
-          console.log('✅ [DEBUG] Web3Modal open() called successfully');
-          
-          // Reset connecting state after modal should be open
-          setTimeout(() => {
-            setIsConnecting(false);
-            console.log('🔄 [DEBUG] Connection state reset');
-          }, 1000);
-        }, delay);
+        // SPEED: No delays - immediate Web3Modal opening
+        open();
+        console.log('✅ [DEBUG] Web3Modal opened immediately');
       } catch (error) {
-        console.error('🚨 [DEBUG] open() failed:', error);
-        setIsConnecting(false);
+        console.error('🚨 [DEBUG] Web3Modal open failed:', error);
       }
     } else {
-      console.error('🚨 [DEBUG] open is not a function! Web3Modal not initialized properly.');
-      setIsConnecting(false);
+      console.error('🚨 [DEBUG] Web3Modal not initialized properly');
     }
-  }, [open, isConnecting, isMobile]);
+  }, [open, isLoading]);
 
   if (isConnected) {
     return (
@@ -93,28 +75,27 @@ export function WalletConnection() {
 
   return (
     <div className="flex flex-col space-y-2">
-      {/* STEP 2: Single event handler - no duplicate touch events */}
+      {/* SPEED OPTIMIZED: Instant response button */}
       <button
         onClick={handleConnect}
-        disabled={isConnecting}
-        className={`px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-base sm:text-lg font-bold transition-all duration-300 min-h-[60px] sm:min-h-[70px] whitespace-nowrap shadow-lg shadow-pink-500/30 ${
-          isConnecting 
+        disabled={isLoading}
+        className={`px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-base sm:text-lg font-bold transition-all duration-200 min-h-[60px] sm:min-h-[70px] whitespace-nowrap shadow-lg shadow-pink-500/30 ${
+          isLoading 
             ? 'opacity-50 cursor-not-allowed' 
             : 'hover:from-pink-400 hover:to-fuchsia-400 hover:shadow-pink-500/40 hover:scale-105 active:scale-95'
         }`}
         style={{ 
-          pointerEvents: isConnecting ? 'none' : 'auto', 
+          // SPEED: iOS Safari optimizations - no 300ms tap delay
           touchAction: 'manipulation',
           WebkitTapHighlightColor: 'transparent',
           WebkitUserSelect: 'none',
           userSelect: 'none',
-          // CRITICAL: Mobile Safari specific fixes
           WebkitTouchCallout: 'none',
           WebkitAppearance: 'none',
-          cursor: isConnecting ? 'not-allowed' : 'pointer'
+          cursor: isLoading ? 'not-allowed' : 'pointer'
         }}
       >
-        {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+        {isConnecting ? 'Connecting...' : isReconnecting ? 'Reconnecting...' : 'Connect Wallet'}
       </button>
       
       {/* Mobile help text */}
