@@ -36,18 +36,39 @@ const FEATURED_WALLET_IDS = [
   '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
 ];
 
-// CRITICAL FIX: Prevent duplicate Web3Modal initialization
-// Build timestamp: 2025-01-14T20:30:00Z - Force cache invalidation
-if (!(window as any).__WEB3MODAL_INITIALIZED__) {
+// STEP 3: Synchronous Web3Modal initialization - no delays that cause race conditions
+const initializeWeb3Modal = () => {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+  // Check for existing Web3Modal instances more thoroughly
+  const existingModals = document.querySelectorAll('w3m-modal, wcm-modal, w3m-router, w3m-toast, [data-w3m], [data-wcm]');
+  const hasExistingInstance = (window as any).__WEB3MODAL_INSTANCE__ || existingModals.length > 0;
+  
+  if (hasExistingInstance) {
+    console.log('⚠️ Web3Modal instance detected, cleaning up before reinitializing');
+    
+    // Clean up existing DOM elements
+    existingModals.forEach(modal => {
+      if (modal.parentNode) {
+        modal.parentNode.removeChild(modal);
+      }
+    });
+    
+    // Reset global state
+    delete (window as any).__WEB3MODAL_INSTANCE__;
+    delete (window as any).__WEB3MODAL_INITIALIZED__;
+  }
+  
   try {
-    createWeb3Modal({
+    // CRITICAL FIX: No delays - initialize immediately to prevent race condition
+    const web3modal = createWeb3Modal({
       wagmiConfig: config,
       projectId,
       
-      // Web3 Expert: Essential settings for mobile compatibility
+      // CRITICAL: Mobile-optimized settings
+      allowUnsupportedChain: false,
       enableAnalytics: false,
       enableOnramp: false,
-      // REMOVED: enableSwaps - not available in Web3Modal v5
       themeMode: 'dark',
       
       // Debug Expert: Environment-aware metadata for CORS
@@ -69,15 +90,23 @@ if (!(window as any).__WEB3MODAL_INITIALIZED__) {
       },
     });
     
+    // Store instance reference to prevent duplicates
+    (window as any).__WEB3MODAL_INSTANCE__ = web3modal;
     (window as any).__WEB3MODAL_INITIALIZED__ = true;
-    console.log('✅ Web3Modal initialized successfully - Build v1.0.2');
+    
+    console.log(`✅ Web3Modal initialized successfully - ${isMobile ? 'Mobile' : 'Desktop'} - Build v1.0.3`);
+    return web3modal;
   } catch (error) {
     console.error('❌ CRITICAL: Web3Modal initialization failed:', error);
-    // Don't throw - let the app continue but log the error
+    // Clean up failed state
+    delete (window as any).__WEB3MODAL_INSTANCE__;
+    delete (window as any).__WEB3MODAL_INITIALIZED__;
+    throw error; // Re-throw to prevent app from continuing with broken state
   }
-} else {
-  console.log('⚠️ Web3Modal already initialized, skipping duplicate initialization');
-}
+};
+
+// Initialize Web3Modal immediately - no delays
+initializeWeb3Modal();
 
 // =============================================================================
 // APP PROVIDERS COMPONENT (Code Reviewer: Clean, simple structure)
@@ -89,7 +118,9 @@ interface AppProvidersProps {
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   useEffect(() => {
-    // CRITICAL: Clear old WalletConnect sessions AND Web3Modal instances
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // STEP 3: Enhanced cleanup and mobile-specific duplicate monitoring
     if (typeof window !== 'undefined') {
       // Clear WalletConnect storage
       Object.keys(localStorage).forEach(key => {
@@ -105,24 +136,50 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
         }
       });
       
-      // Remove any existing Web3Modal DOM elements that might cause duplicates
-      const existingModals = document.querySelectorAll('w3m-modal, w3m-router, w3m-toast');
-      existingModals.forEach(modal => {
-        if (modal.parentNode) {
-          modal.parentNode.removeChild(modal);
-        }
-      });
+      // Mobile-specific duplicate monitoring
+      if (isMobile) {
+        const checkForDuplicates = () => {
+          const modals = document.querySelectorAll('w3m-modal, wcm-modal');
+          if (modals.length > 1) {
+            console.warn('📱 Mobile duplicate Web3Modal/WalletConnect detected, cleaning up');
+            // Keep only the first one, remove the rest
+            for (let i = 1; i < modals.length; i++) {
+              const modal = modals[i];
+              if (modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+              }
+            }
+          }
+        };
+        
+        // Check immediately
+        checkForDuplicates();
+        
+        // Monitor for DOM changes (mobile keyboards, orientation changes, etc.)
+        const observer = new MutationObserver(() => {
+          setTimeout(checkForDuplicates, 100);
+        });
+        
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+        
+        // Cleanup observer on unmount
+        return () => {
+          observer.disconnect();
+        };
+      }
       
       if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
-        console.log('🧹 Cleared old WalletConnect sessions and Web3Modal elements');
+        console.log(`🧹 Enhanced cleanup initialized - ${isMobile ? 'Mobile' : 'Desktop'} mode`);
       }
     }
 
-    // Debug Expert: Basic mobile detection for logging
+    // Debug Expert: Enhanced mobile detection logging
     if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      console.log(`📱 Device type: ${isMobile ? 'mobile' : 'desktop'}`);
-      console.log('🚀 Simplified providers initialized');
+      console.log(`📱 Device: ${isMobile ? 'Mobile' : 'Desktop'} - ${navigator.userAgent.split(' ')[0]}`);
+      console.log('🚀 Enhanced providers initialized with duplicate protection');
     }
   }, []);
 

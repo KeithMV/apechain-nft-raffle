@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAccount, useDisconnect, useChainId } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 
@@ -17,34 +17,58 @@ export function WalletConnection() {
   const chainId = useChainId();
   const { open } = useWeb3Modal();
   
+  // STEP 1: Connection state management
+  const [isConnecting, setIsConnecting] = useState(false);
+  
   const isMobile = isMobileDevice();
 
   // CRITICAL: Debug the Web3Modal hook
   console.log('🔍 [DEBUG] WalletConnection rendered, isConnected:', isConnected);
   console.log('🔍 [DEBUG] Chain ID:', chainId);
   console.log('🔍 [DEBUG] Web3Modal open function:', typeof open, open);
+  console.log('🔍 [DEBUG] Connection state:', { isConnecting, isMobile });
   
-  // CRITICAL: Enhanced mobile Safari touch handler
-  const handleConnect = () => {
+  // STEP 1: Enhanced mobile-optimized connection handler
+  const handleConnect = useCallback(() => {
+    // Prevent double-tap/rapid clicks
+    if (isConnecting) {
+      console.log('🔄 [DEBUG] Connection already in progress, ignoring tap');
+      return;
+    }
+    
     console.log('🔍 [DEBUG] Connect button clicked');
     console.log('🔍 [DEBUG] open function type:', typeof open);
     console.log('🔍 [DEBUG] User agent:', navigator.userAgent);
     
     if (typeof open === 'function') {
-      console.log('🔍 [DEBUG] Calling open()...');
+      console.log('🔍 [DEBUG] Starting connection process...');
+      
+      // Set connecting state immediately
+      setIsConnecting(true);
+      
       try {
-        // CRITICAL: Add small delay for mobile Safari
+        // Mobile-specific delay: iOS Safari needs breathing room
+        const delay = isMobile ? 150 : 0;
+        
         setTimeout(() => {
           open();
-          console.log('✅ [DEBUG] open() called successfully');
-        }, 100);
+          console.log('✅ [DEBUG] Web3Modal open() called successfully');
+          
+          // Reset connecting state after modal should be open
+          setTimeout(() => {
+            setIsConnecting(false);
+            console.log('🔄 [DEBUG] Connection state reset');
+          }, 1000);
+        }, delay);
       } catch (error) {
         console.error('🚨 [DEBUG] open() failed:', error);
+        setIsConnecting(false);
       }
     } else {
       console.error('🚨 [DEBUG] open is not a function! Web3Modal not initialized properly.');
+      setIsConnecting(false);
     }
-  };
+  }, [open, isConnecting, isMobile]);
 
   if (isConnected) {
     return (
@@ -69,23 +93,17 @@ export function WalletConnection() {
 
   return (
     <div className="flex flex-col space-y-2">
-      {/* MOBILE SAFARI COMPATIBLE CONNECT BUTTON */}
+      {/* STEP 2: Single event handler - no duplicate touch events */}
       <button
         onClick={handleConnect}
-        onTouchStart={(e) => {
-          // CRITICAL: Mobile Safari touch event fix
-          e.preventDefault();
-          console.log('🍎 [MOBILE-DEBUG] Touch start detected');
-        }}
-        onTouchEnd={(e) => {
-          // CRITICAL: Mobile Safari fallback
-          e.preventDefault();
-          console.log('🍎 [MOBILE-DEBUG] Touch end detected, calling handleConnect');
-          handleConnect();
-        }}
-        className="px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-base sm:text-lg font-bold hover:from-pink-400 hover:to-fuchsia-400 transition-all duration-300 min-h-[60px] sm:min-h-[70px] whitespace-nowrap shadow-lg shadow-pink-500/30 hover:shadow-pink-500/40 hover:scale-105 active:scale-95"
+        disabled={isConnecting}
+        className={`px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-base sm:text-lg font-bold transition-all duration-300 min-h-[60px] sm:min-h-[70px] whitespace-nowrap shadow-lg shadow-pink-500/30 ${
+          isConnecting 
+            ? 'opacity-50 cursor-not-allowed' 
+            : 'hover:from-pink-400 hover:to-fuchsia-400 hover:shadow-pink-500/40 hover:scale-105 active:scale-95'
+        }`}
         style={{ 
-          pointerEvents: 'auto', 
+          pointerEvents: isConnecting ? 'none' : 'auto', 
           touchAction: 'manipulation',
           WebkitTapHighlightColor: 'transparent',
           WebkitUserSelect: 'none',
@@ -93,10 +111,10 @@ export function WalletConnection() {
           // CRITICAL: Mobile Safari specific fixes
           WebkitTouchCallout: 'none',
           WebkitAppearance: 'none',
-          cursor: 'pointer'
+          cursor: isConnecting ? 'not-allowed' : 'pointer'
         }}
       >
-        Connect Wallet
+        {isConnecting ? 'Connecting...' : 'Connect Wallet'}
       </button>
       
       {/* Mobile help text */}
