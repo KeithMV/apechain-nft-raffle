@@ -114,9 +114,9 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     
     if (config.enableLogging) {
       console.log('Buying tickets:', { 
-        raffleContract: raffle.raffleContract, 
+        raffleContract: raffle.raffleContract?.replace(/[\r\n]/g, ' '), 
         quantity,
-        ticketPrice: raffle.ticketPrice 
+        ticketPrice: String(raffle.ticketPrice).replace(/[\r\n]/g, ' ') 
       });
     }
     
@@ -168,7 +168,7 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     
     if (config.enableLogging) {
       console.log('Selecting winner:', { 
-        raffleContract: raffle.raffleContract 
+        raffleContract: raffle.raffleContract?.replace(/[\r\n]/g, ' ') 
       });
     }
     
