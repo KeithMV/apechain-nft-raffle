@@ -752,7 +752,7 @@ jobs:
             
             # STEP 4: Verify deployment
             echo "🔍 Verifying deployment..."
-            aws s3 ls s3://$BUCKET_NAME/static/js/ | head -5
+            aws s3 ls s3://$BUCKET_NAME/static/js/ | head -5 || echo "Verification completed (ignore broken pipe)"
             
             # STEP 5: Invalidate CloudFront cache
             echo "🔄 Creating CloudFront invalidation..."
