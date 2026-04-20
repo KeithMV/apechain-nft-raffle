@@ -17,8 +17,10 @@ export const TransactionDebugger: React.FC = () => {
   const { writeContractAsync, data: hash, error } = useWriteContract();
 
   const log = (message: string) => {
-    console.log(message);
-    setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+    // Sanitize message to prevent log injection
+    const sanitizedMessage = message.replace(/[\r\n\t]/g, ' ').slice(0, 1000);
+    console.log(sanitizedMessage);
+    setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString()}: ${sanitizedMessage}`]);
   };
 
   const clearLog = () => {

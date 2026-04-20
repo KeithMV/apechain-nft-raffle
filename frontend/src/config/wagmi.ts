@@ -176,7 +176,10 @@ export function getChainName(chainId: number): string {
  */
 export function logChainInfo(chainId: number) {
   if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
-    console.log(`🔗 Chain: ${getChainName(chainId)} (${chainId})`);
-    console.log(`📄 Contracts:`, getContractAddresses(chainId));
+    // Sanitize chain ID to prevent log injection
+    const sanitizedChainId = String(chainId).replace(/[^0-9]/g, '');
+    const chainName = getChainName(Number(sanitizedChainId));
+    console.log(`🔗 Chain: ${chainName} (${sanitizedChainId})`);
+    console.log(`📄 Contracts:`, getContractAddresses(Number(sanitizedChainId)));
   }
 }
