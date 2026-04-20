@@ -75,8 +75,13 @@ async function handleRequest(request) {
     }
   }
   
-  // Everything else - network first
-  return fetch(request);
+  // Everything else - network first with validation
+  try {
+    const response = await fetch(request);
+    return response;
+  } catch {
+    return new Response('Request failed', { status: 503 });
+  }
 }
 
 // SSRF Protection - validate URLs
@@ -97,6 +102,26 @@ function isValidUrl(url) {
     return false;
   }
   
-  // Allow same-origin and CDN requests
-  return true;
+  // Additional SSRF protection - only allow specific domains
+  const allowedDomains = [
+    self.location.hostname, // Same origin
+    'fonts.googleapis.com',
+    'fonts.gstatic.com',
+    'cdn.jsdelivr.net',
+    'unpkg.com',
+    'polygon-mainnet.g.alchemy.com',
+    'apechain.calderachain.xyz',
+    'verify.walletconnect.org',
+    'verify.walletconnect.com',
+    'explorer-api.walletconnect.com',
+    'relay.walletconnect.org',
+    'relay.walletconnect.com'
+  ];
+  
+  // Check if domain is in allowlist
+  const isAllowed = allowedDomains.some(domain => 
+    hostname === domain || hostname.endsWith('.' + domain)
+  );
+  
+  return isAllowed;
 }
