@@ -13,7 +13,6 @@ const RaffleApp = React.memo(function RaffleApp() {
   const { isConnected } = useAccount();
   
   // MOBILE SAFARI DEBUG: Check if RaffleApp renders
-  console.log('🎯 [RAFFLE-APP] RaffleApp component rendering, isConnected:', isConnected);
   
   if (!isConnected) {
     return <ConnectWalletPage />;
@@ -24,15 +23,9 @@ const RaffleApp = React.memo(function RaffleApp() {
 
 function App() {
   // CRITICAL: Mobile Safari React mounting test
-  console.log('🚀 [APP] React App component rendering - MOBILE SAFARI TEST!');
-  console.log('🚀 [APP] User Agent:', navigator.userAgent);
-  console.log('🚀 [APP] SES Mobile Debug:', (window as any).__SES_MOBILE_DEBUG__);
-  console.log('🚀 [APP] Window location:', window.location.href);
-  console.log('🚀 [APP] Document ready state:', document.readyState);
   
   // Test if this component is actually rendering
   React.useEffect(() => {
-    console.log('🚀 [APP] React useEffect fired - component mounted successfully!');
     
     // Add visible indicator for mobile testing
     const indicator = document.createElement('div');

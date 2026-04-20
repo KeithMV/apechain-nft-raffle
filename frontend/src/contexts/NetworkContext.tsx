@@ -28,10 +28,8 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const chainId = useChainId();
   
   // CRITICAL DEBUG: Log NetworkProvider render
-  console.log('🔍 [DEBUG] NetworkProvider rendering, chainId:', chainId);
   
   const networkData = useMemo(() => {
-    console.log('🔍 [DEBUG] NetworkProvider useMemo running, chainId:', chainId);
     
     try {
       const config = getChainConfig(chainId);
@@ -41,7 +39,6 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const isApeChain = chainId === 33139; // apeChain.id
       const isPolygon = chainId === 137; // polygon.id
       
-      console.log('🔍 [DEBUG] NetworkProvider config loaded:', { isApeChain, isPolygon, chainId });
       
       const theme: NetworkTheme = isApeChain 
         ? {
@@ -120,7 +117,6 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [chainId]);
 
-  console.log('🔍 [DEBUG] NetworkProvider returning data:', networkData);
 
   return (
     <NetworkContext.Provider value={networkData}>

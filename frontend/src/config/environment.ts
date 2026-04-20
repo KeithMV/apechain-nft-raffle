@@ -105,7 +105,6 @@ export const isProduction = config.environment === 'production';
 // Logging helper
 export const log = (...args: unknown[]) => {
   if (config.enableLogging) {
-    console.log(`[${config.environment.toUpperCase()}]`, ...args);
   }
 };
 
@@ -117,8 +116,4 @@ export const logError = (...args: unknown[]) => {
 
 // Debug helper to see what environment is detected
 if (typeof window !== 'undefined' && config.enableLogging) {
-  console.log(`🌍 [ENV] Detected environment: ${config.environment}`);
-  console.log(`🌍 [ENV] App URL: ${config.appUrl}`);
-  console.log(`🌍 [ENV] REACT_APP_ENV: ${process.env.REACT_APP_ENV}`);
-  console.log(`🌍 [ENV] Hostname: ${window.location.hostname}`);
 }

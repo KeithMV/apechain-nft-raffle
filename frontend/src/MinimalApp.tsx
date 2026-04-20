@@ -5,7 +5,6 @@
 import React from 'react';
 
 function MinimalApp() {
-  console.log('🔍 MinimalApp rendering...');
   
   return (
     <div style={{ 
