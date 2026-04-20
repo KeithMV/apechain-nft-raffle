@@ -109,22 +109,17 @@
       // Check if React is trying to mount
       const originalCreateRoot = window.React?.createRoot;
       if (originalCreateRoot) {
-        console.log('📱 [MOBILE-DEBUG] React createRoot available');
       }
       
       // Monitor DOM ready state
-      console.log('📱 [MOBILE-DEBUG] DOM ready state:', document.readyState);
       document.addEventListener('DOMContentLoaded', function() {
-        console.log('📱 [MOBILE-DEBUG] DOMContentLoaded fired');
         
         // Check if root element exists
         const rootElement = document.getElementById('root');
-        console.log('📱 [MOBILE-DEBUG] Root element found:', !!rootElement);
         
         // Check if React has mounted anything
         setTimeout(() => {
           const rootContent = rootElement?.innerHTML;
-          console.log('📱 [MOBILE-DEBUG] Root content length:', rootContent?.length || 0);
           if (!rootContent || rootContent.length < 100) {
             console.error('🚨 [MOBILE-ERROR] React failed to mount - root is empty or minimal');
           }
@@ -149,7 +144,6 @@
 
         // Configure SES for mobile compatibility
         if (isMobileSafari) {
-          console.log('🍎 [SES-MOBILE] Configuring SES for Mobile Safari compatibility');
           
           // Set mobile-safe SES configuration before any SES initialization
           window.__SES_MOBILE_SAFE__ = true;
@@ -186,7 +180,6 @@
           // Override problematic SES functions for mobile
           const originalLockdown = window.lockdown;
           window.lockdown = function mobileSafeLockdown(options) {
-            console.log('🍎 [SES-MOBILE] Applying mobile-safe lockdown');
             
             // Merge with mobile-safe options
             const mobileOptions = Object.assign({}, window.__SES_OPTIONS__, options || {});
@@ -196,7 +189,6 @@
                 return originalLockdown(mobileOptions);
               } else {
                 // Minimal lockdown for mobile if SES not available
-                console.log('🍎 [SES-MOBILE] Using minimal lockdown for mobile compatibility');
                 return Promise.resolve();
               }
             } catch (error) {
@@ -206,9 +198,7 @@
             }
           };
           
-          console.log('✅ [SES-MOBILE] Mobile Safari SES configuration applied');
         } else {
-          console.log('🖥️ [SES-DESKTOP] Using standard SES configuration for desktop');
         }
 
         // Export for debugging

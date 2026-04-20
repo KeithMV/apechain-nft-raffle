@@ -94,7 +94,6 @@ const initializeWeb3Modal = () => {
     (window as any).__WEB3MODAL_INSTANCE__ = web3modal;
     (window as any).__WEB3MODAL_INITIALIZED__ = true;
     
-    console.log(`✅ Web3Modal initialized successfully - ${isMobile ? 'Mobile' : 'Desktop'} - Build v1.0.3`);
     return web3modal;
   } catch (error) {
     console.error('❌ CRITICAL: Web3Modal initialization failed:', error);
