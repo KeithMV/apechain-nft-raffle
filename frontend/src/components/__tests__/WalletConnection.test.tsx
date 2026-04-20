@@ -33,10 +33,11 @@ describe('WalletConnection', () => {
     vi.mocked(useChainId).mockReturnValue(33139)
   })
 
-  it('shows connect button when wallet is not connected', () => {
+  it('shows connect button when wallet is not connected and not connecting', () => {
     vi.mocked(useAccount).mockReturnValue({
       address: undefined,
       isConnected: false,
+      isConnecting: false,
     } as any)
 
     render(<WalletConnection />)
@@ -44,7 +45,7 @@ describe('WalletConnection', () => {
     expect(screen.getByText('Connect Wallet')).toBeInTheDocument()
   })
 
-  it('shows connect button when wallet is connecting', () => {
+  it('shows connecting state when wallet is connecting', () => {
     vi.mocked(useAccount).mockReturnValue({
       address: undefined,
       isConnected: false,
@@ -53,8 +54,8 @@ describe('WalletConnection', () => {
 
     render(<WalletConnection />)
     
-    // Component shows connect button even when connecting (simplified UI)
-    expect(screen.getByText('Connect Wallet')).toBeInTheDocument()
+    // Component shows "Connecting..." when isConnecting is true
+    expect(screen.getByText('Connecting...')).toBeInTheDocument()
   })
 
   it('shows wallet address when connected', () => {
@@ -73,6 +74,7 @@ describe('WalletConnection', () => {
     vi.mocked(useAccount).mockReturnValue({
       address: undefined,
       isConnected: false,
+      isConnecting: false, // Explicitly not connecting
     } as any)
 
     render(<WalletConnection />)
