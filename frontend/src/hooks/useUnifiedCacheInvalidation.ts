@@ -156,7 +156,6 @@ export function useUnifiedCacheInvalidation() {
       } else if (immediate) {
         // POLYGON BUY-TICKETS FIX: Force immediate refetch to eliminate UI delay
         if (targetChainId === 137 && transactionType === 'buy-tickets') {
-          console.log('🚀 [POLYGON-CACHE] Forcing immediate refetch for buy-tickets to eliminate UI delay');
           
           const aggressiveRefetchPromises = [
             queryClient.refetchQueries({ queryKey: ['raffles', targetChainId], type: 'active' }),

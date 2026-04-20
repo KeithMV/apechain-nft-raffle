@@ -43,7 +43,6 @@ export function WalletConnection() {
       try {
         // SPEED: No delays - immediate Web3Modal opening
         open();
-        console.log('✅ [DEBUG] Web3Modal opened immediately');
       } catch (error) {
         console.error('🚨 [DEBUG] Web3Modal open failed:', error);
       }
