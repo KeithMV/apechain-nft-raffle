@@ -51,9 +51,15 @@ jobs:
       - run:
           name: Force complete cache clear
           command: |
+            # NUCLEAR: Force complete cache clear and fresh build
             echo "🧹 NUCLEAR CACHE CLEAR - Force fresh build..."
             rm -rf ~/.cache/yarn ~/.yarn/cache ~/.npm ~/.cache/npm
+            rm -rf node_modules/ .yarn/cache/
             echo "✅ All caches cleared"
+            
+            # FORCE: Clear any CircleCI workspace caches
+            rm -rf /tmp/workspace/* || true
+            echo "🗑️ Workspace caches cleared"
       - run:
           name: Install frontend dependencies
           command: |
@@ -63,11 +69,12 @@ jobs:
             echo "📍 Current commit: $(git rev-parse HEAD)"
             echo "📍 Current branch: $(git branch --show-current || echo 'detached')"
             
-            # CRITICAL: Complete fresh install
-            rm -rf node_modules/ .yarn/cache/ yarn.lock
+            # CRITICAL: Complete fresh install with cache busting
+            rm -rf node_modules/ .yarn/cache/
+            # DON'T delete yarn.lock - keep dependency versions consistent
             
-            # Reinstall yarn.lock and dependencies
-            yarn install --network-timeout 300000
+            # Reinstall dependencies with cache busting
+            yarn install --network-timeout 300000 --no-cache
             
             echo "✅ Fresh dependencies installed"
       - save_frontend_cache
