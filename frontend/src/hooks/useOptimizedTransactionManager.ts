@@ -95,8 +95,8 @@ export function useOptimizedTransactionManager(transactionConfig: OptimizedTrans
       
       // Use centralized invalidation delay configuration
       if (envConfig.enableLogging) {
-        console.log(`🔄 [CACHE] Chain-aware invalidation for ${isPolygon ? 'Polygon' : 'ApeChain'}: immediate for tx:`, hash);
-        console.log(`🔄 [CACHE] Transaction type: ${transactionType}, optimisticData:`, optimisticData);
+        console.log(`🔄 [CACHE] Chain-aware invalidation for ${isPolygon ? 'Polygon' : 'ApeChain'}: immediate for tx:`, hash?.replace(/[\r\n]/g, ' '));
+        console.log(`🔄 [CACHE] Transaction type: ${transactionType}, optimisticData:`, optimisticData?.raffleId?.replace(/[\r\n]/g, ' '));
       }
       
       // SIMPLIFIED: Single immediate invalidation for all chains - no conflicts
@@ -310,13 +310,13 @@ export function useOptimizedSelectWinner(optimisticData?: OptimizedTransactionCo
     enableOptimisticUpdates: true,
     optimisticData,
     onSuccess: (hash) => {
-      console.log('✅ [WINNER] Transaction confirmed with hash:', hash);
+      console.log('✅ [WINNER] Transaction confirmed with hash:', hash?.replace(/[\r\n]/g, ' '));
       if (optimisticData?.raffleId) {
-        console.log('🔄 [WINNER] Starting progressive cache invalidation for raffle:', optimisticData.raffleId);
+        console.log('🔄 [WINNER] Starting progressive cache invalidation for raffle:', optimisticData.raffleId?.replace(/[\r\n]/g, ' '));
       }
     },
     onError: (error) => {
-      console.error('❌ [WINNER] Transaction failed:', error);
+      console.error('❌ [WINNER] Transaction failed:', error instanceof Error ? error.message?.replace(/[\r\n]/g, ' ') : String(error).replace(/[\r\n]/g, ' '));
       // Error toasts will be handled by the dashboard
     },
   });
@@ -339,13 +339,13 @@ export function useOptimizedCancelRaffle(optimisticData?: OptimizedTransactionCo
     enableOptimisticUpdates: true,
     optimisticData,
     onSuccess: (hash) => {
-      console.log('✅ [CANCEL] Transaction confirmed with hash:', hash);
+      console.log('✅ [CANCEL] Transaction confirmed with hash:', hash?.replace(/[\r\n]/g, ' '));
       if (optimisticData?.raffleId) {
-        console.log('🔄 [CANCEL] Invalidating cache for raffle:', optimisticData.raffleId);
+        console.log('🔄 [CANCEL] Invalidating cache for raffle:', optimisticData.raffleId?.replace(/[\r\n]/g, ' '));
       }
     },
     onError: (error) => {
-      console.error('❌ [CANCEL] Transaction failed:', error);
+      console.error('❌ [CANCEL] Transaction failed:', error instanceof Error ? error.message?.replace(/[\r\n]/g, ' ') : String(error).replace(/[\r\n]/g, ' '));
       // Error toasts will be handled by the dashboard
     },
   });
