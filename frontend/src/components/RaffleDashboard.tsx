@@ -270,7 +270,7 @@ export default function RaffleDashboard() {
     
     setSelectingWinnerFor(raffleContract);
     
-    console.log('🏆 [WINNER] Starting winner selection for raffle:', raffleContract, 'on chain:', chainId);
+    console.log('🏆 [WINNER] Starting winner selection for raffle:', raffleContract?.replace(/[\r\n]/g, ' '), 'on chain:', chainId);
     
     // Show loading toast with unique ID
     const toastId = `winner-${raffleContract}`;
