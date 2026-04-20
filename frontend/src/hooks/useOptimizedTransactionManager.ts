@@ -99,9 +99,18 @@ export function useOptimizedTransactionManager(transactionConfig: OptimizedTrans
         console.log(`🔄 [CACHE] Transaction type: ${transactionType}, optimisticData:`, optimisticData);
       }
       
-      // POLYGON FIX: Immediate + aggressive refetch for buy-tickets to eliminate UI delay
-      if (isPolygon && transactionType === 'buy-tickets') {
-        // Immediate invalidation for instant feedback
+      // SIMPLIFIED: Single immediate invalidation for all chains - no conflicts
+      invalidateAfterTransaction({
+        raffleContract: optimisticData?.raffleId,
+        userAddress: optimisticData?.userAddress,
+        transactionType,
+        immediate: true,
+        chainId
+      });
+      
+      // Single follow-up for reliability (chain-optimized timing)
+      const followUpDelay = isPolygon ? 1500 : 2000; // Faster for Polygon
+      setTimeout(() => {
         invalidateAfterTransaction({
           raffleContract: optimisticData?.raffleId,
           userAddress: optimisticData?.userAddress,
@@ -109,67 +118,7 @@ export function useOptimizedTransactionManager(transactionConfig: OptimizedTrans
           immediate: true,
           chainId
         });
-        
-        // AGGRESSIVE: Force multiple refetches to overcome stale cache
-        setTimeout(() => {
-          invalidateAfterTransaction({
-            raffleContract: optimisticData?.raffleId,
-            userAddress: optimisticData?.userAddress,
-            transactionType,
-            immediate: true,
-            chainId
-          });
-        }, 500); // 0.5s follow-up
-        
-        setTimeout(() => {
-          invalidateAfterTransaction({
-            raffleContract: optimisticData?.raffleId,
-            userAddress: optimisticData?.userAddress,
-            transactionType,
-            immediate: true,
-            chainId
-          });
-        }, 2000); // 2s follow-up
-      } else if (isPolygon) {
-        // Other Polygon transactions - standard approach
-        invalidateAfterTransaction({
-          raffleContract: optimisticData?.raffleId,
-          userAddress: optimisticData?.userAddress,
-          transactionType,
-          immediate: true,
-          chainId
-        });
-        
-        setTimeout(() => {
-          invalidateAfterTransaction({
-            raffleContract: optimisticData?.raffleId,
-            userAddress: optimisticData?.userAddress,
-            transactionType,
-            immediate: true,
-            chainId
-          });
-        }, 3000); // 3s follow-up
-      } else {
-        // APECHAIN: Standard immediate invalidation
-        invalidateAfterTransaction({
-          raffleContract: optimisticData?.raffleId,
-          userAddress: optimisticData?.userAddress,
-          transactionType,
-          immediate: true,
-          chainId
-        });
-        
-        // Follow-up invalidation for ApeChain reliability
-        setTimeout(() => {
-          invalidateAfterTransaction({
-            raffleContract: optimisticData?.raffleId,
-            userAddress: optimisticData?.userAddress,
-            transactionType,
-            immediate: true,
-            chainId
-          });
-        }, 2000); // 2s follow-up for ApeChain
-      }
+      }, followUpDelay);
       
       if (enableToasts && successMessage) {
         toastManager.transaction.success(successMessage);

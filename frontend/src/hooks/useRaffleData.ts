@@ -87,9 +87,9 @@ export function useRaffleData(options: UseRaffleDataOptions) {
       
       const indices = Array.from({ length: endIndex - startIndex }, (_, i) => startIndex + i);
       
-      // Batch process with reasonable settings for free Polygon RPC
-      const batchSize = chainId === 137 ? 2 : 3; // Moderate batching
-      const delay = chainId === 137 ? 500 : 200; // Reasonable delays
+      // Batch process with optimized settings for Polygon speed
+      const batchSize = chainId === 137 ? 3 : 3; // Increased Polygon batch size
+      const delay = chainId === 137 ? 300 : 200; // Reduced Polygon delay
       
       const results: RaffleData[] = [];
       
