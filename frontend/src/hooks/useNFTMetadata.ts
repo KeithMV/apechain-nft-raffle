@@ -7,8 +7,6 @@ import { usePublicClient, useChainId } from 'wagmi';
 import { useQuery } from '@tanstack/react-query';
 import { OptimizedCache } from '../utils/performance';
 import { sanitizeString, validateAddress } from '../utils/security';
-import { createPublicClient, http } from 'viem';
-import { polygon } from '../config/wagmi';
 import { useMemo } from 'react';
 
 interface NFTMetadata {
@@ -362,21 +360,12 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
   
   // PHASE 3: Create dedicated Alchemy client for NFT metadata (worth paying for)
   const alchemyClient = useMemo(() => {
-    if (chainId === 137 && process.env.REACT_APP_ALCHEMY_API_KEY) {
-      // Use Alchemy for NFT metadata on Polygon (their strength)
-      return createPublicClient({
-        chain: polygon,
-        transport: http(`https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`, {
-          timeout: 35000,
-          retryCount: 1,
-        }),
-      });
-    }
-    return publicClient; // Fallback to regular client
-  }, [chainId, publicClient]);
+    // For now, just use the regular publicClient until we resolve CI/CD issues
+    return publicClient;
+  }, [publicClient]);
   
   const { data: result, isLoading: loading, error } = useQuery({
-    queryKey: ['nft-metadata', chainId, contractAddress?.toLowerCase(), tokenId, 'v3'], // v3 for Phase 3 RPC routing
+    queryKey: ['nft-metadata', chainId, contractAddress?.toLowerCase(), tokenId, 'v2-hotfix'], // v2-hotfix for Phase 1&2 only
     queryFn: async () => {
       // PHASE 1: Check persistent cache first (24-hour cache)
       const persistentCached = getPersistentCache(contractAddress, tokenId);
@@ -400,12 +389,8 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
       
       console.log(`🔄 [CACHE MISS] Fetching fresh metadata for ${contractAddress}/${tokenId}`);
       
-      // PHASE 3: Use Alchemy client for metadata fetching (optimized for this)
-      const clientToUse = alchemyClient || publicClient;
-      const usingAlchemy = chainId === 137 && process.env.REACT_APP_ALCHEMY_API_KEY && alchemyClient;
-      console.log(`🌐 [RPC ROUTING] Using ${usingAlchemy ? 'Alchemy' : 'Public'} RPC for NFT metadata`);
-      
-      const result = await fetchNFTMetadata(clientToUse, contractAddress, tokenId, chainId);
+      // Use regular client for now (Phase 3 RPC routing temporarily disabled for CI/CD)
+      const result = await fetchNFTMetadata(publicClient, contractAddress, tokenId, chainId);
       
       // Cache successful results in both caches
       if (result.metadata && result.source) {

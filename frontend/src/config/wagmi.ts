@@ -78,22 +78,15 @@ export const polygon = defineChain({
   rpcUrls: {
     default: {
       http: [
-        // PHASE 3: Switch to free public RPCs for basic reads (save Alchemy costs)
-        'https://polygon-rpc.com',
-        'https://rpc.ankr.com/polygon', 
+        // Primary: Alchemy with multi-chain API key
+        process.env.REACT_APP_ALCHEMY_API_KEY
+          ? `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`
+          : 'https://polygon-rpc.com',
+        // Fallbacks: Multiple reliable endpoints
+        'https://rpc.ankr.com/polygon',
         'https://polygon.meowrpc.com',
         'https://polygon-mainnet.public.blastapi.io',
-        // Alchemy as fallback only (for when public RPCs fail)
-        ...(process.env.REACT_APP_ALCHEMY_API_KEY 
-          ? [`https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`]
-          : []),
       ],
-    },
-    // PHASE 3: Keep Alchemy available for NFT metadata (separate endpoint)
-    alchemy: {
-      http: process.env.REACT_APP_ALCHEMY_API_KEY
-        ? [`https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`]
-        : [],
     },
   },
   blockExplorers: {
@@ -104,49 +97,6 @@ export const polygon = defineChain({
   },
   testnet: false,
 });
-
-// =============================================================================
-// PHASE 3: DUAL RPC SYSTEM - Smart routing for cost optimization
-// =============================================================================
-
-/**
- * Create public client for basic blockchain reads (free)
- */
-export function createPublicRPCClient(chainId: number) {
-  const chain = chainId === polygon.id ? polygon : apeChain;
-  
-  return http(chain.rpcUrls.default.http[0], {
-    timeout: chainId === polygon.id ? 30000 : 25000,
-    retryCount: 2,
-    retryDelay: 1500,
-  });
-}
-
-/**
- * Create Alchemy client for NFT metadata (paid but optimized)
- */
-export function createAlchemyRPCClient(chainId: number) {
-  if (chainId === polygon.id && process.env.REACT_APP_ALCHEMY_API_KEY) {
-    return http(`https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`, {
-      timeout: 35000,
-      retryCount: 1,
-      retryDelay: 2000,
-    });
-  }
-  
-  // Fallback to public RPC if no Alchemy key
-  return createPublicRPCClient(chainId);
-}
-
-/**
- * Get appropriate RPC client based on use case
- */
-export function getRPCTransport(chainId: number, useCase: 'basic' | 'nft-metadata' = 'basic') {
-  if (useCase === 'nft-metadata') {
-    return createAlchemyRPCClient(chainId);
-  }
-  return createPublicRPCClient(chainId);
-}
 
 // =============================================================================
 // CONTRACT ADDRESSES (Code Reviewer: Single source of truth)
@@ -171,9 +121,18 @@ export const config = createConfig({
   chains: [apeChain, polygon],
   connectors, // REQUIRED: Web3Modal v5 needs these connectors
   transports: {
-    // PHASE 3: Use public RPCs for basic operations (cost savings)
-    [apeChain.id]: createPublicRPCClient(apeChain.id),
-    [polygon.id]: createPublicRPCClient(polygon.id),
+    [apeChain.id]: http(apeChain.rpcUrls.default.http[0], {
+      // Debug Expert: Timeout and retry configuration
+      timeout: 25000,
+      retryCount: 2,
+      retryDelay: 2000,
+    }),
+    [polygon.id]: http(polygon.rpcUrls.default.http[0], {
+      // Debug Expert: Polygon-specific timeout (more congested network)
+      timeout: 30000,
+      retryCount: 3,
+      retryDelay: 2000,
+    }),
   },
   // Web3 Expert: Mobile wallet compatibility
   ssr: false,
