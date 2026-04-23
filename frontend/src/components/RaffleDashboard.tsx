@@ -167,16 +167,17 @@ export default function RaffleDashboard() {
   
 
 
-  // Handle winner selection errors
+  // Handle winner selection errors - FIXED: Only show error if not successful
   useEffect(() => {
-    if (winnerError && selectingWinnerFor) {
+    if (winnerError && selectingWinnerFor && !winnerSelected) {
       const toastId = `winner-${selectingWinnerFor}`;
       
+      console.log('❌ [WINNER-ERROR] Showing error toast for failed winner selection');
       toastManager.transaction.replaceWithError(toastId, 'Winner selection');
       
       setSelectingWinnerFor(null);
     }
-  }, [winnerError, selectingWinnerFor]);
+  }, [winnerError, selectingWinnerFor, winnerSelected]);
   
   // Handle cancel raffle errors
   useEffect(() => {
