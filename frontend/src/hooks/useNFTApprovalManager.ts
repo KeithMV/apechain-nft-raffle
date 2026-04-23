@@ -112,7 +112,7 @@ export function useNFTApprovalManager() {
       return;
     }
     
-    console.log('🔍 [APPROVAL] Checking approval for:', contractAddress, 'token:', tokenId);
+    console.log('🔍 [APPROVAL] Checking approval for:', contractAddress?.replace(/[\r\n]/g, ' '), 'token:', tokenId?.replace(/[\r\n]/g, ' '));
     
     // Clear any existing timeout
     if (timeoutRef.current) {
@@ -131,11 +131,11 @@ export function useNFTApprovalManager() {
         // Use cached data - just set current contract
         setCurrentContract(contractAddress);
         setCurrentTokenId(tokenId || '');
-        console.log('✅ [APPROVAL] Using cached approval status:', existingState.status);
+        console.log('✅ [APPROVAL] Using cached approval status:', String(existingState.status).replace(/[\r\n]/g, ' '));
         return prev;
       }
       
-      console.log('🔄 [APPROVAL] Setting checking state for contract:', contractAddress);
+      console.log('🔄 [APPROVAL] Setting checking state for contract:', contractAddress?.replace(/[\r\n]/g, ' '));
       
       // Set checking state
       return {

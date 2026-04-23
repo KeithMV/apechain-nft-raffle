@@ -5,7 +5,7 @@
 
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useChainId, useAccount, usePublicClient } from 'wagmi';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, useRef } from 'react';
 import { getChainConfig } from '../config/addresses';
 import { RAFFLE_FACTORY_ABI } from '../config/contracts';
 
@@ -53,15 +53,16 @@ export function useRaffleData(options: UseRaffleDataOptions) {
     return chainId === 137 ? Math.min(limit, 10) : Math.min(limit, 20); // Increased limits
   }, [chainId, limit]);
   
-  // Cache configuration - Optimized for immediate updates after transactions
+  // PHASE 2: Simplified cache configuration - static settings to avoid render loops
   const cacheConfig = useMemo(() => ({
-    staleTime: chainId === 137 ? 1000 : 5000, // POLYGON FIX: 1s stale time for faster updates
-    gcTime: chainId === 137 ? 2 * 60 * 1000 : 3 * 60 * 1000, // 2-3 minutes
-    retry: 1, // Allow 1 retry
-    retryDelay: 5000, // 5s delay
-    refetchOnWindowFocus: false, // Keep disabled to be safe
+    staleTime: 2 * 60 * 1000,  // 2 minutes - good balance
+    gcTime: 10 * 60 * 1000,   // 10 minutes
+    retry: 1,
+    retryDelay: 5000,
+    refetchOnWindowFocus: false,
     refetchOnMount: false,
-  }), [chainId]);
+    refetchOnReconnect: false,
+  }), []);
   
   // Fetch function
   const fetchRaffles = useCallback(async (pageParam = 0): Promise<RaffleData[]> => {
@@ -229,7 +230,7 @@ export function useRaffleData(options: UseRaffleDataOptions) {
     optimizedLimit
   ], [chainId, type, resolvedAddress, optimizedLimit]);
   
-  // Infinite query
+  // Infinite query with simplified caching
   const infiniteQuery = useInfiniteQuery({
     queryKey: [...queryKey, 'infinite'],
     queryFn: ({ pageParam }) => fetchRaffles(pageParam),
@@ -240,10 +241,10 @@ export function useRaffleData(options: UseRaffleDataOptions) {
     },
     enabled: Boolean(publicClient && chainId && (type === 'all' || (resolvedAddress && isConnected))),
     ...cacheConfig,
-    maxPages: chainId === 137 ? 3 : 5, // Reasonable limits
+    maxPages: chainId === 137 ? 3 : 5,
   });
   
-  // Regular query
+  // Regular query with simplified caching
   const regularQuery = useQuery({
     queryKey,
     queryFn: () => fetchRaffles(0),
@@ -259,6 +260,7 @@ export function useRaffleData(options: UseRaffleDataOptions) {
     return [];
   }, [infinite, infiniteQuery.data?.pages]);
   
+  // Simplified return - no complex cache analytics
   if (infinite) {
     return {
       raffles: allRaffles,

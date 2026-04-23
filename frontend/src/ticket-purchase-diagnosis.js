@@ -4,7 +4,7 @@
  */
 
 // 1. ENVIRONMENT FIX - Ensure all environment files have the correct API key
-const CORRECT_API_KEY = 'krTN79Cl9cUZKdtFDEled';
+const CORRECT_API_KEY = process.env.REACT_APP_ALCHEMY_API_KEY || 'YOUR_API_KEY_HERE';
 
 // 2. CONTRACT VALIDATION
 const POLYGON_RAFFLE_FACTORY = '0xC9Bd344f5E31481F202E400C33210Bd1AB542b42';

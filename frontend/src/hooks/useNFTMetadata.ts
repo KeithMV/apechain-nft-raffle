@@ -7,6 +7,9 @@ import { usePublicClient, useChainId } from 'wagmi';
 import { useQuery } from '@tanstack/react-query';
 import { OptimizedCache } from '../utils/performance';
 import { sanitizeString, validateAddress } from '../utils/security';
+import { createPublicClient, http } from 'viem';
+import { polygon } from '../config/wagmi';
+import { useMemo } from 'react';
 
 interface NFTMetadata {
   name?: string;
@@ -25,6 +28,52 @@ const metadataCache = new OptimizedCache<NFTMetadata>({
   maxItems: 500, 
   ttl: 900000 
 }); // 5MB, 500 items, 15min TTL
+
+// PHASE 1: Persistent localStorage cache for NFT metadata
+const PERSISTENT_CACHE_PREFIX = 'nft_metadata_';
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+interface CachedMetadata {
+  data: NFTMetadata;
+  timestamp: number;
+  source: string;
+}
+
+function getPersistentCache(contractAddress: string, tokenId: string): CachedMetadata | null {
+  try {
+    const cacheKey = `${PERSISTENT_CACHE_PREFIX}${contractAddress.toLowerCase()}_${tokenId}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (!cached) return null;
+    
+    const parsed: CachedMetadata = JSON.parse(cached);
+    
+    // Check if cache is still valid (24 hours)
+    if (Date.now() - parsed.timestamp > CACHE_DURATION) {
+      localStorage.removeItem(cacheKey);
+      return null;
+    }
+    
+    return parsed;
+  } catch (error) {
+    console.warn('Failed to read persistent cache:', error);
+    return null;
+  }
+}
+
+function setPersistentCache(contractAddress: string, tokenId: string, metadata: NFTMetadata, source: string): void {
+  try {
+    const cacheKey = `${PERSISTENT_CACHE_PREFIX}${contractAddress.toLowerCase()}_${tokenId}`;
+    const cacheData: CachedMetadata = {
+      data: metadata,
+      timestamp: Date.now(),
+      source
+    };
+    
+    localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+  } catch (error) {
+    console.warn('Failed to write persistent cache:', error);
+  }
+}
 
 function validateMetadataUrl(url: string): { valid: boolean; error?: string } {
   if (!url || typeof url !== 'string') {
@@ -104,7 +153,7 @@ async function fetchNFTMetadataFromAlchemy(
   }
   
   try {
-    console.log(`🔍 [ALCHEMY NFT] Fetching metadata for ${contractAddress}/${tokenId} on chain ${chainId}`);
+    console.log(`🔍 [ALCHEMY NFT] Fetching metadata for ${contractAddress?.replace(/[\r\n]/g, ' ')}/${tokenId?.replace(/[\r\n]/g, ' ')} on chain ${String(chainId).replace(/[^0-9]/g, '')}`);
     
     // Use environment-aware Lambda proxy for Alchemy NFT API
     const lambdaProxy = process.env.REACT_APP_ENV === 'staging' 
@@ -146,7 +195,7 @@ async function fetchNFTMetadataFromAlchemy(
     
     const sanitized = sanitizeMetadata(alchemyMetadata);
     if (sanitized.metadata) {
-      console.log(`✅ [ALCHEMY NFT] Successfully fetched metadata for ${contractAddress}/${tokenId}`);
+      console.log(`✅ [ALCHEMY NFT] Successfully fetched metadata for ${contractAddress?.replace(/[\r\n]/g, ' ')}/${tokenId?.replace(/[\r\n]/g, ' ')}`);
       return { metadata: sanitized.metadata };
     }
     
@@ -178,7 +227,7 @@ async function fetchNFTMetadata(
     return { error: 'Invalid contract address format' };
   }
   
-  console.log(`🔍 [NFT METADATA] Fetching metadata for ${contractAddress}/${tokenId} on chain ${chainId}`);
+  console.log(`🔍 [NFT METADATA] Fetching metadata for ${contractAddress?.replace(/[\r\n]/g, ' ')}/${tokenId?.replace(/[\r\n]/g, ' ')} on chain ${String(chainId).replace(/[^0-9]/g, '')}`);
   
   // PHASE 2: Try Alchemy first for supported chains
   let alchemyResult: { metadata?: NFTMetadata; error?: string } | undefined;
@@ -252,7 +301,7 @@ async function fetchNFTMetadataFromBlockchain(
       return { error: 'No token URI found for this NFT' };
     }
     
-    console.log(`📋 [BLOCKCHAIN] TokenURI: ${tokenURI}`);
+    console.log(`📋 [BLOCKCHAIN] TokenURI: ${tokenURI?.replace(/[\r\n]/g, ' ').slice(0, 200)}`);
     
     // Validate the token URI
     const urlValidation = validateMetadataUrl(tokenURI);
@@ -311,29 +360,64 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
   const publicClient = usePublicClient();
   const chainId = useChainId();
   
+  // PHASE 3: Create dedicated Alchemy client for NFT metadata (worth paying for)
+  const alchemyClient = useMemo(() => {
+    if (chainId === 137 && process.env.REACT_APP_ALCHEMY_API_KEY) {
+      // Use Alchemy for NFT metadata on Polygon (their strength)
+      return createPublicClient({
+        chain: polygon,
+        transport: http(`https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`, {
+          timeout: 35000,
+          retryCount: 1,
+        }),
+      });
+    }
+    return publicClient; // Fallback to regular client
+  }, [chainId, publicClient]);
+  
   const { data: result, isLoading: loading, error } = useQuery({
-    queryKey: ['nft-metadata', chainId, contractAddress?.toLowerCase(), tokenId, 'v2'], // v2 for Alchemy integration
+    queryKey: ['nft-metadata', chainId, contractAddress?.toLowerCase(), tokenId, 'v3'], // v3 for Phase 3 RPC routing
     queryFn: async () => {
-      // Check optimized cache first
-      const cacheKey = `${contractAddress?.toLowerCase()}_${tokenId}`;
-      const cached = metadataCache.get(cacheKey);
-      if (cached) {
-        return { metadata: cached };
+      // PHASE 1: Check persistent cache first (24-hour cache)
+      const persistentCached = getPersistentCache(contractAddress, tokenId);
+      if (persistentCached) {
+        console.log(`🎯 [CACHE HIT] Using cached metadata for ${contractAddress}/${tokenId} (${persistentCached.source})`);
+        // Also populate in-memory cache for faster subsequent access
+        const memoryCacheKey = `${contractAddress?.toLowerCase()}_${tokenId}`;
+        metadataCache.set(memoryCacheKey, persistentCached.data);
+        return { 
+          metadata: persistentCached.data, 
+          source: `cached_${persistentCached.source}` 
+        };
       }
       
-      // PHASE 2: Use new Alchemy-first approach with chainId
-      const result = await fetchNFTMetadata(publicClient, contractAddress, tokenId, chainId);
+      // Check optimized in-memory cache second
+      const memoryCacheKey = `${contractAddress?.toLowerCase()}_${tokenId}`;
+      const cached = metadataCache.get(memoryCacheKey);
+      if (cached) {
+        return { metadata: cached, source: 'memory_cache' };
+      }
       
-      // Only cache successful results
-      if (result.metadata) {
-        metadataCache.set(cacheKey, result.metadata);
+      console.log(`🔄 [CACHE MISS] Fetching fresh metadata for ${contractAddress}/${tokenId}`);
+      
+      // PHASE 3: Use Alchemy client for metadata fetching (optimized for this)
+      const clientToUse = alchemyClient || publicClient;
+      const usingAlchemy = chainId === 137 && process.env.REACT_APP_ALCHEMY_API_KEY && alchemyClient;
+      console.log(`🌐 [RPC ROUTING] Using ${usingAlchemy ? 'Alchemy' : 'Public'} RPC for NFT metadata`);
+      
+      const result = await fetchNFTMetadata(clientToUse, contractAddress, tokenId, chainId);
+      
+      // Cache successful results in both caches
+      if (result.metadata && result.source) {
+        metadataCache.set(memoryCacheKey, result.metadata);
+        setPersistentCache(contractAddress, tokenId, result.metadata, result.source);
       }
       
       return result;
     },
     enabled: !!publicClient && !!contractAddress && !!tokenId,
-    staleTime: 5 * 60 * 60 * 1000, // 5 hours - NFT metadata rarely changes
-    gcTime: 24 * 60 * 60 * 1000, // 24 hours - keep in memory much longer
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours - NFT metadata rarely changes, extended for Phase 1
+    gcTime: 48 * 60 * 60 * 1000, // 48 hours - keep in memory much longer
     retry: false, // Disable retries to reduce API calls
     retryDelay: 2000,
     placeholderData: {
@@ -359,7 +443,7 @@ export function useNFTMetadata(contractAddress: string, tokenId: string) {
 
   // Log successful metadata source for debugging
   if (result?.metadata && result?.source) {
-    console.log(`✅ [NFT METADATA] Successfully loaded from ${result.source} for ${contractAddress}/${tokenId}`);
+    console.log(`✅ [NFT METADATA] Successfully loaded from ${result?.source?.replace(/[\r\n]/g, ' ')} for ${contractAddress?.replace(/[\r\n]/g, ' ')}/${tokenId?.replace(/[\r\n]/g, ' ')}`);
   }
 
   return { 

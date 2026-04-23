@@ -35,13 +35,13 @@ export default function RaffleDashboard() {
     isFetchingNextPage: isFetchingNextCreatedPage
   } = useCreatedRaffles(undefined, { infinite: true });
   
-  // Calculate page count from raffles length
-  const createdPageCount = Math.ceil(createdRaffles.length / 15);
+  // Calculate page count from raffles length - Fix typing issue
+  const createdPageCount = Math.ceil((Array.isArray(createdRaffles) ? createdRaffles.length : 0) / 15);
   
   // 🚨 CRITICAL FIX: Only show counts when BOTH hooks are fully loaded
   const bothHooksLoaded = !positionsLoading && !rafflesLoading;
-  const displayPositionsCount = bothHooksLoaded ? userPositions.length : '...';
-  const displayCreatedCount = bothHooksLoaded ? createdRaffles.length : '...';
+  const displayPositionsCount = bothHooksLoaded ? (Array.isArray(userPositions) ? userPositions.length : 0) : '...';
+  const displayCreatedCount = bothHooksLoaded ? (Array.isArray(createdRaffles) ? createdRaffles.length : 0) : '...';
   
   // 🔍 DEBUG: Log the actual data to understand what's happening
   useEffect(() => {
@@ -53,28 +53,28 @@ export default function RaffleDashboard() {
       isConnecting,
       positionsLoading,
       rafflesLoading,
-      userPositionsLength: userPositions.length,
-      createdRafflesLength: createdRaffles.length,
+      userPositionsLength: Array.isArray(userPositions) ? userPositions.length : 0,
+      createdRafflesLength: Array.isArray(createdRaffles) ? createdRaffles.length : 0,
       // Add wallet connection debug info
       walletDebug: {
         hasAddress: !!address,
         addressLength: address?.length || 0,
         connectionState: isConnected ? 'connected' : isConnecting ? 'connecting' : 'disconnected'
       },
-      userPositionsData: userPositions.map(p => ({
+      userPositionsData: Array.isArray(userPositions) ? userPositions.map(p => ({
         raffleId: p.raffleId,
         raffleContract: p.raffleContract
-      })),
-      createdRafflesData: createdRaffles.map(r => ({
+      })) : [],
+      createdRafflesData: Array.isArray(createdRaffles) ? createdRaffles.map(r => ({
         raffleId: r.raffleId,
         raffleContract: r.raffleContract
-      }))
+      })) : []
     };
     
     console.log('🔍 [DASHBOARD-FULL-DEBUG]', JSON.stringify(debugInfo, null, 2));
     
     // Also log a simple summary
-    console.log(`📊 [DASHBOARD-SUMMARY] Chain: ${chainId}, Connected: ${isConnected}, Positions: ${userPositions.length}, Created: ${createdRaffles.length}`);
+    console.log(`📊 [DASHBOARD-SUMMARY] Chain: ${chainId}, Connected: ${isConnected}, Positions: ${Array.isArray(userPositions) ? userPositions.length : 0}, Created: ${Array.isArray(createdRaffles) ? createdRaffles.length : 0}`);
     
     // Store in localStorage for comparison
     const key = `dashboard-debug-${Date.now()}`;
@@ -208,7 +208,8 @@ export default function RaffleDashboard() {
   // Memoized filtered data for performance with monitoring
   const filteredPositions = useMemo(() => {
     return measureSync('dashboard-position-filtering', () => {
-      return showExpired ? userPositions : userPositions.filter(p => p.isActive || p.completed);
+      const positionsArray = Array.isArray(userPositions) ? userPositions : [];
+      return showExpired ? positionsArray : positionsArray.filter(p => p.isActive || p.completed);
     });
   }, [showExpired, userPositions]);
 
@@ -369,7 +370,7 @@ export default function RaffleDashboard() {
   }, [winnerSelected, selectingWinnerFor, chainId, refetchPositions, refetchCreatedRaffles]);
 
   // PHASE 2: Simplified loading - hooks handle wallet connection states
-  if (loading && userPositions.length === 0 && createdRaffles.length === 0) {
+  if (loading && (Array.isArray(userPositions) ? userPositions.length : 0) === 0 && (Array.isArray(createdRaffles) ? createdRaffles.length : 0) === 0) {
     return (
       <div className={`relative bg-gray-900/95 backdrop-blur-xl border ${styles.containerBorderColor} rounded-2xl shadow-2xl ${styles.containerShadowColor} p-8`}>
         <div className={`absolute inset-0 bg-gradient-to-r ${styles.cardBgGradient} rounded-2xl blur-sm`}></div>
@@ -515,7 +516,7 @@ export default function RaffleDashboard() {
                 )}
               
               {/* Load More Button for Created Raffles - Updated for Infinite Queries */}
-              {activeTab === 'created' && hasNextCreatedPage && createdRaffles.length > 0 && (
+              {activeTab === 'created' && hasNextCreatedPage && (Array.isArray(createdRaffles) ? createdRaffles.length : 0) > 0 && (
                 <div className="text-center pt-6">
                   <button
                     onClick={loadMoreCreatedRaffles}

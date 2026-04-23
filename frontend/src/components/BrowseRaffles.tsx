@@ -63,8 +63,8 @@ export default function BrowseRaffles() {
     limit: BATCH_SIZE 
   });
   
-  // Calculate page count from raffles length
-  const pageCount = Math.ceil(raffles.length / BATCH_SIZE);
+  // Calculate page count from raffles length - Fix typing issue
+  const pageCount = Math.ceil((Array.isArray(raffles) ? raffles.length : 0) / BATCH_SIZE);
   
   // Listen for cache invalidation events to trigger refetch
   useEffect(() => {
@@ -180,7 +180,7 @@ export default function BrowseRaffles() {
               setShowExpired={setShowExpired}
               activeCount={activeCount}
               expiredCount={expiredCount}
-              totalRaffles={raffles.length}
+              totalRaffles={Array.isArray(raffles) ? raffles.length : 0}
               isApeChain={isApeChain}
             />
           </div>
