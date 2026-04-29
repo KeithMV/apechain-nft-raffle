@@ -5,7 +5,8 @@
 
 export class CSRFProtection {
   private static readonly ALLOWED_ORIGINS = [
-    'https://apechainraffles.io',
+    'https://web3raffles.io', // Primary production domain
+    'https://apechainraffles.io', // Legacy domain (if still needed)
     'http://localhost:3000',
     'http://127.0.0.1:3000'
   ];
