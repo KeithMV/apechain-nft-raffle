@@ -4,12 +4,30 @@
  */
 
 export class CSRFProtection {
-  private static readonly ALLOWED_ORIGINS = [
-    'https://web3raffles.io', // Primary production domain
-    'https://apechainraffles.io', // Legacy domain (if still needed)
-    'http://localhost:3000',
-    'http://127.0.0.1:3000'
-  ];
+  /**
+   * Get allowed origins from environment configuration
+   */
+  private static getAllowedOrigins(): string[] {
+    const origins: string[] = [];
+    
+    // Add the configured app URL for current environment
+    if (process.env.REACT_APP_APP_URL) {
+      origins.push(process.env.REACT_APP_APP_URL);
+    }
+    
+    // Add development origins
+    if (process.env.NODE_ENV === 'development' || process.env.REACT_APP_ENV === 'development') {
+      origins.push('http://localhost:3000', 'http://127.0.0.1:3000');
+    }
+    
+    // Fallback for safety
+    if (origins.length === 0) {
+      console.warn('No CSRF origins configured, using localhost fallback');
+      origins.push('http://localhost:3000');
+    }
+    
+    return origins;
+  }
 
   /**
    * Validate request origin to prevent CSRF attacks
@@ -18,7 +36,10 @@ export class CSRFProtection {
     if (typeof window === 'undefined') return;
     
     const currentOrigin = window.location.origin;
-    if (!this.ALLOWED_ORIGINS.includes(currentOrigin)) {
+    const allowedOrigins = this.getAllowedOrigins();
+    
+    if (!allowedOrigins.includes(currentOrigin)) {
+      console.error(`CSRF validation failed. Current: ${currentOrigin}, Allowed:`, allowedOrigins);
       throw new Error('CSRF: Invalid origin detected');
     }
   }
@@ -54,7 +75,8 @@ export class CSRFProtection {
     
     try {
       const referrerOrigin = new URL(referrer).origin;
-      return this.ALLOWED_ORIGINS.includes(referrerOrigin);
+      const allowedOrigins = this.getAllowedOrigins();
+      return allowedOrigins.includes(referrerOrigin);
     } catch {
       return false;
     }
