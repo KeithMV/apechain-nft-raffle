@@ -255,6 +255,7 @@ jobs:
             
             # Add secrets from CircleCI environment variables
             echo "REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}" >> .env.staging
+            echo "REACT_APP_APP_URL=${REACT_APP_APP_URL_STAGING}" >> .env.staging
             
             echo "✅ Environment variables configured"
       - run:
@@ -320,6 +321,7 @@ jobs:
             
             # Add secrets from CircleCI environment variables
             echo "REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}" >> .env.production
+            echo "REACT_APP_APP_URL=${REACT_APP_APP_URL_PRODUCTION}" >> .env.production
             
             echo "✅ Environment variables configured"
             echo "Config file size: $(wc -l < .env.production) lines"
