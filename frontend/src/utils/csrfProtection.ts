@@ -10,14 +10,26 @@ export class CSRFProtection {
   private static getAllowedOrigins(): string[] {
     const origins: string[] = [];
     
+    // DEBUG: Log all environment variables for troubleshooting
+    console.log('🔍 [CSRF-DEBUG] Environment variables:', {
+      NODE_ENV: process.env.NODE_ENV,
+      REACT_APP_ENV: process.env.REACT_APP_ENV,
+      REACT_APP_APP_URL: process.env.REACT_APP_APP_URL,
+      allReactAppVars: Object.keys(process.env).filter(k => k.startsWith('REACT_APP_'))
+    });
+    
     // Add the configured app URL for current environment
     if (process.env.REACT_APP_APP_URL) {
       origins.push(process.env.REACT_APP_APP_URL);
+      console.log('✅ [CSRF-DEBUG] Added REACT_APP_APP_URL:', process.env.REACT_APP_APP_URL);
+    } else {
+      console.warn('⚠️ [CSRF-DEBUG] REACT_APP_APP_URL is undefined!');
     }
     
     // Add development origins
     if (process.env.NODE_ENV === 'development' || process.env.REACT_APP_ENV === 'development') {
       origins.push('http://localhost:3000', 'http://127.0.0.1:3000');
+      console.log('🔧 [CSRF-DEBUG] Added development origins');
     }
     
     // Fallback for safety
@@ -26,6 +38,7 @@ export class CSRFProtection {
       origins.push('http://localhost:3000');
     }
     
+    console.log('🎯 [CSRF-DEBUG] Final allowed origins:', origins);
     return origins;
   }
 
