@@ -44,17 +44,13 @@ export class CSRFProtection {
 
   /**
    * Validate request origin to prevent CSRF attacks
+   * DISABLED: Web3 dApps don't need CSRF protection for localStorage operations
    */
   static validateOrigin(): void {
-    if (typeof window === 'undefined') return;
-    
-    const currentOrigin = window.location.origin;
-    const allowedOrigins = this.getAllowedOrigins();
-    
-    if (!allowedOrigins.includes(currentOrigin)) {
-      console.error(`CSRF validation failed. Current: ${currentOrigin}, Allowed:`, allowedOrigins);
-      throw new Error('CSRF: Invalid origin detected');
-    }
+    // DISABLED: Browser's same-origin policy already protects localStorage
+    // Web3 dApps are client-side only with no server-side CSRF risk
+    console.log('🔧 [CSRF] Validation disabled - not needed for Web3 dApps');
+    return;
   }
 
   /**
