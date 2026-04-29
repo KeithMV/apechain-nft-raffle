@@ -259,6 +259,7 @@ jobs:
             
             # Add secrets from CircleCI environment variables
             echo "REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}" >> .env.staging
+            echo "" >> .env.staging  # Add newline
             echo "REACT_APP_APP_URL=${REACT_APP_APP_URL_STAGING}" >> .env.staging
             
             # DEBUG: Show what we wrote to the file
