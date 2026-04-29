@@ -250,12 +250,20 @@ jobs:
             cd frontend
             echo "🔑 Setting up environment variables for staging..."
             
+            # DEBUG: Show what environment variables CircleCI has
+            echo "🔍 DEBUG: Available environment variables:"
+            env | grep REACT_APP | sort
+            
             # Copy public config to .env.staging
             cp .env.staging.public .env.staging
             
             # Add secrets from CircleCI environment variables
             echo "REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}" >> .env.staging
             echo "REACT_APP_APP_URL=${REACT_APP_APP_URL_STAGING}" >> .env.staging
+            
+            # DEBUG: Show what we wrote to the file
+            echo "🔍 DEBUG: Contents of .env.staging:"
+            cat .env.staging
             
             echo "✅ Environment variables configured"
       - run:
