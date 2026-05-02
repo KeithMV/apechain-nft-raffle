@@ -245,65 +245,37 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Setup environment variables
-          command: |
-            cd frontend
-            echo "🔑 Setting up environment variables for staging..."
-            
-            # DEBUG: Show what environment variables CircleCI has
-            echo "🔍 DEBUG: Available environment variables:"
-            env | grep REACT_APP | sort
-            
-            # Copy public config to .env.staging
-            cp .env.staging.public .env.staging
-            
-            # Add secrets from CircleCI environment variables
-            echo "REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}" >> .env.staging
-            echo "REACT_APP_APP_URL=${REACT_APP_APP_URL_STAGING}" >> .env.staging
-            
-            # DEBUG: Show what we wrote to the file
-            echo "🔍 DEBUG: Contents of .env.staging:"
-            cat .env.staging
-            
-            echo "✅ Environment variables configured"
-      - run:
           name: Build frontend for staging
           command: |
             cd frontend
-            echo "🏗️  Building frontend for staging..."
+            echo "🏗️ Building frontend for staging..."
             echo "📍 Git commit: $(git rev-parse HEAD)"
-            echo "📍 Git branch: $(git branch --show-current || echo 'detached')"
             
-            # CRITICAL: Build verification - trust git checkout
-            echo "🔍 Building from commit: $(git rev-parse HEAD)"
-            echo "📍 Git branch: $(git branch --show-current || echo 'detached')"
+            # Set environment variables directly (no file copying!)
+            export REACT_APP_ENV=staging
+            export REACT_APP_ENABLE_LOGGING=false
+            export REACT_APP_NETWORK=apechain
+            export REACT_APP_CHAIN_ID=33139
+            export REACT_APP_APECHAIN_RPC_URL=https://apechain.calderachain.xyz/http
+            export REACT_APP_CONTRACT_ADDRESS=0x1627E7e63b63878E61f91D336385a59B1747934a
+            export REACT_APP_WALLETCONNECT_PROJECT_ID=b848c907908cee0c1bcf0ab0493da6c4
+            export REACT_APP_APP_NAME="ApeChain NFT Raffles (Staging)"
+            export REACT_APP_APP_URL=${REACT_APP_APP_URL_STAGING}
+            export REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}
+            export GENERATE_SOURCEMAP=false
             
-            # SIMPLIFIED: Clean build without nuclear options
+            # Clean build
             rm -rf build/
             
-            # CRITICAL: Use staging-specific build command
-            NODE_ENV=production REACT_APP_ENV=staging GENERATE_SOURCEMAP=false CI=false yarn build:staging
+            # Build with environment variables
+            yarn build
             
-            # Build verification - informational only
-            echo "🔍 Verifying build contains speed optimizations..."
-            if grep -r "POLYGON-CACHE" build/static/js/ > /dev/null; then
-              echo "✅ Speed optimizations found in build!"
-              # Show which main.js file we built
-              MAIN_JS=$(ls build/static/js/main.*.js | head -1)
-              echo "📜 Built file: $(basename $MAIN_JS)"
-            else
-              echo "⚠️ Speed optimizations not found in minified build (expected due to minification)"
-              echo "📜 This is normal - minification removes debug strings"
-              # Don't exit - this is expected behavior
-            fi
-            
-            # Verify build output
+            # Verify build
             if [ -d "build" ] && [ "$(ls -A build)" ]; then
-              echo "✅ Build completed successfully"
+              echo "✅ Staging build completed successfully"
               echo "📦 Build size: $(du -sh build | cut -f1)"
-              ls -la build/static/js/main.*.js
             else
-              echo "❌ Build failed - no output directory found"
+              echo "❌ Build failed"
               exit 1
             fi
       - persist_to_workspace:
@@ -319,39 +291,37 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Setup environment variables
-          command: |
-            cd frontend
-            echo "🔑 Setting up environment variables for production..."
-            
-            # Copy public config to .env.production
-            cp .env.production.public .env.production
-            
-            # Add secrets from CircleCI environment variables
-            echo "REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}" >> .env.production
-            echo "REACT_APP_APP_URL=${REACT_APP_APP_URL_PRODUCTION}" >> .env.production
-            
-            echo "✅ Environment variables configured"
-            echo "Config file size: $(wc -l < .env.production) lines"
-      - run:
           name: Build frontend for production
           command: |
             cd frontend
-            echo "🏗️  Building frontend for production..."
+            echo "🏗️ Building frontend for production..."
+            echo "📍 Git commit: $(git rev-parse HEAD)"
             
-            # Clean previous builds
+            # Set environment variables directly
+            export REACT_APP_ENV=production
+            export REACT_APP_ENABLE_LOGGING=false
+            export REACT_APP_NETWORK=apechain
+            export REACT_APP_CHAIN_ID=33139
+            export REACT_APP_APECHAIN_RPC_URL=https://apechain.calderachain.xyz/http
+            export REACT_APP_CONTRACT_ADDRESS=0x1627E7e63b63878E61f91D336385a59B1747934a
+            export REACT_APP_WALLETCONNECT_PROJECT_ID=b848c907908cee0c1bcf0ab0493da6c4
+            export REACT_APP_APP_NAME="Web3 NFT Raffles"
+            export REACT_APP_APP_URL=${REACT_APP_APP_URL_PRODUCTION}
+            export REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}
+            export GENERATE_SOURCEMAP=false
+            
+            # Clean build
             rm -rf build/
             
-            # CRITICAL: Use production-specific build command
-            yarn build:production
+            # Build with environment variables
+            yarn build
             
-            # Verify build output
+            # Verify build
             if [ -d "build" ] && [ "$(ls -A build)" ]; then
               echo "✅ Production build completed successfully"
               echo "📦 Build size: $(du -sh build | cut -f1)"
-              ls -la build/
             else
-              echo "❌ Build failed - no output directory found"
+              echo "❌ Build failed"
               exit 1
             fi
       - persist_to_workspace:

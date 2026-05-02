@@ -216,22 +216,11 @@
     <!-- Debug script for development -->
     <script>
       if (window.location.hostname === 'localhost' || window.location.hostname.includes('192.168')) {
-        const script = document.createElement('script');
-        script.src = '/debug-purchase.js';
-        script.async = true;
-        document.head.appendChild(script);
-        
-        // Also load emergency reset
+        // Load emergency reset only
         const resetScript = document.createElement('script');
         resetScript.src = '/emergency-reset.js';
         resetScript.async = true;
         document.head.appendChild(resetScript);
-        
-        // Load Polygon raffle debug
-        const polygonScript = document.createElement('script');
-        polygonScript.src = '/debug-polygon-raffle.js';
-        polygonScript.async = true;
-        document.head.appendChild(polygonScript);
       }
     </script>
   </body>
