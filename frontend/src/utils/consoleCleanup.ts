@@ -27,8 +27,13 @@ export class ConsoleCleanup {
 
     const isLocalDev = typeof window !== 'undefined' && 
       (window.location.hostname === 'localhost' || window.location.hostname.includes('192.168'));
+    
+    // ENHANCED: Also check for staging environment or disabled logging
+    const isLoggingDisabled = process.env.REACT_APP_ENABLE_LOGGING === 'false';
+    const isStaging = process.env.REACT_APP_ENV === 'staging';
 
-    if (!isLocalDev) {
+    // Suppress logging if not local dev OR if explicitly disabled OR if staging
+    if (!isLocalDev || isLoggingDisabled || isStaging) {
       this.suppressAllLogging();
     }
 
@@ -64,7 +69,16 @@ export class ConsoleCleanup {
         message.includes('Event received') ||
         message.includes('Network:') ||
         message.includes('balance for') ||
-        message.includes('Raw balance')
+        message.includes('Raw balance') ||
+        message.includes('[DASHBOARD-WINNER]') ||
+        message.includes('[WINNER-BUTTON]') ||
+        message.includes('[TICKETS]') ||
+        message.includes('[REFRESH]') ||
+        message.includes('[WINNER]') ||
+        message.includes('🔍') ||
+        message.includes('🎫') ||
+        message.includes('🏆') ||
+        message.includes('🔄')
       ) {
         return;
       }
