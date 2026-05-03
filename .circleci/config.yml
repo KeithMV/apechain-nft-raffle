@@ -741,7 +741,7 @@ jobs:
             sleep 30
             
             # Basic smoke test
-            curl -f https://apechainraffles.io || exit 1
+            curl -f https://web3raffles.io || exit 1
             echo "✅ Production smoke test passed!"
 
 # Workflows - SIMPLIFIED 2-BRANCH SYSTEM
