@@ -176,7 +176,9 @@ export function initializeMobileCompatibility(): void {
     return; // Desktop browsers typically have better API support
   }
 
-  console.log('📱 [MOBILE] Initializing compatibility polyfills...');
+  if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+    console.log('📱 [MOBILE] Initializing compatibility polyfills...');
+  }
 
   // Apply polyfills
   polyfillRequestIdleCallback();
@@ -190,12 +192,16 @@ export function initializeMobileCompatibility(): void {
     IntersectionObserver: !!window.IntersectionObserver
   };
 
-  console.log('✅ [MOBILE] Polyfills initialized:', polyfillStatus);
+  if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+    console.log('✅ [MOBILE] Polyfills initialized:', polyfillStatus);
+  }
 
   // Mobile-specific performance optimizations
   const hasRequestAnimationFrame = typeof (window as any).requestAnimationFrame === 'function';
   if (hasRequestAnimationFrame) {
-    console.log('🚀 [MOBILE] Applying mobile performance optimizations...');
+    if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+      console.log('🚀 [MOBILE] Applying mobile performance optimizations...');
+    }
     // Could add RAF throttling here if needed
   }
 }
