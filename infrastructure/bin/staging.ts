@@ -30,6 +30,7 @@ try {
     },
     domainName: 'staging.apechainraffles.io',
     certificateArn,
+    environment: 'staging',
   });
   
   console.log('✅ Staging stack configuration loaded successfully');

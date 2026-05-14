@@ -8,6 +8,7 @@ import { Construct } from 'constructs';
 export interface RaffleStagingStackProps extends cdk.StackProps {
   domainName: string;
   certificateArn: string; // Use existing cert that covers *.apechainraffles.io
+  environment: string; // 'staging'
 }
 
 export class RaffleStagingStack extends cdk.Stack {
@@ -19,7 +20,7 @@ export class RaffleStagingStack extends cdk.Stack {
 
     // S3 Bucket for staging frontend
     this.s3Bucket = new s3.Bucket(this, 'RaffleStagingV2Bucket', {
-      bucketName: `apechain-nft-raffle-staging-v2-${this.account}-${this.region}`,
+      bucketName: `apechain-nft-raffle-${props.environment}-v2-${this.account}-${this.region}`,
       versioned: true,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,

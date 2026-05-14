@@ -10,6 +10,7 @@ import { Construct } from 'constructs';
 export interface RaffleInfrastructureStackProps extends cdk.StackProps {
   domainName?: string;
   hostedZoneId?: string;
+  environment: string; // 'production', 'staging', 'apechain-only'
 }
 
 export class RaffleInfrastructureStack extends cdk.Stack {
@@ -21,7 +22,7 @@ export class RaffleInfrastructureStack extends cdk.Stack {
 
     // S3 Bucket for frontend hosting
     this.s3Bucket = new s3.Bucket(this, 'RaffleFrontendBucket', {
-      bucketName: `apechain-nft-raffle-${this.account}-${this.region}`,
+      bucketName: `apechain-nft-raffle-${props?.environment || 'default'}-${this.account}-${this.region}`,
       versioned: true,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,

@@ -13,10 +13,12 @@ if (!process.env.CDK_DEFAULT_ACCOUNT || !process.env.CDK_DEFAULT_REGION) {
 }
 
 try {
-  // Production Stack
+  // Production Stack (Multi-Chain: ApeChain + Polygon)
+  // Serves web3raffles.io - the multi-chain raffle platform
   new RaffleInfrastructureStack(app, 'RaffleInfrastructureStack', {
-    domainName: 'apechainraffles.io',
-    hostedZoneId: 'Z02864901E4MLJMH828IC',
+    domainName: 'web3raffles.io',
+    hostedZoneId: 'Z05119332ATAXYZK4G6R6',
+    environment: 'production',
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
   });
 
@@ -24,6 +26,7 @@ try {
   new RaffleStagingStack(app, 'RaffleStagingStack', {
     domainName: 'staging.apechainraffles.io',
     certificateArn: 'arn:aws:acm:us-east-1:856872546342:certificate/f9cd027a-611e-4aa5-a7be-9301cfd82ddc',
+    environment: 'staging',
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
   });
 } catch (error) {

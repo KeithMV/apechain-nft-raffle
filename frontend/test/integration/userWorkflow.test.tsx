@@ -45,16 +45,12 @@ describe('User Workflow Integration Tests', () => {
     
     // User clicks connect
     fireEvent.click(screen.getByText('Connect Wallet'))
-    
-    // Wait for setTimeout delay in mobile Safari fix
-    await new Promise(resolve => setTimeout(resolve, 150))
-    
     expect(mockOpen).toHaveBeenCalled()
     
-    // Simulate connecting state (simplified UI shows connect button)
+    // Simulate connecting state - shows loading text
     vi.mocked(useAccount).mockReturnValue({ address: undefined, isConnected: false, isConnecting: true } as any)
     rerender(<WalletConnection />)
-    expect(screen.getByText('Connect Wallet')).toBeInTheDocument()
+    expect(screen.getByText('Connecting...')).toBeInTheDocument()
     
     // Simulate connected state
     vi.mocked(useAccount).mockReturnValue({ address: '0x1234567890123456789012345678901234567890', isConnected: true } as any)
@@ -93,12 +89,12 @@ describe('User Workflow Integration Tests', () => {
   })
 
   it('handles reconnection workflow', async () => {
-    // Start in reconnecting state
+    // Start in reconnecting state - shows reconnecting text
     vi.mocked(useAccount).mockReturnValue({ address: undefined, isConnected: false, isReconnecting: true } as any)
     
     render(<WalletConnection />)
     
-    expect(screen.getByText('Connect Wallet')).toBeInTheDocument()
+    expect(screen.getByText('Reconnecting...')).toBeInTheDocument()
   })
 
   it('validates form input workflow', () => {
