@@ -1,6 +1,6 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAccount, useDisconnect, useChainId } from 'wagmi';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { useWeb3Modal, useWeb3ModalState } from '@web3modal/wagmi/react';
 
 // Pure functions moved outside component
 const formatAddress = (addr: string): string => {
@@ -16,17 +16,52 @@ export function WalletConnection() {
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { open } = useWeb3Modal();
+  const { open: modalOpen } = useWeb3ModalState();
   
   const isMobile = isMobileDevice();
   
-  // Combine all loading states for optimal UX
-  const isLoading = isConnecting || isReconnecting;
+  // Track our own connecting state that we can control
+  const [isAttemptingConnection, setIsAttemptingConnection] = useState(false);
+  
+  // Use ONLY our controlled state for UI, ignore Wagmi's stuck isConnecting
+  const isLoading = isReconnecting || isAttemptingConnection;
 
   // SPEED OPTIMIZED: Debug logging
   console.log('🔍 [DEBUG] WalletConnection rendered, isConnected:', isConnected);
   console.log('🔍 [DEBUG] Chain ID:', chainId);
-  console.log('🔍 [DEBUG] Loading states:', { isConnecting, isReconnecting, isLoading });
+  console.log('🔍 [DEBUG] Loading states:', { 
+    wagmiIsConnecting: isConnecting, 
+    isReconnecting, 
+    isAttemptingConnection, 
+    isLoading,
+    note: 'We ignore wagmiIsConnecting to prevent stuck state'
+  });
   console.log('🔍 [DEBUG] Web3Modal open function:', typeof open);
+  console.log('🔍 [DEBUG] Modal state - open:', modalOpen);
+  
+  // FIX: Reset connecting state when modal closes without connection
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    // If modal was open and is now closed, and we're still not connected
+    if (!modalOpen && !isConnected && isAttemptingConnection) {
+      console.log('🔄 [DEBUG] Modal closed without connection - resetting state immediately');
+      setIsAttemptingConnection(false);
+    }
+    
+    // If connection succeeded, reset the attempt flag
+    if (isConnected && isAttemptingConnection) {
+      console.log('✅ [DEBUG] Connection successful - resetting state');
+      setIsAttemptingConnection(false);
+    }
+    
+    // Cleanup: Clear timeout if component unmounts or dependencies change
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [modalOpen, isConnected, isAttemptingConnection]);
   
   // SPEED OPTIMIZED: Instant connection handler
   const handleConnect = useCallback(() => {
@@ -39,15 +74,20 @@ export function WalletConnection() {
     console.log('🔍 [DEBUG] Connect button clicked - starting immediate connection');
     console.log('🔍 [DEBUG] User agent:', navigator.userAgent);
     
+    // Mark that we initiated a connection attempt
+    setIsAttemptingConnection(true);
+    
     if (typeof open === 'function') {
       try {
         // SPEED: No delays - immediate Web3Modal opening
         open();
       } catch (error) {
         console.error('🚨 [DEBUG] Web3Modal open failed:', error);
+        setIsAttemptingConnection(false);
       }
     } else {
       console.error('🚨 [DEBUG] Web3Modal not initialized properly');
+      setIsAttemptingConnection(false);
     }
   }, [open, isLoading]);
 
@@ -79,7 +119,7 @@ export function WalletConnection() {
         onClick={handleConnect}
         disabled={isLoading}
         className={`px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-pink-500 to-fuchsia-500 border border-pink-400 text-white rounded-lg text-base sm:text-lg font-bold transition-all duration-200 min-h-[60px] sm:min-h-[70px] whitespace-nowrap shadow-lg shadow-pink-500/30 ${
-          isLoading 
+          isLoading
             ? 'opacity-50 cursor-not-allowed' 
             : 'hover:from-pink-400 hover:to-fuchsia-400 hover:shadow-pink-500/40 hover:scale-105 active:scale-95'
         }`}
@@ -94,7 +134,7 @@ export function WalletConnection() {
           cursor: isLoading ? 'not-allowed' : 'pointer'
         }}
       >
-        {isConnecting ? 'Connecting...' : isReconnecting ? 'Reconnecting...' : 'Connect Wallet'}
+        {isAttemptingConnection ? 'Connecting...' : isReconnecting ? 'Reconnecting...' : 'Connect Wallet'}
       </button>
       
       {/* Mobile help text */}
