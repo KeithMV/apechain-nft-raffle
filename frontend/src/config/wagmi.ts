@@ -22,6 +22,7 @@ const connectors = [
   injected(), // MetaMask, Trust Wallet, etc.
   walletConnect({ 
     projectId,
+    showQrModal: false, // FIX: Disable WalletConnect's own modal, let Web3Modal handle it
     metadata: {
       name: process.env.REACT_APP_APP_NAME || 'ApeChain NFT Raffles',
       description: 'Decentralized NFT raffle platform on ApeChain and Polygon',
