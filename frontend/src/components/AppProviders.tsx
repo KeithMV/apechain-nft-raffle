@@ -117,68 +117,11 @@ interface AppProvidersProps {
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   useEffect(() => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    // STEP 3: Enhanced cleanup and mobile-specific duplicate monitoring
-    if (typeof window !== 'undefined') {
-      // Clear WalletConnect storage
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('wc@2') || key.startsWith('@walletconnect') || key.includes('walletconnect')) {
-          localStorage.removeItem(key);
-        }
-      });
-      
-      // Clear session storage too
-      Object.keys(sessionStorage).forEach(key => {
-        if (key.startsWith('wc@2') || key.startsWith('@walletconnect') || key.includes('walletconnect')) {
-          sessionStorage.removeItem(key);
-        }
-      });
-      
-      // Mobile-specific duplicate monitoring
-      if (isMobile) {
-        const checkForDuplicates = () => {
-          const modals = document.querySelectorAll('w3m-modal, wcm-modal');
-          if (modals.length > 1) {
-            console.warn('📱 Mobile duplicate Web3Modal/WalletConnect detected, cleaning up');
-            // Keep only the first one, remove the rest
-            for (let i = 1; i < modals.length; i++) {
-              const modal = modals[i];
-              if (modal.parentNode) {
-                modal.parentNode.removeChild(modal);
-              }
-            }
-          }
-        };
-        
-        // Check immediately
-        checkForDuplicates();
-        
-        // Monitor for DOM changes (mobile keyboards, orientation changes, etc.)
-        const observer = new MutationObserver(() => {
-          setTimeout(checkForDuplicates, 100);
-        });
-        
-        observer.observe(document.body, {
-          childList: true,
-          subtree: true
-        });
-        
-        // Cleanup observer on unmount
-        return () => {
-          observer.disconnect();
-        };
-      }
-      
-      if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
-        console.log(`🧹 Enhanced cleanup initialized - ${isMobile ? 'Mobile' : 'Desktop'} mode`);
-      }
-    }
-
-    // Debug Expert: Enhanced mobile detection logging
+    // Debug logging only - no aggressive cleanup that breaks session persistence
     if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       console.log(`📱 Device: ${isMobile ? 'Mobile' : 'Desktop'} - ${navigator.userAgent.split(' ')[0]}`);
-      console.log('🚀 Enhanced providers initialized with duplicate protection');
+      console.log('🚀 Providers initialized - WalletConnect sessions preserved');
     }
   }, []);
 
