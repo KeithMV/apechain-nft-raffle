@@ -128,6 +128,18 @@ export function useCreateRaffleV4() {
     
     const ticketPriceWei = parseEther(params.ticketPrice);
     
+    // DEBUG: Log transaction details
+    if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+      console.log('🎯 [CREATE RAFFLE DEBUG]');
+      console.log('  Chain ID:', chainId);
+      console.log('  Factory Address:', factoryAddress);
+      console.log('  NFT Contract:', params.nftContract);
+      console.log('  Token ID:', params.tokenId);
+      console.log('  Ticket Price (ETH):', params.ticketPrice);
+      console.log('  Max Tickets:', params.maxTickets);
+      console.log('  Duration:', params.duration);
+    }
+    
     // Transaction manager will handle Polygon gas settings
     console.log('🎯 [CREATE] Creating raffle - NFT will be transferred from user wallet to raffle contract');
     console.log('📝 [CREATE] NFT:', params.nftContract, 'Token ID:', params.tokenId);

@@ -141,6 +141,20 @@ export const config = createConfig({
 });
 
 // =============================================================================
+// DEBUG LOGGING (Remove after testing)
+// =============================================================================
+if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+  console.log('🔧 [WAGMI CONFIG DEBUG]');
+  console.log('📍 ApeChain RPC:', apeChain.rpcUrls.default.http[0]);
+  console.log('📍 Polygon RPC:', polygon.rpcUrls.default.http[0]);
+  console.log('🔑 Alchemy API Key present:', !!process.env.REACT_APP_ALCHEMY_API_KEY);
+  if (process.env.REACT_APP_ALCHEMY_API_KEY) {
+    console.log('🔑 Alchemy API Key (first 10 chars):', process.env.REACT_APP_ALCHEMY_API_KEY.substring(0, 10) + '...');
+  }
+  console.log('⚙️ Configured chains:', config.chains.map(c => `${c.name} (${c.id})`));
+}
+
+// =============================================================================
 // UTILITY FUNCTIONS (Code Reviewer: Simple, focused functions)
 // =============================================================================
 

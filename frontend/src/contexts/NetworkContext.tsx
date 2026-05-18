@@ -28,6 +28,9 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const chainId = useChainId();
   
   // CRITICAL DEBUG: Log NetworkProvider render
+  if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+    console.log('🌐 [NETWORK CONTEXT] Current chain ID:', chainId);
+  }
   
   const networkData = useMemo(() => {
     
@@ -39,6 +42,15 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const isApeChain = chainId === 33139; // apeChain.id
       const isPolygon = chainId === 137; // polygon.id
       
+      if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+        console.log('🌐 [NETWORK CONTEXT] Chain detection:', {
+          chainId,
+          isApeChain,
+          isPolygon,
+          networkName: config.name,
+          factoryAddress: contracts.RAFFLE_FACTORY_V4
+        });
+      }
       
       const theme: NetworkTheme = isApeChain 
         ? {
