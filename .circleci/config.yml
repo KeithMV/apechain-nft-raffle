@@ -310,6 +310,14 @@ jobs:
             export REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}
             export GENERATE_SOURCEMAP=false
             
+            # Debug: Verify Alchemy API key is set (show first 10 chars only for security)
+            if [ -n "$REACT_APP_ALCHEMY_API_KEY" ]; then
+              echo "✅ Alchemy API key is set: ${REACT_APP_ALCHEMY_API_KEY:0:10}..."
+            else
+              echo "❌ WARNING: REACT_APP_ALCHEMY_API_KEY is NOT set!"
+              echo "⚠️  Build will use fallback public RPC which may be unreliable"
+            fi
+            
             # Clean build
             rm -rf build/
             
