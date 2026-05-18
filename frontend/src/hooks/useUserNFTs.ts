@@ -60,13 +60,25 @@ async function fetchNFTsViaAPI(
     
     // Verify ownership for first 10 NFTs only to reduce RPC calls
     for (const nft of rawNfts.slice(0, 10)) {
-      if (!nft.contractAddress || !nft.tokenId) continue;
+      if (!nft.contractAddress || !nft.tokenId) {
+        if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+          console.log('⚠️ [NFT VERIFY] Skipping NFT - missing contract or tokenId:', nft);
+        }
+        continue;
+      }
       
       const nftKey = `${nft.contractAddress}-${nft.tokenId}`;
       if (verificationSet.has(nftKey)) continue;
       
       try {
-        if (!publicClient) continue;
+        if (!publicClient) {
+          console.log('❌ [NFT VERIFY] No publicClient available');
+          continue;
+        }
+        
+        if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+          console.log(`🔍 [NFT VERIFY] Checking ownership: ${nft.contractAddress}/${nft.tokenId}`);
+        }
         
         const owner = await publicClient.readContract({
           address: nft.contractAddress as `0x${string}`,
@@ -81,6 +93,10 @@ async function fetchNFTsViaAPI(
           args: [BigInt(nft.tokenId)]
         });
         
+        if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
+          console.log(`🔍 [NFT VERIFY] Owner: ${owner}, User: ${userAddress}, Match: ${owner?.toLowerCase() === userAddress.toLowerCase()}`);
+        }
+        
         if (owner?.toLowerCase() === userAddress.toLowerCase()) {
           verificationSet.add(nftKey);
           verifiedNfts.push({
@@ -89,8 +105,10 @@ async function fetchNFTsViaAPI(
             name: nft.name || `NFT #${nft.tokenId}`,
             image: nft.image
           });
+          console.log(`✅ [NFT VERIFY] Verified: ${nft.name || nft.tokenId}`);
         }
       } catch (error) {
+        console.error(`❌ [NFT VERIFY] Failed for ${nft.contractAddress}/${nft.tokenId}:`, error);
         continue;
       }
     }
