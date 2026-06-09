@@ -125,6 +125,24 @@ On-chain indexing for raffle events on ApeChain — tracks `RaffleCreated` event
 - Separate staging/production environments
 - Manual approval gate before production deploy
 
+### Security Improvements During Development
+
+This repo shows the real development process, including how security issues were identified and fixed:
+
+**CWE-798 (Hardcoded Credentials) - Fixed:**
+- Early commits contain test API keys and empty wallet addresses used during initial Polygon deployment testing
+- Identified in commits `7826048`, `ad52804`, `1c3c0ee`
+- Fixed by moving all credentials to CircleCI encrypted environment variables
+- Added .gitignore patterns to prevent future accidents
+
+**Current Production Security:**
+- All API keys managed through CircleCI secure environment variables
+- No credentials in source code
+- Private keys never used in production deployments
+- Regular Slither security scans in CI/CD pipeline
+
+The exposed test credentials in git history have been rotated and contained no funds. This demonstrates real-world security improvement practices.
+
 ---
 
 ## 🚀 Quick Start

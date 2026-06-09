@@ -48,10 +48,17 @@ artifacts/
 cache/
 typechain-types/
 
-# Test files
+# Test files and old deployment scripts (prevent accidental secret commits)
 test-*.js
 check-*.js
 **/test-*.js
+contracts/deploy-*.js
+contracts/debug-*.js
+contracts/emergency-*.js
+contracts/nuclear-*.js
+archive/debug-scripts/
+CIRCLECI_ALCHEMY_KEY_CHECK.md
+frontend/public/force-polygon-rpc.js
 
 # Build artifacts
 artifacts/
