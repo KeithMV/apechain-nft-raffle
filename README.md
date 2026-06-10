@@ -71,7 +71,7 @@ yarn test:coverage   # Coverage report
 
 **Contracts:**
 - OpenZeppelin: ReentrancyGuard, Pausable, Ownable
-- Commit-reveal pattern for winner selection
+- Commit-reveal pattern for winner selection (VRF integration in progress)
 - Rate limiting (10s cooldown between raffles)
 - NFT ownership verification before transfer
 - Emergency pause functionality
@@ -115,6 +115,17 @@ develop → staging → main (production)
 - Staging: Fast deployment for testing
 - Production: Full validation pipeline with manual approval
 
+## Operating Costs
+
+**Monthly: ~$3-5**
+- CloudFront: ~$1-2 (CDN bandwidth)
+- S3: <$1 (static hosting)
+- Route 53: $0.50 per hosted zone
+- Lambda: <$1 (image proxy, low traffic)
+- Alchemy API: Free tier (300M compute units/month)
+
+Domain and SSL certificates managed through Route 53 and ACM (AWS Certificate Manager).
+
 ## What This Demonstrates
 
 - Full-stack blockchain development (Solidity → React → AWS)
@@ -122,6 +133,7 @@ develop → staging → main (production)
 - Production dApp with real on-chain transactions
 - Security best practices (commit-reveal, reentrancy protection)
 - Automated testing and CI/CD
+- Low-cost infrastructure (<$5/month for production app)
 
 ---
 
