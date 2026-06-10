@@ -6,31 +6,26 @@ Production multi-chain raffle platform deployed at [web3raffles.io](https://web3
 
 Create raffles for NFTs. Users buy tickets, winner selected on-chain using commit-reveal randomness. Platform takes 5% fee.
 
-**Live Stats:**
-- 341 on-chain raffles (314 ApeChain, 27 Polygon)
-- 1,372+ commits over 8 months
-- 56 passing tests
-- Multi-chain: ApeChain (33139) + Polygon (137)
+**Stats:**
+- 341+ on-chain raffles
+- Multi-chain: ApeChain + Polygon
 
 ## Architecture
 
-**Smart Contracts** (Solidity 0.8.19)
+**Smart Contracts**
 
 Factory pattern using EIP-1167 minimal clones. Each raffle is a lightweight clone of the template contract.
 
-- `RaffleFactorySecureV4`: Deploys raffle clones, validates NFT ownership, manages platform fees
-- `RaffleContractSecureV3`: Individual raffle logic with commit-reveal winner selection
+- Factory: Deploys raffle clones, validates NFT ownership, manages platform fees
+- Raffle: Individual raffle logic with commit-reveal winner selection
 
-Deployed contracts:
-- ApeChain Factory: `0x1627E7e63b63878E61f91D336385a59B1747934a`
-- Polygon Factory: `0xC9Bd344f5E31481F202E400C33210Bd1AB542b42`
+Deployed on ApeChain and Polygon mainnets.
 
-**Frontend** (React 19 + TypeScript)
+**Frontend**
 
-- Wagmi v2 + Viem for Web3 interactions
-- Web3Modal v5 (WalletConnect, MetaMask, Coinbase)
-- 48 components, 21 custom hooks
-- Craco for builds, Vitest for testing
+- React + TypeScript
+- Wagmi + Viem for Web3 interactions
+- Web3Modal (WalletConnect, MetaMask, Coinbase)
 - TailwindCSS for styling
 
 **Infrastructure** (AWS)
@@ -65,13 +60,7 @@ yarn test
 
 ## Testing
 
-56 tests covering:
-- Contract interaction hooks (useRaffleContractV4, raffleUtils)
-- Input validation and security (inputSanitizer)
-- UI components (CreateRafflePage, WalletConnection)
-- Full user workflows (wallet connect/disconnect)
-- Performance benchmarks (render timing, memoization)
-- Smart contract logic (Hardhat tests)
+Test coverage includes contract interactions, input validation, UI components, user workflows, and smart contract logic.
 
 ```bash
 yarn test:run        # Run all tests
@@ -128,13 +117,11 @@ develop → staging → main (production)
 
 ## What This Demonstrates
 
-Real production Web3 application with:
 - Full-stack blockchain development (Solidity → React → AWS)
 - Multi-chain EVM architecture
-- 341+ on-chain transactions with actual users
+- Production dApp with real on-chain transactions
 - Security best practices (commit-reveal, reentrancy protection)
 - Automated testing and CI/CD
-- 8 months of sustained development
 
 ---
 
