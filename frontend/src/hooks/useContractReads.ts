@@ -25,6 +25,8 @@ export function useContractReads(config: ContractReadsConfig = {}) {
       enabled,
       refetchInterval,
       staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 3,
+      retryDelay: 1000,
     },
   });
 
@@ -37,6 +39,8 @@ export function useContractReads(config: ContractReadsConfig = {}) {
       enabled,
       refetchInterval,
       staleTime: 30 * 1000, // 30 seconds
+      retry: 3,
+      retryDelay: 1000,
     },
   });
 
@@ -49,6 +53,8 @@ export function useContractReads(config: ContractReadsConfig = {}) {
       enabled,
       refetchInterval,
       staleTime: 10 * 1000, // 10 seconds
+      retry: 3,
+      retryDelay: 1000,
     },
   });
 
@@ -130,6 +136,8 @@ export function useRaffleContractV4(raffleId: number) {
     query: {
       enabled: raffleId >= 0,
       staleTime: 60 * 1000, // 1 minute
+      retry: 3,
+      retryDelay: 1000,
     },
   });
 }
@@ -151,6 +159,8 @@ export function useNFTApprovalStatusV4(nftContract: string, userAddress: string,
     query: {
       enabled: !!(nftContract && userAddress && isValidAddress(nftContract) && isValidAddress(userAddress)),
       staleTime: 30 * 1000, // 30 seconds
+      retry: 3,
+      retryDelay: 1000,
     },
   });
   
@@ -163,6 +173,8 @@ export function useNFTApprovalStatusV4(nftContract: string, userAddress: string,
     query: {
       enabled: !!(nftContract && tokenId && isValidAddress(nftContract)),
       staleTime: 30 * 1000, // 30 seconds
+      retry: 3,
+      retryDelay: 1000,
     },
   });
   

@@ -10,6 +10,8 @@ import { optimisticUpdateHelpers, transactionQueryClient } from '../utils/transa
 import { useUnifiedCacheInvalidation } from './useUnifiedCacheInvalidation';
 import { useChainConfig } from '../hooks/useChainConfig';
 import { config as envConfig } from '../config/environment';
+import { retryWriteContract } from '../utils/retryWrite';
+import { rpcDebugLogger } from '../utils/rpcDebugLogger';
 
 export interface OptimizedTransactionConfig {
   transactionType: 'buy-tickets' | 'select-winner' | 'create-raffle' | 'cancel-raffle';
@@ -191,9 +193,16 @@ export function useOptimizedTransactionManager(transactionConfig: OptimizedTrans
     }
   }, [hash, isConfirming, isSuccess, receiptError, timeout, enableToasts]);
 
-  // Execute transaction with AGGRESSIVE timeout protection
+  // Execute transaction with retry logic for RPC errors
   const executeTransaction = useCallback(async (contractCall: any): Promise<string> => {
-    console.log('🚀 [TX] Starting transaction:', transactionType);
+    rpcDebugLogger.log('TX_START', {
+      transactionType,
+      chainId,
+      isPolygon,
+      contractAddress: contractCall.address,
+      functionName: contractCall.functionName,
+    });
+    
     setIsProcessing(true);
     setLastContractCall(contractCall);
     
@@ -236,23 +245,48 @@ export function useOptimizedTransactionManager(transactionConfig: OptimizedTrans
       }
       
       if (envConfig.enableLogging) {
-        console.log('📤 [TX] Submitting transaction...');
+        console.log('📤 [TX] Submitting transaction with retry logic...');
       }
-      const result = await writeContractAsync(optimizedContractCall);
       
-      if (envConfig.enableLogging) {
-        console.log('✅ [TX] Transaction submitted:', result);
-      }
+      // Wrap writeContractAsync with retry logic for RPC errors
+      const result = await retryWriteContract(
+        () => writeContractAsync(optimizedContractCall),
+        {
+          maxRetries: 3,
+          initialDelay: 1000,
+          maxDelay: 5000,
+          onRetry: (attempt, error) => {
+            rpcDebugLogger.log('TX_RETRY', {
+              attempt,
+              transactionType,
+            }, error);
+            
+            if (enableToasts && attempt === 1) {
+              toastManager.info('Retrying transaction due to network issue...');
+            }
+          },
+        }
+      );
+      
+      rpcDebugLogger.log('TX_SUCCESS', {
+        transactionType,
+        hash: result,
+      });
+      
       clearAllTimeouts();
       
       return result;
     } catch (error) {
-      console.log('❌ [TX] Transaction failed:', error);
+      rpcDebugLogger.log('TX_FAILED', {
+        transactionType,
+        chainId,
+      }, error);
+      
       clearAllTimeouts();
       setIsProcessing(false);
       throw error;
     }
-  }, [writeContractAsync, isPolygon, transactionType]);
+  }, [writeContractAsync, isPolygon, transactionType, enableToasts, chainId]);
 
   // Retry transaction with Polygon-optimized backoff strategy
   const retryTransaction = useCallback(async (): Promise<void> => {

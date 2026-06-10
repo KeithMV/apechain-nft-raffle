@@ -53,8 +53,9 @@ export const apeChain = defineChain({
       http: [
         // Primary: Environment-specific RPC
         process.env.REACT_APP_APECHAIN_RPC_URL || 'https://apechain.calderachain.xyz/http',
-        // Fallbacks: Multiple reliable endpoints
+        // Fallback 1: Official ApeChain RPC
         'https://rpc.apechain.com',
+        // Fallback 2: Alternative Caldera endpoint
         'https://apechain.calderachain.xyz/http',
       ],
     },
@@ -122,22 +123,39 @@ export const config = createConfig({
   chains: [apeChain, polygon],
   connectors, // REQUIRED: Web3Modal v5 needs these connectors
   transports: {
-    [apeChain.id]: http(apeChain.rpcUrls.default.http[0], {
-      // Debug Expert: Timeout and retry configuration
-      timeout: 25000,
-      retryCount: 2,
-      retryDelay: 2000,
-    }),
-    [polygon.id]: http(polygon.rpcUrls.default.http[0], {
-      // Debug Expert: Polygon-specific timeout (more congested network)
+    // FIX: Use undefined to enable automatic fallback to all RPC URLs
+    [apeChain.id]: http(undefined, {
+      // Increased retry configuration for RPC reliability
       timeout: 30000,
-      retryCount: 3,
-      retryDelay: 2000,
+      retryCount: 5,        // Increased from 3 to 5
+      retryDelay: 1500,     // Increased from 1000 to 1500
+      batch: true,          // Enable request batching
+      fetchOptions: {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    }),
+    [polygon.id]: http(undefined, {
+      // Polygon-specific configuration with higher retry tolerance
+      timeout: 35000,       // Increased from 30000
+      retryCount: 5,        // Increased from 3 to 5
+      retryDelay: 1500,     // Increased from 1000 to 1500
+      batch: true,          // Enable request batching
+      fetchOptions: {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
     }),
   },
   // Web3 Expert: Mobile wallet compatibility
   ssr: false,
   syncConnectedChain: true,
+  // Enable batch multicall for efficiency
+  batch: {
+    multicall: true,
+  },
 });
 
 // =============================================================================
