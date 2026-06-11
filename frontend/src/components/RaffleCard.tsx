@@ -1,6 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import BasicNFTImage from './BasicNFTImage';
 import { LiveCountdown } from './LiveCountdown';
+import { getRaffleUrgency, getSoldOutBadge } from '../utils/raffleUrgency';
 
 export interface CreatedRaffle {
   raffleId: number;
@@ -40,21 +41,25 @@ const RaffleCard = React.memo<RaffleCardProps>(({
   nativeCurrency 
 }) => {
   // Memoize expensive calculations
-  const { quantity, totalCost, progress, availableTickets, isExpired } = useMemo(() => {
+  const { quantity, totalCost, progress, availableTickets, isExpired, urgencyInfo, soldOutBadge } = useMemo(() => {
     const qty = ticketQuantities[raffle.raffleContract] || 1;
     const cost = (parseFloat(raffle.ticketPrice) * qty).toFixed(3);
     const prog = (raffle.ticketsSold / raffle.maxTickets) * 100;
     const available = raffle.maxTickets - raffle.ticketsSold;
     const expired = !raffle.isActive || raffle.completed;
+    const urgency = getRaffleUrgency(raffle.endTime);
+    const soldOut = getSoldOutBadge(raffle.ticketsSold, raffle.maxTickets);
     
     return {
       quantity: qty,
       totalCost: cost,
       progress: prog,
       availableTickets: available,
-      isExpired: expired
+      isExpired: expired,
+      urgencyInfo: urgency,
+      soldOutBadge: soldOut
     };
-  }, [raffle.raffleContract, raffle.ticketPrice, raffle.ticketsSold, raffle.maxTickets, raffle.isActive, raffle.completed, ticketQuantities]);
+  }, [raffle.raffleContract, raffle.ticketPrice, raffle.ticketsSold, raffle.maxTickets, raffle.isActive, raffle.completed, raffle.endTime, ticketQuantities]);
 
   // Memoize input change handler
   const handleQuantityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,6 +111,16 @@ const RaffleCard = React.memo<RaffleCardProps>(({
         {isExpired && (
           <div className="absolute top-3 left-3 bg-red-900/90 backdrop-blur-sm border border-red-400/30 rounded-xl px-3 py-2">
             <p className="text-red-300 font-semibold text-sm">EXPIRED</p>
+          </div>
+        )}
+        {!isExpired && urgencyInfo.urgencyLevel !== 'low' && (
+          <div className={`absolute top-3 left-3 ${urgencyInfo.color} backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-lg`}>
+            <p className="font-bold text-xs sm:text-sm whitespace-nowrap">{urgencyInfo.badge}</p>
+          </div>
+        )}
+        {!isExpired && soldOutBadge && (
+          <div className={`absolute bottom-3 left-3 ${soldOutBadge.color} backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-lg`}>
+            <p className="font-bold text-xs sm:text-sm whitespace-nowrap">{soldOutBadge.badge}</p>
           </div>
         )}
       </div>

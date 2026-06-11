@@ -49,8 +49,9 @@ export default function BrowseRaffles() {
   
   // State management - simplified for infinite queries
   const [showExpired, setShowExpired] = useState(false);
+  const [sortBy, setSortBy] = useState<'endingSoon' | 'highValue'>('endingSoon');
   
-  const BATCH_SIZE = 10;
+  const BATCH_SIZE = 30; // Increased from 10 to 30 for better initial view
   const {
     raffles,
     loading,
@@ -111,7 +112,20 @@ export default function BrowseRaffles() {
     [setTicketQuantity]
   );
   
-  // Optimized filtered raffles with better memoization and performance monitoring
+  // Sorting function - SIMPLIFIED: Only Ending Soon and High Value
+  const sortRaffles = useCallback((rafflesToSort: CreatedRaffle[]) => {
+    const sorted = [...rafflesToSort];
+    switch (sortBy) {
+      case 'endingSoon':
+        return sorted.sort((a, b) => a.endTime - b.endTime); // Ascending (soonest first)
+      case 'highValue':
+        return sorted.sort((a, b) => parseFloat(b.ticketPrice) - parseFloat(a.ticketPrice)); // Highest price first
+      default:
+        return sorted;
+    }
+  }, [sortBy]);
+  
+  // Optimized filtered and sorted raffles
   const { filteredRaffles, activeCount, expiredCount } = useMemo(() => {
     return measureSync('raffle-filtering', () => {
       let active = 0;
@@ -135,9 +149,12 @@ export default function BrowseRaffles() {
         }
       }
       
-      return { filteredRaffles: filtered, activeCount: active, expiredCount: expired };
+      // Apply sorting
+      const sorted = sortRaffles(filtered);
+      
+      return { filteredRaffles: sorted, activeCount: active, expiredCount: expired };
     });
-  }, [raffles, showExpired]);
+  }, [raffles, showExpired, sortRaffles]);
 
   if (loading) {
     return (
@@ -173,16 +190,33 @@ export default function BrowseRaffles() {
       
       <div className="relative z-10">
         <div className={`bg-gradient-to-r ${styles.gradientBg} px-4 sm:px-8 py-6 sm:py-8 border-b ${styles.borderColor}`}>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent font-sans tracking-tight`}>NFT Raffles</h2>
-            <RaffleFilters
-              showExpired={showExpired}
-              setShowExpired={setShowExpired}
-              activeCount={activeCount}
-              expiredCount={expiredCount}
-              totalRaffles={Array.isArray(raffles) ? raffles.length : 0}
-              isApeChain={isApeChain}
-            />
+            
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+              {/* Sort Dropdown - SIMPLIFIED */}
+              <div className="flex items-center gap-2">
+                <label className="text-slate-300 text-sm font-medium whitespace-nowrap">Sort:</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'endingSoon' | 'highValue')}
+                  className={`bg-slate-800/50 text-slate-200 border ${styles.borderColor} rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${isApeChain ? 'focus:ring-emerald-500/50' : 'focus:ring-purple-500/50'} transition-all cursor-pointer`}
+                >
+                  <option value="endingSoon">⏰ Ending Soon</option>
+                  <option value="highValue">💎 High Value</option>
+                </select>
+              </div>
+              
+              {/* Active/Expired Filter */}
+              <RaffleFilters
+                showExpired={showExpired}
+                setShowExpired={setShowExpired}
+                activeCount={activeCount}
+                expiredCount={expiredCount}
+                totalRaffles={Array.isArray(raffles) ? raffles.length : 0}
+                isApeChain={isApeChain}
+              />
+            </div>
           </div>
         </div>
 
