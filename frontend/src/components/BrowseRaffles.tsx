@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount, useChainId } from 'wagmi';
 import RaffleCard, { CreatedRaffle } from './RaffleCard';
-import RaffleFilters from './RaffleFilters';
 import { useAllRaffles } from '../hooks/useRaffleData';
 import { useOptimizedRaffleActions } from '../hooks/useOptimizedRaffleActions';
 // Phase 10: Enhanced performance utilities
@@ -194,7 +193,7 @@ export default function BrowseRaffles() {
             <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent font-sans tracking-tight`}>NFT Raffles</h2>
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-              {/* Sort Dropdown - SIMPLIFIED */}
+              {/* Sort Dropdown */}
               <div className="flex items-center gap-2">
                 <label className="text-slate-300 text-sm font-medium whitespace-nowrap">Sort:</label>
                 <select
@@ -207,15 +206,29 @@ export default function BrowseRaffles() {
                 </select>
               </div>
               
-              {/* Active/Expired Filter */}
-              <RaffleFilters
-                showExpired={showExpired}
-                setShowExpired={setShowExpired}
-                activeCount={activeCount}
-                expiredCount={expiredCount}
-                totalRaffles={Array.isArray(raffles) ? raffles.length : 0}
-                isApeChain={isApeChain}
-              />
+              {/* Active/Completed Tabs - SIMPLIFIED */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowExpired(false)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    !showExpired
+                      ? styles.activeButtonStyle
+                      : 'bg-slate-800/30 text-slate-400 border border-slate-600/30 hover:bg-slate-800/50'
+                  }`}
+                >
+                  Active
+                </button>
+                <button
+                  onClick={() => setShowExpired(true)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    showExpired
+                      ? styles.activeButtonStyle
+                      : 'bg-slate-800/30 text-slate-400 border border-slate-600/30 hover:bg-slate-800/50'
+                  }`}
+                >
+                  Completed
+                </button>
+              </div>
             </div>
           </div>
         </div>
