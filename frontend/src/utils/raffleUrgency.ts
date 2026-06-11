@@ -33,14 +33,14 @@ export function getRaffleUrgency(endTime: number): UrgencyInfo {
     return {
       timeRemaining: `${Math.floor(hoursLeft)}h ${minutesLeft}m`,
       urgencyLevel: 'critical',
-      badge: `🔥 ENDING IN ${Math.floor(hoursLeft)}H ${minutesLeft}M`,
+      badge: `${Math.floor(hoursLeft)}H ${minutesLeft}M LEFT`,
       color: 'bg-red-600 text-white animate-pulse'
     };
   } else if (hoursLeft < 24) {
     return {
       timeRemaining: `${Math.floor(hoursLeft)}h`,
       urgencyLevel: 'high',
-      badge: `⏰ ${Math.floor(hoursLeft)} HOURS LEFT`,
+      badge: `${Math.floor(hoursLeft)}H LEFT`,
       color: 'bg-orange-600 text-white'
     };
   } else if (hoursLeft < 72) {
@@ -48,7 +48,7 @@ export function getRaffleUrgency(endTime: number): UrgencyInfo {
     return {
       timeRemaining: `${daysLeft}d`,
       urgencyLevel: 'medium',
-      badge: `📅 ${daysLeft} DAY${daysLeft > 1 ? 'S' : ''} LEFT`,
+      badge: `${daysLeft}D LEFT`,
       color: 'bg-yellow-600 text-white'
     };
   } else {
@@ -56,7 +56,7 @@ export function getRaffleUrgency(endTime: number): UrgencyInfo {
     return {
       timeRemaining: `${daysLeft}d`,
       urgencyLevel: 'low',
-      badge: `${daysLeft} DAYS`,
+      badge: `${daysLeft}D`,
       color: 'bg-slate-700 text-slate-300'
     };
   }
@@ -70,12 +70,12 @@ export function getSoldOutBadge(ticketsSold: number, maxTickets: number): { badg
   
   if (ticketsSold >= maxTickets) {
     return {
-      badge: '🎯 SOLD OUT',
+      badge: 'SOLD OUT',
       color: 'bg-red-600 text-white'
     };
   } else if (percentSold >= 90) {
     return {
-      badge: `🎯 ${Math.floor(percentSold)}% SOLD`,
+      badge: `${Math.floor(percentSold)}% SOLD`,
       color: 'bg-orange-600 text-white'
     };
   } else if (percentSold >= 75) {
