@@ -230,19 +230,8 @@ export function useOptimizedTransactionManager(transactionConfig: OptimizedTrans
     try {
       console.log('📝 [TX] Preparing contract call...');
       
-      // Use dynamic gas pricing based on current network conditions
-      let optimizedContractCall = contractCall;
-      if (isPolygon) {
-        // Don't set gas parameters - let wagmi/viem handle it automatically
-        // This will use current network gas prices
-        optimizedContractCall = {
-          ...contractCall,
-          gas: BigInt(800000), // Increased gas limit for multiple tickets
-        };
-        if (envConfig.enableLogging) {
-          console.log('🔶 [TX] Using Polygon dynamic gas pricing with increased gas limit for multiple tickets');
-        }
-      }
+      // Let wagmi/viem handle gas estimation automatically for all chains
+      const optimizedContractCall = contractCall;
       
       if (envConfig.enableLogging) {
         console.log('📤 [TX] Submitting transaction with retry logic...');
