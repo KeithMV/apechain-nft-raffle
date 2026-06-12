@@ -79,6 +79,16 @@ export default function BrowseRaffles() {
     return () => window.removeEventListener('cache-invalidated', handleCacheInvalidated);
   }, [refetch]);
   
+  // Auto-fetch all active raffles on mount for comprehensive sorting
+  useEffect(() => {
+    if (!showExpired && hasNextPage && !isFetchingNextPage && !loading) {
+      if (config.enableLogging) {
+        console.log('🔄 [BROWSE] Auto-loading all active raffles for sorting...');
+      }
+      fetchNextPage();
+    }
+  }, [showExpired, hasNextPage, isFetchingNextPage, loading, fetchNextPage]);
+  
   // Consolidated optimized raffle actions hook - simplified without progress tracking
   const {
     processingRaffles,
@@ -269,8 +279,8 @@ export default function BrowseRaffles() {
                 </div>
               )}
               
-              {/* Load More Button - Updated for Infinite Queries */}
-              {filteredRaffles.length > 0 && hasNextPage && (
+              {/* Load More Button - Only show for completed raffles */}
+              {filteredRaffles.length > 0 && hasNextPage && showExpired && (
                 <div className="mt-8 text-center">
                   <button
                     onClick={loadMoreRaffles}
@@ -285,10 +295,20 @@ export default function BrowseRaffles() {
                       </>
                     ) : (
                       <>
-                        <span className="relative">Load More Raffles ({pageCount} pages loaded)</span>
+                        <span className="relative">Load More Completed Raffles</span>
                       </>
                     )}
                   </button>
+                </div>
+              )}
+              
+              {/* Loading indicator for auto-fetch */}
+              {!showExpired && isFetchingNextPage && (
+                <div className="mt-8 text-center">
+                  <div className="flex items-center justify-center space-x-3 text-slate-400">
+                    <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Loading all active raffles...</span>
+                  </div>
                 </div>
               )}
       </div>
