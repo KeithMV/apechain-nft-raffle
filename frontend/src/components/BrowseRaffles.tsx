@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAccount, useChainId } from 'wagmi';
 import RaffleCard, { CreatedRaffle } from './RaffleCard';
 import { useAllRaffles } from '../hooks/useRaffleData';
@@ -80,22 +80,36 @@ export default function BrowseRaffles() {
   }, [refetch]);
   
   // Auto-fetch all active raffles on mount for comprehensive sorting
+  const hasAutoFetchCompleted = useRef(false);
+  
   useEffect(() => {
-    if (!showExpired && hasNextPage && !isFetchingNextPage && !loading) {
+    // Reset when switching tabs
+    if (showExpired) {
+      hasAutoFetchCompleted.current = false;
+      return;
+    }
+    
+    // Stop if we've already completed auto-fetch for this session
+    if (hasAutoFetchCompleted.current) {
+      return;
+    }
+    
+    // Continue fetching if there are more pages
+    if (hasNextPage && !isFetchingNextPage && !loading) {
       if (config.enableLogging) {
-        console.log('🔄 [BROWSE] Auto-loading all active raffles for sorting...', {
-          hasNextPage,
-          isFetchingNextPage,
+        console.log('🔄 [BROWSE] Auto-loading next page...', {
           loadedRaffles: raffles.length,
         });
       }
-      // Small delay to prevent rapid fire
-      const timer = setTimeout(() => {
-        fetchNextPage();
-      }, 100);
-      return () => clearTimeout(timer);
+      fetchNextPage();
+    } else if (!hasNextPage && !isFetchingNextPage) {
+      // Mark as completed when no more pages
+      hasAutoFetchCompleted.current = true;
+      if (config.enableLogging) {
+        console.log('✅ [BROWSE] Auto-fetch completed. Total raffles:', raffles.length);
+      }
     }
-  }, [showExpired, hasNextPage, isFetchingNextPage, loading, fetchNextPage, raffles.length]);
+  }, [showExpired, hasNextPage, isFetchingNextPage, loading, raffles.length, fetchNextPage]);
   
   // Consolidated optimized raffle actions hook - simplified without progress tracking
   const {
