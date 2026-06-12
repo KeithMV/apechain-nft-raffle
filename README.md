@@ -115,6 +115,26 @@ develop → staging → main (production)
 - Staging: Fast deployment for testing
 - Production: Full validation pipeline with manual approval
 
+## Troubleshooting
+
+### High Gas Fees on Desktop
+
+If you see unusually high gas estimates in MetaMask desktop:
+
+**Cause:** MetaMask uses its own configured RPC endpoint (not the dApp's) for gas estimation.
+
+**Solution:**
+1. Open MetaMask → Settings → Networks
+2. Select the network (ApeChain or Polygon)
+3. Update RPC URL to:
+   - **ApeChain**: `https://rpc.apechain.com`
+   - **Polygon**: `https://polygon-rpc.com`
+4. Save and retry your transaction
+
+Gas estimates should now be accurate.
+
+**Note:** MetaMask mobile browser works correctly by default.
+
 ## Operating Costs
 
 **Monthly: ~$3-5**
