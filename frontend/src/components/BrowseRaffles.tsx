@@ -83,11 +83,19 @@ export default function BrowseRaffles() {
   useEffect(() => {
     if (!showExpired && hasNextPage && !isFetchingNextPage && !loading) {
       if (config.enableLogging) {
-        console.log('🔄 [BROWSE] Auto-loading all active raffles for sorting...');
+        console.log('🔄 [BROWSE] Auto-loading all active raffles for sorting...', {
+          hasNextPage,
+          isFetchingNextPage,
+          loadedRaffles: raffles.length,
+        });
       }
-      fetchNextPage();
+      // Small delay to prevent rapid fire
+      const timer = setTimeout(() => {
+        fetchNextPage();
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [showExpired, hasNextPage, isFetchingNextPage, loading, fetchNextPage]);
+  }, [showExpired, hasNextPage, isFetchingNextPage, loading, fetchNextPage, raffles.length]);
   
   // Consolidated optimized raffle actions hook - simplified without progress tracking
   const {

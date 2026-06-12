@@ -241,7 +241,7 @@ export function useRaffleData(options: UseRaffleDataOptions) {
     },
     enabled: Boolean(publicClient && chainId && (type === 'all' || (resolvedAddress && isConnected))),
     ...cacheConfig,
-    maxPages: chainId === 137 ? 3 : 5,
+    // Removed maxPages limit to allow loading all raffles
   });
   
   // Regular query with simplified caching
