@@ -53,10 +53,12 @@ export function useRaffleData(options: UseRaffleDataOptions) {
     return chainId === 137 ? Math.min(limit, 10) : Math.min(limit, 20); // Increased limits
   }, [chainId, limit]);
   
-  // PHASE 2: Simplified cache configuration - static settings to avoid render loops
+  // PHASE 2 OPTIMIZATION: Increased cache time from 2min to 5min
+  // Raffle data doesn't change frequently - safe to cache longer
+  // Benefit: If user returns within 5 minutes, uses cached data (0 RPC calls)
   const cacheConfig = useMemo(() => ({
-    staleTime: 2 * 60 * 1000,  // 2 minutes - good balance
-    gcTime: 10 * 60 * 1000,   // 10 minutes
+    staleTime: 5 * 60 * 1000,  // 5 minutes (was 2 minutes)
+    gcTime: 10 * 60 * 1000,    // 10 minutes - keeps data in memory
     retry: 1,
     retryDelay: 5000,
     refetchOnWindowFocus: false,
