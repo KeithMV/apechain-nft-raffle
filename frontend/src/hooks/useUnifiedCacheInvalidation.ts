@@ -64,15 +64,16 @@ export function useUnifiedCacheInvalidation() {
       clearAllCaches(targetChainId);
       
       // 2. Invalidate React Query caches with chain-specific patterns
+      // PHASE 3 FIX: Only invalidate Browse page for raffle creation/cancellation, not winner selection
+      const shouldInvalidateBrowse = transactionType === 'create-raffle' || transactionType === 'cancel-raffle';
+      
       const invalidationPromises = [
-        // Core raffle data (chain-specific) - Updated to match useRaffleData query keys
-        queryClient.invalidateQueries({ queryKey: ['raffles', targetChainId] }),
+        // Dashboard queries - always invalidate
+        queryClient.invalidateQueries({ queryKey: ['raffles', targetChainId, 'participated'] }),
+        queryClient.invalidateQueries({ queryKey: ['raffles', targetChainId, 'created'] }),
         queryClient.invalidateQueries({ queryKey: ['user-positions', targetChainId] }),
         queryClient.invalidateQueries({ queryKey: ['created-raffles', targetChainId] }),
         queryClient.invalidateQueries({ queryKey: ['all-raffles', targetChainId] }),
-        
-        // Browse page specific invalidation (matches useAllRaffles query key)
-        queryClient.invalidateQueries({ queryKey: ['raffles', targetChainId, 'all'] }),
         
         // V4 specific queries (chain-specific)
         queryClient.invalidateQueries({ queryKey: ['raffles-v4', targetChainId] }),
@@ -83,6 +84,17 @@ export function useUnifiedCacheInvalidation() {
         queryClient.invalidateQueries({ queryKey: ['user-nfts', targetChainId] }),
         queryClient.invalidateQueries({ queryKey: ['user-nfts'] }), // Also invalidate without chainId for backward compatibility
       ];
+      
+      // Browse page invalidation - ONLY for create/cancel, NOT for winner selection/buy tickets
+      if (shouldInvalidateBrowse) {
+        console.log(`🔄 [CACHE] Invalidating Browse page for ${transactionType}`);
+        invalidationPromises.push(
+          queryClient.invalidateQueries({ queryKey: ['raffles', targetChainId, 'all'] }),
+          queryClient.invalidateQueries({ queryKey: ['raffles', targetChainId] })
+        );
+      } else {
+        console.log(`⏭️  [CACHE] Skipping Browse page invalidation for ${transactionType}`);
+      }
       
       // 3. Specific raffle invalidation
       if (raffleContract) {
