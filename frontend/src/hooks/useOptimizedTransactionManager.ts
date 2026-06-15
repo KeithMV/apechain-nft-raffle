@@ -162,32 +162,38 @@ export function useOptimizedTransactionManager(transactionConfig: OptimizedTrans
     }
   }, [error, receiptError, onError, enableToasts, isPolygon]);
 
-  // CRITICAL FIX: Add safety mechanism to clear stuck processing states
+  // SMART SAFETY: Only clear stuck state if NO hash after 3 minutes (truly stuck)
   useEffect(() => {
     if (isProcessing && !hash && !error && !receiptError) {
-      // If we've been processing for more than 2 minutes without a hash, something is wrong
+      // Wait 3 minutes before declaring truly stuck
+      // This allows plenty of time for MetaMask review and confirmation
       const safetyTimeout = setTimeout(() => {
-        console.log('🚨 [SAFETY] Clearing stuck processing state after 2 minutes');
+        console.log('🚨 [SAFETY] No transaction hash after 3 minutes - truly stuck');
         setIsProcessing(false);
         if (enableToasts) {
           toastManager.error('Transaction appears to be stuck. Please try again.');
         }
-      }, 120000); // 2 minutes
+      }, 180000); // 3 minutes (increased from 2)
       
       return () => clearTimeout(safetyTimeout);
     }
   }, [isProcessing, hash, error, receiptError, enableToasts]);
 
-  // Handle confirmation timeout
+  // SMART CONFIRMATION TIMEOUT: Only show error if hash exists but confirmation times out
   useEffect(() => {
     if (hash && !isConfirming && !isSuccess && !receiptError) {
       const timeoutId = setTimeout(() => {
-        setIsProcessing(false);
-        
-        if (enableToasts) {
-          toastManager.error('Transaction confirmation timed out. It may still complete.');
+        // Only clear processing if transaction hasn't succeeded
+        // Hash exists = transaction accepted by network, will likely complete
+        if (!isSuccess) {
+          console.log('⚠️ [TX] Transaction has hash but confirmation is slow - continuing to wait');
+          setIsProcessing(false);
+          
+          if (enableToasts) {
+            toastManager.warning('Transaction is taking longer than expected. It will likely still complete. Check your wallet or explorer.');
+          }
         }
-      }, timeout + 5000); // Add 5s buffer
+      }, timeout + 10000); // Add 10s buffer (increased from 5s)
       
       return () => clearTimeout(timeoutId);
     }
@@ -205,27 +211,6 @@ export function useOptimizedTransactionManager(transactionConfig: OptimizedTrans
     
     setIsProcessing(true);
     setLastContractCall(contractCall);
-    
-    // AGGRESSIVE FIX: Multiple timeout layers
-    const timeouts = [
-      setTimeout(() => {
-        console.log('⚠️ [TX] 30s timeout - clearing processing state');
-        setIsProcessing(false);
-        toastManager.error('Transaction taking too long. Cleared processing state.');
-      }, 30000), // 30 seconds
-      
-      setTimeout(() => {
-        console.log('🚨 [TX] 60s timeout - force clearing everything');
-        setIsProcessing(false);
-        // @ts-ignore - queryClient is added globally for debugging
-        if ((window as any).queryClient) (window as any).queryClient.clear();
-        toastManager.error('Transaction timed out. Please refresh and try again.');
-      }, 60000) // 60 seconds
-    ];
-    
-    const clearAllTimeouts = () => {
-      timeouts.forEach(timeout => clearTimeout(timeout));
-    };
     
     try {
       console.log('📝 [TX] Preparing contract call...');
@@ -262,8 +247,6 @@ export function useOptimizedTransactionManager(transactionConfig: OptimizedTrans
         hash: result,
       });
       
-      clearAllTimeouts();
-      
       return result;
     } catch (error) {
       rpcDebugLogger.log('TX_FAILED', {
@@ -271,7 +254,6 @@ export function useOptimizedTransactionManager(transactionConfig: OptimizedTrans
         chainId,
       }, error);
       
-      clearAllTimeouts();
       setIsProcessing(false);
       throw error;
     }

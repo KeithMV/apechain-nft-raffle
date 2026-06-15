@@ -6,7 +6,6 @@ import { useNFTApprovalManager } from '../hooks/useNFTApprovalManager';
 import { useApeChainSwitching } from '../utils/chainSwitching';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useUserNFTs } from '../hooks/useUserNFTs';
-import { useUnifiedCacheInvalidation } from '../hooks/useUnifiedCacheInvalidation';
 import ApprovalModal from './ApprovalModal';
 import NFTGrid from './NFTGrid';
 import RaffleForm, { FormData, getInitialFormData, validateAddress } from './RaffleForm';
@@ -33,9 +32,6 @@ export default function CreateRafflePage() {
     nfts: nfts?.length ? nfts.slice(0, 3).map(nft => `${nft.contractAddress?.slice(0,6)}-${nft.tokenId}`) : [],
     hasDuplicates: nfts && nfts.length > 0 ? nfts.length !== new Set(nfts.map(nft => `${nft.contractAddress}-${nft.tokenId}`)).size : false
   });
-  
-  // Cache invalidation for immediate UI updates
-  const { quickInvalidate } = useUnifiedCacheInvalidation();
   
   // Listen for cache invalidation events to refresh NFTs
   useEffect(() => {
@@ -78,20 +74,17 @@ export default function CreateRafflePage() {
     error: createError
   } = useCreateRaffleV4();
 
-  // Handle approval success - single coordinated cache refresh
+  // Handle approval success - NFT refetch only (no full cache invalidation needed)
   useEffect(() => {
     if (approvalSuccess) {
-      console.log('✅ [APPROVAL] NFT approval successful, coordinated cache refresh');
+      console.log('✅ [APPROVAL] NFT approval successful, refreshing NFT list');
       
-      // Single coordinated cache invalidation
-      quickInvalidate(undefined, chainId);
-      
-      // Delayed NFT refetch to ensure cache is cleared first
+      // Only refetch NFTs - no need to invalidate all caches for approval
       setTimeout(() => {
         refetchNFTs();
       }, 500);
     }
-  }, [approvalSuccess, quickInvalidate, chainId, refetchNFTs]);
+  }, [approvalSuccess, refetchNFTs]);
   
   // Handle approval errors
   useEffect(() => {
@@ -113,14 +106,11 @@ export default function CreateRafflePage() {
     }
   }, [formData.nftContract, formData.tokenId, checkApproval]);
 
-  // Handle create raffle success - coordinated cache invalidation and redirect
+  // Handle create raffle success - redirect (cache already invalidated by transaction manager)
   useEffect(() => {
     if (createSuccess) {
       console.log('✅ Raffle created successfully on chain:', chainId, networkName);
-      
-      // Single coordinated cache invalidation
-      console.log('🔄 [CREATE] Coordinated cache invalidation after raffle creation');
-      quickInvalidate(undefined, chainId);
+      console.log('ℹ️ [CREATE] Cache invalidation handled by transaction manager');
       
       // Show success message
       toastManager.success(`Raffle created successfully on ${networkName}! Redirecting...`, {
@@ -129,9 +119,6 @@ export default function CreateRafflePage() {
       
       // Coordinated cleanup and redirect
       setTimeout(() => {
-        // Force NFT refresh after cache is cleared
-        refetchNFTs();
-        
         // Reset form and clear approval state
         setFormData(getInitialFormData());
         clearApprovalState();
@@ -143,7 +130,7 @@ export default function CreateRafflePage() {
         }, 500);
       }, 1000);
     }
-  }, [createSuccess, navigate, clearApprovalState, chainId, networkName, quickInvalidate, refetchNFTs]);
+  }, [createSuccess, navigate, clearApprovalState, chainId, networkName]);
 
   // Handle create raffle errors
   useEffect(() => {

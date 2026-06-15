@@ -78,21 +78,10 @@ export function useNFTApprovalV4() {
 export function useCreateRaffleV4() {
   const { factoryAddress, currentVersion, rateLimit, rateLimitText } = useContractVersionManager();
   const { validateRaffleCreation } = useContractValidator();
-  const { invalidateAfterTransaction } = useUnifiedCacheInvalidation();
   const chainId = useChainId(); // Use wagmi hook for chain detection
   
-  const handleSuccess = (hash: string) => {
-    console.log('✅ [CREATE] Raffle created successfully, invalidating all caches including user NFTs');
-    // Comprehensive cache invalidation after raffle creation
-    setTimeout(() => {
-      invalidateAfterTransaction({ 
-        transactionType: 'create-raffle',
-        immediate: true
-      });
-    }, 500);
-  };
-  
-  const transactionManager = useOptimizedCreateRaffle(handleSuccess);
+  // No additional invalidation needed - transaction manager handles it
+  const transactionManager = useOptimizedCreateRaffle();
 
   const createRaffle = async (params: CreateRaffleParams) => {
     // SECURITY: Validate and sanitize all inputs

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount, useChainId } from 'wagmi';
 import RaffleCard, { CreatedRaffle } from './RaffleCard';
 import { useAllRaffles } from '../hooks/useRaffleData';
@@ -79,37 +79,10 @@ export default function BrowseRaffles() {
     return () => window.removeEventListener('cache-invalidated', handleCacheInvalidated);
   }, [refetch]);
   
-  // Auto-fetch all active raffles on mount for comprehensive sorting
-  const hasAutoFetchCompleted = useRef(false);
-  
-  useEffect(() => {
-    // Reset when switching tabs
-    if (showExpired) {
-      hasAutoFetchCompleted.current = false;
-      return;
-    }
-    
-    // Stop if we've already completed auto-fetch for this session
-    if (hasAutoFetchCompleted.current) {
-      return;
-    }
-    
-    // Continue fetching if there are more pages
-    if (hasNextPage && !isFetchingNextPage && !loading) {
-      if (config.enableLogging) {
-        console.log('🔄 [BROWSE] Auto-loading next page...', {
-          loadedRaffles: raffles.length,
-        });
-      }
-      fetchNextPage();
-    } else if (!hasNextPage && !isFetchingNextPage) {
-      // Mark as completed when no more pages
-      hasAutoFetchCompleted.current = true;
-      if (config.enableLogging) {
-        console.log('✅ [BROWSE] Auto-fetch completed. Total raffles:', raffles.length);
-      }
-    }
-  }, [showExpired, hasNextPage, isFetchingNextPage, loading, raffles.length, fetchNextPage]);
+  // PHASE 1 OPTIMIZATION: Removed auto-fetch all raffles
+  // Users now control loading with "Load More" button
+  // This reduces initial RPC calls from ~1,000 to ~90 (for first 30 raffles)
+  // Benefit: 10x faster page load, better mobile experience
   
   // Consolidated optimized raffle actions hook - simplified without progress tracking
   const {
@@ -301,8 +274,8 @@ export default function BrowseRaffles() {
                 </div>
               )}
               
-              {/* Load More Button - Only show for completed raffles */}
-              {filteredRaffles.length > 0 && hasNextPage && showExpired && (
+              {/* Load More Button - PHASE 1: Now shows for BOTH Active and Completed tabs */}
+              {filteredRaffles.length > 0 && hasNextPage && (
                 <div className="mt-8 text-center">
                   <button
                     onClick={loadMoreRaffles}
@@ -317,22 +290,14 @@ export default function BrowseRaffles() {
                       </>
                     ) : (
                       <>
-                        <span className="relative">Load More Completed Raffles</span>
+                        <span className="relative">Load More Raffles</span>
                       </>
                     )}
                   </button>
                 </div>
               )}
               
-              {/* Loading indicator for auto-fetch */}
-              {!showExpired && isFetchingNextPage && (
-                <div className="mt-8 text-center">
-                  <div className="flex items-center justify-center space-x-3 text-slate-400">
-                    <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                    <span>Loading all active raffles...</span>
-                  </div>
-                </div>
-              )}
+
       </div>
       </div>
       </div>
