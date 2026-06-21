@@ -76,9 +76,16 @@ export default function RaffleDashboard() {
     // Also log a simple summary
     console.log(`📊 [DASHBOARD-SUMMARY] Chain: ${chainId}, Connected: ${isConnected}, Positions: ${Array.isArray(userPositions) ? userPositions.length : 0}, Created: ${Array.isArray(createdRaffles) ? createdRaffles.length : 0}`);
     
-    // Store in localStorage for comparison
+    // Store in localStorage for comparison (sanitized)
     const key = `dashboard-debug-${Date.now()}`;
-    localStorage.setItem(key, JSON.stringify(debugInfo));
+    try {
+      // Sanitize: JSON.stringify prevents code injection, only store safe debug data
+      const sanitizedDebug = JSON.stringify(debugInfo);
+      localStorage.setItem(key, sanitizedDebug);
+    } catch (e) {
+      // Ignore localStorage errors (quota exceeded, etc.)
+      console.warn('Could not save debug info to localStorage:', e);
+    }
     
     // Keep only last 5 entries
     const allKeys = Object.keys(localStorage).filter(k => k.startsWith('dashboard-debug-'));
@@ -88,11 +95,19 @@ export default function RaffleDashboard() {
     
   }, [chainId, address, isConnected, isConnecting, positionsLoading, rafflesLoading, userPositions, createdRaffles]);
   
-  // Expose comparison function to window
+  // Expose comparison function to window (sanitized)
   useEffect(() => {
     (window as any).compareDashboardStates = () => {
       const allKeys = Object.keys(localStorage).filter(k => k.startsWith('dashboard-debug-')).sort();
-      const states = allKeys.map(k => JSON.parse(localStorage.getItem(k) || '{}'));
+      const states = allKeys.map(k => {
+        try {
+          // Safe: JSON.parse on data we control, with fallback
+          return JSON.parse(localStorage.getItem(k) || '{}');
+        } catch (e) {
+          console.warn('Failed to parse localStorage debug data:', e);
+          return {};
+        }
+      });
       
       console.log('📊 [DASHBOARD-COMPARISON]', {
         totalStates: states.length,

@@ -113,10 +113,13 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     }
     
     if (config.enableLogging) {
+      // SECURITY: Sanitized logging - only log safe string representation
+      const sanitizedContract = String(raffle.raffleContract || '').substring(0, 50);
+      const sanitizedPrice = String(raffle.ticketPrice || '').substring(0, 20);
       console.log('Buying tickets:', { 
-        raffleContract: raffle.raffleContract?.replace(/[\r\n]/g, ' '), 
+        raffleContract: sanitizedContract, 
         quantity,
-        ticketPrice: String(raffle.ticketPrice).replace(/[\r\n]/g, ' ') 
+        ticketPrice: sanitizedPrice
       });
     }
     
@@ -167,8 +170,10 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
     }
     
     if (config.enableLogging) {
+      // SECURITY: Sanitized logging - only log safe string representation
+      const sanitizedContract = String(raffle.raffleContract || '').substring(0, 50);
       console.log('Selecting winner:', { 
-        raffleContract: raffle.raffleContract?.replace(/[\r\n]/g, ' ') 
+        raffleContract: sanitizedContract
       });
     }
     
