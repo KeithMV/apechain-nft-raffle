@@ -83,11 +83,12 @@ export const polygon = defineChain({
         // Primary: Alchemy with multi-chain API key
         process.env.REACT_APP_ALCHEMY_API_KEY
           ? `https://polygon-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`
-          : 'https://polygon-rpc.com',
-        // Fallbacks: Multiple reliable endpoints
-        'https://rpc.ankr.com/polygon',
+          : 'https://rpc-mainnet.matic.quiknode.pro',
+        // Fallbacks: VERIFIED working endpoints (2025-01-20)
+        'https://rpc-mainnet.matic.quiknode.pro',
         'https://polygon.meowrpc.com',
         'https://polygon-mainnet.public.blastapi.io',
+        'https://1rpc.io/matic',
       ],
     },
   },
