@@ -146,15 +146,6 @@ Gas estimates should now be accurate.
 
 Domain and SSL certificates managed through Route 53 and ACM (AWS Certificate Manager).
 
-## What This Demonstrates
-
-- Full-stack blockchain development (Solidity → React → AWS)
-- Multi-chain EVM architecture
-- Production dApp with real on-chain transactions
-- Security best practices (commit-reveal, reentrancy protection)
-- Automated testing and CI/CD
-- Low-cost infrastructure (<$5/month for production app)
-
 ---
 
 Live: [web3raffles.io](https://web3raffles.io) | Built by [Keith Vose](https://github.com/KeithMV)
