@@ -1,6 +1,6 @@
 # Web3 NFT Raffle Platform
 
-Production multi-chain raffle platform deployed at [web3raffles.io](https://web3raffles.io). 341+ raffles executed on-chain across ApeChain and Polygon.
+Production multi-chain raffle platform deployed at [web3raffles.io](https://web3raffles.io).
 
 ## What It Does
 
