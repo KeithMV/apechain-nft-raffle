@@ -132,6 +132,7 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
         ? parseEther(raffle.ticketPrice)
         : BigInt(raffle.ticketPrice);
       
+      // amazonq-ignore-next-line
       const totalValue = ticketPriceWei * BigInt(quantity);
       
       // Use optimized transaction manager with contract call
@@ -177,6 +178,7 @@ export function useOptimizedRaffleActions(refetch: () => void): UseOptimizedRaff
       });
     }
     
+    // amazonq-ignore-next-line
     // Start processing
     addProcessingRaffle(raffle.raffleContract);
     

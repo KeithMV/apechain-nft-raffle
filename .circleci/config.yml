@@ -258,7 +258,7 @@ jobs:
             export REACT_APP_CHAIN_ID=33139
             export REACT_APP_APECHAIN_RPC_URL=https://apechain.calderachain.xyz/http
             export REACT_APP_CONTRACT_ADDRESS=0x1627E7e63b63878E61f91D336385a59B1747934a
-            export REACT_APP_WALLETCONNECT_PROJECT_ID=b848c907908cee0c1bcf0ab0493da6c4
+            export REACT_APP_WALLETCONNECT_PROJECT_ID=${WALLETCONNECT_PROJECT_ID}
             export REACT_APP_APP_NAME="ApeChain NFT Raffles (Staging)"
             export REACT_APP_APP_URL=${REACT_APP_APP_URL_STAGING}
             export REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}
@@ -304,7 +304,7 @@ jobs:
             export REACT_APP_CHAIN_ID=33139
             export REACT_APP_APECHAIN_RPC_URL=https://apechain.calderachain.xyz/http
             export REACT_APP_CONTRACT_ADDRESS=0x1627E7e63b63878E61f91D336385a59B1747934a
-            export REACT_APP_WALLETCONNECT_PROJECT_ID=b848c907908cee0c1bcf0ab0493da6c4
+            export REACT_APP_WALLETCONNECT_PROJECT_ID=${WALLETCONNECT_PROJECT_ID}
             export REACT_APP_APP_NAME="Web3 NFT Raffles"
             export REACT_APP_APP_URL=${REACT_APP_APP_URL_PRODUCTION}
             export REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}
@@ -663,20 +663,20 @@ jobs:
             fi
             
             # Deploy with cache-busting headers
-            aws s3 sync frontend/build/ s3://apechain-nft-raffle-staging-v2-856872546342-us-east-1/ \
+            aws s3 sync frontend/build/ s3://${STAGING_BUCKET_NAME}/ \
               --delete \
               --cache-control "no-cache, no-store, must-revalidate, max-age=0"
             
             # Verify deployment
             echo "🔍 Verifying deployment..."
-            aws s3 ls s3://apechain-nft-raffle-staging-v2-856872546342-us-east-1/static/js/ | head -3 || echo "Verification completed (ignore broken pipe)"
+            aws s3 ls s3://${STAGING_BUCKET_NAME}/static/js/ | head -3 || echo "Verification completed (ignore broken pipe)"
             
             # Invalidate CloudFront cache
             echo "🔄 Creating CloudFront invalidation..."
-            INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id EDPIS47D31NKW --paths "/*" --query 'Invalidation.Id' --output text)
+            INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id ${STAGING_DISTRIBUTION_ID} --paths "/*" --query 'Invalidation.Id' --output text)
             
             echo "✅ Staging deployment complete!"
-            echo "🌍 Staging URL: https://d1784e9dgxn2du.cloudfront.net"
+            echo "🌍 Staging URL: ${STAGING_CLOUDFRONT_URL}"
             echo "🔄 CloudFront invalidation: $INVALIDATION_ID"
       - run:
           name: Run smoke tests on staging
@@ -686,7 +686,7 @@ jobs:
             
             # Basic smoke test
             echo "🔍 Testing staging deployment..."
-            if curl -f https://d1784e9dgxn2du.cloudfront.net > /dev/null 2>&1; then
+            if curl -f ${STAGING_CLOUDFRONT_URL} > /dev/null 2>&1; then
               echo "✅ Staging smoke test passed!"
             else
               echo "⚠️ Staging smoke test failed, but deployment completed"
@@ -805,15 +805,14 @@ workflows:
       - test-frontend-unit:
           requires:
             - install-frontend-deps
-      # Temporarily bypass security scan for deployment
-      # - security-scan-frontend:
-      #     requires:
-      #       - install-frontend-deps
+      - security-scan-frontend:
+          requires:
+            - install-frontend-deps
       - build-frontend-production:
           requires:
             - lint-frontend
             - test-frontend-unit
-            # - security-scan-frontend
+            - security-scan-frontend
       
       # Contract pipeline - Full validation for production
       - compile-contracts:

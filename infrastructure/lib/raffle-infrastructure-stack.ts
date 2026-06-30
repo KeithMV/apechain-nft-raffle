@@ -28,8 +28,10 @@ export class RaffleInfrastructureStack extends cdk.Stack {
       enforceSSL: true,
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      objectLockEnabled: true,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      // objectLockEnabled removed - incompatible with RemovalPolicy.DESTROY
+      // Versioning provides sufficient protection against accidental deletion
+      removalPolicy: cdk.RemovalPolicy.RETAIN, // Changed to RETAIN for production safety
+      autoDeleteObjects: false, // Prevent accidental deletion
     });
 
     // Origin Access Control for secure S3 access
@@ -52,7 +54,40 @@ export class RaffleInfrastructureStack extends cdk.Stack {
       domainNames = [props.domainName, `www.${props.domainName}`];
     }
 
-    // CloudFront Distribution with React Router support
+    // CloudFront Response Headers Policy for Security
+    const securityHeadersPolicy = new cloudfront.ResponseHeadersPolicy(this, 'SecurityHeaders', {
+      comment: 'Security headers for Raffle platform',
+      securityHeadersBehavior: {
+        contentSecurityPolicy: {
+          contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.apechain.com https://*.calderachain.xyz https://*.walletconnect.com https://*.walletconnect.org https://*.infura.io https://*.alchemy.com wss://*.walletconnect.com wss://*.walletconnect.org https://*.execute-api.us-east-1.amazonaws.com https://*.amazonaws.com; frame-src 'self' https://verify.walletconnect.com https://verify.walletconnect.org;",
+          override: true,
+        },
+        contentTypeOptions: {
+          override: true,
+        },
+        frameOptions: {
+          frameOption: cloudfront.HeadersFrameOption.DENY,
+          override: true,
+        },
+        referrerPolicy: {
+          referrerPolicy: cloudfront.HeadersReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
+          override: true,
+        },
+        strictTransportSecurity: {
+          accessControlMaxAge: cdk.Duration.seconds(31536000),
+          includeSubdomains: true,
+          preload: true,
+          override: true,
+        },
+        xssProtection: {
+          protection: true,
+          modeBlock: true,
+          override: true,
+        },
+      },
+    });
+
+    // CloudFront Distribution with React Router support and Security Headers
     const distribution = new cloudfront.Distribution(this, 'RaffleDistribution', {
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(this.s3Bucket, {
@@ -60,6 +95,7 @@ export class RaffleInfrastructureStack extends cdk.Stack {
         }),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        responseHeadersPolicy: securityHeadersPolicy,
       },
       domainNames,
       certificate,

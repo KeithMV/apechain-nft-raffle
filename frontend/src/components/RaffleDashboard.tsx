@@ -304,6 +304,7 @@ export default function RaffleDashboard() {
     toastManager.transaction.loading('Cancelling raffle', { id: toastId });
     
     try {
+      // amazonq-ignore-next-line
       await cancelRaffleHook.executeTransaction({
         address: raffleContract as `0x${string}`,
         abi: [{

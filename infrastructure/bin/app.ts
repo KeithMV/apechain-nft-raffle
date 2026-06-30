@@ -23,9 +23,15 @@ try {
   });
 
   // Staging Stack
+  const certificateArn = process.env.CERTIFICATE_ARN || process.env.STAGING_CERTIFICATE_ARN;
+  if (!certificateArn) {
+    console.error('CERTIFICATE_ARN or STAGING_CERTIFICATE_ARN environment variable is required for staging stack');
+    process.exit(1);
+  }
+  
   new RaffleStagingStack(app, 'RaffleStagingStack', {
     domainName: 'staging.apechainraffles.io',
-    certificateArn: 'arn:aws:acm:us-east-1:856872546342:certificate/f9cd027a-611e-4aa5-a7be-9301cfd82ddc',
+    certificateArn,
     environment: 'staging',
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
   });

@@ -26,7 +26,8 @@ export class RaffleStagingStack extends cdk.Stack {
       enforceSSL: true,
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // OK for staging
+      autoDeleteObjects: true, // Auto-cleanup for staging
     });
 
     // Origin Access Control
@@ -41,7 +42,40 @@ export class RaffleStagingStack extends cdk.Stack {
       props.certificateArn
     );
 
-    // CloudFront Distribution for staging
+    // CloudFront Response Headers Policy for Security (Staging)
+    const securityHeadersPolicy = new cloudfront.ResponseHeadersPolicy(this, 'StagingSecurityHeaders', {
+      comment: 'Security headers for staging environment',
+      securityHeadersBehavior: {
+        contentSecurityPolicy: {
+          contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.apechain.com https://*.calderachain.xyz https://*.walletconnect.com https://*.walletconnect.org https://*.infura.io https://*.alchemy.com wss://*.walletconnect.com wss://*.walletconnect.org https://*.execute-api.us-east-1.amazonaws.com https://*.amazonaws.com; frame-src 'self' https://verify.walletconnect.com https://verify.walletconnect.org;",
+          override: true,
+        },
+        contentTypeOptions: {
+          override: true,
+        },
+        frameOptions: {
+          frameOption: cloudfront.HeadersFrameOption.DENY,
+          override: true,
+        },
+        referrerPolicy: {
+          referrerPolicy: cloudfront.HeadersReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
+          override: true,
+        },
+        strictTransportSecurity: {
+          accessControlMaxAge: cdk.Duration.seconds(31536000),
+          includeSubdomains: true,
+          preload: true,
+          override: true,
+        },
+        xssProtection: {
+          protection: true,
+          modeBlock: true,
+          override: true,
+        },
+      },
+    });
+
+    // CloudFront Distribution for staging with Security Headers
     const distribution = new cloudfront.Distribution(this, 'RaffleStagingV2Distribution', {
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(this.s3Bucket, {
@@ -49,6 +83,7 @@ export class RaffleStagingStack extends cdk.Stack {
         }),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, // Disable cache for staging
+        responseHeadersPolicy: securityHeadersPolicy,
       },
       // domainNames: [props.domainName], // Commented out - will add after DNS switch
       // certificate, // Commented out - will add after DNS switch

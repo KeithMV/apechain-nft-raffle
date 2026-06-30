@@ -7,9 +7,13 @@ const app = new cdk.App();
 
 try {
   // Validate required environment variables
-  const account = process.env.CDK_DEFAULT_ACCOUNT || '856872546342';
+  const account = process.env.CDK_DEFAULT_ACCOUNT;
   const region = process.env.CDK_DEFAULT_REGION || 'us-east-1';
   const certificateArn = process.env.CERTIFICATE_ARN;
+  
+  if (!account) {
+    throw new Error('CDK_DEFAULT_ACCOUNT environment variable is required');
+  }
   
   if (!certificateArn || certificateArn === 'YOUR_CERT_ARN') {
     throw new Error('CERTIFICATE_ARN environment variable must be set to a valid ACM certificate ARN');
@@ -42,8 +46,8 @@ try {
   const errorMessage = error instanceof Error ? error.message : 'Unknown configuration error';
   console.error('❌ Failed to configure staging stack:', errorMessage);
   console.error('\n💡 Required environment variables:');
+  console.error('   - CDK_DEFAULT_ACCOUNT: AWS account ID (required)');
   console.error('   - CERTIFICATE_ARN: ACM certificate ARN for staging.apechainraffles.io');
-  console.error('   - CDK_DEFAULT_ACCOUNT: AWS account ID (optional, defaults to 856872546342)');
   console.error('   - CDK_DEFAULT_REGION: AWS region (optional, defaults to us-east-1)');
   process.exit(1);
 }
