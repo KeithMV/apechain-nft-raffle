@@ -22,6 +22,15 @@ try {
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
   });
 
+  // ApeChain-Only Stack
+  // Serves apechainraffles.io - pure ApeChain utility for Accelerator application
+  new RaffleInfrastructureStack(app, 'RaffleApeChainStack', {
+    domainName: 'apechainraffles.io',
+    hostedZoneId: 'Z02864901E4MLJMH828IC',
+    environment: 'apechain-only',
+    env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+  });
+
   // Staging Stack
   const certificateArn = process.env.CERTIFICATE_ARN || process.env.STAGING_CERTIFICATE_ARN;
   if (!certificateArn) {
