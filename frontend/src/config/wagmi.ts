@@ -111,8 +111,8 @@ export const CONTRACT_ADDRESSES = {
     template: '0x242f56507BFd5034b369418A7C9FB1b4643710a4',
   },
   [polygon.id]: {
-    factory: '0xC9Bd344f5E31481F202E400C33210Bd1AB542b42',
-    template: '0x7487bb0DdAd2d7ff7C59869536cbDcEBAd29D55e',
+    factory: '0xBc6971b3Ba2cc4928136670077c600f451984fE6',
+    template: '0x0DcBfE014D34c2Ac619d7c5d3E1eB323725dEB8c',
   },
 } as const;
 
