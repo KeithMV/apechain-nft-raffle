@@ -48,6 +48,7 @@ vi.mock('react-hot-toast', () => ({
 // Mock @web3modal/wagmi/react
 vi.mock('@web3modal/wagmi/react', () => ({
   useWeb3Modal: vi.fn(() => ({ open: vi.fn(), close: vi.fn() })),
+  useWeb3ModalState: vi.fn(() => ({ open: false })),
   createWeb3Modal: vi.fn(),
 }))
 
