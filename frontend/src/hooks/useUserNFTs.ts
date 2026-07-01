@@ -19,15 +19,7 @@ async function fetchNFTsViaAPI(
 ): Promise<UserNFT[]> {
   try {
     // Use environment-aware Lambda proxy endpoint
-    const lambdaProxy = process.env.REACT_APP_ENV === 'staging' 
-      ? 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/staging/proxy'
-      : 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
-    
-    // Skip Lambda in development mode only if explicitly disabled
-    if (process.env.REACT_APP_ENV === 'development' && process.env.REACT_APP_SKIP_LAMBDA === 'true') {
-      console.log('Development mode: Lambda disabled via REACT_APP_SKIP_LAMBDA, using on-chain scanning');
-      return [];
-    }
+    const lambdaProxy = process.env.REACT_APP_LAMBDA_PROXY_URL || 'https://aeouvdxxl6.execute-api.us-east-1.amazonaws.com/prod/proxy';
     
     const url = `${lambdaProxy}?owner=${encodeURIComponent(userAddress)}&chainId=${chainId}`;
     

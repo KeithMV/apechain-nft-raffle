@@ -1,9 +1,7 @@
 // Enhanced Image Proxy Service - Environment Aware
 export class SimpleImageProxy {
   // Environment-aware Lambda proxy endpoint
-  private static readonly LAMBDA_PROXY = process.env.REACT_APP_ENV === 'staging' 
-    ? 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/staging/proxy'
-    : 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+  private static readonly LAMBDA_PROXY = process.env.REACT_APP_LAMBDA_PROXY_URL || 'https://aeouvdxxl6.execute-api.us-east-1.amazonaws.com/prod/proxy';
   
   private static readonly BACKUP_PROXY = 'https://images.weserv.nl/?url=';
   

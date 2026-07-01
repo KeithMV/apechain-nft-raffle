@@ -154,9 +154,7 @@ async function fetchNFTMetadataFromAlchemy(
     console.log(`🔍 [ALCHEMY NFT] Fetching metadata for ${contractAddress?.replace(/[\r\n]/g, ' ')}/${tokenId?.replace(/[\r\n]/g, ' ')} on chain ${String(chainId).replace(/[^0-9]/g, '')}`);
     
     // Use environment-aware Lambda proxy for Alchemy NFT API
-    const lambdaProxy = process.env.REACT_APP_ENV === 'staging' 
-      ? 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/staging/proxy'
-      : 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    const lambdaProxy = process.env.REACT_APP_LAMBDA_PROXY_URL || 'https://aeouvdxxl6.execute-api.us-east-1.amazonaws.com/prod/proxy';
     
     // FIXED: Call Lambda function with contract address and tokenId for specific NFT metadata
     const alchemyUrl = `${lambdaProxy}?contractAddress=${contractAddress}&tokenId=${tokenId}&chainId=${chainId}`;
@@ -316,9 +314,7 @@ async function fetchNFTMetadataFromBlockchain(
     }
     
     // Use environment-aware Lambda proxy for metadata fetching
-    const lambdaProxy = process.env.REACT_APP_ENV === 'staging' 
-      ? 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/staging/proxy'
-      : 'https://w7pllimgd5.execute-api.us-east-1.amazonaws.com/prod/proxy';
+    const lambdaProxy = process.env.REACT_APP_LAMBDA_PROXY_URL || 'https://aeouvdxxl6.execute-api.us-east-1.amazonaws.com/prod/proxy';
     
     const proxiedMetadataUrl = `${lambdaProxy}?url=${encodeURIComponent(metadataUrl)}`;
     

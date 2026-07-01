@@ -262,22 +262,8 @@ jobs:
             export REACT_APP_APP_NAME="ApeChain NFT Raffles (Staging)"
             export REACT_APP_APP_URL=${REACT_APP_APP_URL_STAGING}
             export REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}
+            export REACT_APP_LAMBDA_PROXY_URL=https://puvhbe7qbc.execute-api.us-east-1.amazonaws.com/prod/proxy
             export GENERATE_SOURCEMAP=false
-            
-            # Clean build
-            rm -rf build/
-            
-            # Build with environment variables
-            yarn build
-            
-            # Verify build
-            if [ -d "build" ] && [ "$(ls -A build)" ]; then
-              echo "✅ Staging build completed successfully"
-              echo "📦 Build size: $(du -sh build | cut -f1)"
-            else
-              echo "❌ Build failed"
-              exit 1
-            fi
       - persist_to_workspace:
           root: .
           paths:
@@ -308,30 +294,8 @@ jobs:
             export REACT_APP_APP_NAME="Web3 NFT Raffles"
             export REACT_APP_APP_URL=${REACT_APP_APP_URL_PRODUCTION}
             export REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}
+            export REACT_APP_LAMBDA_PROXY_URL=https://aeouvdxxl6.execute-api.us-east-1.amazonaws.com/prod/proxy
             export GENERATE_SOURCEMAP=false
-            
-            # Debug: Verify Alchemy API key is set (show first 10 chars only for security)
-            if [ -n "$REACT_APP_ALCHEMY_API_KEY" ]; then
-              echo "✅ Alchemy API key is set: ${REACT_APP_ALCHEMY_API_KEY:0:10}..."
-            else
-              echo "❌ WARNING: REACT_APP_ALCHEMY_API_KEY is NOT set!"
-              echo "⚠️  Build will use fallback public RPC which may be unreliable"
-            fi
-            
-            # Clean build
-            rm -rf build/
-            
-            # Build with environment variables
-            yarn build
-            
-            # Verify build
-            if [ -d "build" ] && [ "$(ls -A build)" ]; then
-              echo "✅ Production build completed successfully"
-              echo "📦 Build size: $(du -sh build | cut -f1)"
-            else
-              echo "❌ Build failed"
-              exit 1
-            fi
       - persist_to_workspace:
           root: .
           paths:
