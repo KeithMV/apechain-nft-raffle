@@ -74,6 +74,8 @@ infrastructure/cdk.out/
 !jest.config.js
 !tailwind.config.js
 !postcss.config.js
+!lambda/
+!lambda/**
 
 # Backup files
 *.backup.*
