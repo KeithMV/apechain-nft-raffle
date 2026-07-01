@@ -737,7 +737,9 @@ jobs:
       - run:
           name: Deploy to S3 and invalidate CloudFront
           command: |
-            pip install awscli --quiet
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+            unzip -q /tmp/awscliv2.zip -d /tmp
+            sudo /tmp/aws/install
             BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name RaffleInfrastructureStack --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)
             DISTRIBUTION_ID=$(aws cloudformation describe-stacks --stack-name RaffleInfrastructureStack --query 'Stacks[0].Outputs[?OutputKey==`DistributionId`].OutputValue' --output text)
             echo "📦 Deploying to bucket: $BUCKET_NAME"
