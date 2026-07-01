@@ -264,6 +264,16 @@ jobs:
             export REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}
             export REACT_APP_LAMBDA_PROXY_URL=https://puvhbe7qbc.execute-api.us-east-1.amazonaws.com/prod/proxy
             export GENERATE_SOURCEMAP=false
+            
+            rm -rf build/
+            yarn build
+            
+            if [ -d "build" ] && [ "$(ls -A build)" ]; then
+              echo "✅ Staging build completed successfully"
+            else
+              echo "❌ Build failed"
+              exit 1
+            fi
       - persist_to_workspace:
           root: .
           paths:
@@ -296,12 +306,16 @@ jobs:
             export REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}
             export REACT_APP_LAMBDA_PROXY_URL=https://aeouvdxxl6.execute-api.us-east-1.amazonaws.com/prod/proxy
             export GENERATE_SOURCEMAP=false
-      - persist_to_workspace:
-          root: .
-          paths:
-            - frontend/build
-
-  # Contract Jobs
+            
+            rm -rf build/
+            yarn build
+            
+            if [ -d "build" ] && [ "$(ls -A build)" ]; then
+              echo "✅ Production build completed successfully"
+            else
+              echo "❌ Build failed"
+              exit 1
+            fi
   install-contracts-deps:
     docker:
       - image: cimg/node:20.19
