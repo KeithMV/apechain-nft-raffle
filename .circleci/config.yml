@@ -692,6 +692,36 @@ jobs:
               echo "⚠️ Staging smoke test failed, but deployment completed"
             fi
 
+  deploy-lambda:
+    docker:
+      - image: cimg/aws:2024.03
+    steps:
+      - checkout
+      - run:
+          name: Package and deploy Lambda
+          command: |
+            echo "📦 Packaging Lambda..."
+            cd lambda/nft-proxy
+            zip -j /tmp/nft-proxy.zip index.js
+            echo "✅ Lambda packaged: $(du -sh /tmp/nft-proxy.zip | cut -f1)"
+
+            echo "⬆️ Uploading to S3..."
+            BUCKET=$(aws cloudformation describe-stacks \
+              --stack-name RaffleInfrastructureStack \
+              --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' \
+              --output text)
+            aws s3 cp /tmp/nft-proxy.zip s3://$BUCKET/lambda/nft-proxy.zip
+            echo "✅ Uploaded to s3://$BUCKET/lambda/nft-proxy.zip"
+
+            echo "🚀 Updating CloudFormation stack..."
+            aws cloudformation deploy \
+              --template-file infrastructure/apechain-image-proxy.yaml \
+              --stack-name apechain-nft-image-proxy-v2 \
+              --parameter-overrides AlchemyApiKey=${ALCHEMY_API_KEY} \
+              --capabilities CAPABILITY_NAMED_IAM \
+              --region us-east-1
+            echo "✅ Lambda deployed successfully"
+
   deploy-production:
     docker:
       - image: cimg/aws:2024.03
@@ -784,6 +814,10 @@ workflows:
           requires:
             - build-frontend-staging
             - compile-contracts
+      
+      - deploy-lambda:
+          requires:
+            - deploy-staging
   
   # Production workflow (main branch) - Full validation for production
   production_pipeline:
@@ -841,5 +875,9 @@ workflows:
             - validate-infrastructure
       
       - deploy-production:
+          requires:
+            - hold-for-approval
+
+      - deploy-lambda:
           requires:
             - hold-for-approval
