@@ -708,10 +708,8 @@ jobs:
           name: Package and deploy Lambda (<< parameters.environment >>)
           command: |
             echo "📦 Packaging Lambda..."
-            cd lambda/nft-proxy
-            zip -j /tmp/nft-proxy.zip index.js
+            zip -j /tmp/nft-proxy.zip lambda/nft-proxy/index.js
             echo "✅ Lambda packaged: $(du -sh /tmp/nft-proxy.zip | cut -f1)"
-            cd ~/project
 
             echo "⬆️ Uploading to S3..."
             aws s3 cp /tmp/nft-proxy.zip s3://<< parameters.s3-bucket >>/lambda/nft-proxy.zip
