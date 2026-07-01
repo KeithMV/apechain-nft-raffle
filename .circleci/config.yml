@@ -693,12 +693,19 @@ jobs:
             fi
 
   deploy-lambda:
+    parameters:
+      environment:
+        type: string
+      stack-name:
+        type: string
+      s3-bucket:
+        type: string
     docker:
       - image: cimg/aws:2024.03
     steps:
       - checkout
       - run:
-          name: Package and deploy Lambda
+          name: Package and deploy Lambda (<< parameters.environment >>)
           command: |
             echo "📦 Packaging Lambda..."
             cd lambda/nft-proxy
@@ -706,21 +713,20 @@ jobs:
             echo "✅ Lambda packaged: $(du -sh /tmp/nft-proxy.zip | cut -f1)"
 
             echo "⬆️ Uploading to S3..."
-            BUCKET=$(aws cloudformation describe-stacks \
-              --stack-name RaffleInfrastructureStack \
-              --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' \
-              --output text)
-            aws s3 cp /tmp/nft-proxy.zip s3://$BUCKET/lambda/nft-proxy.zip
-            echo "✅ Uploaded to s3://$BUCKET/lambda/nft-proxy.zip"
+            aws s3 cp /tmp/nft-proxy.zip s3://<< parameters.s3-bucket >>/lambda/nft-proxy.zip
+            echo "✅ Uploaded to s3://<< parameters.s3-bucket >>/lambda/nft-proxy.zip"
 
-            echo "🚀 Updating CloudFormation stack..."
+            echo "🚀 Updating CloudFormation stack << parameters.stack-name >>..."
             aws cloudformation deploy \
               --template-file infrastructure/apechain-image-proxy.yaml \
-              --stack-name apechain-nft-image-proxy-v2 \
-              --parameter-overrides AlchemyApiKey=${ALCHEMY_API_KEY} \
+              --stack-name << parameters.stack-name >> \
+              --parameter-overrides \
+                AlchemyApiKey=${ALCHEMY_API_KEY} \
+                Environment=<< parameters.environment >> \
+                S3BucketName=<< parameters.s3-bucket >> \
               --capabilities CAPABILITY_NAMED_IAM \
               --region us-east-1
-            echo "✅ Lambda deployed successfully"
+            echo "✅ Lambda deployed to << parameters.environment >>"
 
   deploy-production:
     docker:
@@ -816,6 +822,10 @@ workflows:
             - compile-contracts
       
       - deploy-lambda:
+          name: deploy-lambda-staging
+          environment: staging
+          stack-name: apechain-nft-image-proxy-staging
+          s3-bucket: apechain-nft-raffle-staging-v2-856872546342-us-east-1
           requires:
             - deploy-staging
   
@@ -879,5 +889,9 @@ workflows:
             - hold-for-approval
 
       - deploy-lambda:
+          name: deploy-lambda-production
+          environment: production
+          stack-name: apechain-nft-image-proxy-v2
+          s3-bucket: apechain-nft-raffle-production-856872546342-us-east-1
           requires:
             - hold-for-approval

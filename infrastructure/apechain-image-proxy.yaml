@@ -6,33 +6,41 @@ Parameters:
     Type: String
     NoEcho: true
     Description: Alchemy API key for NFT metadata and ownership queries
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [production, staging]
+    Description: Deployment environment
+  S3BucketName:
+    Type: String
+    Description: S3 bucket where the Lambda zip is stored
 
 Resources:
   # Lambda function to proxy NFT images and bypass CORS
   ApeChainImageProxy:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: apechain-raffle-image-proxy
+      FunctionName: !Sub 'apechain-raffle-nft-proxy-${Environment}'
       Runtime: nodejs20.x
       Handler: index.handler
       Role: !GetAtt ImageProxyRole.Arn
       Timeout: 30
       MemorySize: 512
       Code:
-        S3Bucket: !Sub 'apechain-nft-raffle-production-${AWS::AccountId}-${AWS::Region}'
+        S3Bucket: !Ref S3BucketName
         S3Key: lambda/nft-proxy.zip
         # Source: lambda/nft-proxy/index.js
       Environment:
         Variables:
           ALCHEMY_API_KEY: !Ref AlchemyApiKey
-          ENVIRONMENT: production
-          NODE_ENV: production
+          ENVIRONMENT: !Ref Environment
+          NODE_ENV: !Ref Environment
 
   # IAM role for Lambda execution
   ImageProxyRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: apechain-raffle-image-proxy-role
+      RoleName: !Sub 'apechain-nft-proxy-role-${Environment}'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -47,8 +55,8 @@ Resources:
   ImageProxyApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: apechain-image-proxy-api
-      Description: API Gateway for ApeChain NFT image proxy with rate limiting
+      Name: !Sub 'apechain-nft-proxy-api-${Environment}'
+      Description: !Sub 'ApeChain NFT proxy API - ${Environment}'
       EndpointConfiguration:
         Types:
           - REGIONAL
@@ -105,8 +113,8 @@ Resources:
     Type: AWS::ApiGateway::UsagePlan
     DependsOn: ApiDeployment
     Properties:
-      UsagePlanName: apechain-image-proxy-usage-plan
-      Description: Rate limiting for image proxy API
+      UsagePlanName: !Sub 'apechain-nft-proxy-usage-plan-${Environment}'
+      Description: !Sub 'Rate limiting for NFT proxy API - ${Environment}'
       ApiStages:
         - ApiId: !Ref ImageProxyApi
           Stage: prod
