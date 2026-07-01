@@ -707,63 +707,55 @@ jobs:
 
   deploy-production:
     docker:
-      - image: cimg/aws:2024.03
+      - image: cimg/node:20.19
     steps:
       - checkout
-      - attach_workspace:
-          at: .
-      - aws-cli/setup
+      - restore_frontend_cache
       - run:
-          name: Deploy to production
+          name: Build and deploy to production
           command: |
-            # Get CDK stack outputs
+            cd frontend
+            export REACT_APP_ENV=production
+            export REACT_APP_ENABLE_LOGGING=false
+            export REACT_APP_NETWORK=apechain
+            export REACT_APP_CHAIN_ID=33139
+            export REACT_APP_APECHAIN_RPC_URL=https://apechain.calderachain.xyz/http
+            export REACT_APP_CONTRACT_ADDRESS=0x1627E7e63b63878E61f91D336385a59B1747934a
+            export REACT_APP_WALLETCONNECT_PROJECT_ID=${WALLETCONNECT_PROJECT_ID}
+            export REACT_APP_APP_NAME="Web3 NFT Raffles"
+            export REACT_APP_APP_URL=${REACT_APP_APP_URL_PRODUCTION}
+            export REACT_APP_ALCHEMY_API_KEY=${REACT_APP_ALCHEMY_API_KEY}
+            export REACT_APP_LAMBDA_PROXY_URL=https://aeouvdxxl6.execute-api.us-east-1.amazonaws.com/prod/proxy
+            export GENERATE_SOURCEMAP=false
+            rm -rf build/
+            yarn build
+            if [ ! -d "build" ] || [ ! "$(ls -A build)" ]; then
+              echo "❌ Build failed"
+              exit 1
+            fi
+            echo "✅ Build complete"
+      - run:
+          name: Deploy to S3 and invalidate CloudFront
+          command: |
+            pip install awscli --quiet
             BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name RaffleInfrastructureStack --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)
             DISTRIBUTION_ID=$(aws cloudformation describe-stacks --stack-name RaffleInfrastructureStack --query 'Stacks[0].Outputs[?OutputKey==`DistributionId`].OutputValue' --output text)
-            
             echo "📦 Deploying to bucket: $BUCKET_NAME"
-            echo "🌐 Invalidating CloudFront: $DISTRIBUTION_ID"
-            
-            # CRITICAL: Deploy with proper cache headers for React SPA
-            echo "📦 Deploying to production S3 bucket with cache-busting headers..."
-            
-            # STEP 1: Deploy static assets (JS, CSS) with long-term caching
-            echo "📜 Step 1: Deploying static assets (JS, CSS, images)..."
             aws s3 sync frontend/build/static/ s3://$BUCKET_NAME/static/ \
-              --delete \
-              --cache-control "public, max-age=31536000, immutable"
-            
-            # STEP 2: Deploy HTML files with no caching
-            echo "📜 Step 2: Deploying HTML files..."
+              --delete --cache-control "public, max-age=31536000, immutable"
             aws s3 cp frontend/build/index.html s3://$BUCKET_NAME/index.html \
               --cache-control "no-cache, no-store, must-revalidate, max-age=0"
-            
-            # STEP 3: Deploy remaining files (manifest, favicon, etc.) with short caching
-            echo "📜 Step 3: Deploying remaining files (manifest, favicon, etc.)..."
             aws s3 sync frontend/build/ s3://$BUCKET_NAME/ \
               --cache-control "public, max-age=300" \
-              --exclude "static/*" \
-              --exclude "index.html"
-            
-            # STEP 4: Verify deployment
-            echo "🔍 Verifying deployment..."
-            aws s3 ls s3://$BUCKET_NAME/static/js/ | head -5 || echo "Verification completed (ignore broken pipe)"
-            
-            # STEP 5: Invalidate CloudFront cache
-            echo "🔄 Creating CloudFront invalidation..."
+              --exclude "static/*" --exclude "index.html"
             INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*" --query 'Invalidation.Id' --output text)
-            
-            echo "✅ Production deployment complete!"
-            echo "🔄 CloudFront invalidation: $INVALIDATION_ID"
-            echo "⏳ Cache invalidation will complete in 5-15 minutes"
+            echo "✅ Production deployment complete! Invalidation: $INVALIDATION_ID"
       - run:
-          name: Run smoke tests on production
+          name: Smoke test
           command: |
-            # Wait for CloudFront invalidation
             sleep 30
-            
-            # Basic smoke test
             curl -f https://web3raffles.io || exit 1
-            echo "✅ Production smoke test passed!"
+            echo "✅ Smoke test passed"
 
 # Workflows - SIMPLIFIED 2-BRANCH SYSTEM
 workflows:
